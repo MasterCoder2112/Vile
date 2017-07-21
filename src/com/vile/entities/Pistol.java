@@ -49,9 +49,20 @@ public class Pistol extends Weapon implements WeaponInterface
 				
 				weaponPhase = 1;
 				
-				//Adds spray shot to shotgun
-				Game.addBullet(damage, weaponID, 0.3,
-						Player.rotation);
+				//Create the bullet
+				Bullet bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID, Player.rotation);
+				
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
 				
 				SoundController.pistol.playAudioFile();
 			}
@@ -103,9 +114,20 @@ public class Pistol extends Weapon implements WeaponInterface
 				
 				weaponPhase2 = 1;
 				
-				//Adds spray shot to shotgun
-				Game.addBullet(damage, weaponID, 0.3,
-						Player.rotation);
+				//Create the bullet
+				Bullet bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID, Player.rotation);
+				
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
 				
 				SoundController.pistol.playAudioFile();
 			}

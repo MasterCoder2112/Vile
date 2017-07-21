@@ -27,14 +27,24 @@ public class Enemy extends Entity implements Comparable
 	
 	//Initial speed
 	public double initialSpeed = 0;
-
-	//Makes sure the set height "if" is only called once initially
-	private boolean firstTest = true;
 	
 	//Corrects height that the enemy should actually be at
 	public double heightCorrect = 0;
 	
-	private double totalHeight = 0;
+	//What walking phase is the enemy in, and which direction in
+	//degrees is the enemy moving
+	public double direction = 0;
+	
+	//What is the acceleration down
+	public double acceleration = 0.03;
+	
+	//What is the speed that the enemy is currently falling
+	public double fallSpeed = 1;
+	
+	//How heavy is the enemy
+	public int weightLevel = 1;
+	
+	//private double totalHeight = 0;
 	
 	//ENEMY FLAGS	
 	//Is the flying enemy coming down on the player
@@ -43,12 +53,11 @@ public class Enemy extends Entity implements Comparable
 	//Has an enemy target instead of Player
 	public boolean newTarget = false;
 	
-	//What walking phase is the enemy in, and which direction in
-	//degrees is the enemy moving
-	public double direction = 0;
-	
 	//Going through a door? Used for AI
 	private boolean doorway = false;
+	
+	//Makes sure the set height "if" is only called once initially
+	private boolean firstTest = true;
 	
    /**
     * Creates a new enemy with values sent in. The sets up the enemy based
@@ -72,6 +81,7 @@ public class Enemy extends Entity implements Comparable
 		{
 			health = 100;
 			hasSpecial = true;
+			weightLevel = 2;
 		}
 		//Sentinel
 		else if(ID == 2)
@@ -79,6 +89,7 @@ public class Enemy extends Entity implements Comparable
 			health = 130;
 			hasSpecial = true;
 			canFly = true;
+			weightLevel = 2;
 		}
 		//Mutated Commando
 		else if(ID == 3)
@@ -87,6 +98,7 @@ public class Enemy extends Entity implements Comparable
 			health  = 300;
 			damage *= 4;
 			hasSpecial = true;
+			weightLevel = 3;
 		}
 		//Reaper
 		else if(ID == 4)
@@ -94,12 +106,14 @@ public class Enemy extends Entity implements Comparable
 			speed *= 6;
 			damage = 4;
 			health = 40;
+			weightLevel = 1;
 		}
 		//Magistrate
 		else if(ID == 5)
 		{
 			damage = 2;
 			health = 100;
+			weightLevel = 1;
 			
 			//Increases time it takes to use special which is resurrecting
 			tickAmount = 24;
@@ -111,6 +125,7 @@ public class Enemy extends Entity implements Comparable
 			damage = 25;
 			health = 2500;
 			height = 60;
+			weightLevel = 10;
 			isABoss = true;
 			hasSpecial = true;
 			Game.bosses.add(this);
@@ -120,6 +135,7 @@ public class Enemy extends Entity implements Comparable
 		{
 			damage = 3;
 			health = 40;
+			weightLevel = 1;
 		}
 		//Belegoth
 		else if(ID == 8)
@@ -129,6 +145,7 @@ public class Enemy extends Entity implements Comparable
 			health = 5000;
 			isABoss = true;
 			height = 60;
+			weightLevel = 10;
 			hasSpecial = true;
 			Game.bosses.add(this);
 		}
@@ -183,7 +200,9 @@ public class Enemy extends Entity implements Comparable
     * Keeps track of the enemies movement each turn
     */
 	public void move()
-	{		
+	{	
+		setHeight();
+		
 	   /*
 	    * With faster ticks, the enemies move faster, and therefore to
 	    * correct the faster movements, this slows them down so that
@@ -263,6 +282,87 @@ public class Enemy extends Entity implements Comparable
 			return;
 		}
 		
+	   /*
+	    * All for dealing with the force of explosions propelling
+	    * enemies in some direction
+	    */
+		double xEff = 0;
+		double zEff = 0;
+		double yEff = 0;
+		
+		if(xEffects > 0)
+		{
+			xEff = 0.2;
+		}
+		else if(xEffects < 0)
+		{
+			xEff = -0.2;
+		}
+		
+		if(zEffects > 0)
+		{
+			zEff = 0.2;
+		}
+		else if(zEffects < 0)
+		{
+			zEff = -0.2;
+		}
+		
+		if(yEffects > 0)
+		{
+			yEff = 2;
+		}
+		else if(yEffects < 0)
+		{
+			yEff = -2;
+		}
+		
+		this.yPos -= (yEff);
+		
+		//If the enemy is in the air (Usually from a explosion)
+		//Make it fall.
+		if(-yPos > -maxHeight && !canFly)
+		{
+			yPos += 0.2 * weightLevel * fallSpeed;
+			fallSpeed += acceleration;
+		}
+		else
+		{
+			fallSpeed = 1;
+		}
+		
+		//Don't let enemy go through floor or block if pushed that way.
+		if(yPos > maxHeight)
+		{
+			yPos = maxHeight;
+		}
+		
+	   /*
+		* Can the force of the explosion push the enemy any more into
+	    * the z direction and if so add that effect to the zPos of the
+	    * enemy. Only if there is an effect.
+		*/
+		if(zEff != 0)
+		{
+			if(isFree(xPos, zPos + (zEff)))
+			{
+				zPos += (zEff);
+			}
+		}
+		
+	   /*
+	    * Can the force of the explosion push the enemy any more into
+	    * the x direction and if so add that effect to the xPos of the
+	    * enemy. Only if there is an effect.
+	    */
+		if(xEff != 0)
+		{
+			if(isFree(xPos + (xEff), zPos))
+			{
+				xPos += (xEff);
+			}
+		}
+		
 		//If the enemy is activated, and isn't attacking then move
 		//normally
 		if(super.activated && !super.isFiring && !super.isAttacking
@@ -334,6 +434,7 @@ public class Enemy extends Entity implements Comparable
 					yPos -= 0.5;
 					tracking = true;
 				}
+				
 			   /*
 			    * If stuck behind a wall, or below its default height
 			    * when not in range of player, then fly up
@@ -1329,6 +1430,8 @@ public class Enemy extends Entity implements Comparable
 		//Randomizes enemy items random item drop
 		Random random = new Random();
 		
+		isAlive = false;
+		
 	   /*
 	    * Each enemy drops a particular item/s
 	    */
@@ -1471,8 +1574,7 @@ public class Enemy extends Entity implements Comparable
 		
 		//Add corpse to the map
 		Game.corpses.add(new Corpse(xPos,
-				zPos,
-				-yPos, ID));	
+				zPos, -yPos, ID, xEffects, zEffects, yEffects));	
 		
 		//If survival mode, add two enemies in its place
 		if(!Game.setMap)
@@ -1544,10 +1646,9 @@ public class Enemy extends Entity implements Comparable
 	{
 		//Block enemy is now on
 		Block blockOnNew = Level.getBlock((int)xPos, (int)zPos);
-			
-		//Gets the total height of the new block the 
-		//enemy is standing on.
-		totalHeight = blockOnNew.height + blockOnNew.y;
+		
+		//Makes the y non negative
+		double yCorrect = -this.yPos;
 		
 	   /*
 	    * Only do for non flying enemies. But this is a whole bunch of
@@ -1559,32 +1660,32 @@ public class Enemy extends Entity implements Comparable
 	    */
 		if(!canFly)
 		{
-			if(totalHeight >= 0 && totalHeight < 18)
+			if(yCorrect >= 0 && yCorrect < 18)
 			{
 				heightCorrect = 8;
 			}
-			else if(totalHeight >= 18 && totalHeight < 30)
+			else if(yCorrect >= 18 && yCorrect < 30)
 			{
 				heightCorrect = 9;
 			}
-			else if(totalHeight >= 30 && totalHeight <= 36)
+			else if(yCorrect >= 30 && yCorrect <= 36)
 			{
 				heightCorrect = 9;
 			}
-			else if(totalHeight > 36 && totalHeight <= 48)
+			else if(yCorrect > 36 && yCorrect <= 48)
 			{
 				heightCorrect = 10;
 			}
-			else if(totalHeight <= 79)
+			else if(yCorrect <= 79)
 			{
 				heightCorrect = 10;
 			}
 			else
 			{
 				double addCorrect;
-				totalHeight -= 60;
+				yCorrect -= 60;
 				
-				addCorrect = totalHeight / 20;
+				addCorrect = yCorrect / 20;
 				heightCorrect = 10 + (0.5 * addCorrect);
 				
 			}
@@ -1605,8 +1706,8 @@ public class Enemy extends Entity implements Comparable
 					&& newHeight >= yPos - (2)
 					&& !blockOnNew.isaDoor)
 			{
-				yPos = newHeight;
-				maxHeight = yPos;
+				maxHeight = newHeight;
+				yPos = maxHeight;
 			}
 		}
 		

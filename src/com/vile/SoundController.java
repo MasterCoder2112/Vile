@@ -80,6 +80,9 @@ public class SoundController
 	
 	public static Sound level1Anouncement;
 	public static Sound armorPickup;
+	public static Sound computerShutdown;
+	public static Sound specialPickup;
+	public static Sound creepySound;
 	
 	private int defaultSize = 6;
 	
@@ -88,55 +91,59 @@ public class SoundController
     */
 	public SoundController() 
 	{
-		enemyHit 	    =  new Sound(defaultSize, "/test/enemyHit.wav");
-		defaultKill     =  new Sound(defaultSize, "/test/enemyDeath.wav");
-		health 		    =  new Sound(defaultSize, "/test/health.wav");
-		clip		    =  new Sound(defaultSize, "/test/shell.wav");
-		playerHurt      =  new Sound(defaultSize, "/test/playerHit.wav");
-		shoot		    =  new Sound(defaultSize, "/test/shot.wav");
-		ammoOut         =  new Sound(defaultSize, "/test/ammoOut.wav");
-		reload          =  new Sound(defaultSize, "/test/reload.wav");
-		tryToUse        =  new Sound(defaultSize, "/test/oomf.wav");
-		buttonPress     =  new Sound(defaultSize, "/test/endSwitch.wav");
-		lifting         =  new Sound(defaultSize, "/test/wallMove.wav");
-		secret          =  new Sound(defaultSize, "/test/secretFound.wav");
-		megaPickUp      =  new Sound(defaultSize, "/test/megaPickUp.wav");
-		wallHit         =  new Sound(defaultSize, "/test/wallHit.wav");
-		keyPickUp       =  new Sound(defaultSize, "/test/keyPickUp.wav");
-		weaponPickUp    =  new Sound(defaultSize, "/test/weaponPickUp.wav");
-		playerDeath     =  new Sound(defaultSize, "/test/playerDeath.wav");
-		bossHit         =  new Sound(defaultSize, "/test/bossHit.wav");
-		bossActivate    =  new Sound(defaultSize, "/test/bossActivate.wav");
-		enemyActivate   =  new Sound(defaultSize, "/test/enemyActivate.wav");
-		bossDeath       =  new Sound(defaultSize, "/test/bossDeath.wav");
-		phaseShot       =  new Sound(defaultSize, "/test/phaseShot.wav");
-		barrelExplosion =  new Sound(defaultSize, "/test/barrelexplosion.wav");
-		pistol          =  new Sound(defaultSize, "/test/pistol.wav");
-		enemy2Activate  =  new Sound(defaultSize, "/test/enemy2Activate.wav");
-		enemy3Activate  =  new Sound(defaultSize, "/test/enemy3Activate.wav");
-		enemy4Activate  =  new Sound(defaultSize, "/test/enemy4Activate.wav");
-		enemy5Activate  =  new Sound(defaultSize, "/test/enemy5Activate.wav");
-		enemy7Activate  =  new Sound(defaultSize, "/test/enemy7Activate.wav");
-		enemyFire       =  new Sound(defaultSize, "/test/enemyFire.wav");
-		enemyFireHit    =  new Sound(defaultSize, "/test/fireballHit.wav");
-		reaperHurt      =  new Sound(defaultSize, "/test/reaperHarm.wav");
-		vileCivHurt		=  new Sound(defaultSize, "/test/defaultHurt.wav");
-		tankHurt		=  new Sound(defaultSize, "/test/tankHurt.wav");
-		enemy1Death     =  new Sound(defaultSize, "/test/enemy1Death.wav");
-		enemy2Death     =  new Sound(defaultSize, "/test/enemy2Death.wav");
-		enemy3Death     =  new Sound(defaultSize, "/test/enemy3Death.wav");
-		enemy4Death     =  new Sound(defaultSize, "/test/enemy4Death.wav");
-		enemy7Death     =  new Sound(defaultSize, "/test/enemy7Death.wav");
-		teleportation   =  new Sound(defaultSize, "/test/teleportation.wav");
-		mlgDeath        =  new Sound(1, "/test/mlgDeath.wav");
-		nickDeath       =  new Sound(1, "/test/nickDeath.wav");
-		rocketFire       =  new Sound(defaultSize, "/test/rocketFire.wav");
-		rocketHit        =  new Sound(defaultSize, "/test/barrelExplosion.wav");
-		rocketFly        =  new Sound(1, "/test/rocketFly.wav");
-		glassBreak       =  new Sound(defaultSize, "/test/glassBreak.wav");
-		belegothActivate =  new Sound(1, "/test/belegothActivate.wav");
-		belegothDeath    =  new Sound(1, "/test/belegothDeath.wav");
+		enemyHit 	      =  new Sound(defaultSize, "/test/enemyHit.wav");
+		defaultKill       =  new Sound(defaultSize, "/test/enemyDeath.wav");
+		health 		      =  new Sound(defaultSize, "/test/health.wav");
+		clip		      =  new Sound(defaultSize, "/test/shell.wav");
+		playerHurt        =  new Sound(defaultSize, "/test/playerHit.wav");
+		shoot		      =  new Sound(defaultSize, "/test/shot.wav");
+		ammoOut           =  new Sound(defaultSize, "/test/ammoOut.wav");
+		reload            =  new Sound(defaultSize, "/test/reload.wav");
+		tryToUse          =  new Sound(defaultSize, "/test/oomf.wav");
+		buttonPress       =  new Sound(defaultSize, "/test/endSwitch.wav");
+		lifting           =  new Sound(defaultSize, "/test/wallMove.wav");
+		secret            =  new Sound(defaultSize, "/test/secretFound.wav");
+		megaPickUp        =  new Sound(defaultSize, "/test/megaPickUp.wav");
+		wallHit           =  new Sound(defaultSize, "/test/wallHit.wav");
+		keyPickUp         =  new Sound(defaultSize, "/test/keyPickUp.wav");
+		weaponPickUp      =  new Sound(defaultSize, "/test/weaponPickUp.wav");
+		playerDeath       =  new Sound(defaultSize, "/test/playerDeath.wav");
+		bossHit           =  new Sound(defaultSize, "/test/bossHit.wav");
+		bossActivate      =  new Sound(defaultSize, "/test/bossActivate.wav");
+		enemyActivate     =  new Sound(defaultSize, "/test/enemyActivate.wav");
+		bossDeath         =  new Sound(defaultSize, "/test/bossDeath.wav");
+		phaseShot         =  new Sound(defaultSize, "/test/phaseShot.wav");
+		barrelExplosion   =  new Sound(defaultSize, "/test/barrelexplosion.wav");
+		pistol            =  new Sound(defaultSize, "/test/pistol.wav");
+		enemy2Activate    =  new Sound(defaultSize, "/test/enemy2Activate.wav");
+		enemy3Activate    =  new Sound(defaultSize, "/test/enemy3Activate.wav");
+		enemy4Activate    =  new Sound(defaultSize, "/test/enemy4Activate.wav");
+		enemy5Activate    =  new Sound(defaultSize, "/test/enemy5Activate.wav");
+		enemy7Activate    =  new Sound(defaultSize, "/test/enemy7Activate.wav");
+		enemyFire         =  new Sound(defaultSize, "/test/enemyFire.wav");
+		enemyFireHit      =  new Sound(defaultSize, "/test/fireballHit.wav");
+		reaperHurt        =  new Sound(defaultSize, "/test/reaperHarm.wav");
+		vileCivHurt		  =  new Sound(defaultSize, "/test/defaultHurt.wav");
+		tankHurt		  =  new Sound(defaultSize, "/test/tankHurt.wav");
+		enemy1Death       =  new Sound(defaultSize, "/test/enemy1Death.wav");
+		enemy2Death       =  new Sound(defaultSize, "/test/enemy2Death.wav");
+		enemy3Death       =  new Sound(defaultSize, "/test/enemy3Death.wav");
+		enemy4Death       =  new Sound(defaultSize, "/test/enemy4Death.wav");
+		enemy7Death       =  new Sound(defaultSize, "/test/enemy7Death.wav");
+		teleportation     =  new Sound(defaultSize, "/test/teleportation.wav");
+		mlgDeath          =  new Sound(1, "/test/mlgDeath.wav");
+		nickDeath         =  new Sound(1, "/test/nickDeath.wav");
+		rocketFire        =  new Sound(defaultSize, "/test/rocketFire.wav");
+		rocketHit         =  new Sound(defaultSize, "/test/barrelExplosion.wav");
+		rocketFly         =  new Sound(1, "/test/rocketFly.wav");
+		glassBreak        =  new Sound(defaultSize, "/test/glassBreak.wav");
+		belegothActivate  =  new Sound(1, "/test/belegothActivate.wav");
+		belegothDeath     =  new Sound(1, "/test/belegothDeath.wav");
 		level1Anouncement = new Sound(1, "/test/level1Anouncement.wav");
+		armorPickup       =  new Sound(defaultSize, "/test/armorPickup.wav");
+		computerShutdown  =  new Sound(defaultSize, "/test/computerShutdown.wav");
+		specialPickup     =  new Sound(defaultSize, "/test/specialItems.wav");
+		creepySound       =  new Sound(defaultSize, "/test/creepySound.wav");
 	}
 	
    /**
@@ -195,6 +202,10 @@ public class SoundController
 		belegothActivate.resetVolume(newVolume);
 		belegothDeath.resetVolume(newVolume);
 		level1Anouncement.resetVolume(newVolume);
+		armorPickup.resetVolume(newVolume);
+		computerShutdown.resetVolume(newVolume);
+		specialPickup.resetVolume(newVolume);
+		creepySound.resetVolume(newVolume);
 	}
 
 }

@@ -141,6 +141,9 @@ public class Game
 	public static boolean unlimAmmo;
 	/* End Game Actions ***********************************************/
 	
+	//Did the first announcement or sound to start the level play
+	public boolean firstSound = false;
+	
    /**
     * Sets up the level and the Controller object. The level size is
     * determined by the Display.levelSize variable which is determined
@@ -935,5 +938,7 @@ public class Game
 			//Restart the game to quit
 			new Game(display, false, "");
 		}
+		
+		firstSound = false;
 	}
 }

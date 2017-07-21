@@ -165,7 +165,7 @@ public class Bullet extends Projectile
     * Moves the bullet depending on where the player was looking when
     * the bullet was shot, and the speed of the bullet.
     */
-	public void move()
+	public boolean move()
 	{				
 	   /*
 	    * Adds to bullets y position in such a way that it almost
@@ -192,5 +192,11 @@ public class Bullet extends Projectile
 				}
 			}
 		}
+		else
+		{
+			return false;
+		}
+		
+		return true;
 	}
 }

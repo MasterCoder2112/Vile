@@ -273,8 +273,6 @@ public class Textures
 			("resources/textures/morgoth.png");
 	public static Render enemy5   = loadBitMap
 			("resources/textures/enemy5.png");
-	public static Render corpse   = loadBitMap
-			("resources/textures/corpse.png");
 	public static Render shellBox = loadBitMap
 			("resources/textures/shellBox.png");
 	
@@ -1004,6 +1002,10 @@ public class Textures
 			("resources/textures/explosion7.png");
 	public static Render explosion8 = loadBitMap
 			("resources/textures/explosion8.png");
+	public static Render defaultCorpse1 = loadBitMap
+			("resources/textures/defaultCorpse1.png");
+	public static Render defaultCorpse2 = loadBitMap
+			("resources/textures/defaultCorpse2.png");
 	public static Render coolWall = loadBitMap
 			("resources/textures/theme"+(Display.themeNum + 1)
 					+"/walls/coolWall.png");
@@ -1285,8 +1287,6 @@ public class Textures
 				("resources/textures/lampTable.png");
 		enemy5   = loadBitMap
 				("resources/textures/enemy5.png");
-		corpse   = loadBitMap
-				("resources/textures/corpse.png");
 		morgoth   = loadBitMap
 				("resources/textures/morgoth.png");
 		shellBox = loadBitMap
@@ -2023,6 +2023,10 @@ public class Textures
 				("resources/textures/explosion7.png");
 		 explosion8 = loadBitMap
 				("resources/textures/explosion8.png");
+		 defaultCorpse1 = loadBitMap
+					("resources/textures/defaultCorpse1.png");
+		 defaultCorpse2 = loadBitMap
+					("resources/textures/defaultCorpse2.png");
 		 coolWall = loadBitMap
 					("resources/textures/theme"+(Display.themeNum + 1)
 							+"/walls/coolWall.png");

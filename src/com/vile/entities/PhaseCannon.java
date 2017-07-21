@@ -72,7 +72,7 @@ public class PhaseCannon extends Weapon implements WeaponInterface
 				
 				weaponPhase = 0;
 				
-				Game.addBullet(damage, weaponID, 0.3, 
+				Game.addBullet(damage, weaponID, 0.2, 
 						Player.rotation);
 			}
 			

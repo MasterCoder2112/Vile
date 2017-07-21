@@ -515,7 +515,7 @@ public abstract class Projectile
 					block.health -= damage;
 					
 					//Blass glass hit/break sound
-					SoundController.glassBreak.playAudioFile();
+					SoundController.barrelExplosion.playAudioFile();
 					
 					//If block is broken
 					if(block.health <= 0)
@@ -524,8 +524,8 @@ public abstract class Projectile
 						block = new Block(block.height,
 								19, block.y, block.x, block.z);
 						
-						//Explosion sound effect
-						SoundController.barrelExplosion.playAudioFile();
+						//Computer Shutting down sound effect
+						SoundController.computerShutdown.playAudioFile();
 						
 						//Re-add to level
 						Level.blocks[block.x + block.z * Level.width] = block;
@@ -634,6 +634,21 @@ public abstract class Projectile
 			
 			//Play hit sound effect
 			SoundController.rocketHit.playAudioFile();
+			
+			double yCorrect = this.y;
+			
+			Block blockOn = Level.getBlock((int)this.x, (int)this.z);
+			
+		   /*
+		    * If the rocket goes through the block or floor that the
+		    * player is on, then reset its height to be the block it
+		    * went throughs height so that rocket jumping will work
+		    * correctly.
+		    */
+			if(-yCorrect < (blockOn.height + blockOn.y) - 1)
+			{
+				yCorrect = -(blockOn.height + blockOn.y - 1);
+			}
 			
 			//Add an explosion where it hit and tick it so it has an
 			//effect right after hit.

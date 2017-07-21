@@ -40,6 +40,9 @@ public abstract class Entity
 	public double rotationFromTarget = 0;
 	public double rotationFromPlayer = 0;
 	public double rotDifference = 0;
+	public double xEffects = 0;
+	public double yEffects = 0;
+	public double zEffects = 0;
 	public Render currentPhase = Textures.enemy1;
 	public int enemyPhase = 0;
 	
@@ -102,6 +105,9 @@ public abstract class Entity
 	
 	//Searching for a way out of a room
 	public boolean searchMode = false;
+	
+	//Is the entity still alive?
+	public boolean isAlive = true;
 	
 	//Has this been called yet
 	private boolean firstTime = true;
@@ -166,6 +172,48 @@ public abstract class Entity
 		}
 		
 		this.tick++;
+		
+		if(yEffects > 0)
+		{
+			yEffects -= 2;
+		}
+		else if(yEffects < 0)
+		{
+			yEffects += 2;
+		}
+		
+		if(xEffects > 0)
+		{
+			xEffects -= 0.2;
+		}
+		else if(xEffects < 0)
+		{
+			xEffects += 0.2;
+		}
+		
+		if(zEffects > 0)
+		{
+			zEffects -= 0.2;
+		}
+		else if(zEffects < 0)
+		{
+			zEffects += 0.2;
+		}
+		
+		if(Math.abs(yEffects) <= 2)
+		{
+			yEffects = 0;
+		}
+		
+		if(Math.abs(zEffects) <= 0.2)
+		{
+			zEffects = 0;
+		}
+		
+		if(Math.abs(xEffects) <= 0.2)
+		{
+			xEffects = 0;
+		}
 		
 		//If still just recently hit, keep pose the same
 		//and keep counting down.
@@ -2020,7 +2068,7 @@ public abstract class Entity
 		
 		//If its been a few ticks and its time to check the line of sight
 		//again.
-		if(checkSight)
+		if(checkSight && Player.invisibility == 0)
 		{
 		   /*
 		    * Figures out if Player is within the enemies view range being
@@ -2106,7 +2154,7 @@ public abstract class Entity
 							+ ((zPos - targetZ) * (zPos - targetZ)));
 			
 			//Difference between entity and target y values
-			double yDifference = Math.abs(yPos) - Math.abs(targetY);
+			double yDifference = Math.abs(yPos - 8) - Math.abs(targetY);
 			
 			//Number of moves the eyesight will check for if it reaches
 			//the target successfully
@@ -2116,7 +2164,7 @@ public abstract class Entity
 			double sightY = yDifference / iterations;
 			
 			//Resets the eyesight object with its new values
-			eyeSight = new Eyesight(this.xPos, this.zPos, this.yPos,
+			eyeSight = new Eyesight(this.xPos, this.zPos, this.yPos - 8,
 						targetX, targetZ, targetY,
 						sightX, sightZ, sightY);
 			
@@ -2353,12 +2401,6 @@ public abstract class Entity
    /**
     * Determines whether the entity is free to move to the next space or
     * not.
-    * 
-    * Similar to the player, there is a method for moving in the x
-    * direction, and a method for moving in the z direction in terms
-    * of collision, so that collision works at every height level
-    * correctly.
-    * 
     * @param xx
     * @param zz
     * @return
@@ -2561,6 +2603,7 @@ public abstract class Entity
     				&& Math.abs(temp.y + yPos) <= temp.height
     				&& ID != 4)
     		{
+    			isStuck = true;
     			return false;
     		}
     	}

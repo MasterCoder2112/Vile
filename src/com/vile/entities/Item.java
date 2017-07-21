@@ -5,6 +5,7 @@ import com.vile.SoundController;
 import com.vile.entities.ItemNames;
 import com.vile.Game;
 import com.vile.graphics.Render;
+import com.vile.graphics.Render3D;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -234,6 +235,9 @@ public class Item
 				Display.itemPickup = "Picked up the MEGAHEALTH!";
 				Display.itemPickupTime = 1;
 				
+				//Mega Item pick up sound
+				SoundController.megaPickUp.playAudioFile();
+				
 				itemUsed = true;
 			}
 		}
@@ -257,6 +261,9 @@ public class Item
 			//Displays that the player picked up a Health Pack
 			Display.itemPickup = "Picked up a Health Pack!";
 			Display.itemPickupTime = 1;
+			
+			//Play correlating sound effect
+			SoundController.health.playAudioFile();
 			
 			itemUsed = true;
 		}
@@ -322,11 +329,17 @@ public class Item
 			{
 				//Displays that the player picked up the joy
 				Display.itemPickup = "Picked up some Shells!";
+				
+				//Play ammo pick up sound effect
+				SoundController.clip.playAudioFile();
 			}
 			else if(itemID == ItemNames.SHOTGUN.getID())
 			{
 				//Displays that the player picked up the joy Spreader
 				Display.itemPickup = "You Found the Shotgun!";
+				
+				//Weapon Pick up sound
+				SoundController.weaponPickUp.playAudioFile();
 				
 				//If weapon can't already be equipped, make it so that
 				//it can be, and equip it
@@ -340,10 +353,16 @@ public class Item
 			else if(itemID == ItemNames.SHELLBOX.getID())
 			{
 				Display.itemPickup = "You found a Box of Shells!";	
+				
+				//Play ammo pick up sound effect
+				SoundController.clip.playAudioFile();
 			}
 			else if(itemID == ItemNames.PHASECANNON.getID())
 			{
 				Display.itemPickup = "You found the Phase Cannon!";
+				
+				//Weapon Pick up sound
+				SoundController.weaponPickUp.playAudioFile();
 				
 				//If weapon can't already be equipped, make it so that
 				//it can be, and equip it
@@ -355,16 +374,25 @@ public class Item
 			}
 			else if(itemID == ItemNames.SMALLCHARGE.getID())
 			{
-				Display.itemPickup = "You found a Phase Charge pack!";	
+				Display.itemPickup = "You found a Phase Charge pack!";
+				
+				//Play ammo pick up sound effect
+				SoundController.clip.playAudioFile();
 			}
 			else if(itemID == ItemNames.LARGECHARGE.getID())
 			{
 				Display.itemPickup 
-				= "You found a large Phase charge pack!";	
+				= "You found a large Phase charge pack!";
+				
+				//Play ammo pick up sound effect
+				SoundController.clip.playAudioFile();
 			}
 			else if(itemID == ItemNames.PISTOL.getID())
 			{
 				Display.itemPickup = "You pick up a Pistol!";
+				
+				//Weapon Pick up sound
+				SoundController.weaponPickUp.playAudioFile();
 				
 				//If weapon cant be dual wielded yet, make it so that it 
 				//is
@@ -376,16 +404,25 @@ public class Item
 			}
 			else if(itemID == ItemNames.BULLETS.getID())
 			{
-				Display.itemPickup = "You pick up some bullets!";	
+				Display.itemPickup = "You pick up some bullets!";
+				
+				//Play ammo pick up sound effect
+				SoundController.clip.playAudioFile();
 			}
 			else if(itemID == ItemNames.BOXOFBULLETS.getID())
 			{
 				Display.itemPickup = "You found a box of bullets!";	
+				
+				//Play ammo pick up sound effect
+				SoundController.clip.playAudioFile();
 			}
 			
 			else if(itemID == ItemNames.ROCKETLAUNCHER.getID())
 			{
 				Display.itemPickup = "You found Rocket Launcher!";
+				
+				//Weapon Pick up sound
+				SoundController.weaponPickUp.playAudioFile();
 				
 				//If weapon can't already be equipped, make it so that
 				//it can be, and equip it
@@ -398,10 +435,16 @@ public class Item
 			else if(itemID == ItemNames.ROCKETS.getID())
 			{
 				Display.itemPickup = "You found some Rockets!";
+				
+				//Play ammo pick up sound effect
+				SoundController.clip.playAudioFile();
 			}
 			else if(itemID == ItemNames.ROCKETCRATE.getID())
 			{
 				Display.itemPickup = "You found a Crate of Rockets!";
+				
+				//Play ammo pick up sound effect
+				SoundController.clip.playAudioFile();
 			}
 			
 			Display.itemPickupTime = 1;
@@ -418,6 +461,9 @@ public class Item
 			//Displays that the player picked up the Red key
 			Display.itemPickup = "Picked up Red Keycard!";
 			Display.itemPickupTime = 1;
+			
+			//Key pick up sound
+			SoundController.keyPickUp.playAudioFile();
 		}
 		else if(itemID == ItemNames.BLUEKEY.getID())
 		{
@@ -427,6 +473,9 @@ public class Item
 			//Displays that the player picked up the Blue key
 			Display.itemPickup = "Picked up Blue Keycard!";
 			Display.itemPickupTime = 1;
+			
+			//Key pick up sound
+			SoundController.keyPickUp.playAudioFile();
 		}
 		else if(itemID == ItemNames.GREENKEY.getID())
 		{
@@ -436,6 +485,9 @@ public class Item
 			//Displays that the player picked up the green key
 			Display.itemPickup = "Picked up Green Keycard!";
 			Display.itemPickupTime = 1;
+			
+			//Key pick up sound
+			SoundController.keyPickUp.playAudioFile();
 		}
 		else if(itemID == ItemNames.YELLOWKEY.getID())
 		{
@@ -445,6 +497,9 @@ public class Item
 			//Displays that the player picked up the yellow key
 			Display.itemPickup = "Picked up Yellow Keycard!";
 			Display.itemPickupTime = 1;
+			
+			//Key pick up sound
+			SoundController.keyPickUp.playAudioFile();
 		}
 		//If a secret
 		else if(itemID == ItemNames.SECRET.getID())
@@ -465,6 +520,9 @@ public class Item
 			
 			Display.itemPickup = "Picked up Skull of Resurrection!";
 			Display.itemPickupTime = 1;
+			
+			//Creepy sound is played
+			SoundController.creepySound.playAudioFile();
 		}
 		//Environment Suit
 		else if(itemID == ItemNames.BIOSUIT.getID())
@@ -474,16 +532,22 @@ public class Item
 			
 			Display.itemPickup = "You adorn the Environment suit!";
 			Display.itemPickupTime = 1;
+			
+			//Play special pick up sound for this item
+			SoundController.specialPickup.playAudioFile();
 		}
 		//Goblet of invurnuralbility
 		else if(itemID == ItemNames.GOBLET.getID())
 		{
-			Player.immortality = 1100;
-			Player.vision      = 1100;
+			Player.immortality = 1100 * (int)Render3D.fpsCheck;
+			Player.vision      = 1100 * (int)Render3D.fpsCheck;
 			itemUsed = true;
 			
 			Display.itemPickup = "The Goblet of Invincibility!";
 			Display.itemPickupTime = 1;
+			
+			//Play correlating sound effect
+			SoundController.health.playAudioFile();
 		}
 		//Adrenaline
 		else if(itemID == ItemNames.ADRENALINE.getID())
@@ -495,15 +559,21 @@ public class Item
 			
 			Display.itemPickup = "You've got the Adrenaline!";
 			Display.itemPickupTime = 1;
+			
+			//Play special pick up sound for this item
+			SoundController.specialPickup.playAudioFile();
 		}
 		//Glasses of vision
 		else if(itemID == ItemNames.VISIONGLASSES.getID())
 		{
-			Player.vision = 1100;
+			Player.vision = 1100 * (int)Render3D.fpsCheck;
 			
 			itemUsed = true;
 			Display.itemPickup = "You've now got nightvision!";
 			Display.itemPickupTime = 1;
+			
+			//Mega Item pick up sound
+			SoundController.megaPickUp.playAudioFile();
 		}
 		//Chainmeal armor
 		else if(itemID == ItemNames.CHAINMEAL.getID())
@@ -515,6 +585,9 @@ public class Item
 				itemUsed = true;
 				Display.itemPickup = "You adorn the Chainmeal Armor!";
 				Display.itemPickupTime = 1;
+				
+				//Play Armor pick up sound
+				SoundController.armorPickup.playAudioFile();
 			}
 			else
 			{
@@ -531,6 +604,9 @@ public class Item
 				itemUsed = true;
 				Display.itemPickup = "You adorn the Combat Armor!";
 				Display.itemPickupTime = 1;
+				
+				//Play Armor pick up sound
+				SoundController.armorPickup.playAudioFile();
 			}
 			else
 			{
@@ -547,6 +623,9 @@ public class Item
 				itemUsed = true;
 				Display.itemPickup = "You adorn the Argent Armor!";
 				Display.itemPickupTime = 1;
+				
+				//Play Armor pick up sound
+				SoundController.armorPickup.playAudioFile();
 			}
 			else
 			{
@@ -564,6 +643,9 @@ public class Item
 			itemUsed = true;
 			Display.itemPickup = "You pick up an Armor Shard!";
 			Display.itemPickupTime = 1;
+			
+			//Play Armor pick up sound
+			SoundController.armorPickup.playAudioFile();
 		}
 		//Health vial
 		else if(itemID == ItemNames.VIAL.getID())
@@ -573,6 +655,9 @@ public class Item
 			itemUsed = true;
 			Display.itemPickup = "You consume a Health Vial!";
 			Display.itemPickupTime = 1;
+			
+			//Play correlating sound effect
+			SoundController.health.playAudioFile();
 		}
 		//Upgrade point
 		else if(itemID == ItemNames.UPGRADE.getID())
@@ -580,12 +665,18 @@ public class Item
 			itemUsed = true;
 			Display.itemPickup = "Weapon upgrade Point!";
 			Display.itemPickupTime = 1;
+			
+			//Play special pick up sound for this item
+			SoundController.specialPickup.playAudioFile();
 		}
 		//Holy Water
 		else if(itemID == ItemNames.HOLYWATER.getID())
 		{
 			Display.itemPickup = "You store some Holy Water!";
 			Display.itemPickupTime = 1;
+			
+			//Play correlating sound effect
+			SoundController.health.playAudioFile();
 			
 			//Becomes just a normal table
 			itemID = 42;
@@ -596,6 +687,9 @@ public class Item
 			itemUsed = true;
 			Display.itemPickup = "Scepter of Deciet!";
 			Display.itemPickupTime = 1;
+			
+			//Play creepy pick up sound for this item
+			SoundController.creepySound.playAudioFile();
 		}
 		//Invisibility Emerald
 		else if(itemID == ItemNames.INVISEMERALD.getID())
@@ -603,6 +697,12 @@ public class Item
 			itemUsed = true;
 			Display.itemPickup = "Invisibility Emerald!";
 			Display.itemPickupTime = 1;
+			
+			//Player is now invisible for a certain amount of ticks
+			Player.invisibility = 1100 * (int)Render3D.fpsCheck;
+			
+			//Play correlating sound effect
+			SoundController.health.playAudioFile();
 		}
 		
 		return itemUsed;

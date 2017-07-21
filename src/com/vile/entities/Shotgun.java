@@ -50,33 +50,140 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				weaponPhase = 1;
 				
-				//Adds spray shot to shotgun
-				Game.addBullet(damage, weaponID, 0.3,
-						Player.rotation);
+				//Create the bullet
+				Bullet bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID, Player.rotation);
 				
-				Game.addBullet(damage, weaponID,
-						0.3, Player.rotation + 0.06);
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
 				
-				Game.addBullet(damage, weaponID,
-						0.3, Player.rotation - 0.06);
+				bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID,
+						Player.rotation + 0.06);
 				
-				Game.addBullet(damage, weaponID,
-						0.3, Player.rotation + 0.04);
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
 				
-				Game.addBullet(damage, weaponID,
-						0.3, Player.rotation - 0.04);
+				bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID,
+						Player.rotation - 0.06);
 				
-				Game.addBullet(damage, weaponID,
-						0.3, Player.rotation + 0.08);
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
 				
-				Game.addBullet(damage, weaponID,
-						0.3, Player.rotation - 0.08);
+				bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID,
+						Player.rotation + 0.04);
 				
-				Game.addBullet(damage, weaponID,
-						0.3, Player.rotation + 0.015);
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
 				
-				Game.addBullet(damage, weaponID,
-						0.3, Player.rotation - 0.015);
+				bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID,
+						Player.rotation - 0.04);
+				
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
+				
+				bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID,
+						Player.rotation + 0.08);
+				
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
+				
+				bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID,
+						Player.rotation - 0.08);
+				
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
+				
+				bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID,
+						Player.rotation + 0.015);
+				
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
+				
+				bullet = new Bullet(damage, 0.01, Player.x,
+						Player.y, Player.z, weaponID,
+						Player.rotation - 0.015);
+				
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//Do nothing, just call the move method
+				}
 				
 				SoundController.shoot.playAudioFile();
 			}

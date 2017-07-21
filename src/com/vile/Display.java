@@ -28,6 +28,7 @@ import com.vile.Game;
 import com.vile.entities.Entity;
 import com.vile.entities.Player;
 import com.vile.entities.Weapon;
+import com.vile.graphics.Render3D;
 import com.vile.graphics.Screen;
 import com.vile.graphics.Textures;
 //Imports files within mineFront package holding Render and Screen Objects
@@ -154,6 +155,12 @@ public class Display extends Canvas implements Runnable
 	private static BufferedImage dead;
 	private static BufferedImage godMode;
 	private static BufferedImage gunNormal;
+	private static BufferedImage invisible;
+	private static BufferedImage playerHarmedHealthy;
+	private static BufferedImage playerHarmedHurt;
+	private static BufferedImage playerHarmedVeryHurt;
+	private static BufferedImage playerHarmedAlmostDead;
+	private static BufferedImage invisGodmode;
 	private static BufferedImage gunShot;
 	private static BufferedImage gunShot2;
 	private static BufferedImage gunShot3;
@@ -939,6 +946,12 @@ public class Display extends Canvas implements Runnable
 				{
 					face = healthyFace3;
 				}
+				
+				//If player was just harmed have this face.
+				if(Player.playerHurt > 0)
+				{
+					face = playerHarmedHealthy;
+				}
 			}
 			else if(Player.health > 50)
 			{
@@ -953,6 +966,12 @@ public class Display extends Canvas implements Runnable
 				else
 				{
 					face = hurtFace3;
+				}
+				
+				//If player was just harmed have this face.
+				if(Player.playerHurt > 0)
+				{
+					face = playerHarmedHurt;
 				}
 			}
 			else if(Player.health > 25)
@@ -969,6 +988,12 @@ public class Display extends Canvas implements Runnable
 				{
 					face = veryHurtFace3;
 				}
+				
+				//If player was just harmed have this face.
+				if(Player.playerHurt > 0)
+				{
+					face = playerHarmedVeryHurt;
+				}
 			}
 			else if(Player.health > 0)
 			{
@@ -983,6 +1008,12 @@ public class Display extends Canvas implements Runnable
 				else
 				{
 					face = almostDead3;
+				}
+				
+				//If player was just harmed have this face.
+				if(Player.playerHurt > 0)
+				{
+					face = playerHarmedAlmostDead;
 				}
 			}
 			else
@@ -1000,66 +1031,82 @@ public class Display extends Canvas implements Runnable
 				}
 			}
 			
-		   /*
-		    * If in god mode, override all the faces and make this the
-		    * face displayed.
-		    * 
-		    * Otherwise, if it is Nick Cage mode or MLG mode, then 
-		    * change the faces to match those themes.
-		    */
-			if(Controller.godModeOn || Player.immortality > 0)
+			//As long as Player is alive check for these
+			if(Player.alive)
 			{
-				face = godMode;
-				
-				if(themeNum == 3)
+				//If player is both invisible and invincible
+				if(Player.invisibility > 0 && 
+						(Controller.godModeOn || Player.immortality > 0))
 				{
-					face = nickGod;
+					face = invisGodmode;
+				}	
+				//If player is invisible show the invisible face
+				else if(Player.invisibility > 100 * Render3D.fpsCheck
+						|| (Player.invisibility > 0
+						&& Player.invisibility % 5 == 0))
+				{
+					face = invisible;
 				}
-				else if(themeNum == 5)
+			   /*
+			    * If in god mode, override all the faces and make this the
+			    * face displayed.
+			    * 
+			    * Otherwise, if it is Nick Cage mode or MLG mode, then 
+			    * change the faces to match those themes.
+			    */
+				else if((Controller.godModeOn || Player.immortality > 0))
 				{
-					face = mlgGod;
+					face = godMode;
+					
+					if(themeNum == 3)
+					{
+						face = nickGod;
+					}
+					else if(themeNum == 5)
+					{
+						face = mlgGod;
+					}
 				}
-			}
-		   /*
-		    * For nick cage and mlg theme modes, change the face to
-		    * be a different picture. 
-		    */
-			else
-			{
-				if(Player.health > 0 && 
-						(themeNum == 3 || themeNum == 5))
+			   /*
+			    * For nick cage and mlg theme modes, change the face to
+			    * be a different picture. 
+			    */
+				else
 				{
-					if(phase == 0 || phase == 2)
+					if((themeNum == 3 || themeNum == 5))
 					{
-						if(themeNum == 3)
+						if(phase == 0 || phase == 2)
 						{
-							face = nickCage;
+							if(themeNum == 3)
+							{
+								face = nickCage;
+							}
+							else if(themeNum == 5)
+							{
+								face = mlgFace1;
+							}
 						}
-						else if(themeNum == 5)
+						else if(phase == 1)
 						{
-							face = mlgFace1;
+							if(themeNum == 3)
+							{
+								face = otherNick;
+							}
+							else if(themeNum == 5)
+							{
+								face = mlgFace2;
+							}
 						}
-					}
-					else if(phase == 1)
-					{
-						if(themeNum == 3)
+						else
 						{
-							face = otherNick;
-						}
-						else if(themeNum == 5)
-						{
-							face = mlgFace2;
-						}
-					}
-					else
-					{
-						if(themeNum == 3)
-						{
-							face = otherNick2;
-						}
-						else if(themeNum == 5)
-						{
-							face = mlgFace3;
+							if(themeNum == 3)
+							{
+								face = otherNick2;
+							}
+							else if(themeNum == 5)
+							{
+								face = mlgFace3;
+							}
 						}
 					}
 				}
@@ -1661,6 +1708,24 @@ public class Display extends Canvas implements Runnable
 		
 		godMode = ImageIO.read
 				(new File("Images/godModeFace.png"));
+		
+		invisible = ImageIO.read
+				(new File("Images/invisibilityMode.png"));
+		
+		playerHarmedHealthy = ImageIO.read
+				(new File("Images/healthyHarmed.png"));
+		
+		playerHarmedHurt = ImageIO.read
+				(new File("Images/hurtHarmed.png"));
+		
+		playerHarmedVeryHurt = ImageIO.read
+				(new File("Images/veryHurtHarmed.png"));
+		
+		playerHarmedAlmostDead = ImageIO.read
+				(new File("Images/almostDeadHarmed.png"));
+		
+		invisGodmode = ImageIO.read
+				(new File("Images/invisibleGodmode.png"));
 		
 		nickCage = ImageIO.read
 				(new File("Images/nickCage.png"));

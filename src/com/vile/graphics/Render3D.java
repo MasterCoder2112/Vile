@@ -2,6 +2,7 @@ package com.vile.graphics;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 import com.vile.Display;
 import com.vile.Game;
@@ -74,8 +75,6 @@ public class Render3D extends Render
 	//Is low res graphic settings on?
 	public static boolean lowRes = false;
 	
-	private boolean announcementPlayed = false;
-	
 	ArrayList<Block> allBlocks;
 	
    /**
@@ -103,10 +102,18 @@ public class Render3D extends Render
 	public void floor(Game game)
 	{
 		//Play announcement that correlates to the map loaded in
-		if(Game.mapNum == 1 && !announcementPlayed)
+		if((Game.mapNum == 1 || Game.mapNum == 9) && !game.firstSound
+				&& Game.setMap)
 		{
 			SoundController.level1Anouncement.playAudioFile();
-			announcementPlayed = true;
+			game.firstSound = true;
+		}
+		else if((Game.mapNum == 2 || Game.mapNum == 6 ||
+				Game.mapNum == 8 || Game.mapNum == 10)
+				&& !game.firstSound && Game.setMap)
+		{
+			SoundController.creepySound.playAudioFile();
+			game.firstSound = true;
 		}
 				
 		//If low res graphics settings, set low res to true
@@ -596,7 +603,7 @@ public class Render3D extends Render
 		
 		allBlocks = new ArrayList<Block>();
 		
-		sortAndRenderBlocks(0);		
+		renderBlocks();		
 		
 	   /*
 	    * Used to correct the players y in case the player is 
@@ -842,61 +849,6 @@ public class Render3D extends Render
 				{
 					tempItems.add(item);
 				}
-				
-				
-			   /*
-			    * Play the sounds that correspond to the different items
-			    * if they are picked up.
-			    */
-				if(activated 
-						&& item.itemID == ItemNames.MEGAHEALTH.getID())
-				{
-					SoundController.megaPickUp.playAudioFile();
-				}
-				//Default pick up sound is played for items
-				else if(activated && 
-						item.itemID == ItemNames.HEALTHPACK.getID()
-						|| activated 
-						&& item.itemID > ItemNames.YELLOWKEY.getID()
-						&& item.itemID != ItemNames.SHOTGUN.getID() 
-						&& item.itemID != ItemNames.SHARD.getID()
-						&& item.itemID != ItemNames.SHELLBOX.getID() 
-						&& item.itemID != ItemNames.TOXICWASTE.getID()
-						&& item.itemID != ItemNames.LAVA.getID()
-						&& item.itemID < ItemNames.PHASECANNON.getID())
-				{
-					SoundController.health.playAudioFile();
-				}
-				//2nd Default sound for particular items
-				else if(activated 
-						&& (item.itemID == ItemNames.SHELLS.getID()
-						|| item.itemID == ItemNames.SHARD.getID()
-						|| item.itemID == ItemNames.SHELLBOX.getID()
-						|| item.itemID == ItemNames.SMALLCHARGE.getID()
-						|| item.itemID == ItemNames.LARGECHARGE.getID()
-						|| item.itemID == ItemNames.BULLETS.getID()
-						|| item.itemID == ItemNames.BOXOFBULLETS.getID()
-						|| item.itemID == ItemNames.ROCKETS.getID()
-						|| item.itemID == ItemNames.ROCKETCRATE.getID())) 
-				{
-					SoundController.clip.playAudioFile();
-				}
-				//Same but for keys
-				else if(activated 
-						&& item.itemID >= ItemNames.REDKEY.getID() 
-						&& item.itemID <= ItemNames.YELLOWKEY.getID())
-				{
-					SoundController.keyPickUp.playAudioFile();
-				}
-				//When you pick up a weapon
-				else if(activated 
-						&& (item.itemID == ItemNames.SHOTGUN.getID()
-						|| item.itemID == ItemNames.PHASECANNON.getID()
-						|| item.itemID == ItemNames.PISTOL.getID()
-						|| item.itemID == ItemNames.ROCKETLAUNCHER.getID()))
-				{
-					SoundController.weaponPickUp.playAudioFile();
-				}
 			}
 			
 		   /*
@@ -1032,14 +984,14 @@ public class Render3D extends Render
 				}
 			}
 			
+			corpse.tick();
+			
 		   /*
 		    * If in Death cannot hurt me mode, the corpses will resurrect
 		    * on their own after 2500 ticks.
 		    */
 			if(Display.skillMode == 4)
-			{				
-				corpse.tick();
-					
+			{		
 				//If 10000 ticks have passed with correction for the fps
 				//and the corpse is not just a default corpse
 				if(corpse.time > (10000 / ((Display.fps / 30) + 1)) 
@@ -2589,10 +2541,8 @@ public class Render3D extends Render
 			}
 			else
 			{
-				corpseGraphics= Textures.corpse;
+				corpseGraphics = corpse.corpseImage;
 			}
-			
-			corpse.phaseTime = 0;
 		}
 		//As corpse falls, make its animation look realistic
 		else
@@ -4260,10 +4210,7 @@ public class Render3D extends Render
 		    * If player is nearing the end of immortality, or is not
 		    * immortal.
 		    */
-			if(j == 0 || j > 10 && j <= 20
-					|| j > 30 && j <= 40
-					|| j > 50 && j <= 60
-					|| j > 70 && j <= 80)
+			if(j < 100 * fpsCheck && j % 5 == 0)
 			{
 			   /*
 			    * The brightness of each pixel depending on its distance 
@@ -4433,14 +4380,11 @@ public class Render3D extends Render
 			}
 				
 			//Reset the bits of that particular pixel
-			if(Player.health > 0 && Player.playerHurt == 0)
+			if(Player.alive && Player.playerHurt == 0)
 			{
 				int ePT = Player.environProtectionTime;
 				
-				if(ePT == 0 || ePT > 10 && ePT <= 20
-						|| ePT > 30 && ePT <= 40
-						|| ePT > 50 && ePT <= 60
-						|| ePT > 70 && ePT <= 80)
+				if(ePT == 0 || (ePT < 100 * fpsCheck && ePT % 5 == 0))
 				{
 					PIXELS[i] = r << 16 | g << 8 | b;
 					
@@ -4489,64 +4433,15 @@ public class Render3D extends Render
 	}
 	
    /**
-    * Used to sort and render the blocks in one method  that runs through
-    * all the blocks only once. This uses recursion instead of loops which
-    * in this case is faster so it doesn't have to run through all the
-    * blocks twice. Only once.
+    * May use a special render method in the future, but for now just
+    * render all the blocks.
     * @param index
     */
-	public void sortAndRenderBlocks(int index)
+	public void renderBlocks()
 	{
-		allBlocks.add(Level.blocks[index]);
-		
-		//Base case if index is at the end of the array of blocks
-		if(index == Level.blocks.length - 1)
+		for(Block block: Level.blocks)
 		{
-		   /*
-		    * Using bubble sort, and casts, this organizes the blocks based
-		    * on where the players looking. 
-		    * 
-		    * In this case the player is looking at quadrant 1 (southeast) and
-		    * therefore blocks are rendered from negative z to positive, 
-		    * and from negative x to positive x.
-		    */
-			if(Math.sin(Player.rotation) >= 0 && Math.cos(Player.rotation) >= 0)
-			{
-				Collections.sort(allBlocks, Block.twoSeventyDegrees);
-			}
-		   /*
-		    * Player is looking Northeast at quadrant 2, and blocks are rendered
-		    * from positive z to negative, and negative x to positive x
-		    */
-			else if(Math.sin(Player.rotation) >= 0 && Math.cos(Player.rotation) < 0)
-			{
-				Collections.sort(allBlocks, Block.threeSixtyDegrees);
-			}
-		   /*
-		    * Quadrant 3 (Northwest): Blocks rendered from positive x and z to
-		    * negative x and z.
-		    */
-			else if(Math.sin(Player.rotation) < 0 && Math.cos(Player.rotation) < 0)
-			{
-				Collections.sort(allBlocks, Block.ninetyDegrees);
-			}
-		   /*
-		    * Quandrant 4 (Southwest): Negative z to positive, and
-		    * positive x to negative x.
-		    */
-			else
-			{
-				Collections.sort(allBlocks, Block.oneEightyDegrees);
-			}
+			renderWallsCorrect(block);
 		}
-		//Else keep recursion going
-		else
-		{
-			sortAndRenderBlocks(index+1);
-		}
-		
-		//Render blocks in new sorted order
-		renderWallsCorrect(allBlocks.get(
-				(Level.blocks.length - 1) - index));
 	}
 }

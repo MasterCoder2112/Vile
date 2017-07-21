@@ -20,7 +20,7 @@ public class Player
 	public static int health      = 100;
 	public static int maxHealth   = 200;
 	public static int armor       = 0;
-	public static double height   = 2.0;	
+	public static double height   = 2.0;
 	public static double x        = 0;
 	public static double y        = 0;
 	public static double z        = 0;
@@ -47,7 +47,10 @@ public class Player
 	//Used for rendering
 	public static double upRotate = 1.105;
 	
-	//How many health regenerations do you have
+	//If a solid item or enemy adds extra height to a player
+	public static double extraHeight = 0;
+	
+	//How many health resurrections do you have
 	public static int resurrections = 0;
 	
 	//How long the player is protected from toxic waste/lava
@@ -59,12 +62,16 @@ public class Player
 	//Enhanced Vision/night vision
 	public static int vision = 0;
 	
+	//Invisibility. Enemies can't see player
+	public static int invisibility = 0;
+	
 	//How long since player was last hurt
 	public static int playerHurt = 0;
 	
 	//Is player still alive?
 	public static boolean alive = true;
 	
+	//Block player is standing on
 	public static Block blockOn = null;
 	
    /*
@@ -149,6 +156,14 @@ public class Player
 		if(vision > 0)
 		{
 			vision--;
+		}
+		
+	   /*
+	    * Each tick, if player is invisible, take that down by a tick
+	    */
+		if(invisibility > 0)
+		{
+			invisibility--;
 		}
 		
 	   /*

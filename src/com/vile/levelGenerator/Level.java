@@ -343,13 +343,13 @@ public class Level
 					
 					block.wallEntity = temp;
 				}
-				//Corpse
+				//Default Corpse
 				else if(itemID == 44)
 				{
 					Game.corpses.add(new Corpse( 
 							i + 0.5,  
 							j + 0.5,
-							block.height - block.y, 0));
+							block.height - block.y, 0,0,0,0));
 				}
 				//Adds Magistrate at this location
 				else if(itemID == 45)

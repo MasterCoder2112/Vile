@@ -21,10 +21,15 @@ import com.vile.levelGenerator.Level;
  * rendered at to make it look realistic, and will tick every tick in the
  * game to update how far into the explosion it is into. 
  * 
- * There is now a static method in order to determine whether anything
+ * Also there is a method in order to determine whether anything
  * (Entity, Player, any other Canister) to see if it is within range
  * of being hurt by the explosion, and the farther away from the
  * explosion something is, the less it'll be hurt.
+ * 
+ * As of the current update, the closer an entity is to the explosion in
+ * a given direction and quadrant of the map, the entity will have the
+ * force of the explosion acting on it, throwing it back and up or down
+ * depending on how far the explosion is from it.
  */
 public class Explosion 
 {
@@ -58,6 +63,26 @@ public class Explosion
 		this.y  = y;
 		this.z  = z;
 		this.ID = ID;
+		
+		Block blockOn = Level.getBlock((int)x, (int)z);
+		
+	   /*
+	    * Correct explosions height so that it cannot go through the
+	    * block or floor if they are a rocket explosion
+	    */
+		//if(-this.y < blockOn.height && ID == 0
+				//&& Player.y > blockOn.height)
+		//{
+			//this.y = -blockOn.height + 1;
+		//}
+		//else
+		//{
+			//Only if rocket, then correct it
+			//if(ID == 0)
+			//{
+				//this.y += 1;
+			//}
+		//}	
 		
 		//Add explosion to game
 		Game.explosions.add(this);
@@ -153,7 +178,7 @@ public class Explosion
 	    * and if he/she is, then damage the player
 	    * according to the distance they are from the explosion
 	    */
-		if(distance <= 2 && Math.abs(this.y - (Player.y / 12)) <= 2)
+		if(distance <= 3 && Math.abs(Player.y - Math.abs(this.y)) <= 8)
 		{
 			double damage = 60;
 			double force = 0;
@@ -205,34 +230,27 @@ public class Explosion
 				yCorrect = 1;
 			}
 			
-			yCorrect -= 1;
-			
-			System.out.println(yCorrect);
-			System.out.println(Player.y);
-			
-			if(-yCorrect > (Player.y / 12)) 
+			if(-yCorrect > Player.y) 
 			{
-				double temp = Math.abs(yCorrect - (Player.y / 12));
+				double temp = Math.abs(yCorrect - (Player.y));
 				
-				System.out.println("Temp: "+temp);
+				//System.out.println("Temp: "+temp);
 				
-				if(temp == 0)
-				{
-					temp = 0.01;
-				}
+				//A temporary fix
+				//TODO fix this to be realistic
+				temp = 0.01;
 				
 				Player.yEffects = (-1/temp) * (force / 8);
 			}
 			else
 			{
-				double temp = Math.abs((Player.y / 12) - yCorrect);
+				double temp = Math.abs((Player.y) - yCorrect) / 500;
 				
-				if(temp == 0)
-				{
-					temp = 0.01;
-				}
+				//A temporary fix
+				//TODO Fix this to be realistic
+				temp = 0.01;
 				
-				System.out.println("TEMP: "+temp);
+				//System.out.println("TEMP: "+temp);
 				
 				Player.yEffects = (1/temp) * (force / 8);
 			}
@@ -241,9 +259,6 @@ public class Explosion
 			{
 				Player.yEffects = 40;
 			}
-			
-			Display.itemPickup = ""+Player.yEffects;
-			Display.itemPickupTime = 1;
 			
 			if(Player.immortality == 0 
 				&& !Controller.godModeOn)
@@ -284,37 +299,118 @@ public class Explosion
 		    */
 			for(int j = 0; j < block.enemiesOnBlock.size(); j++)
 			{
-				Enemy temp = block.enemiesOnBlock.get(j);
+				Enemy enemy = block.enemiesOnBlock.get(j);
 				
 				//Self explainatory by now I hope
-				distance = Math.sqrt(((Math.abs(this.x - temp.xPos))
-						* (Math.abs(this.x - temp.xPos)))
-						+ ((Math.abs(this.z - temp.zPos))
-								* (Math.abs(this.z - temp.zPos))));
+				distance = Math.sqrt(((Math.abs(this.x - enemy.xPos))
+						* (Math.abs(this.x - enemy.xPos)))
+						+ ((Math.abs(this.z - enemy.zPos))
+								* (Math.abs(this.z - enemy.zPos))));
 				
 				//If within range of normal enemy
-				if(distance <= 2 && Math.abs(this.y - (temp.yPos / 12)) <= 2
-						&& !temp.isABoss)
+				if(distance <= 3 && Math.abs(this.y - (enemy.yPos / 12)) <= 2
+						&& !enemy.isABoss)
 				{		
 					//Not meant to be funny, this just is the most realistic
 					//it seems after testing. NO LAUGHING
 					double damage = 69;
 					
+					//Force of explosion on enemy
+					double force = 0;
+					
 					//Every 0.1 distance units, subtract 2 from the damage
 					//the explosion will cause.
 					damage -= 2 * (distance / 0.1);
 					
+					force = (damage / 60) * 3;
+					
+					//Heavier enemies don't move as far
+					force /= enemy.weightLevel;
+					
+					//Angle that the player is in accordance to the explosion for
+					//throwing back calculations
+					rotFromTarget = Math.atan
+					(((enemy.xPos - x)) / ((enemy.zPos - z)));
+					
+				   /*
+				    * If the target is in the 3rd or 4th quadrant of the map then
+				    * add PI to rotation so that the player will be thrown back
+				    * into the correct quadrant of the map
+				    */
+					if(enemy.zPos < z)
+					{
+						rotFromTarget += Math.PI;
+					}
+					
+				   /*
+				    * Corrects rotation so that the vector is centered correctly
+				    * in the direction its facing. It doesn't do that automatically
+				    * for some reason
+				    */
+					double correction = 44.765;
+						
+				   /*
+				    * Depending on the targets angle in the x z plane from the
+				    * explosion, the player will move back from that explosion a
+				    * certain amount.
+				    */
+					enemy.xEffects = 
+							((Math.cos(rotFromTarget - correction)) 
+									+ (Math.sin(rotFromTarget - correction))) 
+									* force;
+					enemy.zEffects = 
+							((Math.cos(rotFromTarget - correction)) 
+									- (Math.sin(rotFromTarget - correction))) 
+									* force;
+					
+					double yCorrect = this.y;
+					
+					if(this.y > 1)
+					{
+						yCorrect = 1;
+					}
+					
+					if(-yCorrect > enemy.yPos) 
+					{
+						double yForce = Math.abs(yCorrect - (enemy.yPos));
+						
+						//A temporary fix
+						//TODO fix this to be realistic
+						yForce = 0.01;
+						
+						enemy.yEffects = ((-1/yForce) * (force / 8));// / enemy.weightLevel;
+					}
+					else
+					{
+						double yForce = Math.abs((enemy.yPos) - yCorrect) / 500;
+						
+						//A temporary fix
+						//TODO Fix this to be realistic
+						yForce = 0.01;
+						
+						enemy.yEffects = ((1/yForce) * (force / 8));// / enemy.weightLevel;
+					}
+					
+					if(enemy.yEffects > 40)
+					{
+						enemy.yEffects = 40;
+					}
+					
 					//Hurt the enemy, and activate the enemy
-					temp.hurt((int)damage, false);	
-					temp.activated = true;
-					temp.searchMode = false;
+					enemy.hurt((int)damage, false);	
+					enemy.activated = true;
+					enemy.searchMode = false;
 					
 					//If enemy losses all of its health, commence
 					//the enemy death.
-					if(temp.health <= 0)
+					if(enemy.health <= 0 && enemy.isAlive)
 					{
-						temp.enemyDeath();
-						block.enemiesOnBlock.remove(temp);
+						enemy.enemyDeath();
+						block.enemiesOnBlock.remove(enemy);
+					}
+					else if(enemy.health <= 0 && !enemy.isAlive)
+					{
+						block.enemiesOnBlock.remove(enemy);
 					}
 				}
 			}

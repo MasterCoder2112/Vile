@@ -521,7 +521,10 @@ public class Controller
 		}
 		else
 		{
+			//If dead the player just sits and rotates while also
+			//being near the ground to simulate a fallen body
 			rotationa += 0.001;
+			Player.y = -6.0;		
 		}
 		
 		//If time is not 0, add to it
@@ -906,7 +909,7 @@ public class Controller
 		{
 			yEffects = 2;
 		}
-		else if(Player.xEffects < 0)
+		else if(Player.yEffects < 0)
 		{
 			yEffects = -2;
 		}
@@ -985,7 +988,20 @@ public class Controller
 		{
 			Player.maxHeight = Player.blockOn.height + Player.blockOn.y;
 			
-			if(!crouching && !inJump && Player.y < Player.maxHeight)
+		   /*
+		    * If player is on an item, add that items height to the
+		    * current maxHeight
+		    */
+			if(Player.extraHeight > 0)
+			{
+				Player.maxHeight += Player.extraHeight;
+				Player.extraHeight = 0;
+			}
+			
+			//If not crouching or jumping or flying, and the player is
+			//not dead then reset the players y value.
+			if(!crouching && !inJump && Player.y < Player.maxHeight
+					&& Player.alive)
 			{
 				Player.y = Player.maxHeight;
 			}
@@ -1123,11 +1139,10 @@ public class Controller
 				{
 					return false;
 				}	
-				//If on top of it, reset the players maximum standing height
+				//If on top of it, reset the players extra standing height
 				else if(distance <= 0.3 && yDifference > temp.height)
 				{
-					Player.maxHeight 
-						= temp.height + Math.abs(temp.y) + 5;
+					Player.extraHeight = temp.height + 5;		
 					return true;
 				}	
 			}
@@ -1168,9 +1183,8 @@ public class Controller
 			//Player can jump on top of enemies if height enough
 			else if(distance <= 0.3 && yDifference > 8)
 			{
-				//Reset players maximum standing height
-				Player.maxHeight = 
-						temp.height + Math.abs(temp.yPos) + 5;
+				//Reset players extra standing height
+				Player.extraHeight = temp.height + 5;
 				return true;
 			}
 			
@@ -1258,7 +1272,7 @@ public class Controller
 	    */
 		else if(yCorrect >= block.height + blockY / 2
 				|| block.isSolid && yCorrect + Player.height <= blockY / 2)
-		{		
+		{	
 			return true;
 		}
 		
