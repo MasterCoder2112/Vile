@@ -173,12 +173,15 @@ public class Explosion
 		//Where the entity is from the explosion on the map
 		double rotFromTarget = 0;
 		
+		System.out.println(Player.y);
+		System.out.println(this.y);
+		
 	   /*
 	    * See if player is within range of explosion
 	    * and if he/she is, then damage the player
 	    * according to the distance they are from the explosion
 	    */
-		if(distance <= 3 && Math.abs(Player.y - Math.abs(this.y)) <= 8)
+		if(distance <= 3)
 		{
 			double damage = 60;
 			double force = 0;
@@ -255,9 +258,9 @@ public class Explosion
 				Player.yEffects = (1/temp) * (force / 8);
 			}
 			
-			if(Player.yEffects > 40)
+			if(Player.yEffects > 30)
 			{
-				Player.yEffects = 40;
+				Player.yEffects = 30;
 			}
 			
 			if(Player.immortality == 0 
@@ -310,7 +313,7 @@ public class Explosion
 				//If within range of normal enemy
 				if(distance <= 3 && Math.abs(this.y - (enemy.yPos / 12)) <= 2
 						&& !enemy.isABoss)
-				{		
+				{	
 					//Not meant to be funny, this just is the most realistic
 					//it seems after testing. NO LAUGHING
 					double damage = 69;
@@ -391,9 +394,9 @@ public class Explosion
 						enemy.yEffects = ((1/yForce) * (force / 8));// / enemy.weightLevel;
 					}
 					
-					if(enemy.yEffects > 40)
+					if(enemy.yEffects > 30)
 					{
-						enemy.yEffects = 40;
+						enemy.yEffects = 30;
 					}
 					
 					//Hurt the enemy, and activate the enemy

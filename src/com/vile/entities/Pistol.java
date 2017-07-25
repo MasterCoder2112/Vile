@@ -51,7 +51,7 @@ public class Pistol extends Weapon implements WeaponInterface
 				
 				//Create the bullet
 				Bullet bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID, Player.rotation);
+						-(Player.y * 0.085), Player.z, weaponID, Player.rotation);
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -61,6 +61,7 @@ public class Pistol extends Weapon implements WeaponInterface
 			    */
 				while(bullet.move())
 				{
+					//System.out.println(bullet.y);
 					//Do nothing, just call the move method
 				}
 				
@@ -116,7 +117,7 @@ public class Pistol extends Weapon implements WeaponInterface
 				
 				//Create the bullet
 				Bullet bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID, Player.rotation);
+						-(Player.y * 0.085), Player.z, weaponID, Player.rotation);
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check

@@ -173,6 +173,8 @@ public class Bullet extends Projectile
 	    * crosshair, but for some reason I cannot get it exact.
 	    */
 		y += upRotation;
+		
+		//System.out.println(y);
 
 		
 		//Checks to make sure bullet can move and move it if it can

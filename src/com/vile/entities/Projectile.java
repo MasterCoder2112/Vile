@@ -1,5 +1,6 @@
 package com.vile.entities;
 
+import com.vile.Display;
 import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.graphics.Render3D;
@@ -86,13 +87,13 @@ public abstract class Projectile
     * @return
     */
 	public boolean isFree(double nextX, double nextZ)
-	{	
+	{			
 		//Distance from object the projectile can hit
 		double z = 0;
 		
 		//If projectile hits ceiling or floor. Stop it
 		if(y > 1 || -y * 10 >= Render3D.ceilingDefaultHeight)
-		{
+		{		
 			//Fixes bug where a rocket goes way below the floor
 			//before it hits.
 			if(y > 1)
@@ -104,7 +105,7 @@ public abstract class Projectile
 			//down the rocket hits a y of -37 or something. This corrects
 			//that for rocket jumping.
 			if(y < -36)
-			{
+			{		
 				y = 1;
 			}
 			
@@ -331,15 +332,25 @@ public abstract class Projectile
 								= this.sourceEnemy;
 							
 							//Hurt enemy, and activate
-							//the enemy if not already.
-							enemy.hurt(this.damage, enemyHit);
+							//the enemy if not already. Can't be a rocket
+							//to hurt. The explosion is what hurts the
+							//enemy.
+							if(ID != 3)
+							{
+								enemy.hurt(this.damage, enemyHit);
+							}
+							
 							enemy.activated = true;
 							enemy.searchMode = false;
 						}
 						else
 						{
-							//Hurt enemy
-							enemy.hurt(this.damage, enemyHit);	
+							//Hurt enemy if not a rocket. The explosion is
+							//what harms the enemy from the rocket.
+							if(ID != 3)
+							{
+								enemy.hurt(this.damage, enemyHit);
+							}	
 							
 							//Activate the enemy if not already.
 							enemy.activated = true;
@@ -467,19 +478,32 @@ public abstract class Projectile
     * @return
     */
 	public boolean collisionChecks(Block block)
-	{		
+	{	
+		double yCorrect = y - 0.5;
+		
+	   /*
+	    * The players horizontal line of sight is "technically" at y = 0
+	    * so the floor is considered y = 1. This corrects the y for the
+	    * bullet to make it so that the floor is considered 0 instead
+	    * for collision detection purposes.
+	    */
+		if(yCorrect > 0 && yCorrect <= 1)
+		{
+			yCorrect = 0;
+		}
+		
 	   /*
 	    * If bullet is in between the top and bottom of the block,
 	    * and it isn't a moving door. Or if it hits the very bottom
 	    * of a block and the y value happens to be greater than 0
 	    * because apparently projectiles can do that.
 	    */
-		if(((block.hCorrect - (block.height / 12)
+		if((((block.height)
 				+ block.y) > 
-		(-y * 13) && (-y * 13) >= block.y - 1 
-		&& block.y == 0) || y > 0 && block.y == 0
-		&& !hit)
-		{				
+		(-yCorrect * 12.2) && (-yCorrect * 12.2) >= block.y - 1 
+		&& block.y == 0) || yCorrect > 0 && block.y == 0
+		&& !hit && block.height != 0)
+		{	
 		   /*
 		    * If a glass wall that is also labeled as a secret, it
 		    * is breakable by bullets or rockets. Then it turns into
@@ -587,18 +611,6 @@ public abstract class Projectile
 			
 			//Can't move anymore
 			return false;
-		}
-	   /*
-	    * If above the block, or below a doorway, then it can keep
-	    * moving. 
-	    */
-		else if(Math.abs((y * 13)) > (block.y + (block.hCorrect - 
-						((block.height / 12))))
-				|| Math.abs((y * 13)) <= (block.y + (block.hCorrect - 
-						((block.height / 12))))
-				&& block.y > 0 && !hit)
-		{
-			return true;
 		}
 		
 		//Idk why but for some reason the bullet comes back through this

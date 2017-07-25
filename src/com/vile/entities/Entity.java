@@ -2632,33 +2632,9 @@ public abstract class Entity
 			return false;
 		}
 		
-	   /*
-	    * If the block is 2 higher or lower than the entity, 
-	    * the enemy can pass
-	    * through or onto it. 
-	    */
-		else if(block.isSolid && Math.abs(yPos) >= (block.y + block.height - 2)
-				&& Math.abs(yPos) <= (block.y + block.height)
-				|| block.isSolid && Math.abs(yPos) <= (block.y + block.height + 2)
-				&& Math.abs(yPos) >= (block.y + block.height))
-		{
-			//Entity is no longer stuck
-			isStuck = false;
-		
-		   /*
-		    * Do not reset the entities maxHeight if the block
-		    * it is trying to pass into is a door because then
-		    * the entity will teleport to the top of the door.
-		    * 
-		    * That would not be good.
-		    */
-			if(!block.isaDoor && !canFly)
-			{			
-				maxHeight = -(block.height + block.y);
-			}
-			
-			//Return that it can move
-			return true;
+		if(!block.isaDoor && !canFly)
+		{			
+			maxHeight = -(block.height + block.y);
 		}
 		
 		//Default is that the entity can move

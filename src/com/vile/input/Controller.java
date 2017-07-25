@@ -1267,14 +1267,6 @@ public class Controller
 		{
 			return false;
 		}
-	   /*
-	    * If player is below or above block he/she can move through it
-	    */
-		else if(yCorrect >= block.height + blockY / 2
-				|| block.isSolid && yCorrect + Player.height <= blockY / 2)
-		{	
-			return true;
-		}
 		
 		return true;
 	}

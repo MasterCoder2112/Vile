@@ -159,14 +159,14 @@ public class Enemy extends Entity implements Comparable
 		//If Death cannot touch me or above
 		else if(Display.skillMode >= 4)
 		{
-			speed  *= 2;
+			speed  *= 1.5;
 			damage *= 2;
 			health *= 1.5;
 		}
 		//If Bring it on or above
 		else if(Display.skillMode >= 3)
 		{
-			health *= 1.5;
+			health *= 1.25;
 			damage *= 1.5;
 		}
 		//If peaceful mode
@@ -201,6 +201,17 @@ public class Enemy extends Entity implements Comparable
     */
 	public void move()
 	{	
+		//If the enemy is not supposed to be in the game but its still not
+		//removed from the current block, then remove it.
+		if(!Game.enemies.contains(this))
+		{
+			Block b = Level.getBlock((int)this.xPos, (int)this.zPos);
+			
+			b.enemiesOnBlock.remove(this);
+			return;
+		}
+		
+		//Set enemies height based on block or object its on
 		setHeight();
 		
 	   /*

@@ -271,59 +271,6 @@ public class Corpse
 					(int)(nextZ - bufferZone));
 		}
 		
-		try
-		{
-			//Go through all the enemies on the block
-			for(int i = 0; i < block.enemiesOnBlock.size(); i++)
-			{
-				Enemy temp = block.enemiesOnBlock.get(i);
-				
-				//Distance between enemy and other enemy
-				double distance = Math.sqrt(((Math.abs(temp.xPos - nextX))
-						* (Math.abs(temp.xPos - nextX)))
-						+ ((Math.abs(temp.zPos - nextZ))
-								* (Math.abs(temp.zPos - nextZ))));
-				
-				//If close enough, don't allow the enemy to move into
-				//the other enemies. Enemy can still move if 8 units above
-				//The other enemy
-				if(distance <= 0.5 && !this.equals(temp)
-						&& Math.abs(this.y - temp.yPos) <= 8)
-				{
-					return false;
-				}	
-			}		
-		}
-		catch(Exception e)
-		{
-			
-		}
-		
-		//Distance between enemy and player
-		double distance = Math.sqrt(((Math.abs(Player.x - nextX))
-				* (Math.abs(Player.x - nextX)))
-				+ ((Math.abs(Player.z - nextZ))
-						* (Math.abs(Player.z - nextZ))));
-		
-		//Players y value
-		double playerY = Player.y;
-		
-		//Correct it for if the player is crouching and has a y less than
-		//0
-		if(playerY < 0)
-		{
-			playerY = 0;
-		}
-		
-		//Difference between the the two entities y values
-		double yDifference = playerY - Math.abs(y);
-		
-		//Can't clip inside player
-		if(distance <= bufferZone && yDifference >= -8)
-		{
-			return false;
-		}
-		
 	   /*
 	    * For the current block, check to see if the enemy
 	    * can move through or onto the block. If a solid block, check 
@@ -351,7 +298,8 @@ public class Corpse
 	    		//the entity is not a reaper, you can't move into that
 	    		//block
 	    		if(Game.solidItems.contains(temp) 
-	    				&& Math.abs(temp.y + y) <= temp.height)
+	    				&& Math.abs(temp.y + (y - 3))
+	    				<= temp.height)
 	    		{
 	    			return false;
 	    		}
@@ -376,6 +324,13 @@ public class Corpse
 	public boolean collisionChecks(Block block)
 	{	
 	   /*
+	    * Because the y is automatically 3 higher than what it appears
+	    * to be to make it appear like it does, this corrects it back
+	    * for collision detection purposes.
+	    */
+		double yCorrect = y - 3;
+		
+	   /*
 	    * The corpse can't move forward anyway if the block its moving
 	    * to has a solid object on it
 	    */
@@ -386,7 +341,7 @@ public class Corpse
     		//If there is a solid item on the block, the corpse
     		//cannot move into it
     		if(Game.solidItems.contains(temp)
-    				&& Math.abs(temp.y + y) <= temp.height)
+    				&& Math.abs(temp.y + yCorrect) <= temp.height)
     		{
     			return false;
     		}
@@ -403,22 +358,11 @@ public class Corpse
 	    * to go through it (mainly used with doors) then don't allow
 	    * the corpse to move.
 	    */
-		if(((block.height + block.y - 2) > 
-			-y && -y + 2 > block.y && !block.isaDoor))
+		if(((block.height + block.y - (2)) > 
+			-yCorrect && -yCorrect + (2) >
+			block.y && !block.isaDoor))
 		{
 			return false;
-		}
-		
-	   /*
-	    * If the block is 2 higher than the corpse, 
-	    * the corpse can pass through or onto it. 
-	    */
-		else if(block.isSolid && Math.abs(y) >= (block.y + block.height - 2)
-				&& Math.abs(y) <= (block.y + block.height)
-				|| Math.abs(y) >= block.y + block.height)
-		{			
-			//Return that it can move
-			return true;
 		}
 
 		return true;
