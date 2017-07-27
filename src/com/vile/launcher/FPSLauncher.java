@@ -988,8 +988,8 @@ public class FPSLauncher extends JFrame
 		soundVolume.addChangeListener(change);
 		panel.add(soundVolume);
 
-		mouseSensitivityTitle = new JLabel("Music Volume:");
-		mouseSensitivityTitle.setBounds(550, 30, 200, 10);
+		mouseSensitivityTitle = new JLabel("Mouse Sensitivity");
+		mouseSensitivityTitle.setBounds(550, 300, 200, 10);
 		mouseSensitivityTitle.setForeground(Color.GREEN);
 		panel.add(mouseSensitivityTitle);
 
