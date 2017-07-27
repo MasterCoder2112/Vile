@@ -74,8 +74,8 @@ public class Display extends Canvas implements Runnable
 	public static FloatControl musicControl;
 	
 	//Keeps track of how fast you move mouse
-	public static int mouseSpeedHorizontal;
-	public static int mouseSpeedVertical;
+	public static double mouseSpeedHorizontal;
+	public static double mouseSpeedVertical;
 
 	// Thread of events
 	private static Thread thread;
@@ -661,110 +661,6 @@ public class Display extends Canvas implements Runnable
 			{
 				//Get the JFrame on screen
 				Component c = RunGame.frame;
-				
-			   /*
-			    * Check to see if mouse is in frame, and if it isn't then
-			    * bring it back into it.
-			    */
-				if(!InputHandler.isMouseWithinComponent(c))
-				{
-					//Controls mouse without player input
-					Robot robot = null;
-					
-					try 
-				    {
-						robot = new Robot();
-				    } 
-				    catch (Exception ex) 
-				    {
-				    	ex.printStackTrace();
-				    }
-					
-				   /*
-				    * Finds frames position on screen for mouse 
-				    * reposistioning
-				    */
-					Rectangle bounds = c.getBounds();
-				    bounds.setLocation(c.getLocationOnScreen());
-				    
-				    //Finds mousePos on screen
-				    Point mousePos = MouseInfo.getPointerInfo()
-				    		.getLocation();
-					
-					//If it went out of the right side, move mouse that
-					//way, but only for how much it moved while in the
-					//frame
-					if(mousePos.x > bounds.x + bounds.width)
-					{
-						Display.mouseSpeedHorizontal = 
-								Math.abs(InputHandler.oldMouseX
-										- (bounds.width / 2));
-						
-						//Move back to the center of the screen
-						robot.mouseMove(bounds.x + (bounds.width / 2),
-								bounds.y + (bounds.height / 2));
-					}
-				   /*
-				    * Same as above but for if the mouse moves out of the
-				    * left of the frame. 
-				    */
-					else if(mousePos.x < bounds.x)
-					{
-						Display.mouseSpeedHorizontal = 
-								-Math.abs(InputHandler.oldMouseX
-										- (bounds.width / 2));
-						
-						robot.mouseMove(bounds.x + (bounds.width / 2),
-								bounds.y + (bounds.height / 2));
-					}
-				   /*
-				    * If the x part of the mouse is still "in" the frame
-				    * move it as much as it moved in the x, so just like
-				    * normal basically.
-				    */
-					else
-					{
-						Display.mouseSpeedHorizontal = 
-								Math.abs(InputHandler.oldMouseX
-										- InputHandler.MouseX);
-						
-						robot.mouseMove(bounds.x + (bounds.width / 2),
-								bounds.y + (bounds.height / 2));
-					}
-					
-				   /*
-				    * Do all the same as the above just for the y
-				    * direction. Such as if the mouse went out of the
-				    * top of the frame.
-				    */
-					if(mousePos.y > bounds.y + bounds.height)
-					{
-						Display.mouseSpeedVertical = 
-								Math.abs(InputHandler.oldMouseY
-										- (bounds.height / 2));
-						
-						robot.mouseMove(bounds.x + (bounds.width / 2),
-								bounds.y + (bounds.height / 2));
-					}
-					else if(mousePos.y < bounds.y)
-					{
-						Display.mouseSpeedVertical = 
-								-Math.abs(InputHandler.oldMouseY
-										- (bounds.height / 2));
-						
-						robot.mouseMove(bounds.x + (bounds.width / 2),
-								bounds.y + (bounds.height / 2));
-					}
-					else
-					{
-						Display.mouseSpeedVertical = 
-								Math.abs(InputHandler.oldMouseY
-										- InputHandler.MouseY);
-						
-						robot.mouseMove(bounds.x + (bounds.width / 2),
-								bounds.y + (bounds.height / 2));
-					}
-				}
 			}
 			
 			//If game is supposed to be quit, then call the stop method

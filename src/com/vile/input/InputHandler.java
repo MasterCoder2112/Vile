@@ -249,24 +249,16 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	 * you moved the mouse and in what direction you turned in
 	 */
 	public void mouseMoved(MouseEvent e) 
-	{		
-		//Get mouses current position
-		MouseX = e.getX();
-        MouseY = e.getY();
-        
-        //System.out.println("MouseX: "+MouseX);
-        //System.out.println("MouseY: "+MouseY);
-        
-        //Uses the frame for position reference.
-  		Component c = RunGame.frame;
-  		
-  	   /*
-  	    * Finds frames position on screen for mouse 
-  	    * reposistioning
-  	    */
-  		Rectangle bounds = c.getBounds();
-  	    bounds.setLocation(c.getLocationOnScreen());
-		
+	{
+		Component c = RunGame.frame;
+
+		//get the difference from the center to determine movement
+		double turnAmountX = e.getX() - c.getWidth()/2;
+		double turnAmountY = e.getY() - c.getHeight()/2;
+
+		//based on amount moved the 100 is the sensitivity
+		Display.mouseSpeedHorizontal = Controller.rotationSpeed * turnAmountX;
+		Display.mouseSpeedVertical = Controller.rotationSpeed * turnAmountY;
 		try 
 	    {
 			robot = new Robot();
@@ -275,82 +267,9 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	    {
 	    	ex.printStackTrace();
 	    }
-		
-		if (robot != null) 
-		{
-		   /*
-		    * Robot takes a tick or two to move the mouse longer distances
-		    * so this allows it two ticks when the game is first set up
-		    * to correct its position to the center, and sets the old
-		    * mouse values to being in the center as well so that the
-		    * game doesn't wig out your position from the start
-		    */
-			if(setUp < 2)
-			{
-				if(setUp == 0)
-				{
-					robot.mouseMove(bounds.x + (bounds.width / 2),
-							bounds.y + (bounds.height / 2));
-				}
-				else
-				{
-					oldMouseX = e.getX();
-					oldMouseY = e.getY();
-				}
-				
-				//Add to ticks it has taken to set up
-				setUp++;
-				
-				return;
-			}
-			
-		   /*
-		    * Basically sees which way mouse moved in the x direction, and
-		    * will determine the speed you need to turn based on how far
-		    * your mouse moved in one tick. It also determines which way
-		    * to turn based on what side of the center x did you move the
-		    * mouse.
-		    */
-			if(MouseX > oldMouseX)
-			{
-				Display.mouseSpeedHorizontal = 
-					-Math.abs(oldMouseX - MouseX);
-				Controller.mouseRight = true;
-			}
-			else
-			{
-				Display.mouseSpeedHorizontal = 
-						Math.abs(oldMouseX - MouseX);
-				Controller.mouseLeft = true;
-			}
-			
-		   /*
-		    * Basically sees which way mouse moved in the y direction, and
-		    * will determine the speed you need to turn based on how far
-		    * your mouse moved in one tick. It also determines which way
-		    * to turn based on what side of the center y did you move the
-		    * mouse.
-		    */
-			if(MouseY > oldMouseY)
-			{
-				Display.mouseSpeedVertical = 
-					-Math.abs(oldMouseY - MouseY);
-				Controller.mouseUp = true;
-			}
-			else
-			{
-				Display.mouseSpeedVertical = 
-						Math.abs(oldMouseY - MouseY);
-				Controller.mouseDown = true;
-			}
-			
-			//Always reset mouse to the center of the screen.
-			robot.mouseMove(bounds.x + (bounds.width / 2),
-					bounds.y + (bounds.height / 2));
-			
-			oldMouseX = e.getX();
-			oldMouseY = e.getY();
-        }
+		//Always reset mouse to the center of the screen.
+		robot.mouseMove((int)(e.getX() - turnAmountX),
+				(int)(e.getY() - turnAmountY));
 	}
 	
    /**

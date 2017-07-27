@@ -2075,8 +2075,8 @@ public abstract class Entity
 		    * from 60 degrees to the right and left of the enemies centered
 		    * view.
 		    */
-			double plus60 = rotation + ((Math.PI / 180) * 60);
-			double minus60 = rotation - ((Math.PI / 180) * 60);
+			double plus60 = rotation + ((Math.PI / 3));
+			double minus60 = rotation - ((Math.PI / 3));
 			double tempTarget = rotationFromTarget;
 			withinSight = false;
 			
