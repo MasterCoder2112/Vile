@@ -77,6 +77,7 @@ public class FPSLauncher extends JFrame
 	private JLabel  soundVolumeTitle;
 	private JLabel  title;
 	private JLabel  newMapTitle;
+	private JLabel  mouseSensitivityTitle;
 	
 	private JTextArea readMeText;
 	private JTextField newMapName;
@@ -94,6 +95,7 @@ public class FPSLauncher extends JFrame
 	//Volume Knobs
 	public JSlider musicVolume;
 	public JSlider soundVolume;
+	public JSlider mouseSensitivity;
 	
    /*
     * Level of sound in decibals above or below the original set amount 
@@ -101,6 +103,7 @@ public class FPSLauncher extends JFrame
     */
 	public static float  musicVolumeLevel = -20.0f;
 	public static float  soundVolumeLevel = -20.0f;
+	public static float  mouseSensitivityLevel = 100;
 	
 	//Whether sound files have been opened yet
 	private static boolean opened      = false;
@@ -321,13 +324,21 @@ public class FPSLauncher extends JFrame
 				{
 					newVolume2 = -80;
 				}
-			
+
 				//Resets sound volumes
 				click.resetVolume(newVolume2);
-			
+
 				//Show the volume level that makes since to us
 				int temp2  = (int) soundVolumeLevel + 94;
 				soundVolume.setToolTipText("Sound Volume Level: "+temp2);
+			}
+
+			//Change for mouse sensitivity
+			if(e.getSource() == mouseSensitivity)
+			{
+				mouseSensitivityLevel =  mouseSensitivity.getValue();
+				System.out.println(mouseSensitivityLevel);
+				soundVolume.setToolTipText("Mouse Sensitivity: "+ mouseSensitivityLevel);
 			}
 		}
 	};
@@ -976,7 +987,24 @@ public class FPSLauncher extends JFrame
 		
 		soundVolume.addChangeListener(change);
 		panel.add(soundVolume);
-		
+
+		mouseSensitivityTitle = new JLabel("Music Volume:");
+		mouseSensitivityTitle.setBounds(550, 30, 200, 10);
+		mouseSensitivityTitle.setForeground(Color.GREEN);
+		panel.add(mouseSensitivityTitle);
+
+		mouseSensitivity     = new JSlider();
+		mouseSensitivity.setBounds(550, 320, 200, 40);
+		mouseSensitivity.setMaximum(100);
+		mouseSensitivity.setMinimum(1);
+		mouseSensitivity.setValue((int) mouseSensitivityLevel);
+		mouseSensitivity.setOpaque(true);
+
+		mouseSensitivity.setToolTipText("Mouse Sensitivity: "+ mouseSensitivityLevel);
+
+		mouseSensitivity.addChangeListener(change);
+		panel.add(mouseSensitivity);
+
 		//Title for custom map text field
 		newMapTitle = new JLabel("Custom Map:");
 		newMapTitle.setBounds(WIDTH - 250, 25, 200, 25); 
