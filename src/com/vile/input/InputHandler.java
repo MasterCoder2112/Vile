@@ -41,15 +41,7 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
     */
 	public static int MouseX;
 	public static int MouseY;
-	
-	//Whether mouse has been set up yet or not
-	private int setUp = 0;
-	
-   /*
-    * Old Mouse position on Screen
-    */
-	public static int oldMouseX;
-	public static int oldMouseY;
+
 	
 	//Was mouse clicked firing the weapon
 	public static boolean wasFired = false;
@@ -57,7 +49,17 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	//Can take control of mouse position
 	private Robot robot;
 	
-	
+	public InputHandler()
+	{
+		try
+		{
+			robot = new Robot();
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+	}
 	@Override
    /**
     * Checks if keyCode is valid, and then sets that key to true if it
@@ -135,80 +137,7 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	 * back to a certain position on the screen.
 	 */
 	public void mouseExited(MouseEvent e) 
-	{			
-		MouseX = e.getX();
-        MouseY = e.getY();
-		
-		//Uses the frame for position reference.
-		Component c = RunGame.frame;
-		
-	   /*
-	    * Finds frames position on screen for mouse 
-	    * reposistioning
-	    */
-		Rectangle bounds = c.getBounds();
-	    bounds.setLocation(c.getLocationOnScreen());
-		
-		try 
-	    {
-			robot = new Robot();
-	    } 
-	    catch (Exception ex) 
-	    {
-	    	ex.printStackTrace();
-	    }
-		
-		if (robot != null) 
-		{
-		   /*
-		    * Basically sees which way mouse moved in the x direction, and
-		    * will determine the speed you need to turn based on how far
-		    * your mouse moved in one tick. It also determines which way
-		    * to turn based on what side of the center x did you move the
-		    * mouse.
-		    */
-			if(MouseX > oldMouseX)
-			{
-				Display.mouseSpeedHorizontal = 
-					-Math.abs(oldMouseX - MouseX);
-				Controller.mouseRight = true;
-			}
-			else
-			{
-				Display.mouseSpeedHorizontal = 
-						Math.abs(oldMouseX - MouseX);
-				Controller.mouseLeft = true;
-			}
-			
-		   /*
-		    * Basically sees which way mouse moved in the y direction, and
-		    * will determine the speed you need to turn based on how far
-		    * your mouse moved in one tick. It also determines which way
-		    * to turn based on what side of the center y did you move the
-		    * mouse.
-		    */
-			//If mouse moved up the screen, look up in the game
-			if(MouseY > oldMouseY)
-			{
-				Display.mouseSpeedVertical = 
-					-Math.abs(oldMouseY - MouseY);
-				Controller.mouseUp = true;
-			}
-			//If mouse moved down screen, look down in game
-			else
-			{
-				Display.mouseSpeedVertical = 
-						Math.abs(oldMouseY - MouseY);
-				Controller.mouseDown = true;
-			}
-			
-			//Always move mouse back to the center of the screen
-			robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
-			
-			//Reset the old mouse positions to the center of the frame
-			oldMouseX = e.getX();
-			oldMouseY = e.getY();
-        }
+	{
 	}
 
 	@Override
@@ -252,46 +181,19 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	{
 		Component c = RunGame.frame;
 
+		int x = e.getX();
+		int y = e.getY();
+		int centerx = Display.WIDTH/2;
+		int centery = Display.HEIGHT/2;
 		//get the difference from the center to determine movement
-		double turnAmountX = e.getX() - c.getWidth()/2;
-		double turnAmountY = e.getY() - c.getHeight()/2;
-
+		double turnAmountX = x - centerx;
+		double turnAmountY = y - centery;
 		//based on amount moved the 100 is the sensitivity
 		Display.mouseSpeedHorizontal = Controller.rotationSpeed * turnAmountX;
 		Display.mouseSpeedVertical = Controller.rotationSpeed * turnAmountY;
-		try 
-	    {
-			robot = new Robot();
-	    } 
-	    catch (Exception ex) 
-	    {
-	    	ex.printStackTrace();
-	    }
 		//Always reset mouse to the center of the screen.
-		robot.mouseMove((int)(e.getX() - turnAmountX),
-				(int)(e.getY() - turnAmountY));
+		int lx = c.getLocation().x;
+		int ly = c.getLocation().y;
+		robot.mouseMove(lx + centerx + 3, ly + centery + 26);
 	}
-	
-   /**
-    * Gets location of component and of the mouse, and see if the mouse
-    * is within the bounds of the component. Then return whether the mouse
-    * is in it or not.
-    * @param c
-    * @return
-    */
-	public static boolean isMouseWithinComponent(Component c)
-	{
-		//Get mouses point location on screen
-	    Point mousePos = MouseInfo.getPointerInfo().getLocation();
-	    
-	    //Get bounds of frame
-	    Rectangle bounds = c.getBounds();
-	    
-	    //Is Mouses point on screen within bounds? 
-	    bounds.setLocation(c.getLocationOnScreen());
-	    
-	    //Return whether mouse is within frame
-	    return bounds.contains(mousePos);
-	}
-
 }

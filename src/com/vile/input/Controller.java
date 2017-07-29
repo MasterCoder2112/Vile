@@ -34,15 +34,10 @@ public class Controller {
     /*
      * Other variables
      */
-    public static boolean mouseLeft = false;
-    public static boolean mouseRight = false;
-    public static boolean mouseUp = false;
-    public static boolean mouseDown = false;
     public static boolean showFPS = false;
     public static boolean quitGame = false;
     public static double moveSpeed = 1.0;
     public static double rotationUpSpeed = 0.01;
-    public static int timeAfterShot;
     public static boolean shot = false;
     /*
      * Position and movement variables.
@@ -95,6 +90,8 @@ public class Controller {
 
         double horizontalMouseSpeed = Display.mouseSpeedHorizontal * (FPSLauncher.mouseSensitivityLevel/50);
         double verticalMouseSpeed = Display.mouseSpeedVertical * (FPSLauncher.mouseSensitivityLevel/50);
+        Display.mouseSpeedVertical = 0;
+        Display.mouseSpeedHorizontal = 0;
 
         //Amount your moving in x or z direction each time it loops
         double moveX = 0;
