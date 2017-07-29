@@ -103,7 +103,6 @@ public class Sound
 			{
 				soundClip[clipNum].stop();
 				soundClip[clipNum].setMicrosecondPosition(0);
-				System.out.println("");
 			}
 			
 		   /*
@@ -116,7 +115,6 @@ public class Sound
 				{ 
 					noActive = false;
 					soundClip[i].setMicrosecondPosition(0);
-					System.out.println("");
 				}
 			}
 			
@@ -126,7 +124,6 @@ public class Sound
 				for (int i = 0; i < soundClip.length; i++) 
 				{
 					soundClip[i].setMicrosecondPosition(0);
-					System.out.println("");
 				}
 			}
 			

@@ -105,9 +105,17 @@ public class Corpse
 		time++;
 		
 		//Don't let the time ticker go too high
-		if(time > 20000)
+		if(time > 10000)
 		{
 			time = 0;
+			
+			//If in survival, corpses disappear after a bit
+			//to make the game faster.
+			if(!Game.setMap)
+			{
+				Game.corpses.remove(this);
+				return;
+			}
 		}
 		
 	   /*

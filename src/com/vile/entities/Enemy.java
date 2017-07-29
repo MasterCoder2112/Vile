@@ -200,17 +200,7 @@ public class Enemy extends Entity implements Comparable
     * Keeps track of the enemies movement each turn
     */
 	public void move()
-	{	
-		//If the enemy is not supposed to be in the game but its still not
-		//removed from the current block, then remove it.
-		if(!Game.enemies.contains(this))
-		{
-			Block b = Level.getBlock((int)this.xPos, (int)this.zPos);
-			
-			b.enemiesOnBlock.remove(this);
-			return;
-		}
-		
+	{			
 		//Set enemies height based on block or object its on
 		setHeight();
 		
@@ -285,12 +275,6 @@ public class Enemy extends Entity implements Comparable
 		{
 			rotationFromPlayer = (2 * Math.PI) 
 					+ rotationFromPlayer;
-		}
-		
-		//If peaceful mode, the enemy shall not move
-		if(Game.skillMode == 0)
-		{
-			return;
 		}
 		
 	   /*
@@ -374,11 +358,20 @@ public class Enemy extends Entity implements Comparable
 			}
 		}
 		
+		//If peaceful mode, the enemy shall not move
+		if(Game.skillMode == 0)
+		{
+			return;
+		}
+		
 		//If the enemy is activated, and isn't attacking then move
 		//normally
 		if(super.activated && !super.isFiring && !super.isAttacking
 				&& super.harmed == 0)
 		{
+			//Current block enemy is on.
+			Block blockOn = Level.getBlock((int)xPos, (int)zPos);
+			
 			//If enemy can fly
 			if(canFly)
 			{
@@ -397,107 +390,83 @@ public class Enemy extends Entity implements Comparable
 						yCorrect = Player.maxHeight;
 					}
 				}
-				
-				//Current block enemy is on.
-				Block blockOn = Level.getBlock((int)xPos, (int)zPos);
 
-			   /*
-			    * For the flying enemy only, if the player is within a
-			    * distance of 5 of the enemy, then have the enemy begin
-			    * to fly up or down to match the players height in order
-			    * so that it may attack the player. Because of the 
-			    * different units, (yCorrect + 1) is used so
-			    * that the enemy height matches up with the players.
-			    * 
-			    * If the enemy hits a wall, then the enemy will fly over
-			    * the wall (could be an item too) and descend again after
-			    * getting over the obstacle to go after the player again.
-			    * isStuck refers to whether the enemy is stuck behind a
-			    * wall or solid item or not.
-			    */
-				//Fly down if player is below and no obstacles and player
-				//is not below the height of the block that the enemy is
-				//currently on so that the enemy doesn't jitter on the top
-				//of the block			
-				if(distance <= 5
-						&& Math.abs(yPos) > (yCorrect + 1)
-						&& !isStuck && (Math.abs(yPos)) > blockOn.height)
+			    //If distance is less than or equal to 5 units from
+				//the player, and its not stuck
+				if(distance <= 5 && !isStuck)
 				{
-					yPos += 0.5;
-					tracking = true;
-				}
-			   /*
-			    * If enemy is negligible close to the ground, and is not
-			    * stuck, then stay floating 1/10 units above the ground.
-			    */
-				else if(distance <= 5
-						&& Math.abs(yPos) < (1 / 10)
-						&& !isStuck)
+					//If above player
+					if(Math.abs(yPos) > (yCorrect + 1) + 0.25)
+					{
+						//If negligibly close to top of the block
+						//set the y to slightly above the block
+						if(Math.abs(yPos + blockOn.height) <= 0.25)
+						{
+							yPos = -(blockOn.height + 0.25);
+						}
+						//If not then float down
+						else if((Math.abs(yPos)) > blockOn.height)
+						{
+							yPos += 0.5;
+							tracking = true;
+						}
+					}
+					//If target is above enemy, fly up
+					else if(Math.abs(yPos) < (yCorrect + 1))
+					{
+						yPos -= 0.5;
+						tracking = true;
+					}
+				   /*
+				    * If enemy is negligible close to the ground, and is not
+				    * stuck, then stay floating 1/10 units above the ground.
+				    */
+					else if(Math.abs(yPos) < (1 / 10))
+					{
+						yPos = -(1/10);
+						tracking = true;
+					}
+				   /*
+				    * If the enemy is negligibly close to the player, just
+				    * match up the height with the players.This small
+				    * correction is so small it will never be noticed if
+				    * playing the game.
+				    */
+					else
+					{
+						yPos = -(yCorrect + 1);
+						tracking = true;
+					}
+				}		
+				//If farther than a distance of 5 from the player
+				//Or the enemy is stuck
+				else if(distance > 5 || isStuck)
 				{
-					yPos = -(1/10);
-					tracking = true;
-				}
-				//If target is above enemy, fly up, and no obstacle
-				else if(distance <= 5
-						&& Math.abs(yPos) < (yCorrect + 1)
-						&& !isStuck)
-				{
-					yPos -= 0.5;
-					tracking = true;
-				}
-				
-			   /*
-			    * If stuck behind a wall, or below its default height
-			    * when not in range of player, then fly up
-			    */
-				else if(distance > 5
-						&& yPos > -startY
-						|| isStuck)
-				{
-					yPos -= 0.5;
-					tracking = false;
-				}
-			   /*
-			    * If not stuck, and not in range of player, yet still 
-			    * above the default flying height, then fly down.
-			    */
-				else if(distance > 5
-						&& yPos < -startY
-						&& !isStuck)
-				{
-					yPos += 0.5;
-					tracking = false;
-				}
-				
-			   /*
-			    * If the enemy is negligibly close to the player, just
-			    * match up the height with the players.This small
-			    * correction is so small it will never be noticed if
-			    * playing the game.
-			    */
-				if(distance <= 5
-						&& Math.abs(Math.abs(yPos) - 
-								((yCorrect + 1))) < 0.5
-								&& !isStuck)
-				{
-					yPos = -(yCorrect + 1);
-					tracking = true;
-				}
-				
-			   /*
-			    * If the player is far enough away so that the enemy
-			    * does not chase him/her, and the enemy is near its
-			    * default height by less than 0.05 units, then because
-			    * it is a negligible difference, just set its height
-			    * to the default height of -48.
-			    * 
-			    * The enemy cannot be hindered or stuck by a wall either.
-			    */
-				if(distance > 5 && Math.abs(yPos - (-startY)) < 0.25
-						&& !isStuck)
-				{
-					yPos = -startY;
-					tracking = false;
+				   /*
+				    * If stuck behind a wall, or below its default height
+				    * when not in range of player, then fly up
+				    */
+					if(yPos > -startY + 0.25 || isStuck)
+					{
+						yPos -= 0.5;
+						tracking = false;
+					}
+				   /*
+				    * If not stuck, and not in range of player, yet still 
+				    * above the default flying height, then fly down.
+				    */
+					else if(yPos < -startY - 0.25 && !isStuck)
+					{
+						yPos += 0.5;
+						tracking = false;
+					}
+					//If near enough to start Y, then set that to the new
+					//height
+					else
+					{
+						yPos = -startY;
+						tracking = false;
+					}
 				}
 				
 				//Set the lowest the enemy can fly as being 1/10 units
@@ -537,7 +506,7 @@ public class Enemy extends Entity implements Comparable
 					
 				   /*
 				    * If enemy is within a 1 unit range of corpse. Also
-				    * corpse cannot be another depressed enemy or boss
+				    * corpse cannot be another mage enemy or boss
 				    * otherwise they'd just keep resurrecting each other.
 				    * It'd be impossible. Also they have to be within a
 				    * height of 4 units from each other, and the corpse 
@@ -568,9 +537,6 @@ public class Enemy extends Entity implements Comparable
 							//Add new enemy to game
 							Game.enemies.add(newEnemy);
 							
-							//Render distance becomes less again
-							Render3D.renderDistanceDefault -= 1000;
-							
 							//Remove the corpse from the map
 							Game.corpses.remove(i);
 							
@@ -579,7 +545,7 @@ public class Enemy extends Entity implements Comparable
 						}
 						else
 						{
-							//This is the depressed enemies special 
+							//This is the mage enemies special 
 							//attack. So reset ticks and do this.
 							if(ID == 5)
 							{
@@ -630,9 +596,6 @@ public class Enemy extends Entity implements Comparable
 			boolean xStopped = false;
 			boolean zStopped = false;
 			
-			//Block enemy is currently on
-			Block blockOn = Level.getBlock((int)xPos, (int)zPos);
-			
 			//If enemy is not on the list of enemies on the block then
 			//add it to it.
 			if(!blockOn.enemiesOnBlock.contains(this))
@@ -670,6 +633,16 @@ public class Enemy extends Entity implements Comparable
 				
 				double newSpeed = speed;
 				
+				if(Math.abs(newX) <= 0.001)
+				{
+					xStopped = true;
+				}
+				
+				if(Math.abs(newZ) <= 0.001)
+				{
+					zStopped = true;
+				}
+				
 			   /*
 			    * If stopped in both directions, then as long as the
 			    * enemy is not a flying enemy, turn on search mode
@@ -677,15 +650,14 @@ public class Enemy extends Entity implements Comparable
 			    * to the player. If it is a flying enemy, it is stuck
 			    * and needs to go above the wall.
 			    */
-				if(xStopped && zStopped
-						|| Math.abs(newX) <= 0.001 && zStopped
-						|| Math.abs(newZ) <= 0.001 && xStopped)
+				if(xStopped && zStopped)
 				{
-					//If not flyer enemy
-					if(ID != 2)
+					//If not sentinel enemy
+					if(!canFly)
 					{
 						searchMode = true;
 					}
+					//If a flying enemy
 					else
 					{
 						isStuck = true;
@@ -700,18 +672,7 @@ public class Enemy extends Entity implements Comparable
 				    * try first based upon which direction (either
 				    * z or x) is farthest from the player.
 				    */
-					if(Math.abs(newX) <= 0.001)
-					{
-						if(temp == 0)
-						{
-							direction = 0;
-						}
-						else
-						{
-							direction = 1;
-						}
-					}
-					else if(Math.abs(newZ) <= 0.001)
+					if(Math.abs(newZ) <= 0.001)
 					{
 						if(temp == 0)
 						{
@@ -828,51 +789,54 @@ public class Enemy extends Entity implements Comparable
 					   /*
 					    * Check to see if each block is a doorway and if
 					    * it is, then move through the doorway by changing
-					    * the direction as being torwards the doorway.
+					    * the direction as being towards the doorway.
 					    */
-						if(back.isaDoor && 
-								isFree(xPos, super.zPos - newZ)
-								&& !doorway)
+						if(!doorway)
 						{
-							direction = 2;
-							doorway = true;
-						}
-						else if(front.isaDoor
-								&& isFree(xPos, super.zPos + newZ)
-								&& !doorway)
-						{
-							direction = 3;
-							doorway = true;
-						}
-						else if(left.isaDoor
-								&& isFree(xPos - newX, super.zPos)
-								&& !doorway)
-						{
-							direction = 0;
-							doorway = true;
-						}
-						else if(right.isaDoor
-								&& isFree(xPos + newX, super.zPos)
-								&& !doorway)
-						{
-							direction = 1;
-							doorway = true;
+							if(back.isaDoor && 
+									isFree(xPos, super.zPos - newZ))
+							{
+								direction = 2;
+								doorway = true;
+							}
+							else if(front.isaDoor
+									&& isFree(xPos, super.zPos + newZ))
+							{
+								direction = 3;
+								doorway = true;
+							}
+							else if(left.isaDoor
+									&& isFree(xPos - newX, super.zPos))
+							{
+								direction = 0;
+								doorway = true;
+							}
+							else if(right.isaDoor
+									&& isFree(xPos + newX, super.zPos))
+							{
+								direction = 1;
+								doorway = true;
+							}
 						}
 						
-						//If player is in sight and can be reached
-						if(isFree(xPos + newX, super.zPos)
-								&& isFree(super.xPos, zPos + newZ)
-								&& inSight)
+						//If player is in sight
+						if(inSight)
 						{
-							//Move more to get around a corner if 
-							//it can
-							if(isFree(xPos - speed, zPos))
+							//If player can be reached
+							if(isFree(xPos + newX, super.zPos)
+								&& isFree(super.xPos, zPos + newZ))
 							{
-								xPos -= speed;
+								//Move more to get around a corner if 
+								//it can
+								if(isFree(xPos - speed, zPos))
+								{
+									xPos -= speed;
+								}
+								
+								//Turn off search mode and move torwards player
+								searchMode = false;
+								return;
 							}
-							
-							//Turn off search mode and move torwards player
-							searchMode = false;
 						}
 						
 					   /*
@@ -884,7 +848,7 @@ public class Enemy extends Entity implements Comparable
 					    * players z direction or not, and if it can, move
 					    * towards it.
 					    */
-						if(Math.abs(Player.y - yPos) <= 2)
+						if(Math.abs(Player.y - yPos) <= 2 && !doorway)
 						{
 							if(newZ < 0)
 							{
@@ -893,8 +857,7 @@ public class Enemy extends Entity implements Comparable
 									zPos -= newSpeed;
 								}
 							}
-							
-							if(newZ > 0)
+							else
 							{
 								if(isFree(xPos, zPos + newSpeed))
 								{								
@@ -911,6 +874,7 @@ public class Enemy extends Entity implements Comparable
 						if(doorway)
 						{
 							searchMode = false;
+							return;
 						}
 						
 						//No longer going through doorway
@@ -951,47 +915,54 @@ public class Enemy extends Entity implements Comparable
 						Block back = Level.getBlock((int)xPos,
 								(int)zPos + 1);
 						
-						if(back.isaDoor && 
-								isFree(xPos, super.zPos - newZ)
-								&& !doorway)
+					   /*
+					    * Check to see if each block is a doorway and if
+					    * it is, then move through the doorway by changing
+					    * the direction as being towards the doorway.
+					    */
+						if(!doorway)
 						{
-							direction = 2;
-							doorway = true;
-						}
-						else if(front.isaDoor
-								&& isFree(xPos, super.zPos + newZ)
-								&& !doorway)
-						{
-							direction = 3;
-							doorway = true;
-						}
-						else if(left.isaDoor
-								&& isFree(xPos - newX, super.zPos)
-								&& !doorway)
-						{
-							direction = 0;
-							doorway = true;
-						}
-						else if(right.isaDoor
-								&& isFree(xPos + newX, super.zPos)
-								&& !doorway)
-						{
-							direction = 1;
-							doorway = true;
+							if(back.isaDoor && 
+									isFree(xPos, super.zPos - newZ))
+							{
+								direction = 2;
+								doorway = true;
+							}
+							else if(front.isaDoor
+									&& isFree(xPos, super.zPos + newZ))
+							{
+								direction = 3;
+								doorway = true;
+							}
+							else if(left.isaDoor
+									&& isFree(xPos - newX, super.zPos))
+							{
+								direction = 0;
+								doorway = true;
+							}
+							else if(right.isaDoor
+									&& isFree(xPos + newX, super.zPos))
+							{
+								direction = 1;
+								doorway = true;
+							}
 						}
 						
-						if(isFree(xPos + newX, super.zPos)
-								&& isFree(super.xPos, zPos + newZ)
-								&& inSight)
+						if(inSight)
 						{
-							//Move more to get around the corner if 
-							//it can
-							if(isFree(xPos + speed, zPos))
+							if(isFree(xPos + newX, super.zPos)
+								&& isFree(super.xPos, zPos + newZ))
 							{
-								xPos += speed;
+								//Move more to get around the corner if 
+								//it can
+								if(isFree(xPos + speed, zPos))
+								{
+									xPos += speed;
+								}
+								
+								searchMode = false;
+								return;
 							}
-							
-							searchMode = false;
 						}
 						
 					   /*
@@ -1003,7 +974,7 @@ public class Enemy extends Entity implements Comparable
 					    * players z direction or not, and if it can, move
 					    * towards it.
 					    */
-						if(Math.abs(Player.y - yPos) <= 2)
+						if(Math.abs(Player.y - yPos) <= 2 && !doorway)
 						{
 							if(newZ < 0)
 							{
@@ -1012,8 +983,7 @@ public class Enemy extends Entity implements Comparable
 									zPos -= newSpeed;
 								}
 							}
-							
-							if(newZ > 0)
+							else
 							{
 								if(isFree(xPos, zPos + newSpeed))
 								{								
@@ -1029,6 +999,7 @@ public class Enemy extends Entity implements Comparable
 						if(doorway)
 						{
 							searchMode = false;
+							return;
 						}
 						
 						doorway = false;
@@ -1045,9 +1016,8 @@ public class Enemy extends Entity implements Comparable
 							direction = 3;
 						}
 					}
-				}
-				
-				if(direction == 2)
+				}	
+				else if(direction == 2)
 				{
 					if(isFree(xPos, zPos - speed))
 					{
@@ -1067,47 +1037,56 @@ public class Enemy extends Entity implements Comparable
 						Block back = Level.getBlock((int)xPos,
 								(int)zPos + 1);
 						
-						if(back.isaDoor && 
-								isFree(xPos, super.zPos - newZ)
-								&& !doorway)
+					   /*
+					    * Check to see if each block is a doorway and if
+					    * it is, then move through the doorway by changing
+					    * the direction as being towards the doorway.
+					    */
+						if(!doorway)
 						{
-							direction = 2;
-							doorway = true;
-						}
-						else if(front.isaDoor
-								&& isFree(xPos, super.zPos + newZ)
-								&& !doorway)
-						{
-							direction = 3;
-							doorway = true;
-						}
-						else if(left.isaDoor
-								&& isFree(xPos - newX, super.zPos)
-								&& !doorway)
-						{
-							direction = 0;
-							doorway = true;
-						}
-						else if(right.isaDoor
-								&& isFree(xPos + newX, super.zPos)
-								&& !doorway)
-						{
-							direction = 1;
-							doorway = true;
+							if(back.isaDoor && 
+									isFree(xPos, super.zPos - newZ))
+							{
+								direction = 2;
+								doorway = true;
+							}
+							else if(front.isaDoor
+									&& isFree(xPos, super.zPos + newZ))
+							{
+								direction = 3;
+								doorway = true;
+							}
+							else if(left.isaDoor
+									&& isFree(xPos - newX, super.zPos))
+							{
+								direction = 0;
+								doorway = true;
+							}
+							else if(right.isaDoor
+									&& isFree(xPos + newX, super.zPos))
+							{
+								direction = 1;
+								doorway = true;
+							}
 						}
 						
-						if(isFree(xPos + newX, super.zPos)
-								&& isFree(super.xPos, zPos + newZ)
-								&& inSight)
+						//If player is in sight
+						if(inSight)
 						{
-							//Move more to get around the corner if 
-							//it can
-							if(isFree(xPos, zPos - speed))
+							//If it can move towards the player
+							if(isFree(xPos + newX, super.zPos)
+								&& isFree(super.xPos, zPos + newZ))
 							{
-								zPos -= speed;
+								//Move more to get around the corner if 
+								//it can
+								if(isFree(xPos, zPos - speed))
+								{
+									zPos -= speed;
+								}
+								
+								searchMode = false;
+								return;
 							}
-							
-							searchMode = false;
 						}
 						
 					   /*
@@ -1119,7 +1098,7 @@ public class Enemy extends Entity implements Comparable
 					    * players x direction or not, and if it can, move
 					    * towards it.
 					    */
-						if(Math.abs(Player.y - yPos) <= 2)
+						if(Math.abs(Player.y - yPos) <= 2 && !doorway)
 						{
 							if(newX < 0)
 							{
@@ -1128,8 +1107,7 @@ public class Enemy extends Entity implements Comparable
 									xPos -= newSpeed;
 								}
 							}
-							
-							if(newX > 0)
+							else
 							{
 								if(isFree(xPos + newSpeed, zPos))
 								{								
@@ -1145,6 +1123,7 @@ public class Enemy extends Entity implements Comparable
 						if(doorway)
 						{
 							searchMode = false;
+							return;
 						}
 						
 						doorway = false;
@@ -1162,7 +1141,7 @@ public class Enemy extends Entity implements Comparable
 						}
 					}
 				}
-				else if(direction == 3)
+				else
 				{
 					if(isFree(xPos, zPos + speed))
 					{
@@ -1182,47 +1161,56 @@ public class Enemy extends Entity implements Comparable
 						Block back = Level.getBlock((int)xPos,
 								(int)zPos + 1);
 						
-						if(back.isaDoor && 
-								isFree(xPos, super.zPos - newZ)
-								&& !doorway)
+					   /*
+					    * Check to see if each block is a doorway and if
+					    * it is, then move through the doorway by changing
+					    * the direction as being towards the doorway.
+					    */
+						if(!doorway)
 						{
-							direction = 2;
-							doorway = true;
-						}
-						else if(front.isaDoor
-								&& isFree(xPos, super.zPos + newZ)
-								&& !doorway)
-						{
-							direction = 3;
-							doorway = true;
-						}
-						else if(left.isaDoor
-								&& isFree(xPos - newX, super.zPos)
-								&& !doorway)
-						{
-							direction = 0;
-							doorway = true;
-						}
-						else if(right.isaDoor
-								&& isFree(xPos + newX, super.zPos)
-								&& !doorway)
-						{
-							direction = 1;
-							doorway = true;
+							if(back.isaDoor && 
+									isFree(xPos, super.zPos - newZ))
+							{
+								direction = 2;
+								doorway = true;
+							}
+							else if(front.isaDoor
+									&& isFree(xPos, super.zPos + newZ))
+							{
+								direction = 3;
+								doorway = true;
+							}
+							else if(left.isaDoor
+									&& isFree(xPos - newX, super.zPos))
+							{
+								direction = 0;
+								doorway = true;
+							}
+							else if(right.isaDoor
+									&& isFree(xPos + newX, super.zPos))
+							{
+								direction = 1;
+								doorway = true;
+							}
 						}
 						
-						if(isFree(xPos + newX, super.zPos)
-								&& isFree(super.xPos, zPos + newZ)
-								&& inSight)
+						//If player is in sight
+						if(inSight)
 						{
-							//Move more to get around the corner if 
-							//it can
-							if(isFree(xPos, zPos + speed))
+							//If it can move towards the player
+							if(isFree(xPos + newX, super.zPos)
+								&& isFree(super.xPos, zPos + newZ))
 							{
-								zPos += speed;
+								//Move more to get around the corner if 
+								//it can
+								if(isFree(xPos, zPos + speed))
+								{
+									zPos += speed;
+								}
+								
+								searchMode = false;
+								return;
 							}
-							
-							searchMode = false;
 						}
 						
 					   /*
@@ -1234,7 +1222,7 @@ public class Enemy extends Entity implements Comparable
 					    * players x direction or not, and if it can, move
 					    * towards it.
 					    */
-						if(Math.abs(Player.y - yPos) <= 2)
+						if(Math.abs(Player.y - yPos) <= 2 && !doorway)
 						{
 							if(newX < 0)
 							{
@@ -1243,8 +1231,7 @@ public class Enemy extends Entity implements Comparable
 									xPos -= newSpeed;
 								}
 							}
-							
-							if(newX > 0)
+							else
 							{
 								if(isFree(xPos + newSpeed, zPos))
 								{								
@@ -1260,6 +1247,7 @@ public class Enemy extends Entity implements Comparable
 						if(doorway)
 						{
 							searchMode = false;
+							return;
 						}
 						
 						doorway = false;
@@ -1279,7 +1267,7 @@ public class Enemy extends Entity implements Comparable
 				}  
 			}
 			
-			//Block enemy is currently on
+			//Block enemy is now on
 			Block blockOnNew = Level.getBlock((int)xPos, (int)zPos);
 			
 		   /*
@@ -1326,42 +1314,73 @@ public class Enemy extends Entity implements Comparable
 			yCorrect = -targetEnemy.yPos;
 		}
 		
-		//If in range, and is not attacking yet, begin attack
-		//no matter the tick.
-		if(distance <= 1 && !isAttacking)
+		if(inSight)
 		{
-			tick = 0;
-		}
-		
-	   /*
-	    * Only melee attack once each tick round if
-	    * within distance of 1 from the target. The enemy must also
-	    * be within height range of the target, and have the target
-	    * within its sight.
-	    */
-		if(tick == 0 && super.distance <= 1
-				&& Math.abs(Math.abs(this.getY()) - 
-				(Math.abs(yCorrect))) <= 1 + this.height
-				&& inSight)
-		{
-			//Set melee attacking to true
-			super.isAttacking = true;	
-		}
-	   /*
-	    * Fire at target once each 5 tick rounds if target is in sight
-	    * and if the enemy is not already firing. Also the enemy has to
-	    * have a special attack in order to activate it. Also to fire the
-	    * target has to be within its sight, and the target has to be out
-	    * of melee attack range. 
-	    */
-		else if(tick == 0
-				&& super.hasSpecial && inSight
-				&& !super.isFiring && tickRound == 0
-				&& distance > 1 && super.activated
-				&& Game.skillMode > 0)
-		{
-			//Enemy is in process of firing
-			super.isFiring = true;
+		   /*
+		    * Only melee attack once each tick round if
+		    * within distance of 1 from the target. The enemy must also
+		    * be within height range of the target, and have the target
+		    * within its sight.
+		    */
+			if(super.distance <= 1 && !isAttacking
+					&& Math.abs(Math.abs(this.getY()) - 
+					(Math.abs(yCorrect))) <= 1 + this.height)
+			{
+				tick = 0;
+				
+				//Angle that the player is in accordance to the enemy so
+				//that enemy moves right towards its target
+				rotation = Math.atan
+				(((targetX - xPos)) / ((targetZ - zPos)));
+				
+			   /*
+			    * If the target is in the 3rd or 4th quadrant of the map then
+			    * add PI to rotation so that the enemy will move into
+			    * the correct quadrant of the map and at the target.
+			    */
+				if(targetZ < zPos)
+				{
+					rotation += Math.PI;
+				}
+				
+				//Set melee attacking to true
+				super.isAttacking = true;	
+			}
+		   /*
+		    * Fire at target once each 5 tick rounds if target is in sight
+		    * and if the enemy is not already firing. Also the enemy has to
+		    * have a special attack in order to activate it. Also to fire the
+		    * target has to be within its sight, and the target has to be out
+		    * of melee attack range. 
+		    */
+			else if(tick == 0 && tickRound == 0)
+			{
+				if(distance > 1 && super.activated)
+				{
+					if(super.hasSpecial
+					&& !super.isFiring
+					&& Game.skillMode > 0)
+					{
+						//Enemy is in process of firing
+						super.isFiring = true;
+						
+						//Angle that the player is in accordance to the enemy so
+						//that enemy moves right towards its target
+						rotation = Math.atan
+						(((targetX - xPos)) / ((targetZ - zPos)));
+						
+					   /*
+					    * If the target is in the 3rd or 4th quadrant of the map then
+					    * add PI to rotation so that the enemy will move into
+					    * the correct quadrant of the map and at the target.
+					    */
+						if(targetZ < zPos)
+						{
+							rotation += Math.PI;
+						}
+					}
+				}
+			}
 		}
 	}
 	
@@ -1442,6 +1461,20 @@ public class Enemy extends Entity implements Comparable
 		Random random = new Random();
 		
 		isAlive = false;
+		
+	   /*
+	    * If enemy is not supposed to be in the game, but is not off of
+	    * this block due to an explosion bug, then remove it from the 
+	    * block and exit out of this method.
+	    */
+		if(!Game.enemies.contains(this))
+		{
+			Block blockOn = Level.getBlock((int)this.xPos,
+					(int)this.zPos);
+			
+			blockOn.enemiesOnBlock.remove(this);
+			return;
+		}
 		
 	   /*
 	    * Each enemy drops a particular item/s

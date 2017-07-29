@@ -7,6 +7,7 @@ import com.vile.entities.Button;
 import com.vile.entities.Door;
 import com.vile.entities.Elevator;
 import com.vile.entities.Enemy;
+import com.vile.entities.HurtingBlock;
 import com.vile.entities.Item;
 import com.vile.entities.Player;
 import com.vile.graphics.Render3D;
@@ -949,12 +950,21 @@ public class Controller
 		{
 			//If it contains a Toxic Waste Block or Lava Block
 			if(Game.hurtingBlocks.contains(Player.blockOn.wallEntity))
-			{
+			{			
 			   /*
 			    * Hurt the player if the ticks have reset. Meaning player
 			    * can only be hurt every so many ticks while on the block.
 			    */
 				Player.blockOn.wallEntity.activate();
+				
+				//Update HurtingBlock time only when the player is on the
+				//block
+				HurtingBlock.time++;
+				
+				if(HurtingBlock.time > 21 * Render3D.fpsCheck)
+				{
+					HurtingBlock.time = 0;
+				}
 			}
 			
 			//If a Secret block

@@ -988,7 +988,7 @@ public class Render3D extends Render
 			
 		   /*
 		    * If in Death cannot hurt me mode, the corpses will resurrect
-		    * on their own after 2500 ticks.
+		    * on their own after 10000 ticks.
 		    */
 			if(Display.skillMode == 4)
 			{		
@@ -1231,15 +1231,6 @@ public class Render3D extends Render
 		//Is enemy in the players sight
 		enemy.inSight = false;
 		
-		//Does it check one pixel at a time in the for
-		//loops or more for lower resolutions
-		double correction = 1;
-		
-		if(lowRes)
-		{
-			correction = 2;
-		}
-		
 	   /*
 	    * Make sure it doesn't try to render textures off the screen
 	    * because they can't be
@@ -1283,114 +1274,105 @@ public class Render3D extends Render
 		try
 		{
 		   /*
-		    * Render each pixel in the sprite correctly, and with the 
-		    * (zBuffer) as well so that sprites behind other sprites will
-		    * not clip through sprites in front of them. 
-		    * 
-		    * For each sprite also texture them correctly
-		    * and correct the textures for rotation and movement.
+		    * Performs different operations when looping through the pixels
+		    * depending on whether low resolution is turned on or not. This
+		    * makes the game faster than having if statements within the
+		    * double for loops.
 		    */
-			for(int yy = yPixL; yy < yPixR; yy+=correction)
+			if(lowRes)
 			{
-				//How the sprite rotates up or down based on players up and
-				//down rotation
-				double pixelRotationY = -((yy - yPixelR) / (yPixelL - yPixelR));
-				
-				//Sets the current pixel to an int, and multiplies it by
-				//256 since the image is 256 by 256
-				int yTexture = (int)(pixelRotationY * imageDimensions);
-				
-				//Go through width of image now
-				for(int xx = xPixL; xx < xPixR; xx+=correction)
+			   /*
+			    * Render each pixel in the sprite correctly, and with the 
+			    * (zBuffer) as well so that sprites behind other sprites will
+			    * not clip through sprites in front of them. 
+			    * 
+			    * For each sprite also texture them correctly
+			    * and correct the textures for rotation and movement.
+			    */
+				for(int yy = yPixL; yy < yPixR; yy+=2)
 				{
-					//Corrects the way the pixel faces in the x direction 
-					//depending on the players rotation
-					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+					//How the sprite rotates up or down based on players up and
+					//down rotation
+					double pixelRotationY = -((yy - yPixelR) / (yPixelL - yPixelR));
 					
-					//Sets the current pixel to an int and multiplies it by
-					//256 as that is the size of the image.
-					int xTexture = (int)(pixelRotationX * imageDimensions);
+					//Sets the current pixel to an int, and multiplies it by
+					//256 since the image is 256 by 256
+					int yTexture = (int)(pixelRotationY * imageDimensions);
 					
-					//Can the textures be seen
-					boolean seen = false;
-					
-				   /*
-				    * In case a rare bug continues to occur.
-				    */
-					if(zBuffer[(xx) + (yy) * WIDTH] < 0)
+					//Go through width of image now
+					for(int xx = xPixL; xx < xPixR; xx+=2)
 					{
-						zBuffer[(xx) + (yy) * WIDTH] = 0;
-					}
-					
-					try
-					{
-						//If not behind something else, and still has pixels
-						//to be rendered, the enemy can be seen
-						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
+						//Corrects the way the pixel faces in the x direction 
+						//depending on the players rotation
+						double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+						
+						//Sets the current pixel to an int and multiplies it by
+						//256 as that is the size of the image.
+						int xTexture = (int)(pixelRotationX * imageDimensions);
+						
+						//Can the textures be seen
+						boolean seen = false;
+						
+					   /*
+					    * In case a rare bug continues to occur.
+					    */
+						if(zBuffer[(xx) + (yy) * WIDTH] < 0)
 						{
-							seen = true;
+							zBuffer[(xx) + (yy) * WIDTH] = 0;
 						}
 						
-						//If low res mode, then do this for 4 pixels at once
-						if(lowRes)
-						{					
-							//If one pixel is seen, the other 3 have to also
-							//be seen for rendering to continue in this case
-							//for low res mode
-							if(seen && zBuffer[(xx) + (yy+1) * WIDTH] > rotZ
+						try
+						{
+							//If not behind something else, and still has pixels
+							//to be rendered, the enemy can be seen
+							if(zBuffer[(xx) + (yy) * WIDTH] > rotZ
+									&& zBuffer[(xx) + (yy+1) * WIDTH] > rotZ
 									&& zBuffer[(xx+1) + (yy+1) * WIDTH] > rotZ
 									&& zBuffer[(xx+1) + (yy) * WIDTH] > rotZ)
 							{
 								seen = true;
 							}
-							else
-							{
-								seen = false;
-							}
 						}
-					}
-					catch(Exception e)
-					{
-						continue;
-					}
-	
-					//If pixel is seen and can be rendered
-					if(seen)
-					{				
-						int color = 0;
-						
-						//Catch any weird errors and just continue
-						try
-						{
-							//Set the color of the pixel to be generated.
-							color = enemy.currentPhase.PIXELS
-							[(xTexture & 255) + (yTexture & 255) * 256];	
-						}
-						catch (Exception e)
+						catch(Exception e)
 						{
 							continue;
 						}
-	
-					   /*
-					    * If color is not white, render it, otherwise don't to
-					    * have transparency around your image. First two ff's
-					    * are the images alpha, 2nd two are red, 3rd two are
-					    * green, 4th two are blue. ff is 255.
-					    */
-						if(color != 0xffffffff)
+		
+						//If pixel is seen and can be rendered
+						if(seen)
 						{				
+							int color = 0;
+							
+							//Catch any weird errors and just continue
 							try
 							{
-								//Sets pixel in 2D array to that color
-								PIXELS[xx + yy * WIDTH] = color;
-								
-								//This is now the nearest texture to the
-								//player, so create the new buffer here.
-								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
-								
-								//If low res do this for 3 other pixels too
-								if(lowRes)
+								//Set the color of the pixel to be generated.
+								color = enemy.currentPhase.PIXELS
+								[(xTexture & 255) + (yTexture & 255) * 256];	
+							}
+							catch (Exception e)
+							{
+								continue;
+							}
+		
+						   /*
+						    * If color is not white, render it, otherwise don't to
+						    * have transparency around your image. First two ff's
+						    * are the images alpha, 2nd two are red, 3rd two are
+						    * green, 4th two are blue. ff is 255.
+						    */
+							if(color != 0xffffffff)
+							{				
+								try
 								{
+									//Sets pixel in 2D array to that color
+									PIXELS[xx + yy * WIDTH] = color;
+									
+									//This is now the nearest pixel to the
+									//player, at this coordinate so create
+									//the new buffer here.
+									zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+									
 									PIXELS[(xx + 1) + (yy) * WIDTH] = color;
 									zBuffer[(xx+1) + (yy) * WIDTH] = rotZ;
 									PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
@@ -1398,23 +1380,123 @@ public class Render3D extends Render
 									PIXELS[(xx) + (yy + 1) * WIDTH] = color;
 									zBuffer[(xx) + (yy+1) * WIDTH] = rotZ;
 								}
-							}
-							catch(Exception e)
-							{
-								
-							}
-							
-							//Reapers are translucent because theyre ghost 
-							//technically
-							if(ID == 4)
-							{
-								if(!lowRes)
+								catch(Exception e)
 								{
-									xx++;
+									
 								}
-								else
+								
+								//Reapers are translucent because theyre ghost 
+								//technically
+								if(ID == 4)
 								{
 									xx+=2;
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+			   /*
+			    * Render each pixel in the sprite correctly, and with the 
+			    * (zBuffer) as well so that sprites behind other sprites will
+			    * not clip through sprites in front of them. 
+			    * 
+			    * For each sprite also texture them correctly
+			    * and correct the textures for rotation and movement.
+			    */
+				for(int yy = yPixL; yy < yPixR; yy++)
+				{
+					//How the sprite rotates up or down based on players up and
+					//down rotation
+					double pixelRotationY = -((yy - yPixelR) / (yPixelL - yPixelR));
+					
+					//Sets the current pixel to an int, and multiplies it by
+					//256 since the image is 256 by 256
+					int yTexture = (int)(pixelRotationY * imageDimensions);
+					
+					//Go through width of image now
+					for(int xx = xPixL; xx < xPixR; xx++)
+					{
+						//Corrects the way the pixel faces in the x direction 
+						//depending on the players rotation
+						double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+						
+						//Sets the current pixel to an int and multiplies it by
+						//256 as that is the size of the image.
+						int xTexture = (int)(pixelRotationX * imageDimensions);
+						
+						//Can the textures be seen
+						boolean seen = false;
+						
+					   /*
+					    * In case a rare bug continues to occur.
+					    */
+						if(zBuffer[(xx) + (yy) * WIDTH] < 0)
+						{
+							zBuffer[(xx) + (yy) * WIDTH] = 0;
+						}
+						
+						try
+						{
+							//If not behind something else, and still has pixels
+							//to be rendered, the enemy can be seen
+							if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
+							{
+								seen = true;
+							}
+						}
+						catch(Exception e)
+						{
+							continue;
+						}
+		
+						//If pixel is seen and can be rendered
+						if(seen)
+						{				
+							int color = 0;
+							
+							//Catch any weird errors and just continue
+							try
+							{
+								//Set the color of the pixel to be generated.
+								color = enemy.currentPhase.PIXELS
+								[(xTexture & 255) + (yTexture & 255) * 256];	
+							}
+							catch (Exception e)
+							{
+								continue;
+							}
+		
+						   /*
+						    * If color is not white, render it, otherwise don't to
+						    * have transparency around your image. First two ff's
+						    * are the images alpha, 2nd two are red, 3rd two are
+						    * green, 4th two are blue. ff is 255.
+						    */
+							if(color != 0xffffffff)
+							{				
+								try
+								{
+									//Sets pixel in 2D array to that color
+									PIXELS[xx + yy * WIDTH] = color;
+									
+									//This is now the nearest pixel to the
+									//player, at this coordinate so create
+									//the new buffer here.
+									zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+								}
+								catch(Exception e)
+								{
+									
+								}
+								
+								//Reapers are translucent because theyre ghost 
+								//technically
+								if(ID == 4)
+								{
+									xx++;
 								}
 							}
 						}
@@ -1456,36 +1538,6 @@ public class Render3D extends Render
 		double yC 			    = y + (yCorrect / 10);
 		double zC 			    = ((z) - Player.z) * 1.9;
 		
-		int spriteSize          = 160;
-		
-	   /*
-	    * Both Megahealths and shotguns need to be blown up bigger because
-	    * the textures in the file themselves are smaller than most.
-	    */
-		if(ID == 1 || ID == 24 || ID == 26
-				|| ID >= 33)
-		{
-			spriteSize          = 240;
-		}
-		
-		if(ID == 21 || ID == 25)
-		{
-			spriteSize          = 480;
-		}
-		
-		if(ID >= 29 && ID < 33
-				|| ID == 39 || ID == 42
-				|| ID == 43)
-		{
-			spriteSize          = 600;
-		}
-		
-		//If Satillite
-		if(ID == 52)
-		{
-			spriteSize = 2048;
-		}
-		
 		double rotX      =  
 				xC * cosine - zC * sine;
 		double rotY      =  
@@ -1500,11 +1552,11 @@ public class Render3D extends Render
 				(HEIGHT / Math.sin(Player.upRotate) 
 						* Math.cos(Player.upRotate));
 		
-		double xPixelL   = xPixel - (spriteSize / rotZ);
-		double xPixelR   = xPixel + (spriteSize / rotZ);
+		double xPixelL   = xPixel - (item.size / rotZ);
+		double xPixelR   = xPixel + (item.size / rotZ);
 		
-		double yPixelL   = yPixel - (spriteSize / rotZ);
-		double yPixelR   = yPixel + (spriteSize / rotZ);
+		double yPixelL   = yPixel - (item.size / rotZ);
+		double yPixelR   = yPixel + (item.size / rotZ);
 		
 		int xPixL = (int)(xPixelL);
 		int xPixR = (int)(xPixelR);
@@ -2060,94 +2112,166 @@ public class Render3D extends Render
 			xPixR = 0;
 		}
 		
-		//Render all pixels in image based on the image loaded
-		for(int yy = yPixL; yy < yPixR; yy+=correction)
+	   /*
+	    * Performs different operations when looping through the pixels
+	    * depending on whether low resolution is turned on or not. This
+	    * makes the game faster than having if statements within the
+	    * double for loops.
+	    */
+		if(lowRes)
 		{
-			double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
-			int yTexture = (int)(pixelRotationY * imageDimensions);
-			
-			for(int xx = xPixL; xx < xPixR; xx+=correction)
+			for(int yy = yPixL; yy < yPixR; yy+=correction)
 			{
-				double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
-				int xTexture = (int)(pixelRotationX * imageDimensions);
+				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
+				int yTexture = (int)(pixelRotationY * imageDimensions);
 				
-				boolean seen = false;
-				
-				try
+				for(int xx = xPixL; xx < xPixR; xx+=correction)
 				{
-					if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
-					{
-						seen = true;
-					}
+					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+					int xTexture = (int)(pixelRotationX * imageDimensions);
+					boolean seen = false;
 					
-					if(lowRes)
-					{			
-						if(seen && zBuffer[(xx+1) + (yy) * WIDTH] > rotZ
-								&& zBuffer[(xx) + (yy+1) * WIDTH] > rotZ
-								&& zBuffer[(xx+1) + (yy+1) * WIDTH] > rotZ)
-						{
-							seen = true;
-						}
-						else
-						{
-							seen = false;
-						}
-					}
-				}
-				catch(Exception e)
-				{
-					continue;
-				}
-				
-				if(seen)
-				{
-					int color = 0;
-					
-					//If weird exception is found, just continue
+				   /*
+				    * Try to see if the graphics can be drawn on screen or not
+				    * and if there is a problem with temp being out of the
+				    * array index, catch it and continue.
+				    */
 					try
 					{
-						//Set color of pixel to corresponding pixel in 
-						//the image
-						color = item.itemImage.PIXELS
-						[(xTexture & 255) + (yTexture & 255) * 256];
+						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ
+								&& zBuffer[(xx+1) + (yy) * WIDTH] > rotZ
+								&& zBuffer[(xx+1) + (yy+1) * WIDTH] > rotZ
+								&& zBuffer[(xx) + (yy+1) * WIDTH] > rotZ)
+						{
+							seen = true;
+						}		
 					}
 					catch(Exception e)
 					{
 						continue;
 					}
 					
-					//Adjust brightness if pixel needs to have its
-					//brightness changed from 255 to something else
-					if(changesBrightness && brightness != 255)
+					//If within field of view
+					if(seen)
 					{
-						color = adjustBrightness(brightness, color, 0);
-					}
-				   /*
-				    * If color is not white, render it, otherwise don't to
-				    * have transparency around your image. First two ff's
-				    * are the images alpha, 2nd two are red, 3rd two are
-				    * green, 4th two are blue. ff is 255.
-				    */
-					if(color != 0xffffffff)
-					{
+						int color = 0;
+						
 						try
 						{
-							PIXELS[xx + yy * WIDTH] = color;
-							zBuffer[(xx) + (yy) * WIDTH] = rotZ;
-							
-							if(lowRes)
-							{
-								PIXELS[(xx + 1) + (yy) * WIDTH] = color;
-								zBuffer[(xx+1) + (yy+1) * WIDTH] = rotZ;
-								PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
-								zBuffer[(xx) + (yy+1) * WIDTH] = rotZ;
-								PIXELS[(xx) + (yy + 1) * WIDTH] = color;
-								zBuffer[(xx+1) + (yy) * WIDTH] = rotZ;
-							}
+							color = item.itemImage.PIXELS
+									[(xTexture & 255) + (yTexture & 255) * 256];
 						}
 						catch(Exception e)
 						{
 							continue;
+						}
+									
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff)
+						{
+							//Adjust brightness if pixel needs to have its
+							//brightness changed from 255 to something else
+							if(changesBrightness && brightness != 255)
+							{
+								color = adjustBrightness(brightness, color, 0);
+							}
+							
+							//Try to render
+							try
+							{
+								PIXELS[xx + yy * WIDTH] = color;
+								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+								PIXELS[(xx + 1) + (yy) * WIDTH] = color;
+								zBuffer[(xx+1) + (yy+1) * WIDTH] = rotZ;
+								PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
+								zBuffer[(xx+1) + (yy) * WIDTH] = rotZ;
+								PIXELS[(xx) + (yy + 1) * WIDTH] = color;
+								zBuffer[(xx) + (yy+1) * WIDTH] = rotZ;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for(int yy = yPixL; yy < yPixR; yy++)
+			{
+				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
+				int yTexture = (int)(pixelRotationY * imageDimensions);
+				
+				for(int xx = xPixL; xx < xPixR; xx++)
+				{
+					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+					int xTexture = (int)(pixelRotationX * imageDimensions);
+					boolean seen = false;
+					
+				   /*
+				    * Try to see if the graphics can be drawn on screen or not
+				    * and if there is a problem with temp being out of the
+				    * array index, catch it and continue.
+				    */
+					try
+					{
+						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
+						{
+							seen = true;
+						}		
+					}
+					catch(Exception e)
+					{
+						continue;
+					}
+					
+					//If within field of view
+					if(seen)
+					{
+						int color = 0;
+						
+						try
+						{
+							color = item.itemImage.PIXELS
+									[(xTexture & 255) + (yTexture & 255) * 256];
+						}
+						catch(Exception e)
+						{
+							continue;
+						}
+									
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff)
+						{
+							//Adjust brightness if pixel needs to have its
+							//brightness changed from 255 to something else
+							if(changesBrightness && brightness != 255)
+							{
+								color = adjustBrightness(brightness, color, 0);
+							}
+							
+							//Try to render
+							try
+							{
+								PIXELS[xx + yy * WIDTH] = color;
+								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
 						}
 					}
 				}
@@ -2321,79 +2445,152 @@ public class Render3D extends Render
 			xPixR = 0;
 		}
 		
-		for(int yy = yPixL; yy < yPixR; yy+=correction)
+	   /*
+	    * Performs different operations when looping through the pixels
+	    * depending on whether low resolution is turned on or not. This
+	    * makes the game faster than having if statements within the
+	    * double for loops.
+	    */
+		if(lowRes)
 		{
-			double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
-			int yTexture = (int)(pixelRotationY * imageDimensions);
-			
-			for(int xx = xPixL; xx < xPixR; xx+=correction)
+			for(int yy = yPixL; yy < yPixR; yy+=correction)
 			{
-				double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
-				int xTexture = (int)(pixelRotationX * imageDimensions);
-				boolean seen = false;
+				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
+				int yTexture = (int)(pixelRotationY * imageDimensions);
 				
-				try
+				for(int xx = xPixL; xx < xPixR; xx+=correction)
 				{
-					if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
-					{
-						seen = true;
-					}
+					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+					int xTexture = (int)(pixelRotationX * imageDimensions);
+					boolean seen = false;
 					
-					if(lowRes)
-					{				
-						if(seen && zBuffer[(xx+1) + (yy) * WIDTH] > rotZ
+				   /*
+				    * Try to see if the graphics can be drawn on screen or not
+				    * and if there is a problem with temp being out of the
+				    * array index, catch it and continue.
+				    */
+					try
+					{
+						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ
+								&& zBuffer[(xx+1) + (yy) * WIDTH] > rotZ
 								&& zBuffer[(xx+1) + (yy+1) * WIDTH] > rotZ
 								&& zBuffer[(xx) + (yy+1) * WIDTH] > rotZ)
 						{
 							seen = true;
-						}
-						else
-						{
-							seen = false;
-						}
+						}		
 					}
-				}
-				catch(Exception e)
-				{
-					continue;
-				}
-				
-				//If within field of view
-				if(seen)
-				{
-					int color = 0;
-
-					color = image.PIXELS
-						[(xTexture & 255) + (yTexture & 255) * 256];
-								
-				   /*
-				    * If color is not white, render it, otherwise don't to
-				    * have transparency around your image. First two ff's
-				    * are the images alpha, 2nd two are red, 3rd two are
-				    * green, 4th two are blue. ff is 255.
-				    */
-					if(color != 0xffffffff)
+					catch(Exception e)
 					{
-						//Try to render
+						continue;
+					}
+					
+					//If within field of view
+					if(seen)
+					{
+						int color = 0;
+						
 						try
 						{
-							PIXELS[xx + yy * WIDTH] = color;
-							zBuffer[(xx) + (yy) * WIDTH] = rotZ;
-							
-							//If low res setting on
-							if(lowRes)
-							{
-								PIXELS[(xx + 1) + (yy) * WIDTH] = color;
-								zBuffer[(xx+1) + (yy) * WIDTH] = rotZ;
-								PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
-								zBuffer[(xx+1) + (yy+1) * WIDTH] = rotZ;
-								PIXELS[(xx) + (yy + 1) * WIDTH] = color;
-								zBuffer[(xx) + (yy+1) * WIDTH] = rotZ;
-							}
+							color = image.PIXELS
+									[(xTexture & 255) + (yTexture & 255) * 256];
 						}
 						catch(Exception e)
 						{
 							continue;
+						}
+									
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff)
+						{
+							//Try to render
+							try
+							{
+								PIXELS[xx + yy * WIDTH] = color;
+								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+								PIXELS[(xx + 1) + (yy) * WIDTH] = color;
+								zBuffer[(xx+1) + (yy+1) * WIDTH] = rotZ;
+								PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
+								zBuffer[(xx+1) + (yy) * WIDTH] = rotZ;
+								PIXELS[(xx) + (yy + 1) * WIDTH] = color;
+								zBuffer[(xx) + (yy+1) * WIDTH] = rotZ;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for(int yy = yPixL; yy < yPixR; yy++)
+			{
+				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
+				int yTexture = (int)(pixelRotationY * imageDimensions);
+				
+				for(int xx = xPixL; xx < xPixR; xx++)
+				{
+					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+					int xTexture = (int)(pixelRotationX * imageDimensions);
+					boolean seen = false;
+					
+				   /*
+				    * Try to see if the graphics can be drawn on screen or not
+				    * and if there is a problem with temp being out of the
+				    * array index, catch it and continue.
+				    */
+					try
+					{
+						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
+						{
+							seen = true;
+						}		
+					}
+					catch(Exception e)
+					{
+						continue;
+					}
+					
+					//If within field of view
+					if(seen)
+					{
+						int color = 0;
+						
+						try
+						{
+							color = image.PIXELS
+									[(xTexture & 255) + (yTexture & 255) * 256];
+						}
+						catch(Exception e)
+						{
+							continue;
+						}
+									
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff)
+						{
+							//Try to render
+							try
+							{
+								PIXELS[xx + yy * WIDTH] = color;
+								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
 						}
 					}
 				}
@@ -2832,80 +3029,73 @@ public class Render3D extends Render
 			xPixR = 0;
 		}
 		
-		for(int yy = yPixL; yy < yPixR; yy+=correction)
+	   /*
+	    * Performs different operations when looping through the pixels
+	    * depending on whether low resolution is turned on or not. This
+	    * makes the game faster than having if statements within the
+	    * double for loops.
+	    */
+		if(lowRes)
 		{
-			double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
-			int yTexture = (int)(pixelRotationY * imageDimensions);
-			
-			for(int xx = xPixL; xx < xPixR; xx+=correction)
+			for(int yy = yPixL; yy < yPixR; yy+=correction)
 			{
-				double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
-				int xTexture = (int)(pixelRotationX * imageDimensions);
-				boolean seen = false;
+				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
+				int yTexture = (int)(pixelRotationY * imageDimensions);
 				
-			   /*
-			    * Try to see if the graphics can be drawn on screen or not
-			    * and if there is a problem with temp being out of the
-			    * array index, catch it and continue.
-			    */
-				try
+				for(int xx = xPixL; xx < xPixR; xx+=correction)
 				{
-					if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
-					{
-						seen = true;
-					}
+					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+					int xTexture = (int)(pixelRotationX * imageDimensions);
+					boolean seen = false;
 					
-					if(lowRes)
-					{				
-						if(seen && zBuffer[(xx+1) + (yy) * WIDTH] > rotZ
+				   /*
+				    * Try to see if the graphics can be drawn on screen or not
+				    * and if there is a problem with temp being out of the
+				    * array index, catch it and continue.
+				    */
+					try
+					{
+						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ
+								&& zBuffer[(xx+1) + (yy) * WIDTH] > rotZ
 								&& zBuffer[(xx+1) + (yy+1) * WIDTH] > rotZ
 								&& zBuffer[(xx) + (yy+1) * WIDTH] > rotZ)
 						{
 							seen = true;
-						}
-						else
-						{
-							seen = false;
-						}
-					}
-				}
-				catch(Exception e)
-				{
-					continue;
-				}
-				
-				//If within field of view
-				if(seen)
-				{
-					int color = 0;
-					
-					try
-					{
-						color = corpseGraphics.PIXELS
-								[(xTexture & 255) + (yTexture & 255) * 256];
+						}		
 					}
 					catch(Exception e)
 					{
 						continue;
 					}
-								
-				   /*
-				    * If color is not white, render it, otherwise don't to
-				    * have transparency around your image. First two ff's
-				    * are the images alpha, 2nd two are red, 3rd two are
-				    * green, 4th two are blue. ff is 255.
-				    */
-					if(color != 0xffffffff)
+					
+					//If within field of view
+					if(seen)
 					{
-						//Try to render
+						int color = 0;
+						
 						try
 						{
-							PIXELS[xx + yy * WIDTH] = color;
-							zBuffer[(xx) + (yy) * WIDTH] = rotZ;
-							
-							//If low res setting on
-							if(lowRes)
+							color = corpseGraphics.PIXELS
+									[(xTexture & 255) + (yTexture & 255) * 256];
+						}
+						catch(Exception e)
+						{
+							continue;
+						}
+									
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff)
+						{
+							//Try to render
+							try
 							{
+								PIXELS[xx + yy * WIDTH] = color;
+								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
 								PIXELS[(xx + 1) + (yy) * WIDTH] = color;
 								zBuffer[(xx+1) + (yy+1) * WIDTH] = rotZ;
 								PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
@@ -2913,10 +3103,78 @@ public class Render3D extends Render
 								PIXELS[(xx) + (yy + 1) * WIDTH] = color;
 								zBuffer[(xx) + (yy+1) * WIDTH] = rotZ;
 							}
+							catch(Exception e)
+							{
+								continue;
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for(int yy = yPixL; yy < yPixR; yy++)
+			{
+				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
+				int yTexture = (int)(pixelRotationY * imageDimensions);
+				
+				for(int xx = xPixL; xx < xPixR; xx++)
+				{
+					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+					int xTexture = (int)(pixelRotationX * imageDimensions);
+					boolean seen = false;
+					
+				   /*
+				    * Try to see if the graphics can be drawn on screen or not
+				    * and if there is a problem with temp being out of the
+				    * array index, catch it and continue.
+				    */
+					try
+					{
+						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
+						{
+							seen = true;
+						}		
+					}
+					catch(Exception e)
+					{
+						continue;
+					}
+					
+					//If within field of view
+					if(seen)
+					{
+						int color = 0;
+						
+						try
+						{
+							color = corpseGraphics.PIXELS
+									[(xTexture & 255) + (yTexture & 255) * 256];
 						}
 						catch(Exception e)
 						{
 							continue;
+						}
+									
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff)
+						{
+							//Try to render
+							try
+							{
+								PIXELS[xx + yy * WIDTH] = color;
+								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
 						}
 					}
 				}
@@ -3169,790 +3427,912 @@ public class Render3D extends Render
 		//non indentation of everything in this try block.
 		try
 		{
-	   /*
-	    * Corrects it so that the left side of the wall does not look like
-	    * it is moving as the player moves. It is supposed to look as if
-	    * it is staying put in the same place. You should test this. Make
-	    * those 2's ones and you'll see just how much a little change will
-	    * screw everything up. 
-	    */
-		double xCLeft 		     = 
-				((xLeft)- (rightSpeed * rightCorrect)) * 2;
-		double zCLeft 			 = 
-				((zDepthLeft) - (fowardSpeed * forwardCorrect)) * 2;
-		
-	   /*
-		* Rotate the Left side x and z (up to a full circle if needed)
-		* using both cosine and sine in opposite ways for both
-		* equations to get the effect of a circle. This allows for the
-		* wall to rotate with the player yet look like its staying in the
-		* same place. You can test this effect if you want. If you set
-		* xCLeft to 0 here or anything really, the wall well allow
-		* the right side to rotate correctly but the left side of every
-		* wall will do weird crap like stretch out to infinity and 
-		* stuff. This basically just makes it so that it will turn
-		* towards the player the more the player turns away from that
-		* side to make it seem like it is staying in the same place.
-		*/
-		double rotLeftSideX      =  (xCLeft * cosine - zCLeft * sine);
-		double rotLeftSideZ      =  (zCLeft * cosine + xCLeft * sine);
-		
-	   /*
-	    * Moves corners of wall (or box I guess you could say) in 
-	    * correlation to your y direction (If you jump or crouch).
-	    * So that they seemingly stay in the same positions as well.
-	    */
-		double yCornerTopLeft    = 
-				((-yHeight - ((0.5 / 12) * wallHeight))
-						+ (Player.y * 0.06)) * 100;
-		double yCornerBottomLeft = 
-				((0.5 - yHeight) + (Player.y * 0.06)) * 100;
-		
-	   /*
-	    * Corrects it so that the right side of the wall does not look like
-	    * it is moving as the player moves. It is supposed to look as if
-	    * it is staying put in the same place. You should test this. Make
-	    * those 2's ones and you'll see just how much a little change will
-	    * screw everything up.
-	    */
-		double xCRight 		     = 
-				((xRight)- (rightSpeed * rightCorrect)) * 2;
-		double zCRight 			 = 
-				((zDepthRight) - (fowardSpeed * forwardCorrect)) * 2;
-			
-	   /*
-		* Rotate the Right side x and z (up to a full circle if needed)
-		* using both cosine and sine in opposite ways for both
-		* equations to get the effect of a circle. This allows for the
-		* wall to rotate with the player yet look like its staying in the
-		* same place. You can test this effect if you want. If you set
-		* xCRight to xCLeft here or anything really, the wall well allow
-		* the left side to rotate correctly but the right side of every
-		* wall will do weird crap like strech out to infinity and 
-		* stuff. This basically just makes it so that it will turn
-		* towards the player the more the player turns away from that
-		* side to make it seem like it is staying in the same place.
-		*/
-		double rotRightSideX      =  
-				(xCRight * cosine - zCRight * sine);
-		double rotRightSideZ      =
-				(zCRight * cosine + xCRight * sine);
-			
-	   /*
-		* Moves corners of wall (or box I guess you could say) in 
-		* correlation to your y direction (If you jump or crouch).
-		* So that they seemingly stay in the same positions as well.
-		*/
-		double yCornerTopRight    = 
-				((-yHeight - ((0.5 / 12) * wallHeight)) + (Player.y * 0.06)) * 100;
-		double yCornerBottomRight = 
-				((0.5 - yHeight) + (Player.y * 0.06)) * 100;
-		
-		//All i know is it helps with making the pixels seem like they 
-		//rotate when the wall rotates. They rotate along with the wall
-		//basically.
-		double text4Modifier = 256;
-		
-		//The radius the wall will clip out of
-		double clip = 13;
-		
-	   /*
-	    * Uses cohen sutherland theroem to clip off any textures outside
-	    * of the box created by the walls. If this wasn't used the 
-	    * wall textures may stretch out to infinity.
-	    */
-		if(rotLeftSideZ <= clip)
-		{
-			double temp = (clip - rotLeftSideZ) 
-					/ (rotRightSideZ - rotLeftSideZ);
-			rotLeftSideZ = rotLeftSideZ + 
-					(rotRightSideZ - rotLeftSideZ) * temp;
-			rotLeftSideX = rotLeftSideX + 
-					(rotRightSideX - rotLeftSideX) * temp;
-		}
-		
-		//Used for both sides
-		if(rotRightSideZ <= clip)
-		{
-			double temp = (clip - rotLeftSideZ) 
-					/ (rotRightSideZ - rotLeftSideZ);
-			rotRightSideZ = rotLeftSideZ + 
-					(rotRightSideZ - rotLeftSideZ) * temp;
-			rotRightSideX = rotLeftSideX + 
-					(rotRightSideX - rotLeftSideX) * temp;
-		}
-		
-		/*
-		 * Calculates the vectors from the center (The players position
-		 * in respect to the wall) and places them at each end of the wall
-		 * to define the range in which the textures will be rendered. The
-		 * width of the wall per say.
-		 */
-		double xPixelLeft  		  = 
-				((rotLeftSideX / rotLeftSideZ) * HEIGHT + (WIDTH / 2));
-		double xPixelRight		  = 
-				((rotRightSideX / rotRightSideZ) * HEIGHT + (WIDTH / 2));
-		
-		//Make those into ints for the for loops
-		int xPixelLeftInt         = (int) (xPixelLeft);
-		int xPixelRightInt        = (int) (xPixelRight);
-		
-	   /*
-	    * Don't render things off the screen
-	    */
-		if(xPixelLeftInt < 0)
-		{
-			xPixelLeftInt = 0;
-		}
-		
-	   /*
-	    * Dont render things off the screen
-	    */
-		if(xPixelRightInt > WIDTH)
-		{
-			xPixelRightInt = WIDTH;
-		}
-		
-	   /*
-	    * Sets up vectors to all 4 corners of the wall to define the edges
-	    * of the wall to be rendered no matter where the player is looking
-	    * up or down. For instance if yPixelTop left was lower, the wall
-	    * would have the left side be lower and tilt upward towards the 
-	    * right side which wouldn't look right, so this makes the textures
-	    * stay as a square and stretch as far as looks realistic in the
-	    * y direction
-	    */
-		double yPixelTopLeft 	  = 
-				(yCornerTopLeft 
-						/ rotLeftSideZ * HEIGHT + (HEIGHT 
-								/ Math.sin(Player.upRotate) 
-								* Math.cos(Player.upRotate)));
-		double yPixelBottomLeft   = 
-				(yCornerBottomLeft 
-						/ rotLeftSideZ * HEIGHT + (HEIGHT 
-								/ Math.sin(Player.upRotate) 
-								* Math.cos(Player.upRotate)));
-		double yPixelTopRight 	  = 
-				(yCornerTopRight 
-						/ rotRightSideZ * HEIGHT + (HEIGHT 
-								/ Math.sin(Player.upRotate) 
-								* Math.cos(Player.upRotate)));
-		double yPixelBottomRight  = 
-				(yCornerBottomRight 
-						/ rotRightSideZ * HEIGHT + (HEIGHT 
-								/ Math.sin(Player.upRotate) 
-								* Math.cos(Player.upRotate)));
-		
-		//Allows the textures to rotate with the wall.
-		double texture1 = 1 / rotLeftSideZ;
-		double texture2 = 1 / rotRightSideZ;
-		double texture4 = text4Modifier / rotRightSideZ;
-		
-		//Walls phase is always updated.
-		block.wallPhase++;
-		
-		//Brightness of each wall
-		int brightness = 255;
-		
-		//Does wall stay at full brightness or does it change
-		boolean changesBrightness = false;
-		
-		//Figures out what wall texture to render beforehand
-		switch (wallID)
-		{
-			//Dungeon Bricks
-			case 1:
-				block.wallImage = Textures.wall1;
-				
-				block.wallPhase = 0;
-				break;
-			
-			//Futuristic Wall
-			case 2:
-				block.wallImage = Textures.wall2;
-				
-				block.wallPhase = 0;
-				break;
-
-			//Dark bricks
-			case 3:
-				block.wallImage = Textures.wall3;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Glass
-			case 4:
-				block.wallImage = Textures.wall4;
-				
-				//If glass is damaged, it has different textures
-				if(block.health <= 10)
-				{
-					block.wallImage = Textures.wall4damaged3;
-				}
-				else if(block.health <= 30)
-				{
-					block.wallImage = Textures.wall4damaged2;
-				}
-				else if(block.health <= 50)
-				{
-					block.wallImage = Textures.wall4damaged1;
-				}
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Computer Wall
-			case 5:
-				block.wallImage = Textures.wall5;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//End Button
-			case 6:
-				block.wallImage = Textures.wall6;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Normal door
-			case 7:
-				block.wallImage = Textures.wall7;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Elevator	
-			case 8:
-				block.wallImage = Textures.wall8;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Red key door
-			case 9:
-				block.wallImage = Textures.wall9;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Blue key door
-			case 10:
-				block.wallImage = Textures.wall10;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Green key door	
-			case 11:
-				block.wallImage = Textures.wall11;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Yellow key door	
-			case 12:
-				block.wallImage = Textures.wall12;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Moving computer graphic wall	
-			case 13:
-				if(block.wallPhase < 50 * fpsCheck)
-				{
-					block.wallImage = Textures.wall13Phase1;
-				}
-				else
-				{
-					block.wallImage = Textures.wall13Phase2;
-				}
-				
-				if(block.wallPhase > 100 * fpsCheck)
-				{
-					block.wallPhase = 0;
-				}
-				
-				break;
-		
-			//Secret found wall	
-			case 14:
-				block.wallImage = Textures.wall14;
-				
-				block.wallPhase = 0;
-				break;
-		
-			//Electric wall
-			case 15:
-				brightness = 0;
-				
-				if(block.wallPhase < 10 * fpsCheck)
-				{
-					block.wallImage = Textures.wall15Phase1;
-					
-					brightness = 25;
-				}
-				else if(block.wallPhase < 20 * fpsCheck)
-				{
-					block.wallImage = Textures.wall15Phase2;
-					
-					brightness = 75;
-				}
-				else if(block.wallPhase < 30 * fpsCheck)
-				{
-					block.wallImage = Textures.wall15Phase3;
-					
-					brightness = 150;
-				}
-				else if(block.wallPhase < 40 * fpsCheck)
-				{
-					block.wallImage = Textures.wall15Phase4;
-					
-					brightness = 200;
-				}
-				else if(block.wallPhase < 50 * fpsCheck)
-				{
-					block.wallImage = Textures.wall15Phase5;
-					
-					brightness = 255;
-				}
-				else if(block.wallPhase < 60 * fpsCheck)
-				{
-					block.wallImage = Textures.wall15Phase4;
-					
-					brightness = 200;
-				}
-				else if(block.wallPhase < 70 * fpsCheck)
-				{
-					block.wallImage = Textures.wall15Phase3;
-					
-					brightness = 150;
-				}
-				else if(block.wallPhase < 80 * fpsCheck)
-				{
-					block.wallImage = Textures.wall15Phase2;
-					
-					brightness = 75;
-				}
-				else if(block.wallPhase <= 90 * fpsCheck)
-				{
-					block.wallImage = Textures.wall15Phase1;
-					
-					brightness = 25;
-				}
-				
-				if(block.wallPhase > 90 * fpsCheck)
-				{
-					block.wallPhase = 0;
-				}	
-				
-				changesBrightness = true;
-				
-				break;
-		
-			//Various liquid walls
-			case 16:
-			case 17:
-			case 25:
-				brightness = 0;
-				
-				if(block.wallPhase < 10 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic1;
-					
-					brightness = 150;
-				}
-				else if(block.wallPhase < 20 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic2;
-					
-					brightness = 175;
-				}
-				else if(block.wallPhase < 30 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic3;
-					
-					brightness = 200;
-				}
-				else if(block.wallPhase < 40 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic4;
-					
-					brightness = 225;
-				}
-				else if(block.wallPhase < 50 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic5;
-					
-					brightness = 255;
-				}
-				else if(block.wallPhase < 60 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic6;
-					
-					brightness = 225;
-				}
-				else if(block.wallPhase < 70 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic7;
-					
-					brightness = 200;
-				}
-				else if(block.wallPhase < 80 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic8;
-					
-					brightness = 175;
-				}
-				else if(block.wallPhase < 90 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic9;
-					
-					brightness = 150;
-				}
-				else if(block.wallPhase < 100 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic10;
-					
-					brightness = 175;
-				}
-				else if(block.wallPhase < 110 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic11;
-					
-					brightness = 200;
-				}
-				else if(block.wallPhase < 120 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic12;
-					
-					brightness = 225;
-				}
-				else if(block.wallPhase < 130 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic13;
-					
-					brightness = 255;
-				}
-				else if(block.wallPhase < 140 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic14;
-					
-					brightness = 225;
-				}
-				else if(block.wallPhase < 150 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic15;
-					
-					brightness = 200;
-				}
-				else if(block.wallPhase < 161 * fpsCheck)
-				{
-					block.wallImage = Textures.toxic16;
-					
-					brightness = 175;
-				}
-				
-				if(block.wallPhase > 160 * fpsCheck)
-				{
-					block.wallPhase = 0;
-				}
-				
-				changesBrightness = true;
-				
-			    break;
-		
-			//Spine Wall
-			case 18:
-				if(block.wallPhase < 10 * fpsCheck)
-				{
-					block.wallImage = Textures.spine1;
-				}
-				else if(block.wallPhase < 20 * fpsCheck)
-				{
-					block.wallImage = Textures.spine2;
-				}
-				else if(block.wallPhase < 30 * fpsCheck)
-				{
-					block.wallImage = Textures.spine3;
-				}
-				else if(block.wallPhase < 40 * fpsCheck)
-				{
-					block.wallImage = Textures.spine4;
-				}
-				else if(block.wallPhase < 50 * fpsCheck)
-				{
-					block.wallImage = Textures.spine5;
-				}
-				else if(block.wallPhase < 60 * fpsCheck)
-				{
-					block.wallImage = Textures.spine6;
-				}
-				else if(block.wallPhase < 70 * fpsCheck)
-				{
-					block.wallImage = Textures.spine7;
-				}
-				else if(block.wallPhase < 80 * fpsCheck)
-				{
-					block.wallImage = Textures.spine8;
-				}
-				
-				if(block.wallPhase >= 80 * fpsCheck)
-				{
-					block.wallPhase = 0;
-				}
-				
-				break;
-		
-			//Dead electric wall
-			case 19:
-				brightness = 25;			
-				block.wallImage = Textures.wall15Phase1;
-				
-				break;
-		
-			//MLG wall
-			case 20:
-				block.wallImage = Textures.mlg;
-				block.wallPhase = 0;
-				break;
-		
-			//Box wall
-			case 21:
-				block.wallImage = Textures.box;
-				block.wallPhase = 0;
-				break;
-		
-			//Wood wall
-			case 22:
-				block.wallImage = Textures.woodenWall;
-				block.wallPhase = 0;
-				break;
-		
-			//Wall with picture on it
-			case 23:
-				block.wallImage = Textures.bloodWall;
-				block.wallPhase = 0;
-				break;
-		
-			//Marble wall
-			case 24:
-				block.wallImage = Textures.marble;
-				block.wallPhase = 0;
-				break;
-		
-			//Normal Button
-			case 26:
-				block.wallImage = Textures.normButton;
-				block.wallPhase = 0;
-				break;
-				
-			//Cool molten rock texture
-			case 27:
-				block.wallImage = Textures.coolWall;
-				
-				block.wallPhase = 0;
-				
-				break;
-		}
-		
-		//If not a brightness of 255, it'll need to be changed
-		if(brightness != 255)
-		{
-			changesBrightness = true;
-		}
-		
-		//How it iterates through the for loop. By 1s or 2s
-		int correction = 1;
-		
-		if(lowRes)
-		{
-			correction = 2;
-		}
-		
-		//Color of current picture
-		int color = 0;
-		
-	   /*
-	    * While the pixels being rendered are still within the bounds
-	    * of the wall (The width of the wall)
-	    */
-		for(int x = xPixelLeftInt; x < xPixelRightInt; x+=correction)
-		{
 		   /*
-		    * How much the pixels are to rotate depending on your movement
-		    * . Your movement is tracked by the change in xPixelLeft and
-		    * xPixelRight from frame to frame.
+		    * Corrects it so that the left side of the wall does not look like
+		    * it is moving as the player moves. It is supposed to look as if
+		    * it is staying put in the same place. You should test this. Make
+		    * those 2's ones and you'll see just how much a little change will
+		    * screw everything up. 
 		    */
-			double pixelRotation = (x - xPixelLeft) /
-					(xPixelLeft - xPixelRight);
+			double xCLeft 		     = 
+					((xLeft)- (rightSpeed * rightCorrect)) * 2;
+			double zCLeft 			 = 
+					((zDepthLeft) - (fowardSpeed * forwardCorrect)) * 2;
+			
+		   /*
+			* Rotate the Left side x and z (up to a full circle if needed)
+			* using both cosine and sine in opposite ways for both
+			* equations to get the effect of a circle. This allows for the
+			* wall to rotate with the player yet look like its staying in the
+			* same place. You can test this effect if you want. If you set
+			* xCLeft to 0 here or anything really, the wall well allow
+			* the right side to rotate correctly but the left side of every
+			* wall will do weird crap like stretch out to infinity and 
+			* stuff. This basically just makes it so that it will turn
+			* towards the player the more the player turns away from that
+			* side to make it seem like it is staying in the same place.
+			*/
+			double rotLeftSideX      =  (xCLeft * cosine - zCLeft * sine);
+			double rotLeftSideZ      =  (zCLeft * cosine + xCLeft * sine);
+			
+		   /*
+		    * Moves corners of wall (or box I guess you could say) in 
+		    * correlation to your y direction (If you jump or crouch).
+		    * So that they seemingly stay in the same positions as well.
+		    */
+			double yCornerTopLeft    = 
+					((-yHeight - ((0.5 / 12) * wallHeight))
+							+ (Player.y * 0.06)) * 100;
+			double yCornerBottomLeft = 
+					((0.5 - yHeight) + (Player.y * 0.06)) * 100;
+			
+		   /*
+		    * Corrects it so that the right side of the wall does not look like
+		    * it is moving as the player moves. It is supposed to look as if
+		    * it is staying put in the same place. You should test this. Make
+		    * those 2's ones and you'll see just how much a little change will
+		    * screw everything up.
+		    */
+			double xCRight 		     = 
+					((xRight)- (rightSpeed * rightCorrect)) * 2;
+			double zCRight 			 = 
+					((zDepthRight) - (fowardSpeed * forwardCorrect)) * 2;
+				
+		   /*
+			* Rotate the Right side x and z (up to a full circle if needed)
+			* using both cosine and sine in opposite ways for both
+			* equations to get the effect of a circle. This allows for the
+			* wall to rotate with the player yet look like its staying in the
+			* same place. You can test this effect if you want. If you set
+			* xCRight to xCLeft here or anything really, the wall well allow
+			* the left side to rotate correctly but the right side of every
+			* wall will do weird crap like strech out to infinity and 
+			* stuff. This basically just makes it so that it will turn
+			* towards the player the more the player turns away from that
+			* side to make it seem like it is staying in the same place.
+			*/
+			double rotRightSideX      =  
+					(xCRight * cosine - zCRight * sine);
+			double rotRightSideZ      =
+					(zCRight * cosine + xCRight * sine);
+				
+		   /*
+			* Moves corners of wall (or box I guess you could say) in 
+			* correlation to your y direction (If you jump or crouch).
+			* So that they seemingly stay in the same positions as well.
+			*/
+			double yCornerTopRight    = 
+					((-yHeight - ((0.5 / 12) * wallHeight)) + (Player.y * 0.06)) * 100;
+			double yCornerBottomRight = 
+					((0.5 - yHeight) + (Player.y * 0.06)) * 100;
+			
+			//All i know is it helps with making the pixels seem like they 
+			//rotate when the wall rotates. They rotate along with the wall
+			//basically.
+			double text4Modifier = 256;
+			
+			//The radius the wall will clip out of
+			double clip = 13;
+			
+		   /*
+		    * Uses cohen sutherland theroem to clip off any textures outside
+		    * of the box created by the walls. If this wasn't used the 
+		    * wall textures may stretch out to infinity.
+		    */
+			/*
+			if(rotLeftSideZ <= clip)
+			{
+				double temp = (clip - rotLeftSideZ) 
+						/ (rotRightSideZ - rotLeftSideZ);
+				rotLeftSideZ = rotLeftSideZ + 
+						(rotRightSideZ - rotLeftSideZ) * temp;
+				rotLeftSideX = rotLeftSideX + 
+						(rotRightSideX - rotLeftSideX) * temp;
+			}
+			
+			//Used for both sides
+			if(rotRightSideZ <= clip)
+			{
+				double temp = (clip - rotLeftSideZ) 
+						/ (rotRightSideZ - rotLeftSideZ);
+				rotRightSideZ = rotLeftSideZ + 
+						(rotRightSideZ - rotLeftSideZ) * temp;
+				rotRightSideX = rotLeftSideX + 
+						(rotRightSideX - rotLeftSideX) * temp;
+			}
+			
+			/*
+			 * Calculates the vectors from the center (The players position
+			 * in respect to the wall) and places them at each end of the wall
+			 * to define the range in which the textures will be rendered. The
+			 * width of the wall per say.
+			 */
+			double xPixelLeft  		  = 
+					((rotLeftSideX / rotLeftSideZ) * HEIGHT + (WIDTH / 2));
+			double xPixelRight		  = 
+					((rotRightSideX / rotRightSideZ) * HEIGHT + (WIDTH / 2));
+			
+			//Make those into ints for the for loops
+			int xPixelLeftInt         = (int) (xPixelLeft);
+			int xPixelRightInt        = (int) (xPixelRight);
+			
+		   /*
+		    * Don't render things off the screen
+		    */
+			if(xPixelLeftInt < 0)
+			{
+				xPixelLeftInt = 0;
+			}
+			
+		   /*
+		    * Dont render things off the screen
+		    */
+			if(xPixelRightInt > WIDTH)
+			{
+				xPixelRightInt = WIDTH;
+			}
+			
+		   /*
+		    * Sets up vectors to all 4 corners of the wall to define the edges
+		    * of the wall to be rendered no matter where the player is looking
+		    * up or down. For instance if yPixelTop left was lower, the wall
+		    * would have the left side be lower and tilt upward towards the 
+		    * right side which wouldn't look right, so this makes the textures
+		    * stay as a square and stretch as far as looks realistic in the
+		    * y direction
+		    */
+			double yPixelTopLeft 	  = 
+					(yCornerTopLeft 
+							/ rotLeftSideZ * HEIGHT + (HEIGHT 
+									/ Math.sin(Player.upRotate) 
+									* Math.cos(Player.upRotate)));
+			double yPixelBottomLeft   = 
+					(yCornerBottomLeft 
+							/ rotLeftSideZ * HEIGHT + (HEIGHT 
+									/ Math.sin(Player.upRotate) 
+									* Math.cos(Player.upRotate)));
+			double yPixelTopRight 	  = 
+					(yCornerTopRight 
+							/ rotRightSideZ * HEIGHT + (HEIGHT 
+									/ Math.sin(Player.upRotate) 
+									* Math.cos(Player.upRotate)));
+			double yPixelBottomRight  = 
+					(yCornerBottomRight 
+							/ rotRightSideZ * HEIGHT + (HEIGHT 
+									/ Math.sin(Player.upRotate) 
+									* Math.cos(Player.upRotate)));
+			
+			//Allows the textures to rotate with the wall.
+			double texture1 = 1 / rotLeftSideZ;
+			double texture2 = 1 / rotRightSideZ;
+			double texture4 = text4Modifier / rotRightSideZ;
+			
+			//Walls phase is always updated.
+			block.wallPhase++;
+			
+			//Brightness of each wall
+			int brightness = 255;
+			
+			//Does wall stay at full brightness or does it change
+			boolean changesBrightness = false;
+			
+			//Figures out what wall texture to render beforehand
+			switch (wallID)
+			{
+				//Dungeon Bricks
+				case 1:
+					block.wallImage = Textures.wall1;
+					
+					block.wallPhase = 0;
+					break;
+				
+				//Futuristic Wall
+				case 2:
+					block.wallImage = Textures.wall2;
+					
+					block.wallPhase = 0;
+					break;
+	
+				//Dark bricks
+				case 3:
+					block.wallImage = Textures.wall3;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Glass
+				case 4:
+					block.wallImage = Textures.wall4;
+					
+					//If glass is damaged, it has different textures
+					if(block.health <= 10)
+					{
+						block.wallImage = Textures.wall4damaged3;
+					}
+					else if(block.health <= 30)
+					{
+						block.wallImage = Textures.wall4damaged2;
+					}
+					else if(block.health <= 50)
+					{
+						block.wallImage = Textures.wall4damaged1;
+					}
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Computer Wall
+				case 5:
+					block.wallImage = Textures.wall5;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//End Button
+				case 6:
+					block.wallImage = Textures.wall6;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Normal door
+				case 7:
+					block.wallImage = Textures.wall7;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Elevator	
+				case 8:
+					block.wallImage = Textures.wall8;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Red key door
+				case 9:
+					block.wallImage = Textures.wall9;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Blue key door
+				case 10:
+					block.wallImage = Textures.wall10;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Green key door	
+				case 11:
+					block.wallImage = Textures.wall11;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Yellow key door	
+				case 12:
+					block.wallImage = Textures.wall12;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Moving computer graphic wall	
+				case 13:
+					if(block.wallPhase < 50 * fpsCheck)
+					{
+						block.wallImage = Textures.wall13Phase1;
+					}
+					else
+					{
+						block.wallImage = Textures.wall13Phase2;
+					}
+					
+					if(block.wallPhase > 100 * fpsCheck)
+					{
+						block.wallPhase = 0;
+					}
+					
+					break;
+			
+				//Secret found wall	
+				case 14:
+					block.wallImage = Textures.wall14;
+					
+					block.wallPhase = 0;
+					break;
+			
+				//Electric wall
+				case 15:
+					brightness = 0;
+					
+					if(block.wallPhase < 10 * fpsCheck)
+					{
+						block.wallImage = Textures.wall15Phase1;
+						
+						brightness = 25;
+					}
+					else if(block.wallPhase < 20 * fpsCheck)
+					{
+						block.wallImage = Textures.wall15Phase2;
+						
+						brightness = 75;
+					}
+					else if(block.wallPhase < 30 * fpsCheck)
+					{
+						block.wallImage = Textures.wall15Phase3;
+						
+						brightness = 150;
+					}
+					else if(block.wallPhase < 40 * fpsCheck)
+					{
+						block.wallImage = Textures.wall15Phase4;
+						
+						brightness = 200;
+					}
+					else if(block.wallPhase < 50 * fpsCheck)
+					{
+						block.wallImage = Textures.wall15Phase5;
+						
+						brightness = 255;
+					}
+					else if(block.wallPhase < 60 * fpsCheck)
+					{
+						block.wallImage = Textures.wall15Phase4;
+						
+						brightness = 200;
+					}
+					else if(block.wallPhase < 70 * fpsCheck)
+					{
+						block.wallImage = Textures.wall15Phase3;
+						
+						brightness = 150;
+					}
+					else if(block.wallPhase < 80 * fpsCheck)
+					{
+						block.wallImage = Textures.wall15Phase2;
+						
+						brightness = 75;
+					}
+					else if(block.wallPhase <= 90 * fpsCheck)
+					{
+						block.wallImage = Textures.wall15Phase1;
+						
+						brightness = 25;
+					}
+					
+					if(block.wallPhase > 90 * fpsCheck)
+					{
+						block.wallPhase = 0;
+					}	
+					
+					changesBrightness = true;
+					
+					break;
+			
+				//Various liquid walls
+				case 16:
+				case 17:
+				case 25:
+					brightness = 0;
+					
+					if(block.wallPhase < 10 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic1;
+						
+						brightness = 150;
+					}
+					else if(block.wallPhase < 20 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic2;
+						
+						brightness = 175;
+					}
+					else if(block.wallPhase < 30 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic3;
+						
+						brightness = 200;
+					}
+					else if(block.wallPhase < 40 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic4;
+						
+						brightness = 225;
+					}
+					else if(block.wallPhase < 50 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic5;
+						
+						brightness = 255;
+					}
+					else if(block.wallPhase < 60 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic6;
+						
+						brightness = 225;
+					}
+					else if(block.wallPhase < 70 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic7;
+						
+						brightness = 200;
+					}
+					else if(block.wallPhase < 80 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic8;
+						
+						brightness = 175;
+					}
+					else if(block.wallPhase < 90 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic9;
+						
+						brightness = 150;
+					}
+					else if(block.wallPhase < 100 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic10;
+						
+						brightness = 175;
+					}
+					else if(block.wallPhase < 110 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic11;
+						
+						brightness = 200;
+					}
+					else if(block.wallPhase < 120 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic12;
+						
+						brightness = 225;
+					}
+					else if(block.wallPhase < 130 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic13;
+						
+						brightness = 255;
+					}
+					else if(block.wallPhase < 140 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic14;
+						
+						brightness = 225;
+					}
+					else if(block.wallPhase < 150 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic15;
+						
+						brightness = 200;
+					}
+					else if(block.wallPhase < 161 * fpsCheck)
+					{
+						block.wallImage = Textures.toxic16;
+						
+						brightness = 175;
+					}
+					else
+					{
+						block.wallPhase = 0;
+					}
+					
+					changesBrightness = true;
+					
+				    break;
+			
+				//Spine Wall
+				case 18:
+					if(block.wallPhase < 10 * fpsCheck)
+					{
+						block.wallImage = Textures.spine1;
+					}
+					else if(block.wallPhase < 20 * fpsCheck)
+					{
+						block.wallImage = Textures.spine2;
+					}
+					else if(block.wallPhase < 30 * fpsCheck)
+					{
+						block.wallImage = Textures.spine3;
+					}
+					else if(block.wallPhase < 40 * fpsCheck)
+					{
+						block.wallImage = Textures.spine4;
+					}
+					else if(block.wallPhase < 50 * fpsCheck)
+					{
+						block.wallImage = Textures.spine5;
+					}
+					else if(block.wallPhase < 60 * fpsCheck)
+					{
+						block.wallImage = Textures.spine6;
+					}
+					else if(block.wallPhase < 70 * fpsCheck)
+					{
+						block.wallImage = Textures.spine7;
+					}
+					else if(block.wallPhase < 80 * fpsCheck)
+					{
+						block.wallImage = Textures.spine8;
+					}
+					else
+					{
+						block.wallPhase = 0;
+					}
+					
+					break;
+			
+				//Dead electric wall
+				case 19:
+					brightness = 25;			
+					block.wallImage = Textures.wall15Phase1;
+					
+					break;
+			
+				//MLG wall
+				case 20:
+					block.wallImage = Textures.mlg;
+					block.wallPhase = 0;
+					break;
+			
+				//Box wall
+				case 21:
+					block.wallImage = Textures.box;
+					block.wallPhase = 0;
+					break;
+			
+				//Wood wall
+				case 22:
+					block.wallImage = Textures.woodenWall;
+					block.wallPhase = 0;
+					break;
+			
+				//Wall with picture on it
+				case 23:
+					block.wallImage = Textures.bloodWall;
+					block.wallPhase = 0;
+					break;
+			
+				//Marble wall
+				case 24:
+					block.wallImage = Textures.marble;
+					block.wallPhase = 0;
+					break;
+			
+				//Normal Button
+				case 26:
+					block.wallImage = Textures.normButton;
+					block.wallPhase = 0;
+					break;
+					
+				//Cool molten rock texture
+				case 27:
+					block.wallImage = Textures.coolWall;
+					
+					block.wallPhase = 0;
+					
+					break;
+			}
+			
+			//If not a brightness of 255, it'll need to be changed
+			if(brightness != 255)
+			{
+				changesBrightness = true;
+			}
+			
+			//How it iterates through the for loop. By 1s or 2s
+			int correction = 1;
+			
+			//Color of current picture
+			int color = 0;
 			
 			//Does something with textures. I don't yet understand this
 			double zWall = (texture1 + (texture2 - texture1));
 			
-			//Figures out the texture that needs to be rendered
-			int xTexture = (int) (((texture4) * (pixelRotation)) /
-					zWall);
-
-		   /*
-		    * Figures out where the top pixel and bottom pixel are located
-		    * on the screen.
-		    */
-			double yPixelTop     = yPixelTopLeft +
-					(yPixelTopLeft - yPixelTopRight) 
-					* pixelRotation;
-			double yPixelBottom  = yPixelBottomLeft +
-					(yPixelBottomLeft - yPixelBottomRight)
-					* pixelRotation;
-			
-		   /*
-		    * Casts them into ints to be drawn to the screen
-		    */
-			int yPixelTopInt     = (int) (yPixelTop);
-			int yPixelBottomInt  = (int) (yPixelBottom);
-			
-		   /*
-		    * If the wall goes out of the top of the frame, reduce it so
-		    * that it stays in the frame.
-		    */
-			if(yPixelTopInt < 0)
+			if(lowRes)
 			{
-				yPixelTopInt = 0;
-			}
-			
-		   /*
-		    * If the wall goes below the frame, make it so that it still
-		    * stays in the frame.
-		    */
-			if(yPixelBottomInt > HEIGHT)
-			{
-				yPixelBottomInt = HEIGHT;
-			}
-			
-		   /*
-		    * If the top is farther down than the bottom of the wall, 
-		    * then don't render that maddness
-		    */
-			if(yPixelTopInt > yPixelBottomInt)
-			{
-				return;
-			}
-			
-		   /*
-		    * For each y pixel from the top of the wall to the bottom,
-		    * render the pixels correctly depending on how you rotate
-		    * upward (looking up). Also depending on the walls ID, change
-		    * the texture of the wall to be so.
-		    */
-			for(int y = yPixelTopInt; y < yPixelBottomInt; y+=correction)
-			{
-				//Figures out how the pixel should be stretched or look like
-				//in the y direction
-				double pixelRotationY = (y - yPixelTop) / 
-						(yPixelBottom - yPixelTop);
-				int yTexture = (int) (256 * pixelRotationY);
-				
-				try
+			    correction = 2;
+			    
+			   /*
+			    * While the pixels being rendered are still within the bounds
+			    * of the wall (The width of the wall)
+			    */
+				for(int x = xPixelLeftInt; x < xPixelRightInt; x+=correction)
 				{
-					//If wall is behind another wall, break out of the
-					//loops here because it shouldn't be able to be seen
-					//behind another wall.
-					if(zBufferWall[(x) + (y) * WIDTH] > zWall)
+				   /*
+				    * How much the pixels are to rotate depending on your movement
+				    * . Your movement is tracked by the change in xPixelLeft and
+				    * xPixelRight from frame to frame.
+				    */
+					double pixelRotation = (x - xPixelLeft) /
+							(xPixelLeft - xPixelRight);
+					
+					//Figures out the texture that needs to be rendered
+					int xTexture = (int) (((texture4) * (pixelRotation)) /
+							zWall);
+		
+				   /*
+				    * Figures out where the top pixel and bottom pixel are located
+				    * on the screen.
+				    */
+					double yPixelTop     = yPixelTopLeft +
+							(yPixelTopLeft - yPixelTopRight) 
+							* pixelRotation;
+					
+					double yPixelBottom  = yPixelBottomLeft +
+							(yPixelBottomLeft - yPixelBottomRight)
+							* pixelRotation;
+					
+				   /*
+				    * Casts them into ints to be drawn to the screen
+				    */
+					int yPixelTopInt     = (int) (yPixelTop);
+					int yPixelBottomInt  = (int) (yPixelBottom);
+					
+				   /*
+				    * If the wall goes out of the top of the frame, reduce it so
+				    * that it stays in the frame.
+				    */
+					if(yPixelTopInt < 0)
 					{
-						continue;
+						yPixelTopInt = 0;
 					}
 					
-					if(lowRes)
+				   /*
+				    * If the wall goes below the frame, make it so that it still
+				    * stays in the frame.
+				    */
+					if(yPixelBottomInt > HEIGHT)
 					{
-						if(zBufferWall[(x) + (y+1) * WIDTH] > zWall
-								|| zBufferWall[(x+1) + (y+1) * WIDTH] > zWall
-								|| zBufferWall[(x+1) + (y) * WIDTH] > zWall)
+						yPixelBottomInt = HEIGHT;
+					}
+					
+				   /*
+				    * If the top is farther down than the bottom of the wall, 
+				    * then don't render that maddness
+				    */
+					if(yPixelTopInt > yPixelBottomInt)
+					{
+						return;
+					}
+					
+				   /*
+				    * For each y pixel from the top of the wall to the bottom,
+				    * render the pixels correctly depending on how you rotate
+				    * upward (looking up). Also depending on the walls ID, change
+				    * the texture of the wall to be so.
+				    */
+					for(int y = yPixelTopInt; y < yPixelBottomInt; y+=correction)
+					{
+						//Figures out how the pixel should be stretched or look like
+						//in the y direction
+						double pixelRotationY = (y - yPixelTop) / 
+								(yPixelBottom - yPixelTop);
+						
+						int yTexture = (int) (256 * pixelRotationY);
+						
+						try
+						{
+							//If wall is behind another wall, break out of the
+							//loops here because it shouldn't be able to be seen
+							//behind another wall.
+							if(zBufferWall[(x) + (y) * WIDTH] > zWall
+									|| zBufferWall[(x) + (y+1) * WIDTH] > zWall
+									|| zBufferWall[(x+1) + (y+1) * WIDTH] > zWall
+									|| zBufferWall[(x+1) + (y) * WIDTH] > zWall)
+							{
+								continue;
+							}
+							
+							//Set color of pixel to draw to the color of the pixel
+							//it correlates to in the image file
+							color = block.wallImage.PIXELS
+							[(xTexture & 255) + (yTexture & 255) * 256];
+							
+						}
+						catch(Exception e)
 						{
 							continue;
 						}
-					}
-					
-					//Set color of pixel to draw to the color of the pixel
-					//it correlates to in the image file
-					color = block.wallImage.PIXELS
-					[(xTexture & 255) + (yTexture & 255) * 256];
-					
-					//Change brightness of pixel if needed
-					if(changesBrightness)
-					{
-						color = adjustBrightness(brightness, color, wallID);
-					}
-				}
-				catch(Exception e)
-				{
-					continue;
-				}
-				
-			   /*
-			    * If color is not white, render it, otherwise don't to
-			    * have transparency around your image. First two ff's
-			    * are the images alpha, 2nd two are red, 3rd two are
-			    * green, 4th two are blue. ff is 255.
-			    */
-				if(color != 0xffffffff || Display.themeNum == 3
-						|| Display.themeNum == 5)
-				{			
-					double rotZ = 
-							(0.4 / (texture1 - 
-									(texture2 - texture1) 
-									* pixelRotation)) * 0.3;
-					//Try to render
-					try
-					{
-						PIXELS[x + y * WIDTH] = color;
-						zBuffer[(x) + (y) * WIDTH] = rotZ;
 						
-						//If low res setting on due 4 pixels in one loop
-						if(lowRes)
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff || Display.themeNum == 3
+								|| Display.themeNum == 5)
+						{		
+							//Change brightness of pixel if needed
+							if(changesBrightness)
+							{
+								color = adjustBrightness(brightness, color, wallID);
+							}
+							
+							double rotZ = 
+									(0.4 / (texture1 - 
+											(texture2 - texture1) 
+											* pixelRotation)) * 0.3;
+							
+							//Try to render
+							try
+							{
+								PIXELS[x + y * WIDTH] = color;
+								zBuffer[(x) + (y) * WIDTH] = rotZ;
+								PIXELS[(x + 1) + (y) * WIDTH] = color;
+								zBuffer[(x+1) + (y) * WIDTH] = rotZ;
+								PIXELS[(x + 1) + (y + 1) * WIDTH] = color;
+								zBuffer[(x+1) + (y+1) * WIDTH] = rotZ;
+								PIXELS[(x) + (y + 1) * WIDTH] = color;
+								zBuffer[(x) + (y+1) * WIDTH] = rotZ;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
+							
+							//Set this pixel to being the front most wall pixel
+							zBufferWall[(x) + (y) * WIDTH] =  zWall;
+							
+							try
+							{
+								zBufferWall[(x) + (y+1) * WIDTH] =  zWall;
+								zBufferWall[(x+1) + (y+1) * WIDTH] = zWall;
+								zBufferWall[(x+1) + (y) * WIDTH] = zWall;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
+						}
+						
+					   /*
+					    * Always render the last couple of pixels to ensure that 
+					    * the edges of the walls are always rendered no matter
+					    * what because if they aren't... weird things occur.
+					    */
+						if(x >= xPixelRightInt - 6)
 						{
-							PIXELS[(x + 1) + (y) * WIDTH] = color;
-							zBuffer[(x+1) + (y) * WIDTH] = rotZ;
-							PIXELS[(x + 1) + (y + 1) * WIDTH] = color;
-							zBuffer[(x+1) + (y+1) * WIDTH] = rotZ;
-							PIXELS[(x) + (y + 1) * WIDTH] = color;
-							zBuffer[(x) + (y+1) * WIDTH] = rotZ;
+							correction = 1;
 						}
 					}
-					catch(Exception e)
-					{
-						continue;
-					}
-					
-					//Set this pixel to being the front most wall pixel
-					zBufferWall[(x) + (y) * WIDTH] =  zWall;
-					
-					try
-					{
-						if(lowRes)
-						{
-							zBufferWall[(x) + (y+1) * WIDTH] =  zWall;
-							zBufferWall[(x+1) + (y+1) * WIDTH] = zWall;
-							zBufferWall[(x+1) + (y) * WIDTH] = zWall;
-						}
-					}
-					catch(Exception e)
-					{
-						continue;
-					}
-				}
-				
+				}	
+			}
+			else
+			{
 			   /*
-			    * Always render the last couple of pixels to ensure that 
-			    * the edges of the walls are always rendered no matter
-			    * what because if they aren't... weird things occur.
+			    * While the pixels being rendered are still within the bounds
+			    * of the wall (The width of the wall)
 			    */
-				if(x >= xPixelRightInt - 6)
+				for(int x = xPixelLeftInt; x < xPixelRightInt; x++)
 				{
-					correction = 1;
+				   /*
+				    * How much the pixels are to rotate depending on your movement
+				    * . Your movement is tracked by the change in xPixelLeft and
+				    * xPixelRight from frame to frame.
+				    */
+					double pixelRotation = (x - xPixelLeft) /
+							(xPixelLeft - xPixelRight);
+					
+					//Figures out the texture that needs to be rendered
+					int xTexture = (int) (((texture4) * (pixelRotation)) /
+							zWall);
+		
+				   /*
+				    * Figures out where the top pixel and bottom pixel are located
+				    * on the screen.
+				    */
+					double yPixelTop     = yPixelTopLeft +
+							(yPixelTopLeft - yPixelTopRight) 
+							* pixelRotation;
+					double yPixelBottom  = yPixelBottomLeft +
+							(yPixelBottomLeft - yPixelBottomRight)
+							* pixelRotation;
+					
+				   /*
+				    * Casts them into ints to be drawn to the screen
+				    */
+					int yPixelTopInt     = (int) (yPixelTop);
+					int yPixelBottomInt  = (int) (yPixelBottom);
+					
+				   /*
+				    * If the wall goes out of the top of the frame, reduce it so
+				    * that it stays in the frame.
+				    */
+					if(yPixelTopInt < 0)
+					{
+						yPixelTopInt = 0;
+					}
+					
+				   /*
+				    * If the wall goes below the frame, make it so that it still
+				    * stays in the frame.
+				    */
+					if(yPixelBottomInt > HEIGHT)
+					{
+						yPixelBottomInt = HEIGHT;
+					}
+					
+				   /*
+				    * If the top is farther down than the bottom of the wall, 
+				    * then don't render that maddness
+				    */
+					if(yPixelTopInt > yPixelBottomInt)
+					{
+						return;
+					}
+					
+				   /*
+				    * For each y pixel from the top of the wall to the bottom,
+				    * render the pixels correctly depending on how you rotate
+				    * upward (looking up). Also depending on the walls ID, change
+				    * the texture of the wall to be so.
+				    */
+					for(int y = yPixelTopInt; y < yPixelBottomInt; y++)
+					{
+						//Figures out how the pixel should be stretched or look like
+						//in the y direction
+						double pixelRotationY = (y - yPixelTop) / 
+								(yPixelBottom - yPixelTop);
+						int yTexture = (int) (256 * pixelRotationY);
+						
+						try
+						{
+							//If wall is behind another wall, break out of the
+							//loops here because it shouldn't be able to be seen
+							//behind another wall.
+							if(zBufferWall[(x) + (y) * WIDTH] > zWall)
+							{
+								continue;
+							}
+							
+							//Set color of pixel to draw to the color of the pixel
+							//it correlates to in the image file
+							color = block.wallImage.PIXELS
+							[(xTexture & 255) + (yTexture & 255) * 256];
+						}
+						catch(Exception e)
+						{
+							continue;
+						}
+						
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff || Display.themeNum == 3
+								|| Display.themeNum == 5)
+						{		
+							//Change brightness of pixel if needed
+							if(changesBrightness)
+							{
+								color = adjustBrightness(brightness, color, wallID);
+							}
+							
+							double rotZ = 
+									(0.4 / (texture1 - 
+											(texture2 - texture1) 
+											* pixelRotation)) * 0.3;
+							//Try to render
+							try
+							{
+								PIXELS[x + y * WIDTH] = color;
+								zBuffer[(x) + (y) * WIDTH] = rotZ;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
+							
+							//Set this pixel to being the front most wall pixel
+							zBufferWall[(x) + (y) * WIDTH] =  zWall;
+						}
+					}
 				}
 			}
-		}	
 		}
 		catch(Exception e)
 		{
@@ -4185,67 +4565,63 @@ public class Render3D extends Render
 	{
 		int skip = 6;
 		
-		//Go through all the pixels on the screen in series of 6
-		for (int i = 0; i < (WIDTH * HEIGHT); i+=skip)
+		if(lowRes)
 		{
-			//Color value of this pixel in integer form
-			int color       = PIXELS[i];
-			int color1 = 0;
-			int color2 = 0;
-			int color3 = 0;
-			int color4 = 0;
-			int color5 = 0;
-			
-			//Brightness of color. 255 is Full brightness
-			int brightness = 255;
-			int brightness1 = 255;
-			int brightness2 = 255;
-			int brightness3 = 255;
-			int brightness4 = 255;
-			int brightness5 = 255;
-			
-			int j = Player.vision;
-			
-		   /*
-		    * If player is nearing the end of immortality, or is not
-		    * immortal.
-		    */
-			if(j < 100 * fpsCheck && j % 5 == 0)
+			//Go through all the pixels on the screen in series of 6
+			for (int i = 0; i < (WIDTH * HEIGHT); i+=skip)
 			{
-			   /*
-			    * The brightness of each pixel depending on its distance 
-			    * from the player, and the render Distance
-			    */
-				brightness = (int) (renderDistance / (zBuffer[i]));
+				//Color value of this pixel in integer form
+				int color       = PIXELS[i];
+				int color1 = 0;
+				int color2 = 0;
+				int color3 = 0;
+				int color4 = 0;
+				int color5 = 0;
 				
-				if(skip != 1)
+				//Brightness of color. 255 is Full brightness
+				int brightness = 255;
+				int brightness1 = 255;
+				int brightness2 = 255;
+				int brightness3 = 255;
+				int brightness4 = 255;
+				int brightness5 = 255;
+				
+				int j = Player.vision;
+				
+			   /*
+			    * If player is nearing the end of immortality, or is not
+			    * immortal.
+			    */
+				if(j < 100 * fpsCheck && j % 5 == 0)
 				{
+				   /*
+				    * The brightness of each pixel depending on its distance 
+				    * from the player, and the render Distance
+				    */
+					brightness = (int) (renderDistance / (zBuffer[i]));
 					brightness1 = (int) (renderDistance / (zBuffer[i+1]));
 					brightness2 = (int) (renderDistance / (zBuffer[i+2]));
 					brightness3 = (int) (renderDistance / (zBuffer[i+3]));
 					brightness4 = (int) (renderDistance / (zBuffer[i+4]));
 					brightness5 = (int) (renderDistance / (zBuffer[i+5]));
 				}
-			}
-			//If the player is immortal
-			else
-			{
-				brightness = 255;
-				brightness1 = 255;
-				brightness2 = 255;
-				brightness3 = 255;
-				brightness4 = 255;
-				brightness5 = 255;
-			}
-			
-			//Never can be less than 0 brightness
-			if(brightness < 0)
-			{
-				brightness = 0;
-			}
-			
-			if(skip != 1)
-			{
+				//If the player is immortal
+				else
+				{
+					brightness = 255;
+					brightness1 = 255;
+					brightness2 = 255;
+					brightness3 = 255;
+					brightness4 = 255;
+					brightness5 = 255;
+				}
+				
+				//Never can be less than 0 brightness
+				if(brightness < 0)
+				{
+					brightness = 0;
+				}
+				
 				color1      = PIXELS[i+1];
 				color2      = PIXELS[i+2];
 				color3      = PIXELS[i+3];
@@ -4298,55 +4674,51 @@ public class Render3D extends Render
 				{
 					brightness5 = 255;
 				}
-			}
-			
-			//Can never be brighter than 255
-			if(brightness > 255)
-			{
-				brightness = 255;
-			}
-			
-		   /*
-		    * Or you can use 0xff. It goes from 0 - 255, and 255 = 0xff.
-		    * The 255 is not technically needed as it just causes the
-		    * number to stay the same, but it does matter for the int b
-		    * for some reason. I think because it causes the render distance
-		    * to fade to blue if not. The shifting of the ints causes the color
-		    * to change.
-		    * 
-		    * Converts the bit value of the color into an int so that it can
-		    * be easily tampered with
-		    */
-			int r = (color >> 16) & 255; 
-			int g = (color >> 8)  & 255;
-			int b =  color        & 255;
-			int r1 = 0; 
-			int g1 = 0;
-			int b1 = 0;
-			int r2 = 0; 
-			int g2 = 0;
-			int b2 = 0;
-			int r3 = 0; 
-			int g3 = 0;
-			int b3 = 0;
-			int r4 = 0; 
-			int g4 = 0;
-			int b4 = 0;
-			int r5 = 0; 
-			int g5 = 0;
-			int b5 = 0;
-			
-		   /*
-		    * Divides that value by 255, then multiplies it by the
-		    * brightness level of the pixel to determine how bright
-		    * the reds, greens, and blues in each pixel will get.
-		    */
-			r     = (r * brightness) / 255;
-			g     = (g * brightness) / 255;
-			b     = (b * brightness) / 255;
-			
-			if(skip != 1)
-			{
+				
+				//Can never be brighter than 255
+				if(brightness > 255)
+				{
+					brightness = 255;
+				}
+				
+			   /*
+			    * Or you can use 0xff. It goes from 0 - 255, and 255 = 0xff.
+			    * The 255 is not technically needed as it just causes the
+			    * number to stay the same, but it does matter for the int b
+			    * for some reason. I think because it causes the render distance
+			    * to fade to blue if not. The shifting of the ints causes the color
+			    * to change.
+			    * 
+			    * Converts the bit value of the color into an int so that it can
+			    * be easily tampered with
+			    */
+				int r = (color >> 16) & 255; 
+				int g = (color >> 8)  & 255;
+				int b =  color        & 255;
+				int r1 = 0; 
+				int g1 = 0;
+				int b1 = 0;
+				int r2 = 0; 
+				int g2 = 0;
+				int b2 = 0;
+				int r3 = 0; 
+				int g3 = 0;
+				int b3 = 0;
+				int r4 = 0; 
+				int g4 = 0;
+				int b4 = 0;
+				int r5 = 0; 
+				int g5 = 0;
+				int b5 = 0;
+				
+			   /*
+			    * Divides that value by 255, then multiplies it by the
+			    * brightness level of the pixel to determine how bright
+			    * the reds, greens, and blues in each pixel will get.
+			    */
+				r     = (r * brightness) / 255;
+				g     = (g * brightness) / 255;
+				b     = (b * brightness) / 255;
 				r1 = (color1 >> 16) & 255; 
 				g1 = (color1 >> 8)  & 255;
 				b1 =  color1        & 255;
@@ -4377,32 +4749,24 @@ public class Render3D extends Render
 				r5     = (r5 * brightness5) / 255;
 				g5     = (g5 * brightness5) / 255;
 				b5     = (b5 * brightness5) / 255;
-			}
-				
-			//Reset the bits of that particular pixel
-			if(Player.alive && Player.playerHurt == 0)
-			{
-				int ePT = Player.environProtectionTime;
-				
-				if(ePT == 0 || (ePT < 100 * fpsCheck && ePT % 5 == 0))
-				{
-					PIXELS[i] = r << 16 | g << 8 | b;
 					
-					if(skip != 1)
+				//Reset the bits of that particular pixel
+				if(Player.alive && Player.playerHurt == 0)
+				{
+					int ePT = Player.environProtectionTime;
+					
+					if((ePT < 100 * fpsCheck && ePT % 5 == 0))
 					{
+						PIXELS[i] = r << 16 | g << 8 | b;
 						PIXELS[i+1] = r1 << 16 | g1 << 8 | b1;
 						PIXELS[i+2] = r2 << 16 | g2 << 8 | b2;
 						PIXELS[i+3] = r3 << 16 | g3 << 8 | b3;
 						PIXELS[i+4] = r4 << 16 | g4 << 8 | b4;
 						PIXELS[i+5] = r5 << 16 | g5 << 8 | b5;
 					}
-				}
-				else
-				{
-					PIXELS[i] = r << 8 | g << 8 | b << 8;
-					
-					if(skip != 1)
+					else
 					{
+						PIXELS[i] = r << 8 | g << 8 | b << 8;
 						PIXELS[i+1] = r1 << 8 | g1 << 8 | b1 << 8;
 						PIXELS[i+2] = r2 << 8 | g2 << 8 | b2 << 8;
 						PIXELS[i+3] = r3 << 8 | g3 << 8 | b3 << 8;
@@ -4410,24 +4774,114 @@ public class Render3D extends Render
 						PIXELS[i+5] = r5 << 8 | g5 << 8 | b5 << 8;
 					}
 				}
-			}
-			else
-			{
-				PIXELS[i] = r << 16 | g << 16 | b << 16;
-				
-				if(skip != 1)
+				else
 				{
+					PIXELS[i] = r << 16 | g << 16 | b << 16;
 					PIXELS[i+1] = r1 << 16 | g1 << 16 | b1 << 16;
 					PIXELS[i+2] = r2 << 16 | g2 << 16 | b2 << 16;
 					PIXELS[i+3] = r3 << 16 | g3 << 16 | b3 << 16;
 					PIXELS[i+4] = r4 << 16 | g4 << 16 | b4 << 16;
 					PIXELS[i+5] = r5 << 16 | g5 << 16 | b5 << 16;
 				}
+				
+				if(i + 6 > WIDTH * HEIGHT)
+				{
+					skip = 1;
+				}
 			}
-			
-			if(i + 6 > WIDTH * HEIGHT)
+		}
+		else
+		{
+			//Go through all the pixels on the screen
+			for (int i = 0; i < (WIDTH * HEIGHT); i++)
 			{
-				skip = 1;
+				//Color value of this pixel in integer form
+				int color       = PIXELS[i];
+				
+				//Brightness of color. 255 is Full brightness
+				int brightness = 255;
+				
+				//Whether the player has enhanced vision or not
+				int j = Player.vision;
+				
+			   /*
+			    * If player is nearing end of enhanced vision
+			    */
+				if(j < 100 * fpsCheck && j % 5 == 0)
+				{
+				   /*
+				    * The brightness of each pixel depending on its distance 
+				    * from the player, and the render Distance
+				    * 
+				    * zBuffer is the distance from the player in terms of z
+				    * the pixel is, and the renderDistance is how far the
+				    * player can see. If the pixel is farther than the
+				    * renderDistance then just make it black.
+				    */
+					brightness = (int) (renderDistance / (zBuffer[i]));
+				}
+				//If the player has enhanced vision
+				else
+				{
+					brightness = 255;
+				}
+				
+				//Never can be less than 0 brightness
+				if(brightness < 0)
+				{
+					brightness = 0;
+				}
+				
+				//Can never be brighter than 255
+				if(brightness > 255)
+				{
+					brightness = 255;
+				}
+				
+			   /*
+			    * Or you can use 0xff. It goes from 0 - 255, and 255 = 0xff.
+			    * The 255 is not technically needed as it just causes the
+			    * number to stay the same, but it does matter for the int b
+			    * for some reason. I think because it causes the render distance
+			    * to fade to blue if not. The shifting of the ints causes the color
+			    * to change.
+			    * 
+			    * Converts the bit value of the color into an int so that it can
+			    * be easily tampered with
+			    */
+				int r = (color >> 16) & 255; 
+				int g = (color >> 8)  & 255;
+				int b =  color        & 255;
+				
+			   /*
+			    * Takes the brightness value and divides it by 255 to put
+			    * it into the range of 0 to 255 so it can be rendered as
+			    * the correct brightness on screen.
+			    */
+				r     = (r * brightness) / 255;
+				g     = (g * brightness) / 255;
+				b     = (b * brightness) / 255;
+					
+				//If Player is not being hurt and is alive
+				if(Player.alive && Player.playerHurt == 0)
+				{
+					int ePT = Player.environProtectionTime;
+					
+					//If the environmental protection suit is wearing off
+					if((ePT < 100 * fpsCheck && ePT % 5 == 0))
+					{
+						PIXELS[i] = r << 16 | g << 8 | b;
+					}
+					else
+					{
+						PIXELS[i] = r << 8 | g << 8 | b << 8;
+					}
+				}
+				//If dead or hurt
+				else
+				{
+					PIXELS[i] = r << 16 | g << 16 | b << 16;
+				}
 			}
 		}
 	}

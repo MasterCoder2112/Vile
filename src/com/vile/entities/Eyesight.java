@@ -72,19 +72,32 @@ public class Eyesight
     */
 	public boolean checkEyesight()
 	{
-		while(!hitWall && !hitTarget)
-		{		
+		int tick = 0;
+		
+	   /*
+	    * While it hasn't hit something, then keep looping.
+	    * The tick parameter is a fallback as in VERY VERY rare
+	    * case scenarios it doesn't hit something or check correctly
+	    * so it would got into an infinite loop. This fixes that in
+	    * case it happens.
+	    */
+		while(!hitWall && !hitTarget && tick < 10000)
+		{	
+			//See if it can move in the x direction
 			if(isFree(x + moveX, z))
 			{
 				x += moveX;
 			}
 			
+			//See if it can move in the z
 			if(isFree(x, z + moveZ) && !hitWall && !hitTarget)
 			{
 				z += moveZ;
 			}
-			
+		
 			y += moveY;
+			
+			tick++;
 		}
 		
 		return hitTarget;
@@ -234,19 +247,6 @@ public class Eyesight
 			hitTarget = false;
 			hitWall = true;
 			return false;
-		}
-		
-	   /*
-	    * If the block is 2 higher or lower then the line of sight, 
-	    * the line of sight can pass through it. 
-	    */
-		else if(block.isSolid && Math.abs(this.y) >= (block.y + block.height - 2)
-				&& Math.abs(this.y) <= (block.y + block.height)
-				|| block.isSolid && Math.abs(this.y) <= (block.y + block.height + 2)
-				&& Math.abs(this.y) >= (block.y + block.height))
-		{		
-			//Return that it can move
-			return true;
 		}
 		
 		return true;

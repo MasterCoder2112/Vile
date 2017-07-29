@@ -39,6 +39,7 @@ public class Item
 	public double movementSpeedZ = 0;
 	
 	public int phaseTime = 0;
+	public int size = 160;
 	
 	//Flags for items
 	public boolean isSeeable = true;
@@ -204,6 +205,34 @@ public class Item
 		
 		//Always add item to general item list
 		Game.items.add(this);
+		
+	   /*
+	    * Some items are bigger or smaller than others
+	    * so fix that here.
+	    */
+		if(ID == 1 || ID == 24 || ID == 26
+				|| ID >= 33)
+		{
+			size          = 240;
+		}
+		
+		if(ID == 21 || ID == 25)
+		{
+			size          = 480;
+		}
+		
+		if(ID >= 29 && ID < 33
+				|| ID == 39 || ID == 42
+				|| ID == 43)
+		{
+			size          = 600;
+		}
+		
+		//If Satillite
+		if(ID == 52)
+		{
+			size		  = 2048;
+		}
 	}
 	
    /**

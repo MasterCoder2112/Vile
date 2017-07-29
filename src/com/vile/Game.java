@@ -345,8 +345,12 @@ public class Game
 		weaponSlot3 = key[KeyEvent.VK_4];
 		unlimAmmo   = key[KeyEvent.VK_K];
 		
-		//Sort enemies according to their distance to you
-		Collections.sort(enemies);
+		//Sort enemies according to their distance to you but only if
+		//not in survival
+		if(setMap)
+		{
+			Collections.sort(enemies);
+		}
 		
 		//Always request focus
 		display.requestFocus();
@@ -502,22 +506,6 @@ public class Game
 			}
 		}
 		
-		//Go through all toxic waste, lava, and spike blocks
-		//in the game and update them.
-		for(int i = 0; i < Game.hurtingBlocks.size(); i++)
-		{			
-			//Only update once every tick
-			if(i == 0)
-			{
-				HurtingBlock.time++;
-			}
-			
-			if(HurtingBlock.time > 21 * Render3D.fpsCheck)
-			{
-				HurtingBlock.time = 0;
-			}
-		}
-		
 	   /*
 	    * Check all door entities each tick through the game,
 	    * and if the door is activated, continue to move the
@@ -597,33 +585,33 @@ public class Game
 	   /*
 	    * Spawns a random type of enemy of the 4 types
 	    */
-		//Crying enemy
+		//Brainomorph
 		if(randomNum <= 20)
 		{
 			ID = 1;
 		}
-		//Dizzy enemy
+		//Sentinel 
 		else if(randomNum <= 40)
 		{
 			yPos   = -5;
 			ID     = 2;
 		}
-		//Sick enemy
+		//Mutated Commando
 		else if(randomNum <= 50)
 		{
 			ID      = 3;
 		}
-		//Angry enemy
+		//Night Reaper
 		else if(randomNum <= 70)
 		{
 			ID      = 4;
 		}
-		//Sad enemy
+		//Vile Warrior
 		else if(randomNum <= 98)
 		{
 			ID      = 7;
 		}
-		//Depressed enemy
+		//Mage enemy
 		else
 		{
 			ID      = 5;
@@ -653,28 +641,28 @@ public class Game
 	   /*
 	    * Spawns a random type of enemy of the 4 types
 	    */
-		//Crying enemy
+		//Brainomorph
 		if(randomNum <= 24)
 		{
 			ID = 1;
 		}
-		//Dizzy enemy
+		//Sentinel
 		else if(randomNum <= 49)
 		{
 			yPos   = -5;
 			ID     = 2;
 		}
-		//Sick enemy
+		//Mutated Commando
 		else if(randomNum <= 74)
 		{
 			ID      = 3;
 		}
-		//Angry enemy
+		//Night Reaper
 		else if(randomNum <= 98)
 		{
 			ID      = 4;
 		}
-		//Depressed Enemy
+		//Resurrector enemy
 		else
 		{
 			ID      = 5;

@@ -173,9 +173,6 @@ public class Explosion
 		//Where the entity is from the explosion on the map
 		double rotFromTarget = 0;
 		
-		System.out.println(Player.y);
-		System.out.println(this.y);
-		
 	   /*
 	    * See if player is within range of explosion
 	    * and if he/she is, then damage the player
@@ -314,9 +311,8 @@ public class Explosion
 				if(distance <= 3 && Math.abs(this.y - (enemy.yPos / 12)) <= 2
 						&& !enemy.isABoss)
 				{	
-					//Not meant to be funny, this just is the most realistic
-					//it seems after testing. NO LAUGHING
-					double damage = 69;
+					//Realistic damage
+					double damage = 80;
 					
 					//Force of explosion on enemy
 					double force = 0;
