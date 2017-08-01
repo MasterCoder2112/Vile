@@ -2,8 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ef88442f-0650-4e43-846f-dff83f634f2e" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/bin/com/vile/input/Key.class" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/com/vile/input/Key.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/bin/com/vile/Display.class" afterPath="$PROJECT_DIR$/bin/com/vile/Display.class" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/bin/com/vile/Game.class" afterPath="$PROJECT_DIR$/bin/com/vile/Game.class" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/bin/com/vile/input/Controller.class" afterPath="$PROJECT_DIR$/bin/com/vile/input/Controller.class" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/bin/com/vile/input/InputHandler.class" afterPath="$PROJECT_DIR$/bin/com/vile/input/InputHandler.class" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/vile/Display.java" afterPath="$PROJECT_DIR$/src/com/vile/Display.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/vile/Game.java" afterPath="$PROJECT_DIR$/src/com/vile/Game.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/vile/entities/Item.java" afterPath="$PROJECT_DIR$/src/com/vile/entities/Item.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/vile/input/Controller.java" afterPath="$PROJECT_DIR$/src/com/vile/input/Controller.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/vile/input/InputHandler.java" afterPath="$PROJECT_DIR$/src/com/vile/input/InputHandler.java" />
     </list>
@@ -24,8 +31,8 @@
       <file leaf-file-name="Display.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/vile/Display.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="731">
-              <caret line="77" column="32" lean-forward="false" selection-start-line="77" selection-start-column="32" selection-end-line="77" selection-end-column="32" />
+            <state relative-caret-position="816">
+              <caret line="77" column="0" lean-forward="false" selection-start-line="77" selection-start-column="0" selection-end-line="77" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -34,7 +41,7 @@
       <file leaf-file-name="Controller.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/vile/input/Controller.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1411">
+            <state relative-caret-position="1360">
               <caret line="96" column="9" lean-forward="false" selection-start-line="96" selection-start-column="9" selection-end-line="96" selection-end-column="9" />
               <folding />
             </state>
@@ -150,6 +157,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="PackagesPane" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -204,8 +213,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="PackagesPane" />
-      <pane id="Scratches" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -474,7 +481,7 @@
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.28470436" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.28856042" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -828,15 +835,15 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/vile/Display.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="731">
-          <caret line="77" column="32" lean-forward="false" selection-start-line="77" selection-start-column="32" selection-end-line="77" selection-end-column="32" />
+        <state relative-caret-position="816">
+          <caret line="77" column="0" lean-forward="false" selection-start-line="77" selection-start-column="0" selection-end-line="77" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/vile/input/Controller.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1411">
+        <state relative-caret-position="1360">
           <caret line="96" column="9" lean-forward="false" selection-start-line="96" selection-start-column="9" selection-end-line="96" selection-end-column="9" />
           <folding />
         </state>
