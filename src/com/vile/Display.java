@@ -6,10 +6,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.MouseInfo;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -24,7 +20,6 @@ import javax.sound.sampled.FloatControl;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import com.vile.Game;
 import com.vile.entities.Entity;
 import com.vile.entities.Player;
 import com.vile.entities.Weapon;
@@ -92,11 +87,12 @@ public class Display extends Canvas implements Runnable
 	//The BufferedImage that is displayed of pixels on screen
 	private BufferedImage img;
 
-	// Creates a new game (Handles all key events and ticks)
+	// Creates a new game (Handles all keyMap events and ticks)
 	public static Game game;
 
 	// Handles input events
 	private InputHandler input;
+	private Controller controls;
 	
 	//Music input stream
 	private static AudioInputStream input18;
@@ -198,7 +194,7 @@ public class Display extends Canvas implements Runnable
    /*
     * Sets up a string that can change and disappears after 100 ticks
     * about the most recent pick up you got, or if you are trying to
-    * open a door that requires a key you don't have.
+    * open a door that requires a keyMap you don't have.
     */
 	public static String itemPickup = "";
 	public static int itemPickupTime = 0;
@@ -462,6 +458,7 @@ public class Display extends Canvas implements Runnable
 		
 		//Get rid of loading frame when done loading
 		loading.dispose();
+		controls = new Controller();
 	}
 
 	/**
@@ -717,7 +714,8 @@ public class Display extends Canvas implements Runnable
 	 */
 	private void tick() 
 	{
-		game.tick(input.key);
+		game.tick();
+		controls.performActions(input.keyMap, game);
 	}
 
 	/**
@@ -1387,7 +1385,7 @@ public class Display extends Canvas implements Runnable
 	   /*
 	    * If an item has been picked up within the last 200 ticks, show 
 	    * the item name that was picked up. Or show that a player can't
-	    * open a door without the given key if the player tries to 
+	    * open a door without the given keyMap if the player tries to
 	    * open a door he can't open.
 	    * 
 	    * Also adds to itemPickupTime each time this is rendered.

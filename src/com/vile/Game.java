@@ -11,6 +11,7 @@ import java.util.Scanner;
 import com.vile.entities.*;
 import com.vile.graphics.Render3D;
 import com.vile.input.Controller;
+import com.vile.input.Key;
 import com.vile.levelGenerator.*;
 
 /**
@@ -37,10 +38,7 @@ public class Game
 {
 	//Time games been running in ticks
 	public static int time;
-	
-	//Handles all controls and player movements
-	public Controller controls;
-	
+
 	//Is this a pre-made map or a randomly generated one?
 	public static boolean setMap = false;
 	
@@ -104,43 +102,14 @@ public class Game
 				= new ArrayList<Item>();
 	
 	//Keeps track of all controls, and whether they are pressed or not
-	private static boolean key[];
+	private static Key[] key[];
 	
 	//Calculated Size of map to render
 	private int calculatedSize;
 	
 	//Holds the display class you're using
 	public Display display;
-	
-	/* All Player Actions ***********************************************/
-	public static boolean foward;
-	public static boolean back;
-	public static boolean left;
-	public static boolean right;
-	public static boolean turnLeft;
-	public static boolean turnRight;
-	public static boolean turnUp;
-	public static boolean turnDown;
-	public static boolean shoot;
-	public static boolean pause;
-	public static boolean run;
-	public static boolean crouch;
-	public static boolean jump;
-	public static boolean fpsShow;
-	public static boolean reloading;
-	public static boolean noClip;
-	public static boolean superSpeed;
-	public static boolean fly;
-	public static boolean godMode;
-	public static boolean restock;
-	public static boolean use;
-	public static boolean weaponSlot0;
-	public static boolean weaponSlot1;
-	public static boolean weaponSlot2;
-	public static boolean weaponSlot3;
-	public static boolean unlimAmmo;
-	/* End Game Actions ***********************************************/
-	
+
 	//Did the first announcement or sound to start the level play
 	public boolean firstSound = false;
 	
@@ -286,23 +255,18 @@ public class Game
 			Player.weapons[3].canBeEquipped = true;
 			
 		}
-		else
-		{
+		else {
 			//Load either the first map or custom map if that is chosen
 			mapNum = 1;
 			loadNextMap(newStartMap, newMapName);
 		}
-
-		//Set up the controller to control player movements and actions
-		controls = new Controller();
 	}
 	
    /**
     * Ticks each time the game renders, therefore keeping track of game
-    * time, and all the key events that happen within the game.
-    * @param key2
+    * time, and all the keyMap events that happen within the game.
     */
-	public void tick(boolean key2[])
+	public void tick()
 	{
 		//Keeps track of how many ticks the game has gone on for
 		time++;
@@ -315,35 +279,8 @@ public class Game
 		
 		//This was to fix some bug way back, but I can't remember what
 		//it was so... this is just here.
-		key = key2;
 		
 		//Keeps track of what keys switch what booleans
-		foward      = key[KeyEvent.VK_W];
-		back        = key[KeyEvent.VK_S];
-		left        = key[KeyEvent.VK_A];
-		right       = key[KeyEvent.VK_D];
-		turnLeft    = key[KeyEvent.VK_LEFT];
-		turnRight   = key[KeyEvent.VK_RIGHT];
-		pause       = key[KeyEvent.VK_ESCAPE];
-		run         = key[KeyEvent.VK_SHIFT];
-		crouch      = key[KeyEvent.VK_C];
-		jump        = key[KeyEvent.VK_SPACE];
-		fpsShow     = key[KeyEvent.VK_F];
-		turnUp      = key[KeyEvent.VK_UP];
-		turnDown    = key[KeyEvent.VK_DOWN];
-		reloading   = key[KeyEvent.VK_R];
-		noClip      = key[KeyEvent.VK_N];
-		superSpeed  = key[KeyEvent.VK_P];
-		fly         = key[KeyEvent.VK_O];
-		godMode     = key[KeyEvent.VK_G];
-		shoot       = key[KeyEvent.VK_V];
-		restock     = key[KeyEvent.VK_L];
-		use         = key[KeyEvent.VK_E];
-		weaponSlot0 = key[KeyEvent.VK_1];
-		weaponSlot1 = key[KeyEvent.VK_2];
-		weaponSlot2 = key[KeyEvent.VK_3];
-		weaponSlot3 = key[KeyEvent.VK_4];
-		unlimAmmo   = key[KeyEvent.VK_K];
 		
 		//Sort enemies according to their distance to you
 		Collections.sort(enemies);
@@ -565,7 +502,7 @@ public class Game
 		}
 		
 		//Perform all actions depending on keys pressed.
-		controls.performActions(this);
+
 	}
 	
    /**

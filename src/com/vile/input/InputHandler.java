@@ -1,9 +1,6 @@
 package com.vile.input;
 
 import java.awt.Component;
-import java.awt.MouseInfo;
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -12,6 +9,9 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.vile.Display;
 import com.vile.RunGame;
 
@@ -34,7 +34,8 @@ import com.vile.RunGame;
 public class InputHandler implements KeyListener, MouseListener, MouseMotionListener, FocusListener 
 {
 	//All the possible combinations on the keyboard
-	public boolean[] key = new boolean[68836];
+	public Map<String, Key> keyMap = new HashMap<>();
+
 	
    /*
     * Mouse position on screen now
@@ -59,40 +60,74 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 		{
 			ex.printStackTrace();
 		}
+
+		keyMap.put("Forward", new Key(KeyEvent.VK_W));
+		keyMap.put("Back", new Key(KeyEvent.VK_S));
+		keyMap.put("Left", new Key(KeyEvent.VK_A));
+		keyMap.put("Right", new Key(KeyEvent.VK_D));
+		keyMap.put("Look Left", new Key(KeyEvent.VK_LEFT));
+		keyMap.put("Look Right", new Key(KeyEvent.VK_RIGHT));
+		keyMap.put("Pause", new Key(KeyEvent.VK_ESCAPE));
+		keyMap.put("Run", new Key(KeyEvent.VK_SHIFT));
+		keyMap.put("Crouch", new Key(KeyEvent.VK_C));
+		keyMap.put("Jump", new Key(KeyEvent.VK_SPACE));
+		keyMap.put("Show FPS", new Key(KeyEvent.VK_F));
+		keyMap.put("Look Up", new Key(KeyEvent.VK_UP));
+		keyMap.put("Look Down", new Key(KeyEvent.VK_DOWN));
+		keyMap.put("Reload", new Key(KeyEvent.VK_R));
+		keyMap.put("No Clip", new Key(KeyEvent.VK_N));
+		keyMap.put("Super Speed", new Key(KeyEvent.VK_P));
+		keyMap.put("Fly", new Key(KeyEvent.VK_O));
+		keyMap.put("God Mode", new Key(KeyEvent.VK_G));
+		keyMap.put("Shoot", new Key(KeyEvent.VK_V));
+		keyMap.put("Restock", new Key(KeyEvent.VK_L));
+		keyMap.put("Use", new Key(KeyEvent.VK_E));
+		keyMap.put("Weapon 1", new Key(KeyEvent.VK_1));
+		keyMap.put("Weapon 2", new Key(KeyEvent.VK_2));
+		keyMap.put("Weapon 3", new Key(KeyEvent.VK_3));
+		keyMap.put("Weapon 4", new Key(KeyEvent.VK_4));
+		keyMap.put("Unlimited Ammo", new Key(KeyEvent.VK_K));
 	}
+
 	@Override
    /**
-    * Checks if keyCode is valid, and then sets that key to true if it
-    * is. This means the key was clicked, and it sends this value to the
+    * Checks if keyCode is valid, and then sets that keyMap to true if it
+    * is. This means the keyMap was clicked, and it sends this value to the
     * game class.
     * @param e
     */
 	public void keyPressed(KeyEvent e) 
 	{
 		int keyCode = e.getKeyCode();
-		
-		if(keyCode > 0 && keyCode < key.length)
+		for(String current : keyMap.keySet())
 		{
-			key[keyCode] = true;
+			Key key = keyMap.get(current);
+			if(key.getKeyCode() == keyCode)
+			{
+				key.setPressed(true);
+			}
 		}
 		
 	}
 
 	@Override
    /**
-    * Checks if the keyCode of the key released is valid, then sets that
-    * key to false if it is.
+    * Checks if the keyCode of the keyMap released is valid, then sets that
+    * keyMap to false if it is.
     * @param e
     */
 	public void keyReleased(KeyEvent e) 
 	{
 		int keyCode = e.getKeyCode();
-		
-		if(keyCode > 0 && keyCode < key.length)
+
+		for(String current : keyMap.keySet())
 		{
-			key[keyCode] = false;
+			Key key = keyMap.get(current);
+			if(key.getKeyCode() == keyCode)
+			{
+				key.setPressed(false);
+			}
 		}
-		
 	}
 
 	@Override
@@ -108,9 +143,9 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	@Override
 	public void focusLost(FocusEvent arg0)
 	{
-		for(int i = 0; i < key.length; i++)
+		for(String current : keyMap.keySet())
 		{
-			key[i] = false;
+			keyMap.get(current).setPressed(false);
 		}
 		
 	}
@@ -181,19 +216,21 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	{
 		Component c = RunGame.frame;
 
-		int x = e.getX();
-		int y = e.getY();
+		int x = c.getMousePosition().x;
+		int y = c.getMousePosition().y;
 		int centerx = Display.WIDTH/2;
 		int centery = Display.HEIGHT/2;
 		//get the difference from the center to determine movement
 		double turnAmountX = x - centerx;
 		double turnAmountY = y - centery;
-		//based on amount moved the 100 is the sensitivity
+
+		//based on amount moved
 		Display.mouseSpeedHorizontal = Controller.rotationSpeed * turnAmountX;
 		Display.mouseSpeedVertical = Controller.rotationSpeed * turnAmountY;
+
 		//Always reset mouse to the center of the screen.
-		int lx = c.getLocation().x;
-		int ly = c.getLocation().y;
-		robot.mouseMove(lx + centerx + 3, ly + centery + 26);
+        int lx = c.getLocationOnScreen().x;
+        int ly = c.getLocationOnScreen().y;
+		robot.mouseMove(lx + centerx, ly + centery);
 	}
 }

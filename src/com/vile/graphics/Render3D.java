@@ -611,7 +611,7 @@ public class Render3D extends Render {
                     Door door = Game.doors.get(a);
 
                     //If door is in range of enemy, have it open as long
-                    //as it is not a door requiring a key
+                    //as it is not a door requiring a keyMap
                     if (Math.abs(door.getZ() - enemy.zPos) <= 1
                             && Math.abs(door.getX() - enemy.xPos) <= 1) {
                         if (door.doorType == 0) {
@@ -2834,28 +2834,28 @@ public class Render3D extends Render {
                     block.wallPhase = 0;
                     break;
 
-                //Red key door
+                //Red keyMap door
                 case 9:
                     block.wallImage = Textures.wall9;
 
                     block.wallPhase = 0;
                     break;
 
-                //Blue key door
+                //Blue keyMap door
                 case 10:
                     block.wallImage = Textures.wall10;
 
                     block.wallPhase = 0;
                     break;
 
-                //Green key door
+                //Green keyMap door
                 case 11:
                     block.wallImage = Textures.wall11;
 
                     block.wallPhase = 0;
                     break;
 
-                //Yellow key door
+                //Yellow keyMap door
                 case 12:
                     block.wallImage = Textures.wall12;
 

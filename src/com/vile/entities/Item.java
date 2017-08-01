@@ -458,7 +458,7 @@ public class Item
 			Player.hasRedKey = true;
 			itemUsed = true;
 			
-			//Displays that the player picked up the Red key
+			//Displays that the player picked up the Red keyMap
 			Display.itemPickup = "Picked up Red Keycard!";
 			Display.itemPickupTime = 1;
 			
@@ -470,7 +470,7 @@ public class Item
 			Player.hasBlueKey = true;
 			itemUsed = true;
 			
-			//Displays that the player picked up the Blue key
+			//Displays that the player picked up the Blue keyMap
 			Display.itemPickup = "Picked up Blue Keycard!";
 			Display.itemPickupTime = 1;
 			
@@ -482,7 +482,7 @@ public class Item
 			Player.hasGreenKey = true;
 			itemUsed = true;
 			
-			//Displays that the player picked up the green key
+			//Displays that the player picked up the green keyMap
 			Display.itemPickup = "Picked up Green Keycard!";
 			Display.itemPickupTime = 1;
 			
@@ -494,7 +494,7 @@ public class Item
 			Player.hasYellowKey = true;
 			itemUsed = true;
 			
-			//Displays that the player picked up the yellow key
+			//Displays that the player picked up the yellow keyMap
 			Display.itemPickup = "Picked up Yellow Keycard!";
 			Display.itemPickupTime = 1;
 			

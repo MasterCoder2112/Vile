@@ -9,6 +9,8 @@ import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 import com.vile.launcher.FPSLauncher;
 
+import java.util.Map;
+
 /**
  * Title: Controller
  *
@@ -83,7 +85,7 @@ public class Controller {
      * <p>
      * Also takes care of shooting, flying, and other such events.
      */
-    public void performActions(Game game) {
+    public void performActions(Map<String, Key> keys, Game game) {
        /*
 	    * Reset these variables each time it runs through.
 	    */
@@ -112,47 +114,47 @@ public class Controller {
 		   /*
 		    * If you shoot, then set shot to true
 		    */
-            if (Game.shoot) {
+            if (keys.get("Shoot").isPressed()) {
                 shot = true;
             }
 
             //If moving forward
-            if (Game.foward) {
+            if (keys.get("Forward").isPressed()) {
                 moveZ += 1 / 21.3;
             }
 
             //If moving back
-            if (Game.back) {
+            if (keys.get("Back").isPressed()) {
                 moveZ -= 1 / 21.3;
             }
 
             //If strafing left
-            if (Game.left) {
+            if (keys.get("Left").isPressed()) {
                 moveX -= 1 / 21.3;
             }
 
             //If strafing right
-            if (Game.right) {
+            if (keys.get("Right").isPressed()) {
                 moveX += 1 / 21.3;
             }
 
             //If turning left
-            if (Game.turnLeft) {
+            if (keys.get("Look Left").isPressed()) {
                 rotationa -= rotationSpeed;
             }
 
             //If turning right
-            if (Game.turnRight) {
+            if (keys.get("Look Right").isPressed()) {
                 rotationa += rotationSpeed;
             }
 
             //If looking up
-            if (Game.turnUp) {
+            if (keys.get("Look Up").isPressed()) {
                 upRotationa -= rotationUpSpeed;
             }
 
             //If looking down
-            if (Game.turnDown) {
+            if (keys.get("Look Down").isPressed()) {
                 upRotationa += rotationUpSpeed;
             }
 
@@ -161,7 +163,7 @@ public class Controller {
             upRotationa += verticalMouseSpeed;
 
             //If running, set moveSpeed to 1.5 times the value it was
-            if (Game.run) {
+            if (keys.get("Run").isPressed()) {
                 moveSpeed *= 1.5;
             }
 			
@@ -170,7 +172,7 @@ public class Controller {
 		    * jumping. Half the moveSpeed, set crouching = true, and keep
 		    * performing a given operation while you are crouching.
 		    */
-            if (Game.crouch && !inJump) {
+            if (keys.get("Crouch").isPressed() && !inJump) {
                 moveSpeed = 0.5;
                 crouching = true;
 
@@ -244,8 +246,8 @@ public class Controller {
 			    * ground zero is now higher because the elevator is
 			    * constantly moving.
 			    */
-                if (Game.jump && Player.y == 0 + Player.maxHeight
-                        || Game.jump &&
+                if (keys.get("Jump").isPressed() && Player.y == 0 + Player.maxHeight
+                        || keys.get("Jump").isPressed() &&
                         Player.y <= 0.5 + Player.maxHeight &&
                         Player.y >= 0 + Player.maxHeight) {
                     inJump = true;
@@ -280,7 +282,7 @@ public class Controller {
                 }
             } else {
                 //If in flymode just go upward
-                if (Game.jump) {
+                if (keys.get("Jump").isPressed()) {
                     Player.y += 0.8;
                 }
 
@@ -324,7 +326,7 @@ public class Controller {
             }
 
             //Turns unlimited ammo on or off
-            if (Game.unlimAmmo && time == 0) {
+            if (keys.get("Unlimited Ammo").isPressed() && time == 0) {
                 if (unlimitedAmmoOn) {
                     unlimitedAmmoOn = false;
                 } else {
@@ -337,7 +339,7 @@ public class Controller {
             //If gun shot
             if (shot) {
                 //If shot by using the keyboard, shut it off here
-                if (Game.shoot) {
+                if (keys.get("Shoot").isPressed()) {
                     shot = false;
                 }
 
@@ -352,39 +354,39 @@ public class Controller {
 
             //If the player chooses the first weapon slot
             //Set that weapon as being equipped
-            if (Game.weaponSlot0) {
+            if (keys.get("Weapon 1").isPressed()) {
                 Player.weaponEquipped = 0;
             }
 
             //If Player chooses the second weapon slot
             //Set that weapon as being equipped
-            if (Game.weaponSlot1 && Player.weapons[1].canBeEquipped) {
+            if (keys.get("Weapon 2").isPressed() && Player.weapons[1].canBeEquipped) {
                 Player.weaponEquipped = 1;
             }
             //If weapon has not be picked up yet
-            else if (Game.weaponSlot1) {
+            else if (keys.get("Weapon 2").isPressed()) {
                 Display.itemPickup = "No Weapon yet";
                 Display.itemPickupTime++;
             }
 
             //If Player chooses the second weapon slot
             //Set that weapon as being equipped
-            if (Game.weaponSlot2 && Player.weapons[2].canBeEquipped) {
+            if (keys.get("Weapon 3").isPressed() && Player.weapons[2].canBeEquipped) {
                 Player.weaponEquipped = 2;
             }
             //If weapon has not be picked up yet
-            else if (Game.weaponSlot2) {
+            else if (keys.get("Weapon 3").isPressed()) {
                 Display.itemPickup = "No Weapon yet";
                 Display.itemPickupTime++;
             }
 
             //If Player chooses the third weapon slot
             //Set that weapon as being equipped
-            if (Game.weaponSlot3 && Player.weapons[3].canBeEquipped) {
+            if (keys.get("Weapon 4").isPressed() && Player.weapons[3].canBeEquipped) {
                 Player.weaponEquipped = 3;
             }
             //If weapon has not be picked up yet
-            else if (Game.weaponSlot3) {
+            else if (keys.get("Weapon 4").isPressed()) {
                 Display.itemPickup = "No Weapon yet";
                 Display.itemPickupTime++;
             }
@@ -394,7 +396,7 @@ public class Controller {
 		    * ammo in them, and some time has passed since the last
 		    * reload, then reload.
 		    */
-            if (Game.reloading && time == 0) {
+            if (keys.get("Reload").isPressed() && time == 0) {
                 if (Player.weapons[Player.weaponEquipped].reload()) {
                     time++;
 
@@ -434,7 +436,7 @@ public class Controller {
 	    * showFPS, and then start the ticks again since this action was
 	    * last performed.
 	    */
-        if (Game.fpsShow && time == 0) {
+        if (keys.get("Show FPS").isPressed() && time == 0) {
             if (showFPS) {
                 showFPS = false;
             } else {
@@ -445,7 +447,7 @@ public class Controller {
         }
 
         //If you want to quit the game, set quitGame to true
-        if (Game.pause) {
+        if (keys.get("Pause").isPressed()) {
             //Game is paused
             Display.pauseGame = true;
 
@@ -462,7 +464,7 @@ public class Controller {
 	    * Each time check all of these entities in the game to see if
 	    * the player is within range of them.
 	    */
-        if (Game.use && Player.alive) {
+        if (keys.get("Use").isPressed() && Player.alive) {
             //If nothing is activated, this will activate the oomf sound
             boolean anyActivated = false;
 
@@ -491,9 +493,9 @@ public class Controller {
 			
 		   /*
 		    * See if player activated a door. Player has to be within
-		    * range of door, and have the appropriate key to activate
+		    * range of door, and have the appropriate keyMap to activate
 		    * a door. Otherwise show on screen that you need a certain
-		    * key to activate.
+		    * keyMap to activate.
 		    */
             for (int i = 0; i < Game.doors.size(); i++) {
                 Door door = Game.doors.get(i);
@@ -511,7 +513,7 @@ public class Controller {
                         if (door.doorType == 1 && !Player.hasRedKey) {
 						   /*
 						    * Displays that the player cannot open the
-						    * door without the red key.
+						    * door without the red keyMap.
 						    */
                             Display.itemPickup =
                                     "You need the red keycard!";
@@ -519,7 +521,7 @@ public class Controller {
                         } else if (door.doorType == 2 && !Player.hasBlueKey) {
 						   /*
 						    * Displays that the player cannot open the
-						    * door without the blue key.
+						    * door without the blue keyMap.
 						    */
                             Display.itemPickup =
                                     "You need the blue keycard!";
@@ -527,7 +529,7 @@ public class Controller {
                         } else if (door.doorType == 3 && !Player.hasGreenKey) {
 						   /*
 						    * Displays that the player cannot open the
-						    * door without the green key.
+						    * door without the green keyMap.
 						    */
                             Display.itemPickup =
                                     "You need the green keycard!";
@@ -535,7 +537,7 @@ public class Controller {
                         } else {
 						   /*
 						    * Displays that the player cannot open the
-						    * door without the yellow key.
+						    * door without the yellow keyMap.
 						    */
                             Display.itemPickup =
                                     "You need the yellow keycard!";
@@ -587,7 +589,7 @@ public class Controller {
 	    * DOOM when you die. Usually if your skilled enough you can
 	    * survive and continue on going.
 	    */
-        else if (Game.use && !Player.alive) {
+        else if (keys.get("Use").isPressed() && !Player.alive) {
             new Player();
 
             //If not survival, reload map
@@ -608,7 +610,7 @@ public class Controller {
 		* noClip, and then start the ticks again since this action was
 		* last performed.
 		*/
-        if (Game.noClip && time == 0) {
+        if (keys.get("No Clip").isPressed() && time == 0) {
             time++;
 
             if (!noClipOn) {
@@ -619,7 +621,7 @@ public class Controller {
         }
 
         //Same as above just for godMode
-        if (Game.godMode && time == 0) {
+        if (keys.get("God Mode").isPressed() && time == 0) {
             time++;
 
             if (!godModeOn) {
@@ -642,7 +644,7 @@ public class Controller {
 	    * decreases the fallHeight you are at (even though technically
 	    * you are at the same height). 
 	    */
-        if (Game.fly && time == 0) {
+        if (keys.get("Fly").isPressed() && time == 0) {
             if (!flyOn) {
                 fallSpeed = 0.4;
                 flyOn = true;
@@ -665,7 +667,7 @@ public class Controller {
 	   /*
 	    * Same as other debug modes.
 	    */
-        if (Game.superSpeed && time == 0) {
+        if (keys.get("Super Speed").isPressed()&& time == 0) {
             if (!superSpeedOn) {
                 superSpeedOn = true;
             } else {
@@ -681,7 +683,7 @@ public class Controller {
         }
 
         //Give player all weapons and ammo limits
-        if (Game.restock) {
+        if (keys.get("Restock").isPressed()) {
             Player.weapons[0].ammo = Player.weapons[0].ammoLimit;
             Player.weapons[0].canBeEquipped = true;
             Player.weapons[0].dualWield = true;
