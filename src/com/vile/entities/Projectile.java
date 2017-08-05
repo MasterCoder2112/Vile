@@ -540,7 +540,7 @@ public abstract class Projectile
 					block.health -= damage;
 					
 					//Blass glass hit/break sound
-					SoundController.barrelExplosion.playAudioFile();
+					SoundController.explosion.playAudioFile();
 					
 					//If block is broken
 					if(block.health <= 0)
@@ -562,8 +562,8 @@ public abstract class Projectile
 				
 			}
 			
-			//Normal bullet
-			if(ID <= 3)
+			//Normal bullet, not rocket
+			if(ID <= 2)
 			{
 				SoundController.wallHit.playAudioFile();
 				
@@ -646,7 +646,7 @@ public abstract class Projectile
 			SoundController.rocketFly.stopClip();
 			
 			//Play hit sound effect
-			SoundController.rocketHit.playAudioFile();
+			SoundController.explosion.playAudioFile();
 			
 			double yCorrect = this.y;
 			

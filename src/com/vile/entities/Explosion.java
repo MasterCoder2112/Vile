@@ -474,7 +474,7 @@ public class Explosion
 						block.enemiesOnBlock = temp;
 						
 						//Explosion sound
-						SoundController.barrelExplosion.playAudioFile();
+						SoundController.explosion.playAudioFile();
 						
 						//Re-add to level
 						Level.blocks[block.x + block.z * Level.width] = block;
@@ -578,12 +578,12 @@ public class Explosion
 		//Play explosion sound based on explosion type
 		if(ID == 1)
 		{
-			SoundController.barrelExplosion.playAudioFile();
+			SoundController.explosion.playAudioFile();
 		}
 		else
 		{
 			SoundController.rocketFly.stopClip();
-			SoundController.rocketHit.playAudioFile();
+			SoundController.explosion.playAudioFile();
 		}
 	}
 	

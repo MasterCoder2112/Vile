@@ -22,7 +22,7 @@ public class SoundController
 	// When the player picks up an ammo clip
 	public static Sound clip;
 	
-	public static Sound barrelExplosion;
+	public static Sound explosion;
 	public static Sound secret;
 	public static Sound megaPickUp;
 	public static Sound keyPickUp;
@@ -65,7 +65,6 @@ public class SoundController
 	public static Sound vileCivHurt;
 	public static Sound tankHurt;
 	public static Sound wallHit;
-	public static Sound rocketHit;
 	public static Sound rocketFly;
 	public static Sound rocketFire;
 	
@@ -113,7 +112,7 @@ public class SoundController
 		enemyActivate     =  new Sound(defaultSize, "/test/enemyActivate.wav");
 		bossDeath         =  new Sound(defaultSize, "/test/bossDeath.wav");
 		phaseShot         =  new Sound(defaultSize, "/test/phaseShot.wav");
-		barrelExplosion   =  new Sound(defaultSize, "/test/barrelexplosion.wav");
+		explosion   =  new Sound(defaultSize, "/test/barrelexplosion.wav");
 		pistol            =  new Sound(defaultSize, "/test/pistol.wav");
 		enemy2Activate    =  new Sound(defaultSize, "/test/enemy2Activate.wav");
 		enemy3Activate    =  new Sound(defaultSize, "/test/enemy3Activate.wav");
@@ -134,7 +133,6 @@ public class SoundController
 		mlgDeath          =  new Sound(1, "/test/mlgDeath.wav");
 		nickDeath         =  new Sound(1, "/test/nickDeath.wav");
 		rocketFire        =  new Sound(defaultSize, "/test/rocketFire.wav");
-		rocketHit         =  new Sound(defaultSize, "/test/barrelExplosion.wav");
 		rocketFly         =  new Sound(1, "/test/rocketFly.wav");
 		glassBreak        =  new Sound(defaultSize, "/test/glassBreak.wav");
 		belegothActivate  =  new Sound(1, "/test/belegothActivate.wav");
@@ -175,7 +173,7 @@ public class SoundController
 		enemyActivate.resetVolume(newVolume);
 		bossDeath.resetVolume(newVolume);
 		phaseShot.resetVolume(newVolume);
-		barrelExplosion.resetVolume(newVolume);
+		explosion.resetVolume(newVolume);
 		pistol.resetVolume(newVolume);
 		enemy2Activate.resetVolume(newVolume);
 		enemy3Activate.resetVolume(newVolume);
@@ -196,7 +194,6 @@ public class SoundController
 		mlgDeath.resetVolume(newVolume);
 		nickDeath.resetVolume(newVolume);
 		rocketFire.resetVolume(newVolume);
-		rocketHit.resetVolume(newVolume);
 		rocketFly.resetVolume(newVolume);
 		glassBreak.resetVolume(newVolume);
 		belegothActivate.resetVolume(newVolume);

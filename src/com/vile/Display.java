@@ -278,8 +278,15 @@ public class Display extends Canvas implements Runnable
 		}
 		else
 		{
-			//All sound volumes are reset
-			soundController.resetAllVolumes(FPSLauncher.soundVolumeLevel);
+			try
+			{
+				//All sound volumes are reset
+				soundController.resetAllVolumes(FPSLauncher.soundVolumeLevel);
+			}
+			catch(Exception e)
+			{
+				
+			}
 		}
 
 		//Only resets game values if the game needs to be restarted
