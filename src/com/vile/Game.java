@@ -179,7 +179,7 @@ public class Game
 		activatable   = new ArrayList<Item>();
 		
 		//If a survival map
-		if(setMap == false)
+		if(!setMap)
 		{
 			calculatedSize = 100;
 			
@@ -290,6 +290,41 @@ public class Game
 			Player.weapons[1].canBeEquipped = true;
 			Player.weapons[2].canBeEquipped = true;
 			Player.weapons[3].canBeEquipped = true;
+			
+			//Depending on the theme set the ceiling and floor textures
+			switch(Display.themeNum)
+			{
+				case 1:
+					mapFloor = 9;
+					mapCeiling = 10;
+					break;
+					
+				case 2:
+					mapFloor = 1;
+					mapCeiling = 3;
+					break;
+					
+				case 3:
+					mapFloor = 12;
+					mapCeiling = 12;
+					break;
+					
+				case 4:
+					mapFloor = 11;
+					mapCeiling = 10;
+					break;
+					
+				case 5:
+					mapFloor = 13;
+					mapCeiling = 13;
+					break;
+					
+				default:
+					mapFloor = 9;
+					mapCeiling = 10;
+					break;
+			}
+			
 			
 		}
 		else
