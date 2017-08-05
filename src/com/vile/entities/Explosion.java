@@ -39,6 +39,9 @@ public class Explosion
 	//Type of explosion
 	public int ID = 0;
 	
+	//Activation ID
+	public int itemActivationID = 0;
+	
 	//Corrects height it is seen at
 	public double heightCorrect = 8;
 	
@@ -57,14 +60,15 @@ public class Explosion
     * @param z
     * @param ID
     */
-	public Explosion(double x, double y, double z, int ID) 
+	public Explosion(double x, double y, double z, int ID, int itemActID) 
 	{
 		this.x  = x;
 		this.y  = y;
 		this.z  = z;
 		this.ID = ID;
+		this.itemActivationID = itemActID;
 		
-		Block blockOn = Level.getBlock((int)x, (int)z);
+		//Block blockOn = Level.getBlock((int)x, (int)z);
 		
 	   /*
 	    * Correct explosions height so that it cannot go through the
@@ -417,7 +421,9 @@ public class Explosion
 			try
 			{
 				//Secret glass block
-				if(block.wallID == 4 && block.wallItem.itemID == 20)
+				if(block.wallID == 4 &&
+						block.wallItem.itemID ==
+						ItemNames.BREAKABLEWALL.getID())
 				{
 					block.health -= 60;
 					
@@ -426,9 +432,8 @@ public class Explosion
 					
 					if(block.health <= 0)
 					{
-						//Remove secret item
+						//Remove breakable wall item
 						Game.items.remove(block.wallItem);
-						Game.secretsFound++;
 						
 						//Keep track of the enemies on the block before 
 						//the block changes
@@ -513,7 +518,7 @@ public class Explosion
 					if(Math.abs((temp.y) + (yCorrect)) <= 8)
 					{
 						Game.explosions.add(
-								new Explosion(temp.x, -temp.y/10, temp.z, 1));
+								new Explosion(temp.x, -temp.y/10, temp.z, 1, 0));
 						block.wallItem = null;
 						temp.removeCanister();
 					}

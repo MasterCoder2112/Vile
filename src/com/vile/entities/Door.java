@@ -46,9 +46,10 @@ public class Door extends Entity
     * @param wallX
     * @param wallZ
     */
-	public Door(double x, double y, double z, int wallX, int wallZ, int type) 
+	public Door(double x, double y, double z, int wallX, int wallZ,
+			int type, int itemActID) 
 	{
-		super(0, 0, 0, 0, 0, x, y, z, 8, 0);
+		super(0, 0, 0, 0, 0, x, y, z, 8, 0, itemActID);
 		
 		doorX = wallX;
 		doorZ = wallZ;
@@ -129,7 +130,7 @@ public class Door extends Entity
 			}
 		}
 		//If door is moving down
-		else if(temp.y <= 3 && time > 250)
+		else if(temp.y <= 3 && time > 250 && itemActivationID == 0)
 		{
 			Block thisBlock = Level.getBlock(doorX, doorZ);
 			
@@ -160,21 +161,14 @@ public class Door extends Entity
 			}
 			else
 			{
-				for(int i = 0; i < Game.enemies.size(); i++)
+				for(int i = 0; i < thisBlock.enemiesOnBlock.size(); i++)
 				{
-					Enemy enemy = Game.enemies.get(i);
-					Block block = Level.getBlock
-							((int)enemy.xPos, (int)enemy.zPos);
-					
-					if(block.equals(thisBlock) && thisBlock.y <= 
-							enemy.height)
-					{
-						time = 0;
-						return;
-					}
+					time = 0;
+					return;
 				}
 			}
 			
+			//Move down
 			temp.y -= 0.05;
 			
 			//Only play sound every 10 ticks

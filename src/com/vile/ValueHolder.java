@@ -16,6 +16,7 @@ public class ValueHolder
 	public int wallID    = 1;
 	public int entityID  = 0;
 	public double rotation = 0;
+	public int itemActID = 0;
 	
 	//Future Values
 	public int brightness = 0;
@@ -29,12 +30,13 @@ public class ValueHolder
     * @param ID
     */
 	public ValueHolder(double height, int wallID, int ID,
-			double rotation) 
+			double rotation, int itemActID) 
 	{
 		this.height = height;
 		this.wallID = wallID;
 		entityID = ID;
 		this.rotation = rotation;
+		this.itemActID = itemActID;
 	}
 
 }

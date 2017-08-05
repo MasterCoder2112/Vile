@@ -1,5 +1,6 @@
 package com.vile.entities;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import com.vile.Display;
@@ -69,9 +70,10 @@ public class Enemy extends Entity implements Comparable
     * @param y
     * @param z
     */
-	public Enemy(double x, double y, double z, int ID, double rotation) 
+	public Enemy(double x, double y, double z, int ID, double rotation,
+			int itemActivationID) 
 	{
-		super(100, 0, 0, 6, 0, x, y, z, ID, rotation);
+		super(100, 0, 0, 6, 0, x, y, z, ID, rotation, itemActivationID);
 		
 		//Default speed is 1
 		speed = 1;
@@ -79,14 +81,14 @@ public class Enemy extends Entity implements Comparable
 		//Brainomorph
 		if(ID == 1)
 		{
-			health = 100;
+			health = 120;
 			hasSpecial = true;
 			weightLevel = 2;
 		}
 		//Sentinel
 		else if(ID == 2)
 		{
-			health = 130;
+			health = 150;
 			hasSpecial = true;
 			canFly = true;
 			weightLevel = 2;
@@ -123,7 +125,7 @@ public class Enemy extends Entity implements Comparable
 		{
 			speed *= 2;
 			damage = 25;
-			health = 2500;
+			health = 5000;
 			height = 60;
 			weightLevel = 10;
 			isABoss = true;
@@ -142,7 +144,7 @@ public class Enemy extends Entity implements Comparable
 		{
 			speed *= 2;
 			damage = 50;
-			health = 5000;
+			health = 10000;
 			isABoss = true;
 			height = 60;
 			weightLevel = 10;
@@ -191,9 +193,11 @@ public class Enemy extends Entity implements Comparable
     * specific values you want to create the enemy of your choice. 
     */
 	public Enemy(int health, int armor, int ammo, int damage,
-			int speed, double x, double y, double z, int ID, double rotation)
+			int speed, double x, double y, double z, int ID,
+			double rotation, int itemActivationID)
 	{
-		super(health, armor, ammo, damage, speed, x, y, z, ID, rotation);
+		super(health, armor, ammo, damage, speed, x, y, z, ID,
+				rotation, itemActivationID);
 	}
 	
    /**
@@ -497,6 +501,9 @@ public class Enemy extends Entity implements Comparable
 				{
 					Corpse corpse = Game.corpses.get(i);
 					
+					Block corpseBlock = Level.getBlock
+							((int)corpse.x, (int)corpse.z);
+					
 					//Find the distance between a corpse and the enemy
 					double distance = 
 							Math.sqrt(((Math.abs(getX() - corpse.x))
@@ -515,10 +522,10 @@ public class Enemy extends Entity implements Comparable
 					if(distance <= 1 && corpse.enemyID != 5 
 							&& corpse.enemyID != 6 && corpse.enemyID != 0
 							&& corpse.enemyID != 8
-							&& Math.abs(getY() - corpse.y) <= 4)
+							&& Math.abs(getY() - corpse.y) <= 4
+							&& !corpseBlock.isaDoor)
 					{	
-						//Only resurrect at the end of the special 
-						//attack preperation
+						//Can the mage resurrect the corpse yet
 						if(canResurrect)
 						{
 							//Reset the ability to resurrect again.
@@ -530,7 +537,7 @@ public class Enemy extends Entity implements Comparable
 						    * Also activate the new enemy.
 						    */
 							Enemy newEnemy = new Enemy(corpse.x, 0, corpse.z,
-									corpse.enemyID, 0);
+									corpse.enemyID, 0, 0);
 							
 							newEnemy.activated = true;
 							
@@ -545,8 +552,11 @@ public class Enemy extends Entity implements Comparable
 						}
 						else
 						{
-							//This is the mage enemies special 
-							//attack. So reset ticks and do this.
+						   /*
+						    * If mage should be able to resurrect but
+						    * isn't in the process of doing so then
+						    * start the process
+						    */
 							if(ID == 5)
 							{
 								this.isFiring = true;
@@ -1484,22 +1494,22 @@ public class Enemy extends Entity implements Comparable
 		{
 			new Item(2, xPos, 
 				Math.abs(yPos) + 4, 
-				zPos, ItemNames.SHELLS.getID(), 0);
+				zPos, ItemNames.SHELLS.getID(), 0, 0);
 		}
 		//Sentinel
 		else if(ID == 2)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.SHELLS.getID(), 0);
+					zPos, ItemNames.SHELLS.getID(), 0, 0);
 			
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.SHARD.getID(), 0);
+					zPos, ItemNames.SHARD.getID(), 0, 0);
 			
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.VIAL.getID(), 0);
+					zPos, ItemNames.VIAL.getID(), 0, 0);
 		}
 		//Mutated Commando
 		else if(ID == 3)
@@ -1508,12 +1518,12 @@ public class Enemy extends Entity implements Comparable
 			{
 				new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.SHARD.getID(), 0);
+					zPos, ItemNames.SHARD.getID(), 0, 0);
 			}
 			
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.ROCKETS.getID(), 0);
+					zPos, ItemNames.ROCKETS.getID(), 0, 0);
 
 		}
 		//Reaper
@@ -1521,39 +1531,39 @@ public class Enemy extends Entity implements Comparable
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.VIAL.getID(), 0);
+					zPos, ItemNames.VIAL.getID(), 0, 0);
 		}
 		//Magistrate
 		else if(ID == 5)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.HEALTHPACK.getID(), 0);
+					zPos, ItemNames.HEALTHPACK.getID(), 0, 0);
 			
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.HEALTHPACK.getID(), 0);	
+					zPos, ItemNames.HEALTHPACK.getID(), 0, 0);	
 		}
 		//Morgoth
 		else if(ID == 6)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.REDKEY.getID(), 0);
+					zPos, ItemNames.REDKEY.getID(), 0, 0);
 		}
 		//Vile Warrior
 		else if(ID == 7)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.BULLETS.getID(), 0);
+					zPos, ItemNames.BULLETS.getID(), 0, 0);
 		}
 		//Belegoth
 		else if(ID == 8)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.GREENKEY.getID(), 0);
+					zPos, ItemNames.GREENKEY.getID(), 0, 0);
 		}
 		
 		//Create random number from 0 to 99
@@ -1565,55 +1575,55 @@ public class Enemy extends Entity implements Comparable
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.CHAINMEAL.getID(), 0);
+					zPos, ItemNames.CHAINMEAL.getID(), 0, 0);
 		}
 		else if(temp == 20)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.SMALLCHARGE.getID(), 0);
+					zPos, ItemNames.SMALLCHARGE.getID(), 0, 0);
 		}
 		else if(temp == 30)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.VIAL.getID(), 0);
+					zPos, ItemNames.VIAL.getID(), 0, 0);
 		}
 		else if(temp == 40)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.ADRENALINE.getID(), 0);
+					zPos, ItemNames.ADRENALINE.getID(), 0, 0);
 		}
 		else if(temp == 50)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.SHARD.getID(), 0);
+					zPos, ItemNames.SHARD.getID(), 0, 0);
 		}
 		else if(temp == 60)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.PISTOL.getID(), 0);
+					zPos, ItemNames.PISTOL.getID(), 0, 0);
 		}
 		else if(temp == 70)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.SHELLS.getID(), 0);
+					zPos, ItemNames.SHELLS.getID(), 0, 0);
 		}
 		else if(temp == 80)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.HEALTHPACK.getID(), 0);
+					zPos, ItemNames.HEALTHPACK.getID(), 0, 0);
 		}
 		else if(temp == 90)
 		{
 			new Item(2, xPos, 
 					Math.abs(yPos) + 4, 
-					zPos, ItemNames.SHOTGUN.getID(), 0);
+					zPos, ItemNames.SHOTGUN.getID(), 0, 0);
 		}
 		
 		//Add corpse to the map
@@ -1670,9 +1680,89 @@ public class Enemy extends Entity implements Comparable
 		Game.enemies.remove(this);
 		
 		//If a boss remove it from the bosses array as well.
+		//And activate certain events if they are there
 		if(isABoss)
 		{
 			Game.bosses.remove(this);
+		}
+		
+		//If this has stuff to activate
+		if(this.itemActivationID > 0)
+		{
+			//Search through all the doors
+			for(int k = 0; k < Game.doors.size(); k++)
+			{
+				Door door = Game.doors.get(k);
+				
+				//If door has the same activation ID as the 
+				//button then activate it.
+				if(door.itemActivationID 
+						== this.itemActivationID)
+				{
+					door.activated = true;
+				}
+			}
+			
+			//Stores Items to be deleted
+			ArrayList<Item> tempItems2 = new ArrayList<Item>();
+			
+			//Scan all activatable items
+			for(int j = 0; j < Game.activatable.size(); j++)
+			{
+				Item item = Game.activatable.get(j);
+				
+				if(this.itemActivationID == item.itemActivationID)
+				{
+					//If Item is a Happiness Tower, activate it and
+					//state that it is activated
+					if(item.itemID == ItemNames.RADAR.getID()
+							&& !item.activated)
+					{
+						item.activated = true;
+						Display.itemPickup = "COM SYSTEM ACTIVATED!";
+						Display.itemPickupTime = 1;
+					}
+					else
+					{				
+						//If item is enemy spawnpoint, then spawn the
+						//enemy, and add the item to the arraylist of
+						//items to be deleted
+						if(item.itemID == ItemNames.ENEMYSPAWN.getID())
+						{
+							Game.enemiesInMap++;
+							Display.game.addEnemy(item.x, item.z, item.rotation);
+							tempItems2.add(item);
+						}	
+						//If Explosion has same activation ID of the button
+						//then activate it
+						else if(item.itemID == ItemNames.ACTIVATEEXP.getID())
+						{
+							new Explosion(item.x, item.y, item.z, 0, 0);
+							tempItems2.add(item);
+						}
+						//If it gets rid of a wall, delete the wall and create an
+						//air wall in its place.
+						else if(item.itemID == ItemNames.WALLBEGONE.getID())
+						{
+							Block block2 = Level.getBlock
+									((int)item.x, (int)item.z);
+							
+							//Block is effectively no longer there
+							block2.height = 0;
+							
+							tempItems2.add(item);
+						}
+					}
+				}
+			}
+			
+			//Remove all the items that need to be deleted now
+			for(int j = 0; j < tempItems2.size(); j++)
+			{
+				Item temp2 =  tempItems2.get(j);
+						
+				temp2.removeItem();
+			}
 		}
 		
 		//Block this is on

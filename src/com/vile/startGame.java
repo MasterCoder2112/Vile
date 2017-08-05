@@ -8,5 +8,4 @@ public class startGame
 	{
 		new FPSLauncher(0);
 	}
-
 }

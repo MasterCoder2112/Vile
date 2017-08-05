@@ -2,7 +2,11 @@ package com.vile.graphics;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import javax.imageio.ImageIO;
+
 import com.vile.graphics.Render;
 import com.vile.Display;
 
@@ -18,22 +22,8 @@ import com.vile.Display;
  */
 public class Textures 
 {
-	public static Render floor   = loadBitMap
-			("resources/textures/theme"+(Display.themeNum + 1)+"/ground.png");
-	public static Render floor1   = loadBitMap
-			("resources/textures/theme"+3+"/floor1.png");
-	public static Render floor2   = loadBitMap
-			("resources/textures/theme"+3+"/floor2.png");
-	public static Render floor3   = loadBitMap
-			("resources/textures/theme"+3+"/floor3.png");
-	public static Render floor4   = loadBitMap
-			("resources/textures/theme"+3+"/floor4.png");
-	public static Render sky2   = loadBitMap
-			("resources/textures/theme"+3+"/sky2.png");
-	public static Render sky3   = loadBitMap
-			("resources/textures/theme"+3+"/sky3.png");
-	public static Render sky4   = loadBitMap
-			("resources/textures/theme"+3+"/sky4.png");
+	public static Render[] floors;
+	
 	public static Render enemy1   = loadBitMap
 			("resources/textures/enemy1.png");
 	public static Render enemy2   = loadBitMap
@@ -96,6 +86,20 @@ public class Textures
 	public static Render wall14 = loadBitMap
 			("resources/textures/theme"+(Display.themeNum + 1)
 					+"/walls/wall14.png");
+	public static Render teleportEnter = loadBitMap
+			("resources/textures/teleporterEnter.png");
+	public static Render teleportExit = loadBitMap
+			("resources/textures/teleporterExit.png");
+	public static Render tutorialWall = loadBitMap
+			("resources/textures/tutorialWall.png");
+	public static Render tutorialWall2 = loadBitMap
+			("resources/textures/tutorialWall2.png");
+	public static Render tutorialWall3 = loadBitMap
+			("resources/textures/tutorialWall3.png");
+	public static Render tutorialWall4 = loadBitMap
+			("resources/textures/tutorialWall4.png");
+	public static Render tutorialWall5 = loadBitMap
+			("resources/textures/tutorialWall5.png");
 	public static Render wall15Phase5 = loadBitMap
 			("resources/textures/theme"+(Display.themeNum + 1)
 					+"/walls/wall15phase5.png");
@@ -162,9 +166,7 @@ public class Textures
 			("resources/textures/theme"+(Display.themeNum + 1)
 					+"/walls/toxicWaste1.png");
 	////////////////////////////////////////////////////////
-	
-	public static Render ceiling = loadBitMap
-			("resources/textures/theme"+(Display.themeNum + 1)+"/sky.png");
+
 	public static Render health  = loadBitMap
 			("resources/textures/health.png");
 	public static Render shell   = loadBitMap
@@ -1011,6 +1013,32 @@ public class Textures
 					+"/walls/coolWall.png");
 	
    /**
+    * Constructs floor textures since they require a bit more optimized
+    * version of instantiation
+    */
+	public static void Textures()
+	{
+		try
+		{
+			//Array of floor textures
+			floors = new Render[(int)Files.list(Paths.get
+					("resources/textures/floors")).count()];
+			
+			//Adds all floor textures in order in the array
+			for(int i = 0; i < floors.length; i++)
+			{
+				floors[i] = loadBitMap
+						("resources/textures/floors/floor"
+								+(i + 1)+".png");
+			}
+		}
+		catch(Exception e)
+		{
+			//blah
+		}
+	}
+	
+   /**
     * Finds the texture called for in the file, then creates a Render 
     * object out of it so that it renders on the screen.
     * @param fileName
@@ -1044,16 +1072,6 @@ public class Textures
     */
 	public static void resetTextures()
 	{
-		floor   = loadBitMap
-				("resources/textures/theme"+(Display.themeNum + 1)+"/ground.png");
-		floor1   = loadBitMap
-				("resources/textures/theme"+3+"/floor1.png");
-		floor2   = loadBitMap
-				("resources/textures/theme"+3+"/floor2.png");
-		floor3   = loadBitMap
-				("resources/textures/theme"+3+"/floor3.png");
-		floor4   = loadBitMap
-				("resources/textures/theme"+3+"/floor4.png");
 		enemy1   = loadBitMap
 				("resources/textures/enemy1.png");
 		enemy2   = loadBitMap
@@ -1116,6 +1134,20 @@ public class Textures
 		wall14 = loadBitMap
 				("resources/textures/theme"+(Display.themeNum + 1)
 						+"/walls/wall14.png");
+		teleportEnter = loadBitMap
+				("resources/textures/teleporterEnter.png");
+		teleportExit = loadBitMap
+				("resources/textures/teleporterExit.png");
+		tutorialWall = loadBitMap
+				("resources/textures/tutorialWall.png");
+		tutorialWall2 = loadBitMap
+				("resources/textures/tutorialWall2.png");
+		tutorialWall3 = loadBitMap
+				("resources/textures/tutorialWall3.png");
+		tutorialWall4 = loadBitMap
+				("resources/textures/tutorialWall4.png");
+		tutorialWall5 = loadBitMap
+				("resources/textures/tutorialWall5.png");
 		wall15Phase5 = loadBitMap
 				("resources/textures/theme"+(Display.themeNum + 1)
 						+"/walls/wall15phase5.png");
@@ -1131,8 +1163,6 @@ public class Textures
 		wall15Phase1 = loadBitMap
 				("resources/textures/theme"+(Display.themeNum + 1)
 						+"/walls/wall15phase1.png");
-		ceiling = loadBitMap
-				("resources/textures/theme"+(Display.themeNum + 1)+"/sky.png");
 		health  = loadBitMap
 				("resources/textures/health.png");
 		shell   = loadBitMap
@@ -1728,13 +1758,6 @@ public class Textures
 				("resources/textures/vileCivilianAttack1(135 right).png");
 		vileCivilianAttack2135right   = loadBitMap
 				("resources/textures/vileCivilianAttack2(135 right).png");
-		sky2   = loadBitMap
-				("resources/textures/theme"+3+"/sky2.png");
-		sky3   = loadBitMap
-				("resources/textures/theme"+3+"/sky3.png");
-		sky4   = loadBitMap
-				("resources/textures/theme"+3+"/sky4.png");
-		
 		enemy4corpse1   = loadBitMap
 				("resources/textures/enemy4corpse1.png");
 		enemy4corpse2   = loadBitMap

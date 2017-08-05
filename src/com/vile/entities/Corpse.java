@@ -366,13 +366,16 @@ public class Corpse
 	    * to go through it (mainly used with doors) then don't allow
 	    * the corpse to move.
 	    */
-		if(((block.height + block.y - (2)) > 
-			-yCorrect && -yCorrect + (2) >
-			block.y && !block.isaDoor))
-		{
-			return false;
-		}
+		
+		//TODO FIX THIS COLLISION CRAP
+		
+		//if(((block.height + block.y - (2)) > 
+			//-yCorrect && -yCorrect + (2) >
+			//block.y && !block.isaDoor))
+		//{
+			//return false;
+		//}
 
-		return true;
+		return false;
 	}
 }

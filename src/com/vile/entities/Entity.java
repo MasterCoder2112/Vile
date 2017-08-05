@@ -29,6 +29,7 @@ public abstract class Entity
 	public int tick       = 0;
 	public int tickRound  = 0;
 	public int tickAmount = 11;
+	public int itemActivationID = 0;
 	public double speed   = 0;
 	public double xPos    = 0;
 	public double yPos    = 0;
@@ -125,7 +126,8 @@ public abstract class Entity
     * @param ID
     */
 	public Entity(int health, int armor, int ammo, int damage, double speed
-			, double x, double y, double z, int ID, double rotation) 
+			, double x, double y, double z, int ID, double rotation,
+			int itemActivationID) 
 	{
 		this.health = health;
 		this.armor  = armor;
@@ -134,6 +136,7 @@ public abstract class Entity
 		this.speed  = speed;
 		this.ID     = ID;
 		this.rotation = rotation;
+		this.itemActivationID = itemActivationID;
 		xPos = x;
 		yPos = y;
 		zPos = z;

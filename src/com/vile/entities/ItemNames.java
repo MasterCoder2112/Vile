@@ -20,7 +20,7 @@ public enum ItemNames
 	GREENKEY ("Green Keycard", 0, 6),
 	YELLOWKEY ("Yellow Keycard", 0, 7),
 	SPAWN ("Player Spawn", 0, 8),
-	ENDBUTTON ("End Button", 0, 9),
+	BREAKABLEWALL ("Breakable Wall", 0, 9),
 	ELEVATOR ("Elevator", 0, 10),
 	DOOR ("Door (Normal)", 0, 11),
 	REDDOOR ("Door (Red)", 0, 12),
@@ -53,7 +53,7 @@ public enum ItemNames
 	LAMPTABLE ("Lamp Table", 0, 43),
 	CORPSE ("Default corpse", 0, 44),
 	SHELLBOX ("Box of Shells", 20, 47),
-	ENDLINEDEF ("End line def", 0, 48),
+	LINEDEF ("Line def", 0, 48),
 	PHASECANNON ("Phase Cannon", 3, 49),
 	SMALLCHARGE ("Small Charge Pack", 3, 50),
 	LARGECHARGE ("Large Charge Pack", 7, 51),
@@ -68,7 +68,10 @@ public enum ItemNames
 	ROCKETCRATE ("Rocket Crate", 10, 62),
 	EXPLOSION ("Explosion", 10, 63),
 	ACTIVATEEXP ("Activate Explosion", 10, 64),
-	WALLBEGONE ("Erasable wall", 10, 65);
+	WALLBEGONE ("Erasable wall", 10, 65),
+	TELEPORTERENTER("Teleporter enterance", 0, 66),
+	TELEPORTEREXIT("Teleporter exit", 0, 67),
+	AUDIOQUEUE("Audio Queue", 0, 68);
 	
 	public String itemName = "";
 	public int itemID = 0;

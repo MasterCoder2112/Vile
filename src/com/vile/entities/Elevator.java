@@ -29,9 +29,10 @@ public class Elevator extends Entity
     * @param wallX
     * @param wallZ
     */
-	public Elevator(double x, double y, double z, int wallX, int wallZ) 
+	public Elevator(double x, double y, double z, int wallX, int wallZ,
+			int itemActID) 
 	{
-		super(0, 0, 0, 0, 0, x, y, z, 8, 0);
+		super(0, 0, 0, 0, 0, x, y, z, 8, 0, itemActID);
 		
 		elevatorX = wallX;
 		elevatorZ = wallZ;
@@ -124,6 +125,12 @@ public class Elevator extends Entity
 		if(waitTime <= 250 && waitTime > 0)
 		{
 			waitTime++;
+		}
+		
+		//If elevator is supposed to stay down, keep it down
+		if(itemActivationID > 0)
+		{
+			waitTime = 0;
 		}
 		
 		//Reset soundTime every 10 ticks.

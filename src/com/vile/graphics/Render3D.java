@@ -316,240 +316,54 @@ public class Render3D extends Render
 					zBuffer[(x) + (y+1) * WIDTH] = z;
 				}
 				
+				//If not outdoors mode
 				if(Display.themeNum != 0)
 				{
-					if(Display.themeNum == 2)
+					//For the sky
+					if(ceiling < 0)
 					{
-						if(Game.mapNum == 1 || Game.mapNum == 9)
+					   /*
+					    * Depending on the ID of the ceiling texture, then
+					    * render that texture that is chosen by picking it
+					    * out from the floors array from the textures 
+					    * class
+					    */ 
+						PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+								Textures.floors[Game.mapCeiling].PIXELS
+								[(xPix & 255) + (yPix & 255) * 256];
+						
+						//Here I show that it can be shown in
+						//hexidecimals as well as normal decimals
+						if(lowRes)
 						{
-						   /*
-						    * The center of the screen is considered 0, above that is
-						    * negative because computers are weird like that, and moving
-						    * up in y is actually like moving down. Anyway, if the
-						    * celing pixel is less that 0, then texture them with the 
-						    * ceiling texture correlating to the theme.
-						    * 
-						    * Otherwise, it is the floor, so texture the floor with
-						    * the corresponding floor texture.
-						    */
-							if(ceiling < 0)
-							{
-							   /*
-							    * Each pixel on the screen is coordinated
-							    * with the corresponding pixel in the
-							    * texture file, but xPix and yPix determine
-							    * how much the pixel is stretched and/or
-							    * which pixels are not shown as the
-							    * textures get smaller and smaller into
-							    * the distance. Again, very hard to explain.
-							    * I learned this all from a tutorial which
-							    * couldn't explain it well either, but I
-							    * get it... sort of. This is the same
-							    * for all textures loaded in here.
-							    */
-								PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.sky2.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								
-								//If low res, do 4 pixels at once
-								if(lowRes)
-								{
-									PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.sky2.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.sky2.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.sky2.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-								}
-							}
-							else
-							{
-								PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.floor1.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								
-								if(lowRes)
-								{
-									PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor1.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor1.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor1.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-								}
-							}
-						}		
-						else if(Game.mapNum == 3 || Game.mapNum == 8
-								|| Game.mapNum == 2)
-						{
-							if(ceiling < 0)
-							{
-								PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.sky4.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								
-								if(lowRes)
-								{
-									PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.sky4.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.sky4.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.sky4.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-								}
-							}
-							else
-							{
-								PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.floor2.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								
-								if(lowRes)
-								{
-									PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor2.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor2.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor2.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-								}
-							}
-						}		
-						else if(Game.mapNum == 4 || Game.mapNum == 7)
-						{
-							if(ceiling < 0)
-							{
-								PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.ceiling.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								
-								if(lowRes)
-								{
-									PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.ceiling.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.ceiling.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.ceiling.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-								}
-							}
-							else
-							{
-								PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.floor3.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								
-								if(lowRes)
-								{
-									PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor3.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor3.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor3.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-								}
-							}
-						}		
-						else if(Game.mapNum == 5 || Game.mapNum == 6
-								|| Game.mapNum >= 10)
-						{
-							if(ceiling < 0)
-							{
-								PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.sky3.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								
-								if(lowRes)
-								{
-									PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.sky3.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.sky3.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.sky3.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-								}
-							}
-							else
-							{
-								PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.floor4.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								
-								if(lowRes)
-								{
-									PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor4.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor4.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-									PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-											Textures.floor4.PIXELS
-											[(xPix & 255) + (yPix & 255) * 256];
-								}
-							}
+							PIXELS[(x+1) + (y) * WIDTH] =
+									Textures.floors[Game.mapCeiling].PIXELS
+									[(xPix & 255) + (yPix & 255) * 256];;
+							PIXELS[(x+1) + (y+1) * WIDTH] =
+									Textures.floors[Game.mapCeiling].PIXELS
+									[(xPix & 255) + (yPix & 255) * 256];;
+							PIXELS[(x) + (y+1) * WIDTH] =
+									Textures.floors[Game.mapCeiling].PIXELS
+									[(xPix & 255) + (yPix & 255) * 256];;
 						}
 					}
 					else
 					{
-						if(ceiling < 0)
+						PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+								Textures.floors[Game.mapFloor].PIXELS
+								[(xPix & 255) + (yPix & 255) * 256];
+						
+						if(lowRes)
 						{
-							PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.ceiling.PIXELS
+							PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+									Textures.floors[Game.mapFloor].PIXELS
 									[(xPix & 255) + (yPix & 255) * 256];
-							
-							if(lowRes)
-							{
-								PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.ceiling.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.ceiling.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.ceiling.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-							}
-						}
-						else
-						{
-							PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floor.PIXELS
+							PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+									Textures.floors[Game.mapFloor].PIXELS
 									[(xPix & 255) + (yPix & 255) * 256];
-							
-							if(lowRes)
-							{
-								PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.floor.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.floor.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-								PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-										Textures.floor.PIXELS
-										[(xPix & 255) + (yPix & 255) * 256];
-							}
+							PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+									Textures.floors[Game.mapFloor].PIXELS
+									[(xPix & 255) + (yPix & 255) * 256];
 						}
 					}
 				}
@@ -581,19 +395,19 @@ public class Render3D extends Render
 					else
 					{
 						PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-								Textures.floor.PIXELS
+								Textures.floors[9].PIXELS
 								[(xPix & 255) + (yPix & 255) * 256];
 						
 						if(lowRes)
 						{
 							PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floor.PIXELS
+									Textures.floors[9].PIXELS
 									[(xPix & 255) + (yPix & 255) * 256];
 							PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floor.PIXELS
+									Textures.floors[9].PIXELS
 									[(xPix & 255) + (yPix & 255) * 256];
 							PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floor.PIXELS
+									Textures.floors[9].PIXELS
 									[(xPix & 255) + (yPix & 255) * 256];
 						}
 					}
@@ -720,7 +534,8 @@ public class Render3D extends Render
 					//If door is in range of enemy, have it open as long
 					//as it is not a door requiring a key
 					if(Math.abs(door.getZ() - enemy.zPos) <= 1
-							&& Math.abs(door.getX() - enemy.xPos) <= 1)
+							&& Math.abs(door.getX() - enemy.xPos) <= 1
+							&& door.itemActivationID == 0)
 					{
 						if(door.doorType == 0)
 						{
@@ -823,12 +638,102 @@ public class Render3D extends Render
 					+ ((Math.abs(Player.z - item.z))
 							* (Math.abs(Player.z - item.z))));
 			
-			//If it is an end level linedef, start the next level
-			if(item.itemID == ItemNames.ENDLINEDEF.itemID &&
+			//If it is a line def
+			if(item.itemID == ItemNames.LINEDEF.itemID &&
 					distance <= 0.5)
 			{
-				Game.mapNum++;
-				game.loadNextMap(false, "");
+				//If End Level Line Def
+				if(item.itemActivationID == 0)
+				{
+					Game.mapNum++;
+					game.loadNextMap(false, "");
+				}
+				else
+				{
+					//Search through all the doors
+					for(int k = 0; k < Game.doors.size(); k++)
+					{
+						Door door = Game.doors.get(k);
+						
+						//If door has the same activation ID as the 
+						//button then activate it.
+						if(door.itemActivationID 
+								== item.itemActivationID)
+						{
+							door.activated = true;
+						}
+					}
+					
+					//Stores Items to be deleted
+					ArrayList<Item> tempItems2 = new ArrayList<Item>();
+					
+					//Scan all activatable items
+					for(int j = 0; j < Game.activatable.size(); j++)
+					{
+						Item itemAct = Game.activatable.get(j);
+						
+						//If Item is a Happiness Tower, activate it and
+						//state that it is activated
+						if(itemAct.itemID == ItemNames.RADAR.getID()
+								&& !itemAct.activated &&
+								item.itemActivationID ==
+								itemAct.itemActivationID)
+						{
+							itemAct.activated = true;
+							Display.itemPickup = "COM SYSTEM ACTIVATED!";
+							Display.itemPickupTime = 1;
+						}
+						else
+						{				
+							//If item is enemy spawnpoint, then spawn the
+							//enemy, and add the item to the arraylist of
+							//items to be deleted
+							if(itemAct.itemID == ItemNames.ENEMYSPAWN.getID()
+									&& itemAct.itemActivationID 
+									== item.itemActivationID)
+							{
+								Game.enemiesInMap++;
+								game.addEnemy(itemAct.x, itemAct.z,
+										itemAct.rotation);
+								tempItems2.add(itemAct);
+							}	
+							//If Explosion has same activation ID of the button
+							//then activate it
+							else if(itemAct.itemID ==
+									ItemNames.ACTIVATEEXP.getID()
+									&& itemAct.itemActivationID 
+									== item.itemActivationID)
+							{
+								new Explosion(itemAct.x, itemAct.y,
+										itemAct.z, 0, 0);
+								tempItems2.add(itemAct);
+							}
+							//If it gets rid of a wall, delete the wall and create an
+							//air wall in its place.
+							else if(itemAct.itemID 
+									== ItemNames.WALLBEGONE.getID()
+									&& itemAct.itemActivationID ==
+									item.itemActivationID)
+							{
+								Block block2 = Level.getBlock
+										((int)itemAct.x, (int)itemAct.z);
+								
+								//Block is effectively no longer there
+								block2.height = 0;
+								
+								tempItems2.add(itemAct);
+							}
+						}
+					}
+					
+					//Remove all the items that need to be deleted now
+					for(int j = 0; j < tempItems2.size(); j++)
+					{
+						Item temp2 =  tempItems2.get(j);
+								
+						temp2.removeItem();
+					}
+				}
 			}
 			
 			//If the item is at least 0.7 units away, and its not
@@ -1002,7 +907,7 @@ public class Render3D extends Render
 				    * was before it died. Also activate the new resurrected enemy.
 				    */
 					Enemy newEnemy = new Enemy(corpse.x, 0, corpse.z,
-							corpse.enemyID, 0);
+							corpse.enemyID, 0, 0);
 					
 					//Activate this new enemy
 					newEnemy.activated = true;
@@ -3519,7 +3424,6 @@ public class Render3D extends Render
 		    * of the box created by the walls. If this wasn't used the 
 		    * wall textures may stretch out to infinity.
 		    */
-			/*
 			if(rotLeftSideZ <= clip)
 			{
 				double temp = (clip - rotLeftSideZ) 
@@ -4007,6 +3911,70 @@ public class Render3D extends Render
 					
 				//Cool molten rock texture
 				case 27:
+					block.wallImage = Textures.coolWall;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Teleporter entrance
+				case 28:
+					block.wallImage = Textures.teleportEnter;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Teleporter exit
+				case 29:
+					block.wallImage = Textures.teleportExit;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Tutorial Wall
+				case 30:
+					block.wallImage = Textures.tutorialWall;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Tutorial Wall 2
+				case 31:
+					block.wallImage = Textures.tutorialWall2;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Tutorial Wall 3
+				case 32:
+					block.wallImage = Textures.tutorialWall3;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Tutorial Wall 4
+				case 33:
+					block.wallImage = Textures.tutorialWall4;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Tutorial Wall 5
+				case 34:
+					block.wallImage = Textures.tutorialWall5;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Default texture
+				default:
 					block.wallImage = Textures.coolWall;
 					
 					block.wallPhase = 0;
@@ -4870,7 +4838,7 @@ public class Render3D extends Render
 					//If the environmental protection suit is wearing off
 					if((ePT < 100 * fpsCheck && ePT % 5 == 0))
 					{
-						PIXELS[i] = r << 16 | g << 8 | b;
+						PIXELS[i] = r << 16 | g << 8 | b << 0;
 					}
 					else
 					{

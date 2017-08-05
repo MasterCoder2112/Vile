@@ -61,7 +61,11 @@ public class Game
 	public static int skillMode = 2;
 	
 	//Map number default is 1. Unless set otherwise
-	public static int mapNum   = 1;
+	public static int mapNum   = 0;
+	
+	//Map floor and ceiling ID's
+	public static int mapFloor = 0;
+	public static int mapCeiling = 0;
 	
 	//Map name and map audio name
 	public static String mapName = "";
@@ -102,6 +106,8 @@ public class Game
 				= new ArrayList<Item>();
 	public static ArrayList<Item> activatable
 				= new ArrayList<Item>();
+	public static ArrayList<Item> teleporters
+	 			= new ArrayList<Item>();
 	
 	//Keeps track of all controls, and whether they are pressed or not
 	private static boolean key[];
@@ -244,7 +250,7 @@ public class Game
 				
 				//Item adds itself when instantiated
 				new Item(2, rand.nextInt(calculatedSize), 
-						0, rand.nextInt(calculatedSize), ammoType, 0);
+						0, rand.nextInt(calculatedSize), ammoType, 0, 0);
 			}
 			
 		   /*
@@ -276,7 +282,7 @@ public class Game
 				
 				//Item adds itself when instantiated
 				new Item(2, rand.nextInt(calculatedSize), 
-						0, rand.nextInt(calculatedSize), ammoType, 0);
+						0, rand.nextInt(calculatedSize), ammoType, 0, 0);
 			}
 			
 			//Player has all weapons for survival mode
@@ -289,7 +295,7 @@ public class Game
 		else
 		{
 			//Load either the first map or custom map if that is chosen
-			mapNum = 1;
+			mapNum = 0;
 			loadNextMap(newStartMap, newMapName);
 		}
 
@@ -433,19 +439,32 @@ public class Game
 			Button temp = buttons.get(i);
 			
 			//If an end button, load the next map
-			if(temp.ID == 0
+			if(temp.itemActivationID == 0
 					&& temp.activated)
 			{
 				mapNum++;
 				loadNextMap(false, "");
 			}
-			
 			//If a normal button
-			if(temp.ID == 1 
+			else if(temp.itemActivationID > 0 
 					&& temp.activated)
 			{
 				//De-activate the button
 				temp.activated = false;
+				
+				//Search through all the doors
+				for(int k = 0; k < Game.doors.size(); k++)
+				{
+					Door door = Game.doors.get(k);
+					
+					//If door has the same activation ID as the 
+					//button then activate it.
+					if(door.itemActivationID 
+							== temp.itemActivationID)
+					{
+						door.activated = true;
+					}
+				}
 				
 				//Stores Items to be deleted
 				ArrayList<Item> tempItems2 = new ArrayList<Item>();
@@ -455,12 +474,12 @@ public class Game
 				{
 					Item item = activatable.get(j);
 					
-					Player.hasYellowKey = true;
-					
 					//If Item is a Happiness Tower, activate it and
 					//state that it is activated
 					if(item.itemID == ItemNames.RADAR.getID()
-							&& !item.activated)
+							&& !item.activated &&
+							temp.itemActivationID ==
+							item.itemActivationID)
 					{
 						item.activated = true;
 						Display.itemPickup = "COM SYSTEM ACTIVATED!";
@@ -471,28 +490,34 @@ public class Game
 						//If item is enemy spawnpoint, then spawn the
 						//enemy, and add the item to the arraylist of
 						//items to be deleted
-						if(item.itemID == ItemNames.ENEMYSPAWN.getID())
+						if(item.itemID == ItemNames.ENEMYSPAWN.getID()
+								&& temp.itemActivationID == item.itemActivationID)
 						{
 							enemiesInMap++;
 							addEnemy(item.x, item.z, item.rotation);
+							tempItems2.add(item);
 						}	
-						//If activatable explosion, set forth the explosion
-						else if(item.itemID == ItemNames.ACTIVATEEXP.getID())
+						//If Explosion has same activation ID of the button
+						//then activate it
+						else if(item.itemID == ItemNames.ACTIVATEEXP.getID()
+								&& temp.itemActivationID == item.itemActivationID)
 						{
-							new Explosion(item.x, item.y, item.z, 0);
+							new Explosion(item.x, item.y, item.z, 0, 0);
+							tempItems2.add(item);
 						}
 						//If it gets rid of a wall, delete the wall and create an
 						//air wall in its place.
-						else if(item.itemID == ItemNames.WALLBEGONE.getID())
+						else if(item.itemID == ItemNames.WALLBEGONE.getID()
+								&& temp.itemActivationID == item.itemActivationID)
 						{
 							Block block2 = Level.getBlock
 									((int)item.x, (int)item.z);
 							
 							//Block is effectively no longer there
 							block2.height = 0;
+							
+							tempItems2.add(item);
 						}
-						
-						tempItems2.add(item);
 					}
 				}
 				
@@ -620,7 +645,7 @@ public class Game
 		//Add new enemy to game
 		enemies.add(new Enemy( 
 				0.5 + rand.nextInt(calculatedSize), yPos,
-				0.5 + rand.nextInt(calculatedSize), ID, 0));
+				0.5 + rand.nextInt(calculatedSize), ID, 0, 0));
 	}
 	
 	/**
@@ -668,11 +693,13 @@ public class Game
 			ID      = 5;
 		}
 		
-		Enemy enemy = new Enemy( x, yPos, z, ID, rotation);
+		Enemy enemy = new Enemy( x, yPos, z, ID, rotation, 0);
 		
 		//Add new enemy to game with correct values
 		enemies.add(enemy);
 		block.enemiesOnBlock.add(enemy);
+		
+		SoundController.teleportation.playAudioFile();
 	}
 	
    /**
@@ -683,13 +710,16 @@ public class Game
 	{
 	   /*
 	    * The player does not keep keys from level to level.
+	    * Nor does he/she keep his/her effects
 	    */
 		Player.hasRedKey = false;
 		Player.hasBlueKey = false;
 		Player.hasGreenKey = false;
 		Player.hasYellowKey = false;
 		Player.immortality = 0;
+		Player.invisibility = 0;
 		Player.environProtectionTime = 0;
+		Player.vision = 0;
 		
 	   /*
 	    * Every map starts with 0 enemies, 0 secrets, and no secrets
@@ -751,14 +781,23 @@ public class Game
 			{
 				//Split that line up to get the map number
 				//ceiling height, and render distance of map
-				//and map audio to be played
+				//and map audio to be played and also the
+				//Ceiling and floor texture ID's
 				String[] temp2 = mapSettings.split(":");
+				
 				mapNum = Integer.parseInt(temp2[0]);
+				
 				Render3D.ceilingDefaultHeight 
-				= Integer.parseInt(temp2[1]);
+					= Integer.parseInt(temp2[1]);
+				
 				Render3D.renderDistanceDefault 
-				= Integer.parseInt(temp2[2]);
+					= Integer.parseInt(temp2[2]);
+				
 				mapAudio = temp2[3];
+				
+				Game.mapFloor = Integer.parseInt(temp2[4]);
+				
+				Game.mapCeiling = Integer.parseInt(temp2[5]);
 			}
 			catch(Exception e)
 			{
@@ -822,6 +861,7 @@ public class Game
 				int wallID = Integer.parseInt(blockValues[1]);
 				int entityID = Integer.parseInt(blockValues[2]);
 				double rotation = 0;
+				int itemActID = 0;
 				
 				//Try to see if block has an entity with a given rotation
 				try
@@ -835,6 +875,19 @@ public class Game
 				{
 					//If entity does not have a rotation, the default is 0
 					rotation = 0;
+				}
+				
+				//Try to see if block has an entity with a given
+				//Activation ID
+				try
+				{
+					itemActID = Integer.parseInt(blockValues[4]);
+				}
+				catch (Exception e)
+				{
+					//If entity does not have a activation ID
+					//, the default is 0
+					itemActID = 0;
 				}
 				
 			   /*
@@ -852,7 +905,7 @@ public class Game
 					//Set the next spot in the map to this new ValueHolder
 					tempMap[row][col] = 
 							new ValueHolder(height, wallID, entityID,
-									rotation);
+									rotation, itemActID);
 					
 					//Go to next column
 					col++;

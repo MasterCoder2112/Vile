@@ -231,7 +231,7 @@ public class Player
 		//If the player is immortal then don't hurt
 		//Or if in peaceful mode don't hurt
 		if(Controller.godModeOn || immortality != 0
-				|| Game.skillMode == 0)
+				|| Game.skillMode == 0 || !Player.alive)
 		{
 			return;
 		}

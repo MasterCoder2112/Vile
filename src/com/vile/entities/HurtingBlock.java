@@ -38,7 +38,7 @@ public class HurtingBlock extends Item
     */
 	public HurtingBlock(double x, double y, double z, int wallX, int wallZ, int type) 
 	{
-		super(2, x, y, z, 22, 0);
+		super(2, x, y, z, 22, 0, 0);
 		
 		//If lava, change the values slightly
 		if(type == 1)

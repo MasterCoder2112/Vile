@@ -15,21 +15,9 @@ public class Button extends Entity
 {	
 	public boolean pressed = false;
 	
-	public Button(double x, double y, double z, int itemID) 
+	public Button(double x, double y, double z, int itemID, int itemActID) 
 	{
-		super(0, 0, 0, 0, 0, x, y, z, 0, 0);
-		
-		//If itemID is 9, its the end button
-		if(itemID == 9)
-		{
-			ID = 0;
-		}
-		//If itemID is 53, the button activates either enemy spawnpoints
-		//and or the Communication Satillite.
-		else if(itemID == 53)
-		{
-			ID = 1;
-		}
+		super(0, 0, 0, 0, 0, x, y, z, 0, 0, itemActID);
 	}
 
 }

@@ -110,6 +110,9 @@ public class Level
 				//Rotation of entity if there is one
 				double rotation = map[i][j].rotation;
 				
+				//Item activation ID
+				int itemActID = map[i][j].itemActID;
+				
 				//Gets each blocks height
 				block = new Block(map[i][j].height,
 						map[i][j].wallID, 0, i, j);
@@ -152,7 +155,9 @@ public class Level
 						&& itemID != ItemNames.EXPLOSION.getID() 
 						&& itemID != ItemNames.ACTIVATEEXP.getID()
 						&& itemID != ItemNames.WALLBEGONE.getID()
-						&& itemID != ItemNames.ENEMYSPAWN.getID())
+						&& itemID != ItemNames.ENEMYSPAWN.getID()
+						&& itemID != ItemNames.TELEPORTERENTER.getID()
+						&& itemID != ItemNames.TELEPORTEREXIT.getID())
 				{
 					//Item to be added to the map and block
 					Item temp = null;
@@ -166,14 +171,14 @@ public class Level
 						temp = new Item(10, 
 								i + 0.5, 
 								block.height - block.y, 
-								j + 0.5, itemID, (int)rotation);
+								j + 0.5, itemID, (int)rotation, itemActID);
 					}
 					else
 					{
 						temp = new ExplosiveCanister(10, 
 								i + 0.5, 
 								block.height - block.y, 
-								j + 0.5, itemID, (int)rotation);
+								j + 0.5, itemID, (int)rotation, itemActID);
 					}
 					
 					//If the item is solid
@@ -204,60 +209,60 @@ public class Level
 					Player.rotation = rotation;
 				}
 				//End button or normal button
-				else if(itemID == 9 || itemID == 53)
+				else if(itemID == ItemNames.BUTTON.getID())
 				{
 					Game.buttons.add(new Button( 
 							i + 0.5, 
-							0.77, j + 0.5, itemID));
+							0.77, j + 0.5, itemID, itemActID));
 				}
 				//Lift/elevator
-				else if(itemID == 10)
+				else if(itemID == ItemNames.ELEVATOR.getID())
 				{
 					Game.elevators.add(new Elevator( 
 							i + 0.5, 
-							0.77, j + 0.5, i, j));
+							0.77, j + 0.5, i, j, itemActID));
 				}
 				//Normal door
-				else if(itemID == 11)
+				else if(itemID == ItemNames.DOOR.getID())
 				{
 					Game.doors.add(new Door( 
 							i + 0.5, 
-							0.77, j + 0.5, i, j, 0));
+							0.77, j + 0.5, i, j, 0, itemActID));
 				}
 				//Red door
-				else if(itemID == 12)
+				else if(itemID == ItemNames.REDDOOR.getID())
 				{
 					Game.doors.add(new Door( 
 							i + 0.5, 
-							0.77, j + 0.5, i, j, 1));
+							0.77, j + 0.5, i, j, 1, itemActID));
 				}
 				//Blue door
-				else if(itemID == 13)
+				else if(itemID == ItemNames.BLUEDOOR.getID())
 				{
 					Game.doors.add(new Door( 
 							i + 0.5, 
-							0.77, j + 0.5, i, j, 2));
+							0.77, j + 0.5, i, j, 2, itemActID));
 				}
 				//Green Door
-				else if(itemID == 14)
+				else if(itemID == ItemNames.GREENDOOR.getID())
 				{
 					Game.doors.add(new Door( 
 							i + 0.5, 
-							0.77, j + 0.5, i, j, 3));
+							0.77, j + 0.5, i, j, 3, itemActID));
 				}
 				//Yellow door
-				else if(itemID == 15)
+				else if(itemID == ItemNames.YELLOWDOOR.getID())
 				{
 					Game.doors.add(new Door( 
 							i + 0.5, 
-							0.77, j + 0.5, i, j, 4));
+							0.77, j + 0.5, i, j, 4, itemActID));
 				}
 				//Adds Brainomorpth
 				else if(itemID == 16)
 				{
 					Enemy temp = new Enemy(
 							i + 0.5, 0, 
-							j + 0.5, 1, rotation);
+							j + 0.5, 1, rotation, itemActID);
 					
 					Game.enemies.add(temp);
 					block.enemiesOnBlock.add(temp);
@@ -267,7 +272,7 @@ public class Level
 				{
 					Enemy temp = new Enemy(
 							i + 0.5, 0.77, 
-							j + 0.5, 2, rotation);
+							j + 0.5, 2, rotation, itemActID);
 					
 					Game.enemies.add(temp);
 					block.enemiesOnBlock.add(temp);
@@ -277,7 +282,7 @@ public class Level
 				{
 					Enemy temp = new Enemy(
 							i + 0.5, 0.77, 
-							j + 0.5, 3, rotation);
+							j + 0.5, 3, rotation, itemActID);
 					
 					Game.enemies.add(temp);
 					block.enemiesOnBlock.add(temp);
@@ -287,7 +292,7 @@ public class Level
 				{
 					Enemy temp = new Enemy(
 							i + 0.5, 0.77, 
-							j + 0.5, 4, rotation);
+							j + 0.5, 4, rotation, itemActID);
 					
 					Game.enemies.add(temp);
 					block.enemiesOnBlock.add(temp);
@@ -297,7 +302,7 @@ public class Level
 				{
 					Enemy temp = new Enemy(
 							i + 0.5, 0.77, 
-							j + 0.5, 7, rotation);
+							j + 0.5, 7, rotation, itemActID);
 					
 					Game.enemies.add(temp);
 					block.enemiesOnBlock.add(temp);
@@ -307,22 +312,23 @@ public class Level
 				{
 					Enemy temp = new Enemy(
 							i + 0.5, 0.77, 
-							j + 0.5, 8, rotation);
+							j + 0.5, 8, rotation, itemActID);
 					
 					Game.enemies.add(temp);
 					block.enemiesOnBlock.add(temp);
 				}
 				//Adds secret at this location
-				else if(itemID == 20)
+				else if(itemID == ItemNames.SECRET.getID())
 				{
 					Item temp = new Item(5, 
 							i + 0.5, 
-							0, j + 0.5, itemID, (int)rotation);
+							0, j + 0.5, itemID, (int)rotation,
+							itemActID);
 
 					block.wallItem = temp;
 				}
 				//Toxic waste
-				else if(itemID == 22)
+				else if(itemID == ItemNames.TOXICWASTE.getID())
 				{
 					Item temp = new HurtingBlock( 
 							i + 0.5, 
@@ -333,7 +339,7 @@ public class Level
 					block.wallEntity = temp;
 				}
 				//Lava
-				else if(itemID == 23)
+				else if(itemID == ItemNames.LAVA.getID())
 				{
 					Item temp = new HurtingBlock( 
 							i + 0.5, 
@@ -344,7 +350,7 @@ public class Level
 					block.wallEntity = temp;
 				}
 				//Default Corpse
-				else if(itemID == 44)
+				else if(itemID == ItemNames.CORPSE.getID())
 				{
 					Game.corpses.add(new Corpse( 
 							i + 0.5,  
@@ -356,14 +362,14 @@ public class Level
 				{
 					Game.enemies.add(new Enemy(
 							i + 0.5, 0.77, 
-							j + 0.5, 5, rotation));
+							j + 0.5, 5, rotation, itemActID));
 				}
 				//The boss MORGOTH
 				else if(itemID == 46)
 				{
 					Enemy temp = new Enemy(
 							i + 0.5, 0.77, 
-							j + 0.5, 6, rotation);
+							j + 0.5, 6, rotation, itemActID);
 					
 					Game.enemies.add(temp);
 					block.enemiesOnBlock.add(temp);
@@ -372,19 +378,41 @@ public class Level
 				else if(itemID == ItemNames.EXPLOSION.getID())
 				{
 					new Explosion(i + 0.5, 0, 
-							j + 0.5, 0);
+							j + 0.5, 0, 0);
 				}
 				
 				//If item supposed to be activated by button
-				if(itemID == ItemNames.ACTIVATEEXP.getID()
+				else if(itemID == ItemNames.ACTIVATEEXP.getID()
 						|| itemID == ItemNames.ENEMYSPAWN.getID()
 						|| itemID == ItemNames.WALLBEGONE.getID())
 				{
 					Item temp = new Item(5, 
 							i + 0.5, 
-							0, j + 0.5, itemID, (int)rotation);
+							0, j + 0.5, itemID, (int)rotation
+							, itemActID);
 					
 					Game.activatable.add(temp);
+				}
+				else if(itemID == ItemNames.BREAKABLEWALL.getID())
+				{
+					Item temp = new Item(10, 
+							i + 0.5, 
+							block.height - block.y, 
+							j + 0.5, itemID, (int)rotation, 0);
+					
+					block.wallItem = temp;
+				}
+				else if(itemID == ItemNames.TELEPORTEREXIT.getID()
+						|| itemID == ItemNames.TELEPORTERENTER.getID())
+				{
+					Item temp = new Item(10, 
+							i + 0.5, 
+							block.height - block.y, 
+							j + 0.5, itemID, (int)rotation, itemActID);
+					
+					Game.teleporters.add(temp);
+					
+					block.wallEntity = temp;
 				}
 			}
 		}

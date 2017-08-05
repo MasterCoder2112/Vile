@@ -119,7 +119,7 @@ public class FPSLauncher extends JFrame
 	public static final int HEIGHT = 400;
 	
 	//Default starting map name
-	public static String startMap = "map1";
+	public static String startMap = "map0";
 	
    /*
     * Instantiates a new ActionListener that listens to whether Buttons 

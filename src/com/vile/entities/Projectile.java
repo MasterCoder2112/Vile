@@ -189,7 +189,7 @@ public abstract class Projectile
 					{
 						Game.explosions.add(
 								new Explosion(can.x,
-										-can.y/10, can.z, 1));
+										-can.y/10, can.z, 1, 0));
 						block.wallItem = null;
 						can.removeCanister();
 						projectileHit();
@@ -505,13 +505,15 @@ public abstract class Projectile
 		&& !hit && block.height != 0)
 		{	
 		   /*
-		    * If a glass wall that is also labeled as a secret, it
+		    * If a glass wall that is also labeled as a breakable wall, it
 		    * is breakable by bullets or rockets. Then it turns into
 		    * an air block when it is broken.
 		    */
 			try
 			{
-				if(block.wallID == 4 && block.wallItem.itemID == 20
+				if(block.wallID == 4 &&
+						block.wallItem.itemID ==
+						ItemNames.BREAKABLEWALL.getID()
 						&& !hit)
 				{
 					block.health -= damage;
@@ -522,7 +524,6 @@ public abstract class Projectile
 					if(block.health <= 0)
 					{
 						Game.items.remove(block.wallItem);
-						Game.secretsFound++;
 						
 						//New air block
 						block = new Block(0,0,0,block.x, block.z);
@@ -664,7 +665,7 @@ public abstract class Projectile
 			
 			//Add an explosion where it hit and tick it so it has an
 			//effect right after hit.
-			Explosion temp = new Explosion(this.x, this.y, this.z, 0);
+			Explosion temp = new Explosion(this.x, this.y, this.z, 0, 0);
 			
 			temp.tick();
 			

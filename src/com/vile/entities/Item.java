@@ -28,6 +28,7 @@ public class Item
 	//Normal values
 	public int itemID = 0;
 	public int itemValue = 0;
+	public int itemActivationID = 0;
 	public int rotation = 0;
 	public double x;
 	public double y;
@@ -59,7 +60,7 @@ public class Item
     * @param ID
     */
 	public Item(int value, double x, double y, double z,
-			int ID, int rotation) 
+			int ID, int rotation, int itemActID) 
 	{
 		itemValue = value;
 		itemID = ID;
@@ -67,6 +68,7 @@ public class Item
 		this.y = y;
 		this.z = z;
 		this.rotation = rotation;
+		this.itemActivationID = itemActID;
 		
 		//If it is a shell item, it has a default amount of 4
 		if(itemID == ItemNames.SHELLS.getID())
@@ -175,11 +177,11 @@ public class Item
 	    */
 		if(Display.skillMode <= 1)
 		{
-			itemValue *= 4;
+			itemValue *= 2;
 		}
 		else if(Display.skillMode == 2 && itemID != 56)
 		{
-			itemValue *= 2;
+			itemValue *= 1.5;
 		}
 		
 		//If secret object, add to secrets in map
@@ -195,7 +197,7 @@ public class Item
 				|| itemID == ItemNames.TOXICWASTE.getID() 
 				|| itemID == ItemNames.LAVA.getID() 
 				|| itemID == ItemNames.SECRET.getID() 
-				|| itemID == ItemNames.ENDLINEDEF.getID()
+				|| itemID == ItemNames.LINEDEF.getID()
 				|| itemID == ItemNames.ENEMYSPAWN.getID()
 				|| itemID == ItemNames.WALLBEGONE.getID()
 				|| itemID == ItemNames.ACTIVATEEXP.getID())

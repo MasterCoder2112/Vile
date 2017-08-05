@@ -70,17 +70,17 @@ public abstract class Weapon
 			damage = 6;
 			ammo = 8;
 			cartridges = new ArrayList<Cartridge>();
-			cooldownTime = 26;
+			cooldownTime = 43;
 			ammoLimit = 40;
 			canBeEquipped = false;
 		}
 		else if(weaponID == 2)
 		{
 			name = "Phase Cannon";
-			damage = 100;
+			damage = 120;
 			ammo = 5;
 			cartridges = new ArrayList<Cartridge>();
-			cooldownTime = 50;
+			cooldownTime = 60;
 			ammoLimit = 20;
 		}
 		else if(weaponID == 3)

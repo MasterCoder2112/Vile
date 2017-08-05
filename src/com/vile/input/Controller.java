@@ -9,6 +9,7 @@ import com.vile.entities.Elevator;
 import com.vile.entities.Enemy;
 import com.vile.entities.HurtingBlock;
 import com.vile.entities.Item;
+import com.vile.entities.ItemNames;
 import com.vile.entities.Player;
 import com.vile.graphics.Render3D;
 import com.vile.levelGenerator.Block;
@@ -641,8 +642,17 @@ public class Controller
 							door.doorType == 3 && Player.hasGreenKey ||
 							door.doorType == 4 && Player.hasYellowKey)
 					{
-						door.activated = true;
-						anyActivated = true;
+						//If door doesn't have to be activated by a button
+						if(door.itemActivationID == 0)
+						{
+							door.activated = true;
+							anyActivated = true;
+						}
+						else
+						{
+							Display.itemPickup = "This door is opened elsewhere!";
+							Display.itemPickupTime = 1;
+						}
 					}
 					else
 					{
@@ -917,6 +927,9 @@ public class Controller
 		
 		Player.y += (yEffects);
 		
+		//Block the player is on before he/she moves
+		Block previousBlock = Player.blockOn;
+		
 	   /*
 	    * These determine if the space to the side of the player
 	    * is a solid block or not. If its not then move the player,
@@ -966,9 +979,16 @@ public class Controller
 					HurtingBlock.time = 0;
 				}
 			}
+		}
+		catch(Exception e)
+		{
 			
+		}
+			
+		try
+		{
 			//If a Secret block
-			if(Player.blockOn.wallItem.itemID == 20)
+			if(Player.blockOn.wallItem.itemID == ItemNames.SECRET.getID())
 			{
 			   /*
 			    * Activate secret
@@ -991,11 +1011,54 @@ public class Controller
 		{
 			
 		}
+			
+		try
+		{
+			//If a Teleporter enterance
+			if(Player.blockOn.wallEntity.itemID 
+					== ItemNames.TELEPORTERENTER.getID())
+			{
+				//Check all teleporters for a matching exit
+			   for(int i = 0; i < Game.teleporters.size(); i++)
+			   {
+				   //Teleporter Object
+				   Item tel = Game.teleporters.get(i);
+				   
+				   //If there is a teleporter exit with the same exact
+				   //activation ID, teleport the player to that location
+				   if(tel.itemActivationID ==
+						   Player.blockOn.wallEntity.itemActivationID
+						   && tel.itemID ==
+						   ItemNames.TELEPORTEREXIT.getID())
+				   {
+					   Player.x = tel.x;
+					   Player.z = tel.z;
+					   
+					   //Block teleporter exit is on
+					   Block teleporterExit =
+							   Level.getBlock((int)tel.x, (int)tel.z);
+					   
+					   //Set players y value to that new blocks height
+					   Player.y = teleporterExit.height + teleporterExit.y;
+					   
+					   //Play teleportation sound
+					   SoundController.teleportation.playAudioFile();
+				   }
+			   }
+			}
+		}
+		catch(Exception e)
+		{
+			
+		}
 		
 		//Reset players height to the blocks current height so the player
 		//never falls through a block
 		if(!Player.blockOn.isaDoor)
 		{
+			//TODO Update in the air collision detection on block...
+			//will take time
+			
 			Player.maxHeight = Player.blockOn.height + Player.blockOn.y;
 			
 		   /*

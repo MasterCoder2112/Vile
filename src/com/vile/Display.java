@@ -51,7 +51,7 @@ public class Display extends Canvas implements Runnable
 	private static final long serialVersionUID = 1L;
 
 	//Version Number
-	private static double versionNumber = 1.5_5;
+	private static double versionNumber = 1.6;
 	
 	//Frame Width and height
 	public static int HEIGHT   = 600;
@@ -62,7 +62,8 @@ public class Display extends Canvas implements Runnable
 	public static int screenWidth = 0;
 	
 	//Frame title
-	public static final String TITLE = "Vile Alpha " + versionNumber;
+	public static final String TITLE = "Vile Alpha " + versionNumber
+			+" Dev 1";
 
 	// Is music audio on?
 	public static boolean audioOn = false;
@@ -260,6 +261,9 @@ public class Display extends Canvas implements Runnable
 		
 		//Just displays point in loading.
 		loading.setTitle("Loading sounds... 5% Loaded");
+		
+		//Set up textures
+		Textures.Textures();
 		
 	   /*
 	    * If the sound system isn't set up, set up the sounds by 
