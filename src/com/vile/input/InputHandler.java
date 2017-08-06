@@ -35,7 +35,6 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 {
 	//All the possible combinations on the keyboard
 	public Map<String, Key> keyMap = new HashMap<>();
-
 	
    /*
     * Mouse position on screen now
@@ -215,11 +214,10 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	public void mouseMoved(MouseEvent e) 
 	{
 		Component c = RunGame.frame;
-
-		int x = c.getMousePosition().x;
-		int y = c.getMousePosition().y;
-		int centerx = Display.WIDTH/2;
-		int centery = Display.HEIGHT/2;
+		double x = c.getMousePosition().x;
+		double y = c.getMousePosition().y;
+		double centerx = Display.WIDTH/2;
+		double centery = Display.HEIGHT/2;
 		//get the difference from the center to determine movement
 		double turnAmountX = x - centerx;
 		double turnAmountY = y - centery;
@@ -231,6 +229,6 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 		//Always reset mouse to the center of the screen.
         int lx = c.getLocationOnScreen().x;
         int ly = c.getLocationOnScreen().y;
-		robot.mouseMove(lx + centerx, ly + centery);
+		robot.mouseMove((int) (lx + centerx), (int) (ly + centery));
 	}
 }
