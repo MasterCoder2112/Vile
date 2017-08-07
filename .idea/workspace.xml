@@ -61,8 +61,8 @@
       <file leaf-file-name="FPSLauncher.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/com/vile/launcher/FPSLauncher.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="393">
-              <caret line="548" column="27" lean-forward="false" selection-start-line="548" selection-start-column="27" selection-end-line="548" selection-end-column="27" />
+            <state relative-caret-position="308">
+              <caret line="543" column="40" lean-forward="false" selection-start-line="543" selection-start-column="39" selection-end-line="543" selection-end-column="40" />
               <folding />
             </state>
           </provider>
@@ -133,6 +133,13 @@
   <component name="GradleLocalSettings">
     <option name="externalProjectsViewState">
       <projects_view />
+    </option>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/com/vile/launcher/FPSLauncher.java" />
+      </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
@@ -866,8 +873,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/vile/launcher/FPSLauncher.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="393">
-          <caret line="548" column="27" lean-forward="false" selection-start-line="548" selection-start-column="27" selection-end-line="548" selection-end-column="27" />
+        <state relative-caret-position="308">
+          <caret line="543" column="40" lean-forward="false" selection-start-line="543" selection-start-column="39" selection-end-line="543" selection-end-column="40" />
           <folding />
         </state>
       </provider>
