@@ -1,6 +1,9 @@
 package com.vile.entities;
 
+import java.util.ArrayList;
+
 import com.vile.Display;
+import com.vile.PopUp;
 import com.vile.SoundController;
 import com.vile.entities.ItemNames;
 import com.vile.Game;
@@ -33,7 +36,10 @@ public class Item
 	public double x;
 	public double y;
 	public double z;
-	public double height = 12;
+	public double height = 8;
+	
+	//Distance from player
+	public double distanceFromPlayer = 0;
 	
 	//To be added when physics is added to items
 	public double movementSpeedX = 0;
@@ -50,6 +56,10 @@ public class Item
 	
 	//Items image to render
 	public Render itemImage = null;
+	
+	//What pixels does this render on the screen
+	public ArrayList<Integer> pixelsOnScreen 
+			= new ArrayList<Integer>();
 	
    /**
     * Instantiates an item object
@@ -177,11 +187,11 @@ public class Item
 	    */
 		if(Display.skillMode <= 1)
 		{
-			itemValue *= 2;
-		}
-		else if(Display.skillMode == 2 && itemID != 56)
-		{
 			itemValue *= 1.5;
+		}
+		else if(Display.skillMode >= 3)
+		{
+			itemValue *= 0.75;
 		}
 		
 		//If secret object, add to secrets in map
@@ -253,6 +263,11 @@ public class Item
 		//Was item used?
 		boolean itemUsed = false;
 		
+		distanceFromPlayer = Math.sqrt(((Math.abs(x - Player.x))
+				* (Math.abs(x - Player.x)))
+				+ ((Math.abs(z - Player.z))
+						* (Math.abs(z - Player.z))));
+		
 	   /*
 	    * If MegaHealth, then heal the player completely.
 	    */
@@ -263,11 +278,10 @@ public class Item
 				Player.health = Player.maxHealth;
 				
 				//Displays that the player picked up the megahealth
-				Display.itemPickup = "Picked up the MEGAHEALTH!";
-				Display.itemPickupTime = 1;
+				Display.messages.add(new PopUp("Picked up the MEGAHEALTH!"));
 				
 				//Mega Item pick up sound
-				SoundController.megaPickUp.playAudioFile();
+				SoundController.megaPickUp.playAudioFile(distanceFromPlayer);
 				
 				itemUsed = true;
 			}
@@ -290,11 +304,10 @@ public class Item
 			}
 			
 			//Displays that the player picked up a Health Pack
-			Display.itemPickup = "Picked up a Health Pack!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You heal with a health pack!"));
 			
 			//Play correlating sound effect
-			SoundController.health.playAudioFile();
+			SoundController.healthBig.playAudioFile(distanceFromPlayer);
 			
 			itemUsed = true;
 		}
@@ -358,19 +371,18 @@ public class Item
 			
 			if(itemID == ItemNames.SHELLS.getID())
 			{
-				//Displays that the player picked up the joy
-				Display.itemPickup = "Picked up some Shells!";
+				Display.messages.add(new PopUp("Picked up some shotgun shells!"));
 				
 				//Play ammo pick up sound effect
-				SoundController.clip.playAudioFile();
+				SoundController.clip.playAudioFile(distanceFromPlayer);
 			}
 			else if(itemID == ItemNames.SHOTGUN.getID())
 			{
 				//Displays that the player picked up the joy Spreader
-				Display.itemPickup = "You Found the Shotgun!";
+				Display.messages.add(new PopUp("You found a shotgun!"));
 				
 				//Weapon Pick up sound
-				SoundController.weaponPickUp.playAudioFile();
+				SoundController.weaponPickUp.playAudioFile(distanceFromPlayer);
 				
 				//If weapon can't already be equipped, make it so that
 				//it can be, and equip it
@@ -383,17 +395,17 @@ public class Item
 			
 			else if(itemID == ItemNames.SHELLBOX.getID())
 			{
-				Display.itemPickup = "You found a Box of Shells!";	
+				Display.messages.add(new PopUp("You pick up a shellbox!"));	
 				
 				//Play ammo pick up sound effect
-				SoundController.clip.playAudioFile();
+				SoundController.clip.playAudioFile(distanceFromPlayer);
 			}
 			else if(itemID == ItemNames.PHASECANNON.getID())
 			{
-				Display.itemPickup = "You found the Phase Cannon!";
+				Display.messages.add(new PopUp("You found a Phasecannon!"));
 				
 				//Weapon Pick up sound
-				SoundController.weaponPickUp.playAudioFile();
+				SoundController.weaponPickUp.playAudioFile(distanceFromPlayer);
 				
 				//If weapon can't already be equipped, make it so that
 				//it can be, and equip it
@@ -405,25 +417,22 @@ public class Item
 			}
 			else if(itemID == ItemNames.SMALLCHARGE.getID())
 			{
-				Display.itemPickup = "You found a Phase Charge pack!";
+				Display.messages.add(new PopUp("You found a small Phase charge!"));
 				
 				//Play ammo pick up sound effect
-				SoundController.clip.playAudioFile();
+				SoundController.clip.playAudioFile(distanceFromPlayer);
 			}
 			else if(itemID == ItemNames.LARGECHARGE.getID())
 			{
-				Display.itemPickup 
-				= "You found a large Phase charge pack!";
+				Display.messages.add(new PopUp("You found a large Phase charge!"));
 				
 				//Play ammo pick up sound effect
-				SoundController.clip.playAudioFile();
+				SoundController.clip.playAudioFile(distanceFromPlayer);
 			}
 			else if(itemID == ItemNames.PISTOL.getID())
-			{
-				Display.itemPickup = "You pick up a Pistol!";
-				
+			{			
 				//Weapon Pick up sound
-				SoundController.weaponPickUp.playAudioFile();
+				SoundController.weaponPickUp.playAudioFile(distanceFromPlayer);
 				
 				//If weapon cant be dual wielded yet, make it so that it 
 				//is
@@ -431,29 +440,34 @@ public class Item
 				{
 					Player.weapons[0].dualWield = true;
 					Player.weaponEquipped = 0;
-				}	
+					Display.messages.add(new PopUp("Hell yeah! Dual wielding!"));
+				}
+				else
+				{
+					Display.messages.add(new PopUp("You pick up a pistol!"));
+				}
 			}
 			else if(itemID == ItemNames.BULLETS.getID())
 			{
-				Display.itemPickup = "You pick up some bullets!";
+				Display.messages.add(new PopUp("You pick up some bullets!"));
 				
 				//Play ammo pick up sound effect
-				SoundController.clip.playAudioFile();
+				SoundController.clip.playAudioFile(distanceFromPlayer);
 			}
 			else if(itemID == ItemNames.BOXOFBULLETS.getID())
 			{
-				Display.itemPickup = "You found a box of bullets!";	
+				Display.messages.add(new PopUp("You've found a box of bullets!"));
 				
 				//Play ammo pick up sound effect
-				SoundController.clip.playAudioFile();
+				SoundController.clip.playAudioFile(distanceFromPlayer);
 			}
 			
 			else if(itemID == ItemNames.ROCKETLAUNCHER.getID())
 			{
-				Display.itemPickup = "You found Rocket Launcher!";
+				Display.messages.add(new PopUp("You found the rocket launcher!"));
 				
 				//Weapon Pick up sound
-				SoundController.weaponPickUp.playAudioFile();
+				SoundController.weaponPickUp.playAudioFile(distanceFromPlayer);
 				
 				//If weapon can't already be equipped, make it so that
 				//it can be, and equip it
@@ -465,20 +479,18 @@ public class Item
 			}
 			else if(itemID == ItemNames.ROCKETS.getID())
 			{
-				Display.itemPickup = "You found some Rockets!";
+				Display.messages.add(new PopUp("You found some rockets!"));
 				
 				//Play ammo pick up sound effect
-				SoundController.clip.playAudioFile();
+				SoundController.clip.playAudioFile(distanceFromPlayer);
 			}
 			else if(itemID == ItemNames.ROCKETCRATE.getID())
 			{
-				Display.itemPickup = "You found a Crate of Rockets!";
+				Display.messages.add(new PopUp("You found a whole crate of rockets!"));
 				
 				//Play ammo pick up sound effect
-				SoundController.clip.playAudioFile();
+				SoundController.clip.playAudioFile(distanceFromPlayer);
 			}
-			
-			Display.itemPickupTime = 1;
 		}
 		
 	   /*
@@ -489,12 +501,10 @@ public class Item
 			Player.hasRedKey = true;
 			itemUsed = true;
 			
-			//Displays that the player picked up the Red key
-			Display.itemPickup = "Picked up Red Keycard!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You picked up the red keycard!"));
 			
 			//Key pick up sound
-			SoundController.keyPickUp.playAudioFile();
+			SoundController.keyPickUp.playAudioFile(distanceFromPlayer);
 		}
 		else if(itemID == ItemNames.BLUEKEY.getID())
 		{
@@ -502,11 +512,10 @@ public class Item
 			itemUsed = true;
 			
 			//Displays that the player picked up the Blue key
-			Display.itemPickup = "Picked up Blue Keycard!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You picked up the blue keycard!"));
 			
 			//Key pick up sound
-			SoundController.keyPickUp.playAudioFile();
+			SoundController.keyPickUp.playAudioFile(distanceFromPlayer);
 		}
 		else if(itemID == ItemNames.GREENKEY.getID())
 		{
@@ -514,11 +523,10 @@ public class Item
 			itemUsed = true;
 			
 			//Displays that the player picked up the green key
-			Display.itemPickup = "Picked up Green Keycard!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You picked up the green keycard!"));
 			
 			//Key pick up sound
-			SoundController.keyPickUp.playAudioFile();
+			SoundController.keyPickUp.playAudioFile(distanceFromPlayer);
 		}
 		else if(itemID == ItemNames.YELLOWKEY.getID())
 		{
@@ -526,11 +534,10 @@ public class Item
 			itemUsed = true;
 			
 			//Displays that the player picked up the yellow key
-			Display.itemPickup = "Picked up Yellow Keycard!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You picked up the yellow keycard!"));
 			
 			//Key pick up sound
-			SoundController.keyPickUp.playAudioFile();
+			SoundController.keyPickUp.playAudioFile(distanceFromPlayer);
 		}
 		//If a secret
 		else if(itemID == ItemNames.SECRET.getID())
@@ -539,9 +546,8 @@ public class Item
 			itemUsed = true;
 			
 			//Display that a secret was found 
-			Display.itemPickup = "Secret Found!!!";
-			Display.itemPickupTime = 1;
-			SoundController.secret.playAudioFile();
+			Display.messages.add(new PopUp("A SECRET is discovered!"));
+			SoundController.secret.playAudioFile(distanceFromPlayer);
 		}
 		//Skull of Resurrection
 		else if(itemID == ItemNames.SKULLOFRES.getID())
@@ -549,11 +555,10 @@ public class Item
 			Player.resurrections++;
 			itemUsed = true;
 			
-			Display.itemPickup = "Picked up Skull of Resurrection!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You've binded with the skull of resurrection!"));
 			
 			//Creepy sound is played
-			SoundController.creepySound.playAudioFile();
+			SoundController.creepySound.playAudioFile(distanceFromPlayer);
 		}
 		//Environment Suit
 		else if(itemID == ItemNames.BIOSUIT.getID())
@@ -561,11 +566,10 @@ public class Item
 			Player.environProtectionTime = 1100;
 			itemUsed = true;
 			
-			Display.itemPickup = "You adorn the Environment suit!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You adorn the environmental suit!"));
 			
 			//Play special pick up sound for this item
-			SoundController.specialPickup.playAudioFile();
+			SoundController.specialPickup.playAudioFile(distanceFromPlayer);
 		}
 		//Goblet of invurnuralbility
 		else if(itemID == ItemNames.GOBLET.getID())
@@ -574,11 +578,10 @@ public class Item
 			Player.vision      = 1100 * (int)Render3D.fpsCheck;
 			itemUsed = true;
 			
-			Display.itemPickup = "The Goblet of Invincibility!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("The Goblet of immortality..."));
 			
 			//Play correlating sound effect
-			SoundController.health.playAudioFile();
+			SoundController.healthBig.playAudioFile(distanceFromPlayer);
 		}
 		//Adrenaline
 		else if(itemID == ItemNames.ADRENALINE.getID())
@@ -588,11 +591,10 @@ public class Item
 			
 			itemUsed = true;
 			
-			Display.itemPickup = "You've got the Adrenaline!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You got some adrenaline!"));
 			
 			//Play special pick up sound for this item
-			SoundController.specialPickup.playAudioFile();
+			SoundController.specialPickup.playAudioFile(distanceFromPlayer);
 		}
 		//Glasses of vision
 		else if(itemID == ItemNames.VISIONGLASSES.getID())
@@ -600,11 +602,10 @@ public class Item
 			Player.vision = 1100 * (int)Render3D.fpsCheck;
 			
 			itemUsed = true;
-			Display.itemPickup = "You've now got nightvision!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You're vision has been enhanced!"));
 			
 			//Mega Item pick up sound
-			SoundController.megaPickUp.playAudioFile();
+			SoundController.megaPickUp.playAudioFile(distanceFromPlayer);
 		}
 		//Chainmeal armor
 		else if(itemID == ItemNames.CHAINMEAL.getID())
@@ -614,11 +615,10 @@ public class Item
 				Player.armor = ItemNames.CHAINMEAL.getValue();
 				
 				itemUsed = true;
-				Display.itemPickup = "You adorn the Chainmeal Armor!";
-				Display.itemPickupTime = 1;
+				Display.messages.add(new PopUp("You adorn the chainmeal armor!"));
 				
 				//Play Armor pick up sound
-				SoundController.armorPickup.playAudioFile();
+				SoundController.armorPickup.playAudioFile(distanceFromPlayer);
 			}
 			else
 			{
@@ -633,11 +633,10 @@ public class Item
 				Player.armor = ItemNames.COMBAT.getValue();
 				
 				itemUsed = true;
-				Display.itemPickup = "You adorn the Combat Armor!";
-				Display.itemPickupTime = 1;
+				Display.messages.add(new PopUp("You adorn the chainmeal armor!"));
 				
 				//Play Armor pick up sound
-				SoundController.armorPickup.playAudioFile();
+				SoundController.armorPickup.playAudioFile(distanceFromPlayer);
 			}
 			else
 			{
@@ -652,11 +651,10 @@ public class Item
 				Player.armor = ItemNames.ARGENT.getValue();
 				
 				itemUsed = true;
-				Display.itemPickup = "You adorn the Argent Armor!";
-				Display.itemPickupTime = 1;
+				Display.messages.add(new PopUp("You adorn the powerful Argent armor!"));
 				
 				//Play Armor pick up sound
-				SoundController.armorPickup.playAudioFile();
+				SoundController.armorPickup.playAudioFile(distanceFromPlayer);
 			}
 			else
 			{
@@ -672,11 +670,10 @@ public class Item
 			}
 			
 			itemUsed = true;
-			Display.itemPickup = "You pick up an Armor Shard!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You pick up an armor shard!"));
 			
 			//Play Armor pick up sound
-			SoundController.armorPickup.playAudioFile();
+			SoundController.armorPickup.playAudioFile(distanceFromPlayer);
 		}
 		//Health vial
 		else if(itemID == ItemNames.VIAL.getID())
@@ -684,30 +681,30 @@ public class Item
 			Player.health++;
 			
 			itemUsed = true;
-			Display.itemPickup = "You consume a Health Vial!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You consume a health vial!"));
 			
 			//Play correlating sound effect
-			SoundController.health.playAudioFile();
+			SoundController.health.playAudioFile(distanceFromPlayer);
 		}
 		//Upgrade point
 		else if(itemID == ItemNames.UPGRADE.getID())
 		{
 			itemUsed = true;
-			Display.itemPickup = "Weapon upgrade Point!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You collect an upgrade point!"));
+			
+			//Add to upgradePoints player has
+			Player.upgradePoints += 1;
 			
 			//Play special pick up sound for this item
-			SoundController.specialPickup.playAudioFile();
+			SoundController.specialPickup.playAudioFile(distanceFromPlayer);
 		}
 		//Holy Water
 		else if(itemID == ItemNames.HOLYWATER.getID())
 		{
-			Display.itemPickup = "You store some Holy Water!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You collect the Holy Water!"));
 			
 			//Play correlating sound effect
-			SoundController.health.playAudioFile();
+			SoundController.health.playAudioFile(distanceFromPlayer);
 			
 			//Becomes just a normal table
 			itemID = 42;
@@ -716,24 +713,22 @@ public class Item
 		else if(itemID == ItemNames.DECIETSCEPTER.getID())
 		{
 			itemUsed = true;
-			Display.itemPickup = "Scepter of Deciet!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You hold the scepter of deciet!"));
 			
 			//Play creepy pick up sound for this item
-			SoundController.creepySound.playAudioFile();
+			SoundController.creepySound.playAudioFile(distanceFromPlayer);
 		}
 		//Invisibility Emerald
 		else if(itemID == ItemNames.INVISEMERALD.getID())
 		{
 			itemUsed = true;
-			Display.itemPickup = "Invisibility Emerald!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("You are now invisible!"));
 			
 			//Player is now invisible for a certain amount of ticks
 			Player.invisibility = 1100 * (int)Render3D.fpsCheck;
 			
 			//Play correlating sound effect
-			SoundController.health.playAudioFile();
+			SoundController.health.playAudioFile(distanceFromPlayer);
 		}
 		
 		return itemUsed;

@@ -1,11 +1,11 @@
 package com.vile;
 
-import com.vile.launcher.FPSLauncher;
+import com.vile.launcher.LogIn;
 
 public class startGame 
 {
 	public static void main(String[] args) 
 	{
-		new FPSLauncher(0);
+		new LogIn();
 	}
 }

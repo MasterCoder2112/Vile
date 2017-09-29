@@ -2,6 +2,7 @@ package com.vile.input;
 
 import com.vile.Display;
 import com.vile.Game;
+import com.vile.PopUp;
 import com.vile.SoundController;
 import com.vile.entities.Button;
 import com.vile.entities.Door;
@@ -12,6 +13,7 @@ import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
 import com.vile.entities.Player;
 import com.vile.graphics.Render3D;
+import com.vile.launcher.FPSLauncher;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -59,16 +61,7 @@ public class Controller
 	private double  fallSpeed         = 0.4;
 	private double  acceleration      = 0.03;
 	private double  fallAmount        = 0;
-	
-   /*
-    * Debugging variables
-    */
-	public static boolean noClipOn;
-	public static boolean flyOn;
-	public static boolean superSpeedOn;
-	public static boolean godModeOn;
-	public static boolean unlimitedAmmoOn;
-	
+
    /*
     * Other variables
     */
@@ -121,6 +114,8 @@ public class Controller
 		{
 			acceleration = 0.005;
 		}
+		
+		boolean test = true;
 		
 	   /*
 	    * Only allow these actions if the player is alive
@@ -247,15 +242,13 @@ public class Controller
 		    * performing a given operation while you are crouching.
 		    */
 			if(Game.crouch && !inJump)
-			{
-				moveSpeed = 0.5;
-				crouching = true;
-				
+			{	
 				//If still not as low as you can go
-				if(Player.y > -6.0 + Player.maxHeight) 
+				if(Player.y > -6.0 + Player.maxHeight + Player.extraHeight) 
 				{
+					test = false;
 					//If flying, just fly down
-					if(flyOn)
+					if(Player.flyOn)
 					{
 						Player.y  -= 0.8;
 					}
@@ -281,8 +274,13 @@ public class Controller
 						}
 					}
 					//If not falling, just crouch at the normal speed
-					else
+					//Also you have to be at your normal height or
+					//below it already.
+					else	
 					{
+						moveSpeed = 0.5;
+						crouching = true;
+						
 						Player.y  -= 0.5;
 						Player.height -= 0.17;
 					}
@@ -290,37 +288,54 @@ public class Controller
 				
 			
 				//If there is some decimal error, round to -6.0
-				if(Player.y <= -6.0 + Player.maxHeight)
+				if(Player.y <= -6.0 + Player.maxHeight + Player.extraHeight)
 				{
-					Player.y = -6.0 + Player.maxHeight;
+					Player.y = -6.0 + Player.maxHeight + Player.extraHeight;
 					Player.height = 0;
+					test = true;
 				}
 			}
-			//If not crouching
-			else
+			//If not crouching but still on the ground
+			else if(!inJump && Player.y < Player.maxHeight
+					+ Player.extraHeight &&
+					Player.height < 2)
 			{
 				crouching = false;
 				
-			   /*
-			    * If you're not standing at your normal height yet,
-			    * keep rising till your back at your normal height
-			    */
-				if(Player.y < 0 + Player.maxHeight)
+				//Slowly raise up
+				if(Player.y < Player.maxHeight + Player.extraHeight)
 				{
-					Player.y += 0.4;
-					Player.height += 1.7;
+					Player.y += 0.5;
+				}
+				
+				//Also raises player up
+				if(Player.height < 2)
+				{
+					Player.height += 0.17;
 				}
 				
 				if(Player.height > 2)
 				{
 					Player.height = 2;
 				}
+				
+				if(Player.y > Player.maxHeight + Player.extraHeight)
+				{
+					Player.y = Player.maxHeight + Player.extraHeight;
+				}
+				
+				test = false;
+			}
+			else
+			{
+				crouching = false;
+				test = true;
 			}
 		
 		   /*
 		    * If fly mode is not on, jump like normal
 		    */
-			if(!flyOn)
+			if(!Player.flyOn)
 			{		
 			   /*
 			    * If the Player is trying to jump, and the player is on
@@ -331,18 +346,16 @@ public class Controller
 			    * ground zero is now higher because the elevator is
 			    * constantly moving.
 			    */
-				if(Game.jump && Player.y == 0 + Player.maxHeight
-						|| Game.jump && 
-						Player.y <= 0.5 + Player.maxHeight &&
-						Player.y >= 0 + Player.maxHeight)
+				if(Game.jump && Player.y == Player.maxHeight + Player.extraHeight)
 				{
 					inJump = true;
-					Player.jumpHeight = 8 + Player.maxHeight;
+					Player.jumpHeight = 8 + Player.maxHeight + Player.extraHeight;
 					
 					//If on the moon, add to maximum jumpHeight
 					if(Display.themeNum == 4)
 					{
-						Player.jumpHeight = 12 + Player.maxHeight;
+						Player.jumpHeight = 12 + 
+								Player.maxHeight + Player.extraHeight;
 					}
 				}
 			
@@ -366,7 +379,8 @@ public class Controller
 				}
 				
 				//If you're falling, accelerate down
-				if(Player.y > 0 + Player.maxHeight && !crouching && !inJump)
+				if(Player.y > 0 + Player.maxHeight + Player.extraHeight 
+						&& !crouching && !inJump)
 				{
 					Player.y -= fallSpeed;
 					fallAmount -= fallSpeed;
@@ -390,10 +404,10 @@ public class Controller
 		
 			//If Player.y is negligibly close to his/her max height
 			//then just set the player at being their maxHeight
-			if(Player.y < 0.4 + Player.maxHeight &&
-					Player.y > -0.4 + Player.maxHeight)
+			if(Player.y < 0.4 + Player.maxHeight + Player.extraHeight &&
+					Player.y > -0.4 + Player.maxHeight + Player.extraHeight)
 			{
-				Player.y = 0 + Player.maxHeight;
+				Player.y = 0 + Player.maxHeight + Player.extraHeight;
 				inJump     = false;
 				fallSpeed  = 0.4;
 			}
@@ -403,7 +417,8 @@ public class Controller
 		    * crouching, then set the Player.y equal to -7 to
 		    * not go below the map.
 		    */
-			if(Player.y <= -7 + Player.maxHeight && !crouching)
+			if(Player.y <= -7 + Player.maxHeight + Player.extraHeight
+					&& !crouching)
 			{
 				Player.y     = -7 + Player.maxHeight;
 				inJump         = false;
@@ -417,7 +432,7 @@ public class Controller
 		    */
 			if(fallAmount > 0)
 			{
-				if(!godModeOn && Player.immortality == 0)
+				if(!Player.godModeOn && Player.immortality == 0)
 				{
 					Player.health -= (int) (5 * (fallAmount / 25));
 				}
@@ -428,13 +443,13 @@ public class Controller
 			//Turns unlimited ammo on or off
 			if(Game.unlimAmmo && time == 0)
 			{
-				if(unlimitedAmmoOn)
+				if(Player.unlimitedAmmoOn)
 				{
-					unlimitedAmmoOn = false;
+					Player.unlimitedAmmoOn = false;
 				}
 				else
 				{
-					unlimitedAmmoOn = true;
+					Player.unlimitedAmmoOn = true;
 				}
 				
 				time++;
@@ -455,7 +470,7 @@ public class Controller
 					//Only play sound if weapon can't fire and its out of ammo
 					if(Player.weapons[Player.weaponEquipped].ammo <= 0)
 					{
-						SoundController.ammoOut.playAudioFile();
+						SoundController.ammoOut.playAudioFile(0);
 					}
 				}
 			}
@@ -476,8 +491,7 @@ public class Controller
 			//If weapon has not be picked up yet
 			else if(Game.weaponSlot1)
 			{
-				Display.itemPickup = "No Weapon yet";
-				Display.itemPickupTime++;
+				Display.messages.add(new PopUp("You don't have this weapon yet"));
 			}
 			
 			//If Player chooses the second weapon slot
@@ -489,8 +503,7 @@ public class Controller
 			//If weapon has not be picked up yet
 			else if(Game.weaponSlot2)
 			{
-				Display.itemPickup = "No Weapon yet";
-				Display.itemPickupTime++;
+				Display.messages.add(new PopUp("You don't have this weapon yet"));
 			}
 			
 			//If Player chooses the third weapon slot
@@ -502,8 +515,7 @@ public class Controller
 			//If weapon has not be picked up yet
 			else if(Game.weaponSlot3)
 			{
-				Display.itemPickup = "No Weapon yet";
-				Display.itemPickupTime++;
+				Display.messages.add(new PopUp("You don't have this weapon yet"));
 			}
 			
 		   /*
@@ -517,7 +529,7 @@ public class Controller
 			    {
 			    	time++;
 			    	
-			    	SoundController.reload.playAudioFile();
+			    	SoundController.reload.playAudioFile(0);
 			    }
 			}
 		}
@@ -613,8 +625,9 @@ public class Controller
 						button.activated = true;
 						anyActivated = true;
 						
+						SoundController.activated.playAudioFile(0);
 						//Play button press sound
-						SoundController.buttonPress.playAudioFile();
+						SoundController.buttonPress.playAudioFile(0);
 						
 						//Reset useTime and start it again
 						useTime = 0;
@@ -643,15 +656,24 @@ public class Controller
 							door.doorType == 4 && Player.hasYellowKey)
 					{
 						//If door doesn't have to be activated by a button
-						if(door.itemActivationID == 0)
+						if(door.itemActivationID == 0
+								&& !door.activated)
 						{
+							if(!SoundController.keyUse.isStillActive())
+							{
+								SoundController.keyUse.playAudioFile(door.distanceFromPlayer + 10);
+							}
 							door.activated = true;
 							anyActivated = true;
 						}
-						else
+						else if(door.itemActivationID > 0)
 						{
-							Display.itemPickup = "This door is opened elsewhere!";
-							Display.itemPickupTime = 1;
+							if(!SoundController.keyTry.isStillActive())
+							{
+								SoundController.keyTry.playAudioFile(door.distanceFromPlayer + 10);
+							}
+							
+							Display.messages.add(new PopUp("This door is opened elsewhere!"));
 						}
 					}
 					else
@@ -662,9 +684,12 @@ public class Controller
 						    * Displays that the player cannot open the
 						    * door without the red key.
 						    */
-							Display.itemPickup = 
-									"You need the red keycard!";
-							Display.itemPickupTime = 1;
+							Display.messages.add(new PopUp("You require the red keycard!"));
+							
+							if(!SoundController.keyTry.isStillActive())
+							{
+								SoundController.keyTry.playAudioFile(door.distanceFromPlayer + 10);
+							}
 						}
 						else if(door.doorType == 2 && !Player.hasBlueKey)
 						{
@@ -672,9 +697,12 @@ public class Controller
 						    * Displays that the player cannot open the
 						    * door without the blue key.
 						    */
-							Display.itemPickup = 
-									"You need the blue keycard!";
-							Display.itemPickupTime = 1;
+							Display.messages.add(new PopUp("You require the blue keycard!"));
+							
+							if(!SoundController.keyTry.isStillActive())
+							{
+								SoundController.keyTry.playAudioFile(door.distanceFromPlayer + 10);
+							}
 						}
 						else if(door.doorType == 3 && !Player.hasGreenKey)
 						{
@@ -682,9 +710,12 @@ public class Controller
 						    * Displays that the player cannot open the
 						    * door without the green key.
 						    */
-							Display.itemPickup = 
-									"You need the green keycard!";
-							Display.itemPickupTime = 1;
+							Display.messages.add(new PopUp("You require the green keycard!"));
+							
+							if(!SoundController.keyTry.isStillActive())
+							{
+								SoundController.keyTry.playAudioFile(door.distanceFromPlayer + 10);
+							}
 						}
 						else
 						{
@@ -692,9 +723,12 @@ public class Controller
 						    * Displays that the player cannot open the
 						    * door without the yellow key.
 						    */
-							Display.itemPickup = 
-									"You need the yellow keycard!";
-							Display.itemPickupTime = 1;
+							Display.messages.add(new PopUp("You require the yellow keycard!"));
+							
+							if(!SoundController.keyTry.isStillActive())
+							{
+								SoundController.keyTry.playAudioFile(door.distanceFromPlayer + 10);
+							}
 						}
 					}
 				}
@@ -711,19 +745,27 @@ public class Controller
 				if(Math.abs(elevator.getZ() - Player.z) <= 0.95
 						&& Math.abs(elevator.getX() - Player.x) <= 0.95)
 				{
-					elevator.activated = true;
-					anyActivated = true;
-					
-					//Reset useTime and start it again
-					useTime = 0;
-					useTime++;
+					//If door doesn't have to be activated by a button
+					if(elevator.itemActivationID == 0)
+					{
+						elevator.activated = true;
+						anyActivated = true;
+						
+						//Reset useTime and start it again
+						useTime = 0;
+						useTime++;
+					}
+					else
+					{
+						Display.messages.add(new PopUp("This elevator is activated elsewhere!"));
+					}
 				}
 			}
 			
 			//If nothing was activated play oomf sound effect
 			if(!anyActivated && useTime == 0)
 			{
-				SoundController.tryToUse.playAudioFile();
+				SoundController.tryToUse.playAudioFile(0);
 				
 				//Begin the next waiting cycle to play sound again
 				useTime++;
@@ -752,7 +794,7 @@ public class Controller
 			new Player();
 			
 			//If not survival, reload map
-			if(Game.setMap)
+			if(FPSLauncher.gameMode == 0)
 			{
 				game.loadNextMap(false, "");
 			}
@@ -778,13 +820,13 @@ public class Controller
 		{
 			time++;
 			
-			if(!noClipOn)
+			if(!Player.noClipOn)
 			{
-				noClipOn = true;
+				Player.noClipOn = true;
 			}
 			else
 			{
-				noClipOn = false;
+				Player.noClipOn = false;
 			}
 		}
 		
@@ -793,13 +835,13 @@ public class Controller
 		{
 			time++;
 			
-			if(!godModeOn)
+			if(!Player.godModeOn)
 			{
-				godModeOn = true;
+				Player.godModeOn = true;
 			}
 			else
 			{
-				godModeOn = false;
+				Player.godModeOn = false;
 			}
 		}
 		
@@ -818,17 +860,17 @@ public class Controller
 	    */
 		if(Game.fly && time == 0)
 		{
-			if(!flyOn)
+			if(!Player.flyOn)
 			{
 				fallSpeed = 0.4;
-				flyOn     = true;
+				Player.flyOn     = true;
 				
 				//No longer in a jump
 				inJump    = false;		
 			}
 			else
 			{
-				flyOn      = false;
+				Player.flyOn      = false;
 				fallAmount = Player.y - Player.maxHeight;
 				
 				//If on the moon, falling has less of a health impact
@@ -846,20 +888,20 @@ public class Controller
 	    */
 		if(Game.superSpeed && time == 0)
 		{
-			if(!superSpeedOn)
+			if(!Player.superSpeedOn)
 			{
-				superSpeedOn = true;
+				Player.superSpeedOn = true;
 			}
 			else
 			{
-				superSpeedOn = false;
+				Player.superSpeedOn = false;
 			}
 			
 			time++;
 		}
 		
 		//If super speed is on, multiply players speed by 4
-		if(superSpeedOn)
+		if(Player.superSpeedOn)
 		{
 			moveSpeed *= 4;
 		}
@@ -878,8 +920,7 @@ public class Controller
 			Player.weapons[3].canBeEquipped = true;
 			
 			//Display that weapons were given
-			Display.itemPickup = "All Weapons Given!";
-			Display.itemPickupTime = 1;
+			Display.messages.add(new PopUp("All weapons given!"));
 		}
 			
 	   /*
@@ -927,9 +968,6 @@ public class Controller
 		
 		Player.y += (yEffects);
 		
-		//Block the player is on before he/she moves
-		Block previousBlock = Player.blockOn;
-		
 	   /*
 	    * These determine if the space to the side of the player
 	    * is a solid block or not. If its not then move the player,
@@ -938,7 +976,8 @@ public class Controller
 	    * If noclip is on, you can clip through walls, so you can
 	    * do this anyway.
 	    */
-		if(isFree(Player.x + xa + (xEffects), Player.z) || noClipOn)
+		if(isFree(Player.x + xa + (xEffects), Player.z) 
+				&& test || Player.noClipOn)
 		{
 			Player.x += xa + (xEffects);
 		}
@@ -951,7 +990,8 @@ public class Controller
 		* If noclip is on, you can clip through walls, so you can
 		* do this anyway.
 		*/
-		if(isFree(Player.x, Player.z + za + (zEffects)) || noClipOn)
+		if(isFree(Player.x, Player.z + za + (zEffects)) 
+				&& test || Player.noClipOn)
 		{
 			Player.z += za + (zEffects);
 		}
@@ -1042,7 +1082,7 @@ public class Controller
 					   Player.y = teleporterExit.height + teleporterExit.y;
 					   
 					   //Play teleportation sound
-					   SoundController.teleportation.playAudioFile();
+					   SoundController.teleportation.playAudioFile(0);
 				   }
 			   }
 			}
@@ -1073,7 +1113,8 @@ public class Controller
 			
 			//If not crouching or jumping or flying, and the player is
 			//not dead then reset the players y value.
-			if(!crouching && !inJump && Player.y < Player.maxHeight
+			if(!crouching && !inJump && Player.y < Player.maxHeight 
+					&& test
 					&& Player.alive)
 			{
 				Player.y = Player.maxHeight;
@@ -1198,24 +1239,24 @@ public class Controller
 				
 				double playerY = Player.y;
 				
-				if(playerY < 0)
+				if(playerY < Player.maxHeight + Player.extraHeight)
 				{
-					playerY = 0;
+					playerY = Player.maxHeight + Player.extraHeight;
 				}
 				
 				//Difference in y
 				double yDifference = playerY - Math.abs(temp.y);
 				
 				//If close enough, don't allow the player to move into it.
-				if(distance <= 0.3 && yDifference <= temp.height
-						&& yDifference >= -temp.height)
+				if(distance <= 0.3 && (yDifference <= temp.height
+						&& yDifference >= -temp.height))
 				{
 					return false;
 				}	
 				//If on top of it, reset the players extra standing height
-				else if(distance <= 0.3 && yDifference > temp.height)
+				else if(distance <= 0.3 && yDifference >= temp.height)
 				{
-					Player.extraHeight = temp.height + 5;		
+					Player.extraHeight = temp.height + 5;
 					return true;
 				}	
 			}
@@ -1239,13 +1280,21 @@ public class Controller
 			
 			double playerY = Player.y;
 			
-			if(playerY < 0)
+			if(playerY < Player.maxHeight + Player.extraHeight)
 			{
-				playerY = 0;
+				playerY = Player.maxHeight + Player.extraHeight;
 			}
 			
 			//Difference between enemy and player
 			double yDifference = playerY - Math.abs(temp.yPos);
+			
+			//If this enemy was removed from the game but not the block for
+			//some reason, remove it now and allow the player to move.
+			if(!Game.enemies.contains(temp))
+			{
+				block.enemiesOnBlock.remove(i);
+				return true;
+			}
 			
 			//If close enough, don't allow the player to move into it.
 			if(distance <= 0.3 && yDifference <= 8
@@ -1254,7 +1303,7 @@ public class Controller
 				return false;
 			}	
 			//Player can jump on top of enemies if height enough
-			else if(distance <= 0.3 && yDifference > 8)
+			else if(distance <= 0.3 && yDifference >= 8)
 			{
 				//Reset players extra standing height
 				Player.extraHeight = temp.height + 5;
@@ -1268,6 +1317,8 @@ public class Controller
 				return false;
 			}
 		}
+		
+		Player.extraHeight = 0;
 		
 		//Adds the plus 2 to go up steps
 		double yCorrect = Player.y + 2;

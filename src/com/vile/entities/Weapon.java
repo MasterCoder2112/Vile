@@ -95,6 +95,57 @@ public abstract class Weapon
 	}
 	
    /**
+    * Constructs a weapon with a given amount of ammo, ID, and already
+    * set cartridges. This is for mainly when a previous game is being 
+    * loaded back in and your exact ammo must be known.
+    * @param weaponID
+    */
+	public Weapon(int weaponID, int ammo, ArrayList<Cartridge> temp
+			, boolean dualWield) 
+	{
+		this.weaponID = weaponID;
+		this.dualWield = dualWield;
+		
+		if(weaponID == 0)
+		{
+			name = "Pistol";
+			damage = 10;
+			this.ammo = ammo;
+			cartridges = temp;
+			cooldownTime = 25;
+			ammoLimit = 100;
+		}
+		else if(weaponID == 1)
+		{
+			name = "Shotgun";
+			damage = 6;
+			this.ammo = ammo;
+			cartridges = temp;
+			cooldownTime = 43;
+			ammoLimit = 40;
+			canBeEquipped = false;
+		}
+		else if(weaponID == 2)
+		{
+			name = "Phase Cannon";
+			damage = 120;
+			this.ammo = ammo;
+			cartridges = temp;
+			cooldownTime = 60;
+			ammoLimit = 20;
+		}
+		else if(weaponID == 3)
+		{
+			name = "Rocket Launcher";
+			damage = 50;
+			this.ammo = ammo;
+			cartridges = temp;
+			cooldownTime = 40;
+			ammoLimit = 25;
+		}
+	}
+	
+   /**
     * Begin to start firing up the weapon by setting weaponShootTime in
     * motion. To shoot you have to have more than 0 ammo, and the weapon
     * cannot already be in the process of firing. Returns whether it could

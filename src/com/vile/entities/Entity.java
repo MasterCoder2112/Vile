@@ -1,5 +1,7 @@
 package com.vile.entities;
 
+import java.util.ArrayList;
+
 import com.vile.Display;
 import com.vile.Game;
 import com.vile.SoundController;
@@ -46,6 +48,9 @@ public abstract class Entity
 	public double zEffects = 0;
 	public Render currentPhase = Textures.enemy1;
 	public int enemyPhase = 0;
+	
+	public ArrayList<Integer> pixelsOnScreen 
+			= new ArrayList<Integer>();
 	
 	//Rotation in the map in correspondence with the enemy
 	public double rotation = 0;
@@ -363,7 +368,8 @@ public abstract class Entity
 		
 		//Only if the enemy has you directly in its line of sight
 		//or if the enemy is not behind a wall and you fire.
-		if(inSight && (withinSight || InputHandler.wasFired))
+		if(!activated && Display.skillMode > 0
+				&& Player.alive)
 		{
 		   /*
 		    * If the enemy is already not activated and also
@@ -375,66 +381,58 @@ public abstract class Entity
 		    * has to either be within the enemies sight, or the
 		    * player has to fire a gun to activate the enemy.
 		    */
-			if(!activated && Display.skillMode > 0
-					&& Player.alive)
+			if((inSight && (withinSight || InputHandler.wasFired))
+					|| distanceFromPlayer <= 1)
 			{	
-				//Enemy can activate
-				boolean canActivate = true;
+				activated = true;
 				
-			   /*
-			    * Because the flying enemies can see the player
-			    * from much farther away than any other normal
-			    * enemy standing on the ground, this limits how
-			    * far away the flying enemy can activate so
-			    * that all the flying enemies in the map do not
-			    * activate at once causing issues.
-			    */
-				if(canFly && distance > 10)
+				//Depending on ID, play entity activation sound
+				switch(ID)
 				{
-					canActivate = false;
-				}
+					case 6:
+						SoundController.bossActivate.
+						playAudioFile(0);
+						break;
 				
-			   /*
-			    * If enemy can be activated, activate the enemy
-			    * and player the enemy activation sound that
-			    * correlates to the enemy being activated.
-			    */
-				if(canActivate)
-				{
-					activated = true;
-					
-					if(ID == 6)
-					{
-						SoundController.bossActivate.playAudioFile();
-					}
-					else if(ID == 8)
-					{
-						SoundController.belegothActivate.playAudioFile();
-					}
-					else if(ID == 1)
-					{
-						SoundController.enemyActivate.playAudioFile();
-					}
-					else if(ID == 2)
-					{
-						SoundController.enemy2Activate.playAudioFile();
-					}
-					else if(ID == 3)
-					{
-						SoundController.enemy3Activate.playAudioFile();
-					}
-					else if(ID == 4)
-					{
-						SoundController.enemy4Activate.playAudioFile();
-					}
-					else if(ID == 5)
-					{
-						SoundController.enemy5Activate.playAudioFile();
-					}
-					else if(ID == 7)
-					{
-						SoundController.enemy7Activate.playAudioFile();
-					}
+					case 8:
+						SoundController.belegothActivate.
+						playAudioFile(0);
+						break;
+				
+					case 1:
+						SoundController.enemyActivate.
+						playAudioFile(distanceFromPlayer);
+						break;
+				
+					case 2:
+						SoundController.enemy2Activate.
+						playAudioFile(distanceFromPlayer);
+						break;
+				
+					case 3:
+						SoundController.enemy3Activate.
+						playAudioFile(distanceFromPlayer);
+						break;
+				
+					case 4:
+						SoundController.enemy4Activate.
+						playAudioFile(distanceFromPlayer);
+						break;
+				
+					case 5:
+						SoundController.enemy5Activate.
+						playAudioFile(distanceFromPlayer);
+						break;
+				
+					case 7:
+						SoundController.enemy7Activate.
+						playAudioFile(distanceFromPlayer);
+						break;
+						
+					default:
+						SoundController.enemyActivate.
+						playAudioFile(distanceFromPlayer);
+						break;
 				}
 			}
 		}
@@ -477,7 +475,7 @@ public abstract class Entity
 					}
 				}
 				
-				SoundController.enemyFire.playAudioFile();
+				SoundController.enemyFire.playAudioFile(distanceFromPlayer);
 				
 				isAttacking = false;
 			}
@@ -491,7 +489,7 @@ public abstract class Entity
 			{
 				isFiring = false;
 				
-				SoundController.enemyFire.playAudioFile();
+				SoundController.enemyFire.playAudioFile(distanceFromPlayer);
 				
 				//Default projectile
 				int tempID = 4;

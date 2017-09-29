@@ -15,6 +15,7 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.File;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
@@ -35,6 +36,7 @@ import com.vile.graphics.Textures;
 import com.vile.input.Controller;
 import com.vile.input.InputHandler;
 import com.vile.launcher.FPSLauncher;
+import com.vile.launcher.LogIn;
 
 /**
  * @title Display
@@ -63,16 +65,13 @@ public class Display extends Canvas implements Runnable
 	
 	//Frame title
 	public static final String TITLE = "Vile Alpha " + versionNumber
-			+" Dev 1";
+			+" Dev 2";
 
 	// Is music audio on?
 	public static boolean audioOn = false;
 
 	// Audio clip that is loaded in for music
-	private static Clip music;
-	
-	//Keeps track of gain controller for the music. Volume basically
-	public static FloatControl musicControl;
+	public static Clip music;
 	
 	//Keeps track of how fast you move mouse
 	public static int mouseSpeedHorizontal;
@@ -80,9 +79,11 @@ public class Display extends Canvas implements Runnable
 
 	// Thread of events
 	private static Thread thread;
+	public static Thread thread2;
+	public static Thread thread3;
 
 	// Determines if program is running
-	private boolean isRunning = false;
+	public static boolean isRunning = false;
 
 	// Determines whether the game is paused
 	public static boolean pauseGame = false;
@@ -97,10 +98,7 @@ public class Display extends Canvas implements Runnable
 	public static Game game;
 
 	// Handles input events
-	private InputHandler input;
-	
-	//Music input stream
-	private static AudioInputStream input18;
+	public static InputHandler input;
 
 	// Used to display frames per second
 	public static int fps = 0;
@@ -201,8 +199,7 @@ public class Display extends Canvas implements Runnable
     * about the most recent pick up you got, or if you are trying to
     * open a door that requires a key you don't have.
     */
-	public static String itemPickup = "";
-	public static int itemPickupTime = 0;
+	public static ArrayList<PopUp> messages = new ArrayList<PopUp>();
 	
 	//In case user wants to manually set the map that is played
 	public static boolean nonDefaultMap = false;
@@ -315,16 +312,29 @@ public class Display extends Canvas implements Runnable
 			// New Game and map
 			game = new Game(this, nonDefaultMap, newMapName);
 			
+			//Reset the popup list
+			messages = new ArrayList<PopUp>();
+			
 			// Reset debug values
 			Controller.showFPS = false;
-			Controller.flyOn = false;
-			Controller.noClipOn = false;
-			Controller.superSpeedOn = false;
-			Controller.godModeOn = false;
-			Controller.unlimitedAmmoOn = false;
 			
-			//Reset kills
-			kills = 0;
+			//Only if not loading the game.
+			if(!FPSLauncher.loadingGame)
+			{
+				Player.flyOn = false;
+				Player.noClipOn = false;
+				Player.superSpeedOn = false;
+				Player.godModeOn = false;
+				Player.unlimitedAmmoOn = false;
+				
+				//Reset kills
+				kills = 0;
+			}
+			else
+			{
+				//Set to no longer loading in a game if it got to here.
+				FPSLauncher.loadingGame = false;
+			}
 			
 			loading.setTitle("Setting up music... 50% Loaded");
 	       /*
@@ -333,7 +343,7 @@ public class Display extends Canvas implements Runnable
 	        */
 			if(audioOn)
 			{
-				music.close();
+				music.stop();
 			}
 			
 			//Music is not on yet
@@ -355,19 +365,7 @@ public class Display extends Canvas implements Runnable
 			//Only do if there is music playing
 			if(audioOn)
 			{
-				   /*
-				    * If the music volume is as lower than it can go (Meaning off) 
-				    * then just set it to the limit. Otherwise just set the
-				    * music volume to the correct level.
-				    */
-					if(FPSLauncher.musicVolumeLevel < -80)
-					{
-						musicControl.setValue(-80.0f);
-					}
-					else
-					{
-						musicControl.setValue(FPSLauncher.musicVolumeLevel);
-					}
+				Sound.setMusicVolume(music);
 			}	
 		}
 		//If just resuming game, most values are already loaded
@@ -375,6 +373,43 @@ public class Display extends Canvas implements Runnable
 		{
 			//Do not reset the game completely
 			Display.resetGame = false;
+			
+			if(FPSLauncher.gameMode == 1)
+			{
+				//Depending on the theme set the ceiling and floor textures
+				switch(themeNum)
+				{
+					case 1:
+						Game.mapFloor = 9;
+						Game.mapCeiling = 10;
+						break;
+						
+					case 2:
+						Game.mapFloor = 1;
+						Game.mapCeiling = 3;
+						break;
+						
+					case 3:
+						Game.mapFloor = 12;
+						Game.mapCeiling = 12;
+						break;
+						
+					case 4:
+						Game.mapFloor = 11;
+						Game.mapCeiling = 10;
+						break;
+						
+					case 5:
+						Game.mapFloor = 13;
+						Game.mapCeiling = 13;
+						break;
+						
+					default:
+						Game.mapFloor = 9;
+						Game.mapCeiling = 10;
+						break;
+				}
+			}
 			
 			loading.setTitle("Setting up music... 50% Loaded");
 			
@@ -393,7 +428,7 @@ public class Display extends Canvas implements Runnable
 		    */
 			if(musicTheme != oldMusicTheme)
 			{
-				music.close();
+				music.stop();
 				audioOn = false;
 				oldMusicTheme =  musicTheme;
 			}
@@ -401,19 +436,7 @@ public class Display extends Canvas implements Runnable
 			//Only do if there is music playing
 			if(audioOn)
 			{
-			   /*
-			    * If the music volume is as lower than it can go (Meaning off) 
-			    * then just set it to the limit. Otherwise just set the
-			    * music volume to the correct level.
-			    */
-				if(FPSLauncher.musicVolumeLevel < -80)
-				{
-					musicControl.setValue(-80.0f);
-				}
-				else
-				{
-					musicControl.setValue(FPSLauncher.musicVolumeLevel);
-				}
+				Sound.setMusicVolume(music);
 			}			   
 		}
 
@@ -449,7 +472,7 @@ public class Display extends Canvas implements Runnable
 				(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
 
 		//Gets the data from each integer and converts it to a color type
-		screen.render3D.PIXELS = 
+		Screen.render3D.PIXELS = 
 				((DataBufferInt) img.getRaster().getDataBuffer()).getData();
 
 		loading.setTitle("Setting up input handling listeners... 90% Loaded");
@@ -552,7 +575,10 @@ public class Display extends Canvas implements Runnable
 
 			// Starts a new thread to handle all the events
 			thread = new Thread(this);
+			//thread2 = new Thread(screen);
+			//thread3 = new Thread(game);
 			thread.start();
+			//thread2.start();
 		}
 	}
 
@@ -589,6 +615,8 @@ public class Display extends Canvas implements Runnable
 		// While the game is running, keep ticking and rendering
 		while (isRunning == true) 
 		{			
+			thread3 = new Thread(game);
+			thread2 = new Thread(screen);
 			//Current time
 			long currentTime = System.nanoTime();
 			
@@ -665,6 +693,9 @@ public class Display extends Canvas implements Runnable
 			
 			// Render the pixels, and add to number of frames rendered
 			render();
+			
+			//thread3.start();
+			
 			frames++;
 			
 			// Only do this if the mouse is on
@@ -784,6 +815,16 @@ public class Display extends Canvas implements Runnable
 			{
 				stop();
 			}
+			
+			/*try
+			{
+				thread2.join();
+				thread3.join();
+			}
+			catch(Exception ex)
+			{
+				
+			}*/
 		}
 	}
 
@@ -809,7 +850,7 @@ public class Display extends Canvas implements Runnable
 			// Closes the clip, stopping the games music.
 			if (musicTheme != 0 && !Display.pauseGame) 
 			{
-				music.close();
+				music.stop();
 			}
 			
 			//Start new launcher
@@ -871,8 +912,7 @@ public class Display extends Canvas implements Runnable
 			createBufferStrategy(3);
 			return;
 		}
-
-		// Call screen and have it render all events that happen in game
+		
 		screen.render(game);
 
 		/*
@@ -886,7 +926,7 @@ public class Display extends Canvas implements Runnable
 		g.drawImage(img, 0, 0, WIDTH, HEIGHT, null);
 
 		// Sets font of any text drawn on the screen
-		g.setFont(new Font("Nasalization", 3, 15));
+		g.setFont(new Font("Nasalization", 1, 15));
 
 		/*
 		 * Depending on how low the players health is, set the text to different
@@ -1047,7 +1087,7 @@ public class Display extends Canvas implements Runnable
 			{
 				//If player is both invisible and invincible
 				if(Player.invisibility > 0 && 
-						(Controller.godModeOn || Player.immortality > 0))
+						(Player.godModeOn || Player.immortality > 0))
 				{
 					face = invisGodmode;
 				}	
@@ -1065,7 +1105,7 @@ public class Display extends Canvas implements Runnable
 			    * Otherwise, if it is Nick Cage mode or MLG mode, then 
 			    * change the faces to match those themes.
 			    */
-				else if((Controller.godModeOn || Player.immortality > 0))
+				else if((Player.godModeOn || Player.immortality > 0))
 				{
 					face = godMode;
 					
@@ -1322,27 +1362,27 @@ public class Display extends Canvas implements Runnable
 		}
 
 		// Shows if fly mode is on
-		if (Controller.flyOn) {
+		if (Player.flyOn) {
 			g.drawString("FlyMode on", 400, 50);
 		}
 
 		// Shows up if noClip is on
-		if (Controller.noClipOn) {
+		if (Player.noClipOn) {
 			g.drawString("noClip On", 200, 50);
 		}
 
 		// If SuperSpeed is activated
-		if (Controller.superSpeedOn) {
+		if (Player.superSpeedOn) {
 			g.drawString("Super Speed On", 200, 100);
 		}
 
 		// If GodMode is activated
-		if (Controller.godModeOn) {
+		if (Player.godModeOn) {
 			g.drawString("God Mode On", 400, 100);
 		}
 		
 		// If Unlimited ammo is activated
-		if (Controller.unlimitedAmmoOn) {
+		if (Player.unlimitedAmmoOn) {
 			g.drawString("Infinite Ammo On", 600, 50);
 		}
 
@@ -1462,8 +1502,9 @@ public class Display extends Canvas implements Runnable
 			Controller.moveSpeed = 0.0;
 			Player.y = -6;
 			
-			itemPickup = "Press E to restart level";
-			itemPickupTime = 1;
+			//popupMessage = "Press E to restart level";
+			//popupTime = 1;
+			messages.add(new PopUp("Press E to restart level", -1, 0));
 		}
 
 	   /*
@@ -1473,7 +1514,7 @@ public class Display extends Canvas implements Runnable
 	    * 
 	    * Otherwise show secrets found, and the actual map name.
 	    */
-		if(!Game.setMap)
+		if(FPSLauncher.gameMode == 1)
 		{
 			g.drawString("Kills: " + kills, 
 					(WIDTH / 2) + 200, HEIGHT - gC + 18);
@@ -1507,21 +1548,61 @@ public class Display extends Canvas implements Runnable
 	    * 
 	    * Also adds to itemPickupTime each time this is rendered.
 	    */
-		if(itemPickupTime != 0)
+		/*if(popupTime != 0)
 		{
-			g.drawString(itemPickup,(WIDTH / 2) + 75, HEIGHT - gC + 93);
-			itemPickupTime++;
+			g.drawString(popupMessage,(WIDTH / 2) + 75, 50);
+			popupTime++;
 		}
 		
-		if(itemPickupTime > 200)
+		if(popupTime > 200)
 		{
-			itemPickupTime = 0;
+			popupTime = 0;
+		}*/
+		
+		//The last popups y value so it can be checked to make
+		//sure popups don't bunch up too much
+		int lastY = 0;
+		
+		//For all the popups the game is handling
+		for(int i = 0; i < messages.size(); i++)
+		{
+			PopUp p = messages.get(i);
+			
+		   /*
+		    * Popups cannot be less than 25 pixels away from each other.
+		    * This check ensures that they are spaced out enough
+		    * when being presented on the screen. This cannot be the first
+		    * popup in the array list either because then it will not
+		    * be checking for the last popup displayed.
+		    */
+			if((lastY - p.getYOnScreen()) < 25 && i > 0)
+			{
+				PopUp p2 = messages.get(i - 1);
+				p2.setYOnScreen(p.getYOnScreen() + 25);
+			}
+			
+			//Draw pop up on screen
+			g.drawString(p.getText(),(WIDTH / 2) + 75, p.getYOnScreen());
+			
+			//Save the y value
+			lastY = p.getYOnScreen();
+			
+			//Tick the popups values.
+			p.tick();
 		}
 		
 	   /*
 	    * Draw other needed texts
 	    */
-		g.drawString("Keys:", (WIDTH / 2) + 75, HEIGHT - gC + 18);
+		if(FPSLauncher.gameMode == 0)
+		{
+			g.drawString("Keys:", (WIDTH / 2) + 75, HEIGHT - gC + 18);
+		}
+		else
+		{
+			g.drawString("High Score:", (WIDTH / 2) + 75, HEIGHT - gC + 18);
+			g.drawString(""+Player.maxKills, (WIDTH / 2) + 75, HEIGHT - gC + 36);
+		}
 
 		/*
 		 * Disposes of this graphics object, and show what it was on the screen
@@ -1535,17 +1616,13 @@ public class Display extends Canvas implements Runnable
 	public static void main(String[] args) 
 	{
 		// Start the launcher
-		new FPSLauncher(0);
+		new LogIn();
 	}
 
 	/**
-	 * Plays the game audio, depending on the audio the player chose for the
-	 * game to play. This gets an audio input stream from an audio file that is
-	 * opened using the AudioSystem object's getAudioInputStream method. After
-	 * getting the audio stream, and opening it, it then tells the Clip to keep
-	 * looping as long as the clip is playing and then it starts the clip, and
-	 * set audioOn equal to true. It will only start the clip once therefore and
-	 * won't keep restarting it every tick.
+	 * Plays the music audio. Because this audio is slightly different
+	 * than other sounds because of the fact it is set to loop
+	 * continuously, this is not handled by the sound controller.
 	 */
 	public synchronized void playAudio(String custom) 
 	{
@@ -1553,78 +1630,61 @@ public class Display extends Canvas implements Runnable
 		{
 			if (!audioOn) 
 			{
-				music = AudioSystem.getClip();
+				String file = "";
 
 				// I instantiate it up here so the code below doesn't sqauwk
-				input18 = AudioSystem.getAudioInputStream(this
-						.getClass().getResource("/test/gameAudio.wav"));
+				file = ("/test/gameAudio.wav");
 				
 			   /*
 			    * If the actual maps are being played instead of the
 			    * randomly generated survival maps.
 			    */
-				if(!Game.setMap)
+				if(FPSLauncher.gameMode == 1)
 				{
-					if (musicTheme == 0)
+					if (musicTheme == 1) 
 					{
-						input18 = AudioSystem.getAudioInputStream(this.getClass()
-								.getResource("/test/gameAudio.wav"));
-					} 
-					else if (musicTheme == 1) 
-					{
-						input18 = AudioSystem.getAudioInputStream(this.getClass()
-								.getResource("/test/gameAudio2.wav"));
+						file = ("/test/gameAudio2.wav");
 					}
 					else if (musicTheme == 2) 
 					{
-						input18 = AudioSystem.getAudioInputStream(this.getClass()
-								.getResource("/test/e1m3.wav"));
+						file = ("/test/e1m3.wav");
 					}
 					//MLG theme
 					else if (musicTheme == 3)
 					{
-						input18 = AudioSystem.getAudioInputStream(this.getClass()
-								.getResource("/test/gameAudio3.wav"));
+						file = ("/test/gameAudio3.wav");
 					} 
+					else
+					{
+						file = ("/test/gameAudio.wav");
+					}
 				}
 				//Custom music themes
 				else
 				{
-					input18 = AudioSystem.getAudioInputStream(this.getClass()
-						.getResource("/test/"+custom+".wav"));
+					file = ("/test/"+custom+".wav");
 				}
 				
-				//Open audio input screen
-				music.open(input18);
-				
-				//Have music loop continuously
+				music = AudioSystem.getClip();
+				AudioInputStream input =
+						AudioSystem.getAudioInputStream
+						(this.getClass().getResource
+								(file));
+				music.open(input);
 				music.loop(Clip.LOOP_CONTINUOUSLY);
-				
-				//Start music
 				music.start();
+				
+				audioOn = true;
 				
 				//Audio is on
 				audioOn = true;
 				
-				//Set volume of music
-				musicControl= (FloatControl) music.getControl
+				FPSLauncher.musicVolumeControl = (FloatControl) 
+						Display.music.getControl
 						(FloatControl.Type.MASTER_GAIN);
 				
-			   /*
-				* If the music volume is as lower than it can go (Meaning off) 
-			    * then just set it to the limit. Otherwise just set the
-			    * music volume to the correct level.
-				*/
-				if(FPSLauncher.musicVolumeLevel < -80)
-				{
-					musicControl.setValue(-80.0f);
-				}
-				else
-				{
-					musicControl.setValue(FPSLauncher.musicVolumeLevel);
-				}
-				
-				input18.close();
+				//Reset clip volume
+				Sound.setMusicVolume(music);
 			}
 		} 
 		catch (Exception e) 
@@ -1643,7 +1703,7 @@ public class Display extends Canvas implements Runnable
 	{
 		try
 		{
-			music.close();
+			music.stop();
 		}
 		catch(Exception e)
 		{
@@ -2122,6 +2182,10 @@ public class Display extends Canvas implements Runnable
     */
 	public void restartSurvival()
 	{
+		//So it knows what method to call
+		FPSLauncher.loadingGame = false;
+		FPSLauncher.gameMode = 1;
+		
 		//Starts a new game in survival mode
 		game = new Game(this, false, "");
 		

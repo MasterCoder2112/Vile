@@ -5,10 +5,12 @@ import java.util.Random;
 
 import com.vile.Display;
 import com.vile.Game;
+import com.vile.PopUp;
 import com.vile.SoundController;
 import com.vile.entities.Enemy;
 import com.vile.entities.Player;
 import com.vile.graphics.Render3D;
+import com.vile.launcher.FPSLauncher;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -178,6 +180,11 @@ public class Enemy extends Entity implements Comparable
 			damage = 0;
 		}
 		
+		distanceFromPlayer = Math.sqrt(((Math.abs(getX() - Player.x))
+				* (Math.abs(getX() - Player.x)))
+				+ ((Math.abs(getZ() - Player.z))
+						* (Math.abs(getZ() - Player.z))));
+		
 		//Sets speed to specific units the map uses
 		speed /= 21.3;
 		
@@ -185,6 +192,61 @@ public class Enemy extends Entity implements Comparable
 		initialSpeed = speed;
 		
 		setHeight();
+		
+		//If survival
+		if(FPSLauncher.gameMode == 1)
+		{
+			activated = true;
+			
+			//Depending on ID, play entity activation sound
+			switch(ID)
+			{
+				case 6:
+					SoundController.bossActivate.
+					playAudioFile(0);
+					break;
+			
+				case 8:
+					SoundController.belegothActivate.
+					playAudioFile(0);
+					break;
+			
+				case 1:
+					SoundController.enemyActivate.
+					playAudioFile(distanceFromPlayer);
+					break;
+			
+				case 2:
+					SoundController.enemy2Activate.
+					playAudioFile(distanceFromPlayer);
+					break;
+			
+				case 3:
+					SoundController.enemy3Activate.
+					playAudioFile(distanceFromPlayer);
+					break;
+			
+				case 4:
+					SoundController.enemy4Activate.
+					playAudioFile(distanceFromPlayer);
+					break;
+			
+				case 5:
+					SoundController.enemy5Activate.
+					playAudioFile(distanceFromPlayer);
+					break;
+			
+				case 7:
+					SoundController.enemy7Activate.
+					playAudioFile(distanceFromPlayer);
+					break;
+					
+				default:
+					SoundController.enemyActivate.
+					playAudioFile(distanceFromPlayer);
+					break;
+			}
+		}
 	}
 	
    /**
@@ -281,6 +343,9 @@ public class Enemy extends Entity implements Comparable
 					+ rotationFromPlayer;
 		}
 		
+		//Block enemy is now on
+		Block blockOn = Level.getBlock((int)xPos, (int)zPos);
+		
 	   /*
 	    * All for dealing with the force of explosions propelling
 	    * enemies in some direction
@@ -362,9 +427,35 @@ public class Enemy extends Entity implements Comparable
 			}
 		}
 		
-		//If peaceful mode, the enemy shall not move
+		//If peaceful mode, the enemy only moves if hit by and explosion
+		//so this updates what block its on still.
 		if(Game.skillMode == 0)
 		{
+			//Block enemy is now on
+			Block blockOnNew = Level.getBlock((int)xPos, (int)zPos);
+			
+		   /*
+		    * If the enemy is on a new block, then remove the enemy
+		    * from the last block it was on and add it to the new
+		    * block its on.
+		    */
+			if(!blockOnNew.equals(blockOn))
+			{
+				blockOn.enemiesOnBlock.remove(this);
+				blockOnNew.enemiesOnBlock.add(this);
+				
+				setHeight();
+			}	
+			
+			//Allows enemies to ride lifts/elevators
+			//Basically set enemies position to the position of the current
+			//block.
+			if(blockOnNew.wallID == 8 && !canFly
+					&& Math.abs(blockOnNew.height + yPos) <= 2)
+			{
+				yPos = -(blockOnNew.height + blockOnNew.y);
+			}
+			
 			return;
 		}
 		
@@ -373,8 +464,8 @@ public class Enemy extends Entity implements Comparable
 		if(super.activated && !super.isFiring && !super.isAttacking
 				&& super.harmed == 0)
 		{
-			//Current block enemy is on.
-			Block blockOn = Level.getBlock((int)xPos, (int)zPos);
+			//Current block enemy is on. Re-update from above
+			blockOn = Level.getBlock((int)xPos, (int)zPos);
 			
 			//If enemy can fly
 			if(canFly)
@@ -491,11 +582,10 @@ public class Enemy extends Entity implements Comparable
 		    * For the magistrate enemy, check to see if a corpse is
 		    * in range of being resurrected, and resurrect the corpse
 		    * if so.
-		    * 
-		    * Also do for Bosses
 		    */
-			if(ID == 5 || isABoss)
+			if(ID == 5)
 			{
+				//TODO here
 				//Check all corpses in the game
 				for(int i = 0; i < Game.corpses.size(); i++)
 				{
@@ -519,8 +609,7 @@ public class Enemy extends Entity implements Comparable
 				    * height of 4 units from each other, and the corpse 
 				    * cannot be a default corpse with no ID.
 				    */
-					if(distance <= 1 && corpse.enemyID != 5 
-							&& corpse.enemyID != 6 && corpse.enemyID != 0
+					if(distance <= 1 && corpse.enemyID != 6 && corpse.enemyID != 0
 							&& corpse.enemyID != 8
 							&& Math.abs(getY() - corpse.y) <= 4
 							&& !corpseBlock.isaDoor)
@@ -1334,7 +1423,7 @@ public class Enemy extends Entity implements Comparable
 		    */
 			if(super.distance <= 1 && !isAttacking
 					&& Math.abs(Math.abs(this.getY()) - 
-					(Math.abs(yCorrect))) <= 1 + this.height)
+					(Math.abs(yCorrect))) <= 4 + this.height)
 			{
 				tick = 0;
 				
@@ -1434,23 +1523,23 @@ public class Enemy extends Entity implements Comparable
 		{
 			if(ID == 1 || ID == 2)
 			{
-				SoundController.enemyHit.playAudioFile();	
+				SoundController.enemyHit.playAudioFile(distanceFromPlayer);	
 			}
 			else if(ID == 3)
 			{
-				SoundController.tankHurt.playAudioFile();	
+				SoundController.tankHurt.playAudioFile(distanceFromPlayer);	
 			}
 			else if(ID == 4 || ID == 5)
 			{
-				SoundController.reaperHurt.playAudioFile();	
+				SoundController.reaperHurt.playAudioFile(distanceFromPlayer);	
 			}
 			else if(ID == 7)
 			{
-				SoundController.vileCivHurt.playAudioFile();
+				SoundController.vileCivHurt.playAudioFile(distanceFromPlayer);
 			}
 			else
 			{
-				SoundController.bossHit.playAudioFile();	
+				SoundController.bossHit.playAudioFile(distanceFromPlayer / 2);	
 			}
 		}
 	}
@@ -1631,7 +1720,7 @@ public class Enemy extends Entity implements Comparable
 				zPos, -yPos, ID, xEffects, zEffects, yEffects));	
 		
 		//If survival mode, add two enemies in its place
-		if(!Game.setMap)
+		if(FPSLauncher.gameMode == 1)
 		{
 			Display.game.addEnemy();
 			Display.game.addEnemy();
@@ -1646,34 +1735,34 @@ public class Enemy extends Entity implements Comparable
 			//Depending on enemy, have a different death sound.
 			if(ID == 1)
 			{
-				SoundController.enemy1Death.playAudioFile();
+				SoundController.enemy1Death.playAudioFile(distanceFromPlayer);
 			}
 			else if(ID == 2)
 			{
-				SoundController.enemy2Death.playAudioFile();
+				SoundController.enemy2Death.playAudioFile(distanceFromPlayer);
 			}
 			else if(ID == 3)
 			{
-				SoundController.enemy3Death.playAudioFile();
+				SoundController.enemy3Death.playAudioFile(distanceFromPlayer);
 			}
 			else if(ID == 4 || ID == 5)
 			{
-				SoundController.enemy4Death.playAudioFile();
+				SoundController.enemy4Death.playAudioFile(distanceFromPlayer);
 			}
 			else if(ID == 7)
 			{
-				SoundController.enemy7Death.playAudioFile();
+				SoundController.enemy7Death.playAudioFile(distanceFromPlayer);
 			}
 		}
 		//Morgoth death
 		else if(ID == 6)
 		{
-			SoundController.bossDeath.playAudioFile();
+			SoundController.bossDeath.playAudioFile(distanceFromPlayer / 2);
 		}
 		//Belegoth death
 		else
 		{
-			SoundController.belegothDeath.playAudioFile();
+			SoundController.belegothDeath.playAudioFile(distanceFromPlayer / 2);
 		}
 		
 		//Remove enemy from game
@@ -1719,8 +1808,8 @@ public class Enemy extends Entity implements Comparable
 							&& !item.activated)
 					{
 						item.activated = true;
-						Display.itemPickup = "COM SYSTEM ACTIVATED!";
-						Display.itemPickupTime = 1;
+						Display.messages.add(new PopUp("COM SYSTEM ACTIVATED!"));
+						SoundController.uplink.playAudioFile(0);
 					}
 					else
 					{				

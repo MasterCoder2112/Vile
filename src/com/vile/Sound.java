@@ -4,7 +4,6 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
-
 import com.vile.launcher.FPSLauncher;
 
 /**
@@ -51,18 +50,10 @@ public class Sound
 						soundClip[i].getControl
 						(FloatControl.Type.MASTER_GAIN);
 				
-				if(FPSLauncher.soundVolumeLevel < -80)
-				{
-					soundControl[i].setValue(-80.0f);
-				}
-				else
-				{
-					soundControl[i].setValue
-					(FPSLauncher.soundVolumeLevel);
-				}
-				
 				soundClip[i].setMicrosecondPosition(0);
 			}
+			
+			resetVolume(FPSLauncher.soundVolumeLevel);
 		}
 		catch (Exception e)
 		{
@@ -77,8 +68,22 @@ public class Sound
     * unless all the clips are played, and the first clip is to be played 
     * on the next loop around.
     */
-	public void playAudioFile()
+	public void playAudioFile(double distance)
 	{
+		//Tends to make sounds more realistic
+		distance *= 2;
+		
+		//The clip will have a new volume depending on
+		//the sources distance from the player
+		double volume = ((100 - distance) / 100) 
+				* FPSLauncher.soundVolumeLevel;
+		
+		//If 0 or below, just don't play the sound. Makes things faster
+		if(volume <= 0)
+		{
+			return;
+		}
+		
 	   /*
 		* Basically, try to open the audio file, and throw an
 		* exception if you can't. If the audio file is opened,
@@ -95,14 +100,11 @@ public class Sound
 		{
 			boolean noActive = true;
 			
-			//soundClip[clipNum].stop();
-			
 			//If only a clip length of 1, then just reset that one clip
 			//each time anyway.
 			if(soundClip[clipNum].isActive())
 			{
-				soundClip[clipNum].stop();
-				soundClip[clipNum].setMicrosecondPosition(0);
+				stopClip();
 			}
 			
 		   /*
@@ -126,6 +128,9 @@ public class Sound
 					soundClip[i].setMicrosecondPosition(0);
 				}
 			}
+			
+			//Change the clips volume the amount calculated
+			changeClipVolume((float)volume);
 			
 			//Close sound input thread
 			input.close();
@@ -155,16 +160,19 @@ public class Sound
     */
 	public void resetVolume(float newVolume)
 	{
-		//If newVolume is less than the volume limit, set it to limit
-		if(newVolume < -80)
+		float temp = 40f * (float) Math.log10
+				(FPSLauncher.soundVolumeLevel / 100);
+		
+		if(temp < -80)
 		{
-			newVolume = -80;
+			temp = -80;
 		}
 		
 		//Set volume of all clips to a new volume
 		for(int i = 0; i < clipSize; i++)
-		{
-			soundControl[i].setValue(newVolume);
+		{		
+			soundControl[i].setValue
+			(temp);
 		}
 	}
 	
@@ -174,25 +182,18 @@ public class Sound
     * if a fireball hits far away and is lower volume. 
     * @param newVolume
     */
-	public void resetClipVolume(float newVolume)
+	public void changeClipVolume(float volume)
 	{
-		//If newVolume is less than the volume limit, set it to limit
-		if(newVolume < -80)
+		float temp = 40f * (float) Math.log10
+				(volume / 100);
+		
+		if(temp < -80)
 		{
-			newVolume = -80;
+			temp = -80;
 		}
-
-		soundControl[clipNum].setValue(newVolume);	
-	}
-	
-   /**
-    * Sets new position of the sound clip, such as if you want to replay
-    * a part or something. Has to be a long int value
-    * @param newPosition
-    */
-	public void resetClipPosition(long newPosition)
-	{
-		soundClip[clipNum].setMicrosecondPosition(newPosition);
+		
+		soundControl[clipNum].setValue
+		(temp);
 	}
 	
    /**
@@ -210,5 +211,38 @@ public class Sound
 	public void stopClip()
 	{
 		soundClip[clipNum].stop();
+		soundClip[clipNum].setMicrosecondPosition(0);
+	}
+	
+   /**
+    * Stops all clips of this type. Mainly for lifting sounds
+    */
+	public void stopAll()
+	{
+		for(int i = 0; i < soundClip.length; i++)
+		{
+			soundClip[i].stop();
+			soundClip[i].setMicrosecondPosition(0);
+		}
+	}
+	
+   /**
+    * Mainly for music used outside of normal gameplay, this
+    * static method can be accessed anywhere by statically calling this
+    * class in order to set the clips volume. Optimizes the code.
+    * @param temp
+    */
+	public static void setMusicVolume(Clip temp)
+	{	
+		float temp2 = 40f * (float) Math.log10
+				(FPSLauncher.musicVolumeLevel / 100);
+		
+		if(temp2 < -80)
+		{
+			temp2 = -80;
+		}
+		
+		FPSLauncher.musicVolumeControl.setValue
+		(temp2);
 	}
 }

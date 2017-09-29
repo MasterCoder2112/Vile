@@ -43,7 +43,7 @@ public class RocketLauncher extends Weapon implements WeaponInterface
 			if(weaponShootTime == 1)
 			{
 				//If unlimited ammo is not on
-				if(!Controller.unlimitedAmmoOn)
+				if(!Player.unlimitedAmmoOn)
 				{
 					ammo--;
 				}
@@ -52,12 +52,12 @@ public class RocketLauncher extends Weapon implements WeaponInterface
 				weaponPhase = 1;
 				
 				//Adds rocket to map
-				Game.addBullet(damage, weaponID, 0.3,
+				Game.addBullet(damage, weaponID, 0.2,
 						Player.rotation);
 				
 				//Begin rocket sound effect, and play firing sound effect
-				SoundController.rocketFire.playAudioFile();
-				SoundController.rocketFly.playAudioFile();
+				SoundController.rocketFire.playAudioFile(0);
+				SoundController.rocketFly.playAudioFile(0);
 			}
 			//Weapon firing phase increases every so many ticks
 			else if(weaponShootTime == 6)

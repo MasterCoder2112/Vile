@@ -1,6 +1,8 @@
 package com.vile.entities;
 
-import com.vile.Game;
+import java.util.ArrayList;
+
+import com.vile.Display;
 import com.vile.SoundController;
 import com.vile.input.Controller;
 
@@ -43,7 +45,7 @@ public class Shotgun extends Weapon implements WeaponInterface
 			if(weaponShootTime == 1)
 			{
 				//If unlimited ammo is not on
-				if(!Controller.unlimitedAmmoOn)
+				if(!Player.unlimitedAmmoOn)
 				{
 					ammo--;
 				}
@@ -51,10 +53,11 @@ public class Shotgun extends Weapon implements WeaponInterface
 				weaponPhase = 1;
 				
 				//Create the bullet
-				Bullet bullet = new Bullet(damage, 0.01, Player.x,
+				Bullet bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID, Player.rotation);
+
 				
-			   /*
+				/*
 			    * Instead of rendering the bullet and all that, just check
 			    * its movement instantaneously in small increments to make 
 			    * it look like it hits the enemy instantaneously and also
@@ -65,10 +68,10 @@ public class Shotgun extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID,
+				bullet = new Bullet(damage, 0.03, Player.x,
+						-(Player.y * 0.085), Player.z, weaponID,
 						Player.rotation + 0.06);
-				
+
 			   /*
 			    * Instead of rendering the bullet and all that, just check
 			    * its movement instantaneously in small increments to make 
@@ -80,8 +83,8 @@ public class Shotgun extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID,
+				bullet = new Bullet(damage, 0.03, Player.x,
+						-(Player.y * 0.085), Player.z, weaponID,
 						Player.rotation - 0.06);
 				
 			   /*
@@ -95,8 +98,8 @@ public class Shotgun extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID,
+				bullet = new Bullet(damage, 0.03, Player.x,
+						-(Player.y * 0.085), Player.z, weaponID,
 						Player.rotation + 0.04);
 				
 			   /*
@@ -110,8 +113,8 @@ public class Shotgun extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID,
+				bullet = new Bullet(damage, 0.03, Player.x,
+						-(Player.y * 0.085), Player.z, weaponID,
 						Player.rotation - 0.04);
 				
 			   /*
@@ -125,8 +128,8 @@ public class Shotgun extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID,
+				bullet = new Bullet(damage, 0.03, Player.x,
+						-(Player.y * 0.085), Player.z, weaponID,
 						Player.rotation + 0.08);
 				
 			   /*
@@ -140,8 +143,8 @@ public class Shotgun extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID,
+				bullet = new Bullet(damage, 0.03, Player.x,
+						-(Player.y * 0.085), Player.z, weaponID,
 						Player.rotation - 0.08);
 				
 			   /*
@@ -155,8 +158,8 @@ public class Shotgun extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID,
+				bullet = new Bullet(damage, 0.03, Player.x,
+						-(Player.y * 0.085), Player.z, weaponID,
 						Player.rotation + 0.015);
 				
 			   /*
@@ -170,8 +173,8 @@ public class Shotgun extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				bullet = new Bullet(damage, 0.01, Player.x,
-						Player.y, Player.z, weaponID,
+				bullet = new Bullet(damage, 0.03, Player.x,
+						-(Player.y * 0.085), Player.z, weaponID,
 						Player.rotation - 0.015);
 				
 			   /*
@@ -185,7 +188,7 @@ public class Shotgun extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				SoundController.shoot.playAudioFile();
+				SoundController.shoot.playAudioFile(0);
 			}
 			else if(weaponShootTime == 6)
 			{

@@ -1011,6 +1011,40 @@ public class Textures
 	public static Render coolWall = loadBitMap
 			("resources/textures/theme"+(Display.themeNum + 1)
 					+"/walls/coolWall.png");
+	public static Render phaseHit1 = loadBitMap
+			("resources/textures/phaseHit1.png");
+	public static Render phaseHit2 = loadBitMap
+			("resources/textures/phaseHit2.png");
+	public static Render phaseHit3 = loadBitMap
+			("resources/textures/phaseHit3.png");
+	public static Render phaseHit4 = loadBitMap
+			("resources/textures/phaseHit4.png");
+	public static Render phaseHit5 = loadBitMap
+			("resources/textures/phaseHit5.png");
+	public static Render fireHit1 = loadBitMap
+			("resources/textures/fireHit1.png");
+	public static Render fireHit2 = loadBitMap
+			("resources/textures/fireHit2.png");
+	public static Render fireHit3 = loadBitMap
+			("resources/textures/fireHit3.png");
+	public static Render fireHit4 = loadBitMap
+			("resources/textures/fireHit4.png");
+	public static Render bulletHit1 = loadBitMap
+			("resources/textures/bulletHit1.png");
+	public static Render bulletHit2 = loadBitMap
+			("resources/textures/bulletHit2.png");
+	public static Render bulletHit3 = loadBitMap
+			("resources/textures/bulletHit3.png");
+	public static Render bulletHit4 = loadBitMap
+			("resources/textures/bulletHit4.png");
+	public static Render bloodSpray1 = loadBitMap
+			("resources/textures/bloodSpray1.png");
+	public static Render bloodSpray2 = loadBitMap
+			("resources/textures/bloodSpray2.png");
+	public static Render bloodSpray3 = loadBitMap
+			("resources/textures/bloodSpray3.png");
+	public static Render bloodSpray4 = loadBitMap
+			("resources/textures/bloodSpray4.png");
 	
    /**
     * Constructs floor textures since they require a bit more optimized
@@ -2050,8 +2084,42 @@ public class Textures
 					("resources/textures/defaultCorpse1.png");
 		 defaultCorpse2 = loadBitMap
 					("resources/textures/defaultCorpse2.png");
-		 coolWall = loadBitMap
-					("resources/textures/theme"+(Display.themeNum + 1)
-							+"/walls/coolWall.png");
+		coolWall = loadBitMap
+				("resources/textures/theme"+(Display.themeNum + 1)
+						+"/walls/coolWall.png");
+		phaseHit1 = loadBitMap
+				("resources/textures/phaseHit1.png");
+		phaseHit2 = loadBitMap
+				("resources/textures/phaseHit2.png");
+		phaseHit3 = loadBitMap
+				("resources/textures/phaseHit3.png");
+		phaseHit4 = loadBitMap
+				("resources/textures/phaseHit4.png");
+		phaseHit5 = loadBitMap
+				("resources/textures/phaseHit5.png");
+		fireHit1 = loadBitMap
+				("resources/textures/fireHit1.png");
+		fireHit2 = loadBitMap
+				("resources/textures/fireHit2.png");
+		fireHit3 = loadBitMap
+				("resources/textures/fireHit3.png");
+		fireHit4 = loadBitMap
+				("resources/textures/fireHit4.png");
+		bulletHit1 = loadBitMap
+				("resources/textures/bulletHit1.png");
+		bulletHit2 = loadBitMap
+				("resources/textures/bulletHit2.png");
+		bulletHit3 = loadBitMap
+				("resources/textures/bulletHit3.png");
+		bulletHit4 = loadBitMap
+				("resources/textures/bulletHit4.png");
+		bloodSpray1 = loadBitMap
+				("resources/textures/bloodSpray1.png");
+		bloodSpray2 = loadBitMap
+				("resources/textures/bloodSpray2.png");
+		bloodSpray3 = loadBitMap
+				("resources/textures/bloodSpray3.png");
+		bloodSpray4 = loadBitMap
+				("resources/textures/bloodSpray4.png");
 	}
 }

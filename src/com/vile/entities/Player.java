@@ -20,35 +20,9 @@ public class Player
 	public static int health      = 100;
 	public static int maxHealth   = 200;
 	public static int armor       = 0;
-	public static double height   = 2.0;
-	public static double x        = 0;
-	public static double y        = 0;
-	public static double z        = 0;
-	public static double rotation = 0;
 	
-	//If an explosion effects movement of player, this is the effect on
-	//each direction of the player
-	public static double zEffects = 0;
-	public static double xEffects = 0;
-	public static double yEffects = 0;
-	
-	//Max Height a player can stand on at moment.
-	public static double maxHeight = 0;
-	
-	//Whether the player has the keys or not
-	public static boolean hasRedKey = false;
-	public static boolean hasBlueKey = false;
-	public static boolean hasGreenKey = false;
-	public static boolean hasYellowKey = false;
-	
-	//The height the player can jump
-	public static double jumpHeight = 8;
-	
-	//Used for rendering
-	public static double upRotate = 1.105;
-	
-	//If a solid item or enemy adds extra height to a player
-	public static double extraHeight = 0;
+	//How many upgrade points has the player collected
+	public static int upgradePoints = 0;
 	
 	//How many health resurrections do you have
 	public static int resurrections = 0;
@@ -67,6 +41,46 @@ public class Player
 	
 	//How long since player was last hurt
 	public static int playerHurt = 0;
+	
+	//Max number of kills in survival
+	public static int maxKills;
+	
+	public static double height   = 2.0;
+	public static double x        = 0;
+	public static double y        = 0;
+	public static double z        = 0;
+	public static double rotation = 0;
+	
+	//If an explosion effects movement of player, this is the effect on
+	//each direction of the player
+	public static double zEffects = 0;
+	public static double xEffects = 0;
+	public static double yEffects = 0;
+	
+	//Max Height a player can stand on at moment.
+	public static double maxHeight = 0;
+	
+	//The height the player can jump
+	public static double jumpHeight = 8;
+	
+	//Used for rendering
+	public static double upRotate = 1.105;
+	
+	//If a solid item or enemy adds extra height to a player
+	public static double extraHeight = 0;
+	
+	//Whether the player has the keys or not
+	public static boolean hasRedKey = false;
+	public static boolean hasBlueKey = false;
+	public static boolean hasGreenKey = false;
+	public static boolean hasYellowKey = false;
+	
+	//Player cheats
+	public static boolean noClipOn;
+	public static boolean flyOn;
+	public static boolean superSpeedOn;
+	public static boolean godModeOn;
+	public static boolean unlimitedAmmoOn;
 	
 	//Is player still alive?
 	public static boolean alive = true;
@@ -230,7 +244,7 @@ public class Player
 	{
 		//If the player is immortal then don't hurt
 		//Or if in peaceful mode don't hurt
-		if(Controller.godModeOn || immortality != 0
+		if(godModeOn || immortality != 0
 				|| Game.skillMode == 0 || !Player.alive)
 		{
 			return;
@@ -273,7 +287,7 @@ public class Player
 		playerHurt = 10;
 		
 		//Player hurt sound
-		SoundController.playerHurt.playAudioFile();
+		SoundController.playerHurt.playAudioFile(0);
 	}
 	
 }

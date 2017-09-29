@@ -1,8 +1,6 @@
 package com.vile.entities;
 
 import com.vile.entities.Player;
-import com.vile.Display;
-import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
@@ -24,9 +22,10 @@ public class Door extends Entity
 	//Wall that door correlates to position on map
 	public  int doorX;
 	public  int doorZ;
+	public  double doorY;
 	
 	//Keeps track of time door stays in up position
-	private int time = 0;
+	public int time = 0;
 	
 	//Type of door. Normal or a door that requires a certain key
 	public  int doorType = 0;
@@ -36,6 +35,9 @@ public class Door extends Entity
 	
 	//Door Flags! (Most are not in use yet)
 	public boolean stayOpen = false;
+	
+	//Makes sure stopping sound doesn't repeat
+	private boolean soundPlayed = false;
 	
    /**
     * A constructor of a door entity, which also holds the coordinates of
@@ -54,6 +56,11 @@ public class Door extends Entity
 		doorX = wallX;
 		doorZ = wallZ;
 		doorType = type;
+		
+		if(itemActID > 0)
+		{
+			stayOpen = true;
+		}
 	}
 	
    /**
@@ -61,9 +68,18 @@ public class Door extends Entity
     * it up to a height of 3, makes it stay there long enough for the
     * player to move through, then goes back down.
     */
+	@SuppressWarnings("unused")
 	public void move()
 	{
 		Block temp = Level.getBlock(doorX, doorZ);
+		
+		//Set the doorY position
+		doorY = temp.y;
+		
+		distanceFromPlayer = Math.sqrt(((Math.abs(xPos - Player.x))
+				* (Math.abs(xPos - Player.x)))
+				+ ((Math.abs(zPos - Player.z))
+						* (Math.abs(zPos - Player.z))));
 		
 		//When a door is moving, it is see through. Otherwise normally not
 		temp.seeThrough = true;
@@ -79,6 +95,7 @@ public class Door extends Entity
 		if(temp.y <= 0 && time == 0)
 		{
 			soundTime = 0;
+			SoundController.doorStart.playAudioFile(distanceFromPlayer);
 		}
 		
 		//If door has reached maximum height
@@ -89,6 +106,13 @@ public class Door extends Entity
 			
 			//Reset time between sounds
 			soundTime = 0;
+			
+			if(!soundPlayed)
+			{
+				soundPlayed = true;
+				SoundController.lifting.stopAll();
+				SoundController.doorEnd.playAudioFile(distanceFromPlayer);
+			}
 		}
 	
 		//If Door has closed completely
@@ -112,6 +136,11 @@ public class Door extends Entity
 			
 			//Reset time between sounds
 			soundTime = 0;
+			SoundController.lifting.stopAll();
+			SoundController.doorEnd.playAudioFile(distanceFromPlayer);
+			
+			//Reset
+			soundPlayed = false;
 			
 			return;
 		}
@@ -124,13 +153,13 @@ public class Door extends Entity
 			//Only play sound every 10 ticks
 			if(soundTime == 0)
 			{
-				SoundController.lifting.playAudioFile();
+				SoundController.lifting.playAudioFile(distanceFromPlayer);
 				
 				soundTime++;
 			}
 		}
 		//If door is moving down
-		else if(temp.y <= 3 && time > 250 && itemActivationID == 0)
+		else if(temp.y <= 3 && time > 250 && !stayOpen)
 		{
 			Block thisBlock = Level.getBlock(doorX, doorZ);
 			
@@ -174,7 +203,7 @@ public class Door extends Entity
 			//Only play sound every 10 ticks
 			if(soundTime == 0)
 			{
-				SoundController.lifting.playAudioFile();
+				SoundController.lifting.playAudioFile(distanceFromPlayer);
 				
 				soundTime++;
 			}

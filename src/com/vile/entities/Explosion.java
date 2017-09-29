@@ -2,11 +2,9 @@ package com.vile.entities;
 
 import java.util.ArrayList;
 
-import com.vile.Display;
 import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.graphics.Render3D;
-import com.vile.input.Controller;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -45,6 +43,9 @@ public class Explosion
 	//Corrects height it is seen at
 	public double heightCorrect = 8;
 	
+	//Distance from the player
+	public double distanceFromPlayer = 0;
+	
 	//Position variables
 	public double x;
 	public double y;
@@ -68,25 +69,10 @@ public class Explosion
 		this.ID = ID;
 		this.itemActivationID = itemActID;
 		
-		//Block blockOn = Level.getBlock((int)x, (int)z);
-		
-	   /*
-	    * Correct explosions height so that it cannot go through the
-	    * block or floor if they are a rocket explosion
-	    */
-		//if(-this.y < blockOn.height && ID == 0
-				//&& Player.y > blockOn.height)
-		//{
-			//this.y = -blockOn.height + 1;
-		//}
-		//else
-		//{
-			//Only if rocket, then correct it
-			//if(ID == 0)
-			//{
-				//this.y += 1;
-			//}
-		//}	
+		this.distanceFromPlayer = Math.sqrt(((Math.abs(x - Player.x))
+				* (Math.abs(x - Player.x)))
+				+ ((Math.abs(z - Player.z))
+						* (Math.abs(z - Player.z))));
 		
 		//Add explosion to game
 		Game.explosions.add(this);
@@ -183,7 +169,7 @@ public class Explosion
 	    * according to the distance they are from the explosion
 	    */
 		if(distance <= 3)
-		{
+		{	
 			double damage = 60;
 			double force = 0;
 			
@@ -259,13 +245,13 @@ public class Explosion
 				Player.yEffects = (1/temp) * (force / 8);
 			}
 			
-			if(Player.yEffects > 30)
+			if(Player.yEffects > 20)
 			{
-				Player.yEffects = 30;
+				Player.yEffects = 20;
 			}
 			
 			if(Player.immortality == 0 
-				&& !Controller.godModeOn)
+				&& !Player.godModeOn)
 			{
 				Player.hurtPlayer(damage);	
 			}
@@ -428,7 +414,7 @@ public class Explosion
 					block.health -= 60;
 					
 					//Blass glass hit/break sound
-					SoundController.glassBreak.playAudioFile();
+					SoundController.glassBreak.playAudioFile(distanceFromPlayer);
 					
 					if(block.health <= 0)
 					{
@@ -457,7 +443,7 @@ public class Explosion
 					block.health -= 60;
 					
 					//Blass glass hit/break sound
-					SoundController.glassBreak.playAudioFile();
+					SoundController.glassBreak.playAudioFile(distanceFromPlayer);
 					
 					if(block.health <= 0)
 					{		
@@ -474,7 +460,7 @@ public class Explosion
 						block.enemiesOnBlock = temp;
 						
 						//Explosion sound
-						SoundController.explosion.playAudioFile();
+						SoundController.explosion.playAudioFile(distanceFromPlayer);
 						
 						//Re-add to level
 						Level.blocks[block.x + block.z * Level.width] = block;
@@ -578,12 +564,12 @@ public class Explosion
 		//Play explosion sound based on explosion type
 		if(ID == 1)
 		{
-			SoundController.explosion.playAudioFile();
+			SoundController.explosion.playAudioFile(distanceFromPlayer);
 		}
 		else
 		{
 			SoundController.rocketFly.stopClip();
-			SoundController.explosion.playAudioFile();
+			SoundController.explosion.playAudioFile(distanceFromPlayer);
 		}
 	}
 	

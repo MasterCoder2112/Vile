@@ -1,11 +1,12 @@
 package com.vile.graphics;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Random;
+
+import javax.swing.JFrame;
 
 import com.vile.Display;
 import com.vile.Game;
+import com.vile.PopUp;
 import com.vile.SoundController;
 import com.vile.entities.Bullet;
 import com.vile.entities.Corpse;
@@ -14,12 +15,13 @@ import com.vile.entities.Enemy;
 import com.vile.entities.EnemyFire;
 import com.vile.entities.Entity;
 import com.vile.entities.Explosion;
+import com.vile.entities.HitSprite;
 import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
 import com.vile.entities.Player;
 import com.vile.entities.Projectile;
 import com.vile.input.Controller;
-import com.vile.input.InputHandler;
+import com.vile.launcher.FPSLauncher;
 import com.vile.levelGenerator.*;
 
 /**
@@ -103,16 +105,16 @@ public class Render3D extends Render
 	{
 		//Play announcement that correlates to the map loaded in
 		if((Game.mapNum == 1 || Game.mapNum == 9) && !game.firstSound
-				&& Game.setMap)
+				&& FPSLauncher.gameMode != 1)
 		{
-			SoundController.level1Anouncement.playAudioFile();
+			SoundController.level1Anouncement.playAudioFile(0);
 			game.firstSound = true;
 		}
 		else if((Game.mapNum == 2 || Game.mapNum == 6 ||
 				Game.mapNum == 8 || Game.mapNum == 10)
-				&& !game.firstSound && Game.setMap)
+				&& !game.firstSound && FPSLauncher.gameMode != 1)
 		{
-			SoundController.creepySound.playAudioFile();
+			SoundController.creepySound.playAudioFile(0);
 			game.firstSound = true;
 		}
 				
@@ -144,17 +146,15 @@ public class Render3D extends Render
 		double floorDepth    = 8 +
 				Player.y;
 		
-		//If night time, then be the darkest map theme
-		if(Display.themeNum == 1 && !Game.setMap)
+		//Survival mode night time mode is the darkest. Else the
+		//default is 100,000
+		if(FPSLauncher.gameMode == 1)
 		{
-			renderDistanceDefault = 50000;
-		}
-		//This is the default survival render distance
-		else
-		{
-			if(!Game.setMap)
+			renderDistanceDefault = 100000;
+			
+			if(Display.themeNum == 1)
 			{
-				renderDistanceDefault = 100000;
+				renderDistanceDefault = 50000;
 			}
 		}
 		
@@ -445,63 +445,6 @@ public class Render3D extends Render
 		{
 			Enemy enemy = Game.enemies.get(i);
 			
-		   /*
-		    * If the player is within 1 block of the enemy, or if
-		    * the player is playing survival mode, then activate the
-		    * enemy to start moving and acting.
-		    * 
-		    * Player has to be alive, and the enemy cannot already
-		    * be activated for this to occur. Also the gamemode cannot
-		    * be peaceful otherwise the sound just gets annoying.
-		    * 
-		    * Enemy can also be activated if seen by the player
-		    */
-			if((enemy.distance <= 1 && 
-					enemy.distance >= 0
-					|| !Game.setMap) && !enemy.activated
-					&& Player.alive && Game.skillMode > 0)
-			{				
-				//Activate enemy
-				enemy.activated = true;
-				
-			   /*
-			    * Play the audio file that correlates to each enemies
-			    * activation sound.
-			    */
-				if(enemy.ID == 6)
-				{
-					SoundController.bossActivate.playAudioFile();
-				}
-				else if(enemy.ID == 8)
-				{
-					SoundController.belegothActivate.playAudioFile();
-				}
-				else if(enemy.ID == 1)
-				{
-					SoundController.enemyActivate.playAudioFile();
-				}
-				else if(enemy.ID == 2)
-				{
-					SoundController.enemy2Activate.playAudioFile();
-				}
-				else if(enemy.ID == 3)
-				{
-					SoundController.enemy3Activate.playAudioFile();
-				}
-				else if(enemy.ID == 4)
-				{
-					SoundController.enemy4Activate.playAudioFile();
-				}
-				else if(enemy.ID == 5)
-				{
-					SoundController.enemy5Activate.playAudioFile();
-				}
-				else if(enemy.ID == 7)
-				{
-					SoundController.enemy7Activate.playAudioFile();
-				}
-			}
-			
 			//Deactivate the enemies if the player is dead and they have
 			//no other target
 			if(Player.health <= 0 && enemy.targetEnemy == null)
@@ -680,8 +623,8 @@ public class Render3D extends Render
 								itemAct.itemActivationID)
 						{
 							itemAct.activated = true;
-							Display.itemPickup = "COM SYSTEM ACTIVATED!";
-							Display.itemPickupTime = 1;
+							Display.messages.add(new PopUp("COM SYSTEM ACTIVATED"));
+							SoundController.uplink.playAudioFile(0);
 						}
 						else
 						{				
@@ -741,7 +684,7 @@ public class Render3D extends Render
 			if (distance <= 0.7
 					&& Math.abs(item.y - playerYCorrect) <= 3
 					&& item.itemID != ItemNames.SECRET.itemID
-					&& !Controller.noClipOn) 
+					&& !Player.noClipOn) 
 			{
 				//Was the object activated?
 				boolean activated = item.activate();
@@ -922,7 +865,8 @@ public class Render3D extends Render
 					Game.enemiesInMap++;
 					
 					//Play teleportation/respawn sound effect
-					SoundController.teleportation.playAudioFile();
+					SoundController.teleportation.
+					playAudioFile(newEnemy.distanceFromPlayer);
 				}
 			}
 			
@@ -1029,7 +973,7 @@ public class Render3D extends Render
 			bullet.move();
 			
 			renderProjectiles(bullet.x, bullet.y, bullet.z,
-					0.2, bullet.ID);
+					0.2, bullet.ID, bullet);
 		}	
 		
 	   /*
@@ -1043,7 +987,43 @@ public class Render3D extends Render
 			temp.move();
 			
 			renderProjectiles(temp.x, temp.y, temp.z,
-					0.2, temp.ID);
+					0.2, temp.ID, temp);
+		}
+		
+	   /*
+	    * Ticks and renders all extra sprites in the game
+	    */
+		for(int i = 0; i < Game.sprites.size(); i++)
+		{
+			HitSprite hS = Game.sprites.get(i);
+			
+			//render sprite
+			renderHitSprite(hS.x, hS.y, hS.z, 0, hS);
+			
+			hS.tick();
+		}
+		
+		int crossWidth = WIDTH;
+		int crossHeight = HEIGHT;
+		
+		if(Display.graphicsSelection < 2)
+		{
+			crossHeight -= 100;
+		}
+		
+		PIXELS[(crossWidth / 2) + (crossHeight / 2) * crossWidth] = 0x00FF00;
+		zBuffer[((crossWidth / 2)) + ((crossHeight / 2)) * crossWidth] = 0;
+		
+		for(int i = 3; i < 12; i++)
+		{
+			PIXELS[((crossWidth / 2)) + ((crossHeight / 2) - i) * crossWidth] = 0x00FF00;
+			PIXELS[((crossWidth / 2)) + ((crossHeight / 2) + i) * crossWidth] = 0x00FF00;
+			PIXELS[((crossWidth / 2) - i) + ((crossHeight / 2)) * crossWidth] = 0x00FF00;
+			PIXELS[((crossWidth / 2) + i) + ((crossHeight / 2)) * crossWidth] = 0x00FF00;
+			zBuffer[((crossWidth / 2)) + ((crossHeight / 2) - i) * crossWidth] = 0;
+			zBuffer[((crossWidth / 2)) + ((crossHeight / 2) + i) * crossWidth] = 0;
+			zBuffer[((crossWidth / 2) - i) + ((crossHeight / 2)) * crossWidth] = 0;
+			zBuffer[((crossWidth / 2) + i) + ((crossHeight / 2)) * crossWidth] = 0;
 		}
 	}
 	
@@ -1175,6 +1155,8 @@ public class Render3D extends Render
 		{
 			xPixL = 0;
 		}
+
+		enemy.pixelsOnScreen = new ArrayList<Integer>();
 		
 		try
 		{
@@ -1273,6 +1255,12 @@ public class Render3D extends Render
 									//Sets pixel in 2D array to that color
 									PIXELS[xx + yy * WIDTH] = color;
 									
+									//Adds to the pixels on screen this enemy takes up
+									enemy.pixelsOnScreen.add((xx + 1) + (yy) * WIDTH);
+									enemy.pixelsOnScreen.add((xx + 1) + (yy + 1) * WIDTH);
+									enemy.pixelsOnScreen.add((xx) + (yy + 1) * WIDTH);
+									enemy.pixelsOnScreen.add(xx + yy * WIDTH);
+									
 									//This is now the nearest pixel to the
 									//player, at this coordinate so create
 									//the new buffer here.
@@ -1294,6 +1282,16 @@ public class Render3D extends Render
 								//technically
 								if(ID == 4)
 								{
+									//Adds to the pixels on screen this takes up
+									//Reapers still take up the same amount of space
+									//Though they are translucent
+									enemy.pixelsOnScreen.add((xx+2) + (yy+1) * WIDTH);
+									enemy.pixelsOnScreen.add((xx+2) + (yy) * WIDTH);
+									enemy.pixelsOnScreen.add((xx+3) + (yy+1) * WIDTH);
+									enemy.pixelsOnScreen.add((xx+3) + (yy) * WIDTH);
+									enemy.pixelsOnScreen.add((xx+4) + (yy+1) * WIDTH);
+									enemy.pixelsOnScreen.add((xx+4) + (yy) * WIDTH);
+									
 									xx+=2;
 								}
 							}
@@ -1387,6 +1385,9 @@ public class Render3D extends Render
 									//Sets pixel in 2D array to that color
 									PIXELS[xx + yy * WIDTH] = color;
 									
+									//Adds to the pixels on screen this takes up
+									enemy.pixelsOnScreen.add(xx + yy * WIDTH);
+									
 									//This is now the nearest pixel to the
 									//player, at this coordinate so create
 									//the new buffer here.
@@ -1402,6 +1403,9 @@ public class Render3D extends Render
 								if(ID == 4)
 								{
 									xx++;
+									
+									//Adds to the pixels on screen this takes up
+									enemy.pixelsOnScreen.add((xx+1) + yy * WIDTH);
 								}
 							}
 						}
@@ -1413,6 +1417,48 @@ public class Render3D extends Render
 		{
 			return;
 		}
+		
+		//TODO FIX
+	   /*
+	    * If off screen, still save the pixels of the enemy in a crude
+	    * way so that projectiles can still hit the enemies if you look
+	    * away from them. Of course in this method it cannot determine
+	    * the color of the pixels so it just gets the entire pixel array
+	    * instead of only the non see through pixels. It's buggy but it works.
+	    */
+		/*
+		if(!xRender)
+		{
+			xPixL = (int)(xPixelL);
+			xPixR = (int)(xPixelR);
+			yPixL = (int)(yPixelL);
+			yPixR = (int)(yPixelR);
+			
+			int lesserX = xPixL;
+			int lesserY = yPixL;
+			int greaterX = xPixR;
+			int greaterY = yPixR;
+			
+			if(xPixR < xPixL)
+			{
+				lesserX = xPixR;
+				greaterX = xPixL;
+			}
+			
+			if(yPixR < yPixL)
+			{
+				lesserY = yPixR;
+				greaterY = yPixL;
+			}
+			
+			for(int i = lesserY; i < greaterY; i++)
+			{
+				for(int j = lesserX; j < greaterX; j++)
+				{
+					enemy.pixelsOnScreen.add(i + j * WIDTH);
+				}
+			}
+		}*/
 	}
 	
    /**
@@ -2017,6 +2063,10 @@ public class Render3D extends Render
 			xPixR = 0;
 		}
 		
+		item.pixelsOnScreen = new ArrayList<Integer>();
+		
+		//boolean xRender = false;
+		
 	   /*
 	    * Performs different operations when looping through the pixels
 	    * depending on whether low resolution is turned on or not. This
@@ -2027,11 +2077,19 @@ public class Render3D extends Render
 		{
 			for(int yy = yPixL; yy < yPixR; yy+=correction)
 			{
+				//If it can't render then break
+				//if(yy == yPixL + correction && !xRender)
+				//{
+					//break;
+				//}
+				
 				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
 				int yTexture = (int)(pixelRotationY * imageDimensions);
 				
 				for(int xx = xPixL; xx < xPixR; xx+=correction)
 				{
+					//xRender = true;
+					
 					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
 					int xTexture = (int)(pixelRotationX * imageDimensions);
 					boolean seen = false;
@@ -2089,6 +2147,15 @@ public class Render3D extends Render
 							//Try to render
 							try
 							{
+								//Adds to the pixels on screen this enemy takes up
+								if(item.itemID == ItemNames.CANISTER.getID())
+								{
+									item.pixelsOnScreen.add((xx + 1) + (yy) * WIDTH);
+									item.pixelsOnScreen.add((xx + 1) + (yy + 1) * WIDTH);
+									item.pixelsOnScreen.add((xx) + (yy + 1) * WIDTH);
+									item.pixelsOnScreen.add(xx + yy * WIDTH);
+								}
+								
 								PIXELS[xx + yy * WIDTH] = color;
 								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
 								PIXELS[(xx + 1) + (yy) * WIDTH] = color;
@@ -2111,11 +2178,19 @@ public class Render3D extends Render
 		{
 			for(int yy = yPixL; yy < yPixR; yy++)
 			{
+				//If it can't render then break
+				//if(yy == yPixL + 1 && !xRender)
+				//{
+				//	break;
+				//}
+				
 				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
 				int yTexture = (int)(pixelRotationY * imageDimensions);
 				
 				for(int xx = xPixL; xx < xPixR; xx++)
 				{
+					//xRender = true;
+					
 					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
 					int xTexture = (int)(pixelRotationX * imageDimensions);
 					boolean seen = false;
@@ -2170,6 +2245,12 @@ public class Render3D extends Render
 							//Try to render
 							try
 							{
+								//Adds to the pixels on screen this item takes up
+								if(item.itemID == ItemNames.CANISTER.getID())
+								{
+									item.pixelsOnScreen.add(xx + yy * WIDTH);
+								}
+								
 								PIXELS[xx + yy * WIDTH] = color;
 								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
 							}
@@ -2182,6 +2263,48 @@ public class Render3D extends Render
 				}
 			}
 		}
+		
+		//TODO FIX THIS
+	   /*
+	    * If off screen, still save the pixels of the enemy in a crude
+	    * way so that projectiles can still hit the enemies if you look
+	    * away from them. Of course in this method it cannot determine
+	    * the color of the pixels so it just gets the entire pixel array
+	    * instead of only the non see through pixels. It's buggy but it works.
+	    */
+		/*
+		if(!xRender)
+		{
+			xPixL = (int)(xPixelL);
+			xPixR = (int)(xPixelR);
+			yPixL = (int)(yPixelL);
+			yPixR = (int)(yPixelR);
+			
+			int lesserX = xPixL;
+			int lesserY = yPixL;
+			int greaterX = xPixR;
+			int greaterY = yPixR;
+			
+			if(xPixR < xPixL)
+			{
+				lesserX = xPixR;
+				greaterX = xPixL;
+			}
+			
+			if(yPixR < yPixL)
+			{
+				lesserY = yPixR;
+				greaterY = yPixL;
+			}
+			
+			for(int i = lesserY; i < greaterY; i++)
+			{
+				for(int j = lesserX; j < greaterX; j++)
+				{
+					item.pixelsOnScreen.add(i + j * WIDTH);
+				}
+			}
+		}*/
 	}
 	
    /**
@@ -2350,6 +2473,8 @@ public class Render3D extends Render
 			xPixR = 0;
 		}
 		
+		//boolean xRender = false;
+		
 	   /*
 	    * Performs different operations when looping through the pixels
 	    * depending on whether low resolution is turned on or not. This
@@ -2360,11 +2485,19 @@ public class Render3D extends Render
 		{
 			for(int yy = yPixL; yy < yPixR; yy+=correction)
 			{
+				//If it can't render then break
+				//if(yy == yPixL + correction && !xRender)
+				//{
+					//break;
+				//}
+				
 				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
 				int yTexture = (int)(pixelRotationY * imageDimensions);
 				
 				for(int xx = xPixL; xx < xPixR; xx+=correction)
 				{
+					//xRender = true;
+					
 					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
 					int xTexture = (int)(pixelRotationX * imageDimensions);
 					boolean seen = false;
@@ -2437,11 +2570,416 @@ public class Render3D extends Render
 		{
 			for(int yy = yPixL; yy < yPixR; yy++)
 			{
+				//If it can't render then break
+				//if(yy == yPixL + 1 && !xRender)
+				//{
+					//break;
+				//}
+				
 				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
 				int yTexture = (int)(pixelRotationY * imageDimensions);
 				
 				for(int xx = xPixL; xx < xPixR; xx++)
 				{
+					//xRender = true;
+					
+					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+					int xTexture = (int)(pixelRotationX * imageDimensions);
+					boolean seen = false;
+					
+				   /*
+				    * Try to see if the graphics can be drawn on screen or not
+				    * and if there is a problem with temp being out of the
+				    * array index, catch it and continue.
+				    */
+					try
+					{
+						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
+						{
+							seen = true;
+						}		
+					}
+					catch(Exception e)
+					{
+						continue;
+					}
+					
+					//If within field of view
+					if(seen)
+					{
+						int color = 0;
+						
+						try
+						{
+							color = image.PIXELS
+									[(xTexture & 255) + (yTexture & 255) * 256];
+						}
+						catch(Exception e)
+						{
+							continue;
+						}
+									
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff)
+						{
+							//Try to render
+							try
+							{
+								PIXELS[xx + yy * WIDTH] = color;
+								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+    * Renders explosion like methods above. It takes too long to comment
+    * this stuff so just look at the renderEnemies method to know what
+    * all this stuff does.
+    * @param x
+    * @param y
+    * @param z
+    * @param hOffSet
+    * @param explosion
+    */
+	public void renderHitSprite(double x, double y, double z,
+			double hOffSet, HitSprite hitSprite)
+	{	
+		double yCorrect = Player.y;
+		
+	   /*
+	    * If the player is crouching, this corrects the item graphics so
+	    * that you can still see them as if you were actually crawling
+	    * and not below the map as it would be if it used the negative
+	    * Player.y as the actually y.
+	    */
+		if(Player.y < Player.maxHeight - 2)
+		{
+			yCorrect = Player.y - 1.77;
+		}
+		
+		double xC = ((x) - Player.x) * 1.9;
+		double yC = y + (yCorrect / 10);
+		double zC = ((z) - Player.z) * 1.9;
+		
+		int spriteSize          = 150;
+		
+		//If phase cannon bolt
+		if(hitSprite.ID == 2)
+		{
+			spriteSize = 600;
+		}
+		//If fireball
+		else if(hitSprite.ID == 4)
+		{
+			spriteSize = 300;
+		}
+		
+		double rotX      =  
+				xC * cosine - zC * sine;
+		double rotY      =  
+				yC;
+		double rotZ      =  
+				zC * cosine + xC * sine;
+		
+		double xCenter   = WIDTH / 2;
+		
+		double xPixel    = ((rotX / rotZ) * HEIGHT) + xCenter;
+		double yPixel    = ((rotY / rotZ) * HEIGHT) + 
+				(HEIGHT / Math.sin(Player.upRotate) 
+						* Math.cos(Player.upRotate));
+		
+		double xPixelL   = xPixel - (spriteSize / rotZ);
+		double xPixelR   = xPixel + (spriteSize / rotZ);
+		
+		double yPixelL   = yPixel - (spriteSize / rotZ);
+		double yPixelR   = yPixel + (spriteSize / rotZ);
+		
+		int xPixL = (int)(xPixelL);
+		int xPixR = (int)(xPixelR);
+		int yPixL = (int)(yPixelL);
+		int yPixR = (int)(yPixelR);
+		
+		if(xPixL < 0)
+		{
+			xPixL = 0;
+		}
+		
+		if(xPixR > WIDTH)
+		{
+			xPixR = WIDTH;
+		}
+		
+		if(yPixL < 0)
+		{
+			yPixL = 0;
+		}
+		
+		if(yPixR > HEIGHT)
+		{
+			yPixR = HEIGHT;
+		}
+		
+		rotZ *= 8;
+		
+		int imageDimensions = 256;	
+		
+		int correction = 1;
+		
+		if(lowRes)
+		{
+			correction = 2;
+		}
+		
+		//The image of the projectile hit
+		Render image = null;
+
+		//Pistol and shotgun bullets
+		if(hitSprite.ID <= 1)
+		{						
+			if(hitSprite.phaseTime <= 6)
+			{
+				image = Textures.bulletHit1;
+			}
+			else if(hitSprite.phaseTime <= 13)
+			{
+				image = Textures.bulletHit2;
+			}
+			else if(hitSprite.phaseTime <= 20)
+			{
+				image = Textures.bulletHit3;
+			}
+			else
+			{
+				image = Textures.bulletHit4;
+			}
+		}
+		//If the Phase Cannon hits something.
+		else if(hitSprite.ID == 2)
+		{
+			if(hitSprite.phaseTime <= 4)
+			{
+				image = Textures.phaseHit1;
+			}
+			else if(hitSprite.phaseTime <= 8)
+			{
+				image = Textures.phaseHit2;
+			}
+			else if(hitSprite.phaseTime <= 12)
+			{
+				image = Textures.phaseHit3;
+			}
+			else if(hitSprite.phaseTime <= 16)
+			{
+				image = Textures.phaseHit4;
+			}
+			else if(hitSprite.phaseTime <= 20)
+			{
+				image = Textures.phaseHit5;
+			}
+		}
+		//If an enemy is hit
+		else if(hitSprite.ID == 3)
+		{
+			if(hitSprite.phaseTime <= 5)
+			{
+				image = Textures.bloodSpray1;
+			}
+			else if(hitSprite.phaseTime <= 10)
+			{
+				image = Textures.bloodSpray2;
+			}
+			else if(hitSprite.phaseTime <= 15)
+			{
+				image = Textures.bloodSpray3;
+			}
+			else if(hitSprite.phaseTime <= 20)
+			{
+				image = Textures.bloodSpray4;
+			}
+		}
+		//If an enemy fireball hits something
+		else if(hitSprite.ID == 4)
+		{
+			if(hitSprite.phaseTime <= 5)
+			{
+				image = Textures.fireHit1;
+			}
+			else if(hitSprite.phaseTime <= 10)
+			{
+				image = Textures.fireHit2;
+			}
+			else if(hitSprite.phaseTime <= 15)
+			{
+				image = Textures.fireHit3;
+			}
+			else if(hitSprite.phaseTime <= 20)
+			{
+				image = Textures.fireHit4;
+			}
+		}
+		//This bullet hits something, but disappears. Only if it hits
+		//glass or any block that can disappear.
+		else if(hitSprite.ID == 5)
+		{						
+			if(hitSprite.phaseTime <= 6)
+			{
+				image = Textures.bulletHit1;
+			}
+			else if(hitSprite.phaseTime <= 13)
+			{
+				image = Textures.bulletHit2;
+			}
+			else if(hitSprite.phaseTime <= 20)
+			{
+				image = Textures.bulletHit3;
+			}
+			else
+			{
+				image = Textures.bulletHit4;
+			}
+		}
+		
+		if(yPixR > HEIGHT)
+		{
+			yPixR = HEIGHT;
+		}
+		else if(yPixR < 0)
+		{
+			yPixR = 0;
+		}
+		
+		if(xPixR > WIDTH)
+		{
+			xPixR = WIDTH;
+		}
+		else if(xPixR < 0)
+		{
+			xPixR = 0;
+		}
+		
+		//boolean xRender = false;
+		
+	   /*
+	    * Performs different operations when looping through the pixels
+	    * depending on whether low resolution is turned on or not. This
+	    * makes the game faster than having if statements within the
+	    * double for loops.
+	    */
+		if(lowRes)
+		{
+			for(int yy = yPixL; yy < yPixR; yy+=correction)
+			{
+				//If it can't render then break
+				//if(yy == yPixL + correction && !xRender)
+				//{
+					//break;
+				//}
+				
+				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
+				int yTexture = (int)(pixelRotationY * imageDimensions);
+				
+				for(int xx = xPixL; xx < xPixR; xx+=correction)
+				{
+					//xRender = true;
+					
+					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+					int xTexture = (int)(pixelRotationX * imageDimensions);
+					boolean seen = false;
+					
+				   /*
+				    * Try to see if the graphics can be drawn on screen or not
+				    * and if there is a problem with temp being out of the
+				    * array index, catch it and continue.
+				    */
+					try
+					{
+						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ
+								&& zBuffer[(xx+1) + (yy) * WIDTH] > rotZ
+								&& zBuffer[(xx+1) + (yy+1) * WIDTH] > rotZ
+								&& zBuffer[(xx) + (yy+1) * WIDTH] > rotZ)
+						{
+							seen = true;
+						}		
+					}
+					catch(Exception e)
+					{
+						continue;
+					}
+					
+					//If within field of view
+					if(seen)
+					{
+						int color = 0;
+						
+						try
+						{
+							color = image.PIXELS
+									[(xTexture & 255) + (yTexture & 255) * 256];
+						}
+						catch(Exception e)
+						{
+							continue;
+						}
+									
+					   /*
+					    * If color is not white, render it, otherwise don't to
+					    * have transparency around your image. First two ff's
+					    * are the images alpha, 2nd two are red, 3rd two are
+					    * green, 4th two are blue. ff is 255.
+					    */
+						if(color != 0xffffffff)
+						{
+							//Try to render
+							try
+							{
+								PIXELS[xx + yy * WIDTH] = color;
+								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+								PIXELS[(xx + 1) + (yy) * WIDTH] = color;
+								zBuffer[(xx+1) + (yy+1) * WIDTH] = rotZ;
+								PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
+								zBuffer[(xx+1) + (yy) * WIDTH] = rotZ;
+								PIXELS[(xx) + (yy + 1) * WIDTH] = color;
+								zBuffer[(xx) + (yy+1) * WIDTH] = rotZ;
+							}
+							catch(Exception e)
+							{
+								continue;
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for(int yy = yPixL; yy < yPixR; yy++)
+			{
+				//If it can't render then break
+				//if(yy == yPixL + 1 && !xRender)
+				//{
+					//break;
+				//}
+				
+				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
+				int yTexture = (int)(pixelRotationY * imageDimensions);
+				
+				for(int xx = xPixL; xx < xPixR; xx++)
+				{
+					//xRender = true;
+					
 					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
 					int xTexture = (int)(pixelRotationX * imageDimensions);
 					boolean seen = false;
@@ -2934,73 +3472,100 @@ public class Render3D extends Render
 			xPixR = 0;
 		}
 		
+		if(lowRes)
+		{
+			correction = 2;
+		}
+		
+		//boolean xRender = false;
+		
 	   /*
 	    * Performs different operations when looping through the pixels
 	    * depending on whether low resolution is turned on or not. This
 	    * makes the game faster than having if statements within the
 	    * double for loops.
 	    */
-		if(lowRes)
+		for(int yy = yPixL; yy < yPixR; yy+=correction)
 		{
-			for(int yy = yPixL; yy < yPixR; yy+=correction)
+			//If it can't be rendered
+			//if(yy == yPixL + correction && !xRender)
+			//{
+				//break;
+			//}
+			
+			double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
+			int yTexture = (int)(pixelRotationY * imageDimensions);
+			
+			for(int xx = xPixL; xx < xPixR; xx+=correction)
 			{
-				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
-				int yTexture = (int)(pixelRotationY * imageDimensions);
+				//xRender = true;
 				
-				for(int xx = xPixL; xx < xPixR; xx+=correction)
+				double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+				int xTexture = (int)(pixelRotationX * imageDimensions);
+				boolean seen = true;
+				
+			   /*
+			    * Try to see if the graphics can be drawn on screen or not
+			    * and if there is a problem with temp being out of the
+			    * array index, catch it and continue.
+			    */
+				try
 				{
-					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
-					int xTexture = (int)(pixelRotationX * imageDimensions);
-					boolean seen = false;
-					
-				   /*
-				    * Try to see if the graphics can be drawn on screen or not
-				    * and if there is a problem with temp being out of the
-				    * array index, catch it and continue.
-				    */
-					try
+					if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
 					{
-						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ
-								&& zBuffer[(xx+1) + (yy) * WIDTH] > rotZ
-								&& zBuffer[(xx+1) + (yy+1) * WIDTH] > rotZ
-								&& zBuffer[(xx) + (yy+1) * WIDTH] > rotZ)
+						if(correction > 1 
+							&& zBuffer[(xx+1) + (yy) * WIDTH] > rotZ
+							&& zBuffer[(xx+1) + (yy+1) * WIDTH] > rotZ
+							&& zBuffer[(xx) + (yy+1) * WIDTH] > rotZ)
 						{
 							seen = true;
-						}		
+						}
+						else if(correction > 1)
+						{
+							seen = false;
+						}
+					}	
+					else
+					{
+						seen = false;
+					}
+				}
+				catch(Exception e)
+				{
+					continue;
+				}
+				
+				//If within field of view
+				if(seen)
+				{
+					int color = 0;
+					
+					try
+					{
+						color = corpseGraphics.PIXELS
+								[(xTexture & 255) + (yTexture & 255) * 256];
 					}
 					catch(Exception e)
 					{
 						continue;
 					}
-					
-					//If within field of view
-					if(seen)
+								
+				   /*
+				    * If color is not white, render it, otherwise don't to
+				    * have transparency around your image. First two ff's
+				    * are the images alpha, 2nd two are red, 3rd two are
+				    * green, 4th two are blue. ff is 255.
+				    */
+					if(color != 0xffffffff)
 					{
-						int color = 0;
-						
+						//Try to render
 						try
 						{
-							color = corpseGraphics.PIXELS
-									[(xTexture & 255) + (yTexture & 255) * 256];
-						}
-						catch(Exception e)
-						{
-							continue;
-						}
-									
-					   /*
-					    * If color is not white, render it, otherwise don't to
-					    * have transparency around your image. First two ff's
-					    * are the images alpha, 2nd two are red, 3rd two are
-					    * green, 4th two are blue. ff is 255.
-					    */
-						if(color != 0xffffffff)
-						{
-							//Try to render
-							try
-							{
-								PIXELS[xx + yy * WIDTH] = color;
-								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+							PIXELS[xx + yy * WIDTH] = color;
+							zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+							
+							if(correction > 1)
+							{	
 								PIXELS[(xx + 1) + (yy) * WIDTH] = color;
 								zBuffer[(xx+1) + (yy+1) * WIDTH] = rotZ;
 								PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
@@ -3008,78 +3573,10 @@ public class Render3D extends Render
 								PIXELS[(xx) + (yy + 1) * WIDTH] = color;
 								zBuffer[(xx) + (yy+1) * WIDTH] = rotZ;
 							}
-							catch(Exception e)
-							{
-								continue;
-							}
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			for(int yy = yPixL; yy < yPixR; yy++)
-			{
-				double pixelRotationY = -(yy - yPixelR) / (yPixelL - yPixelR);
-				int yTexture = (int)(pixelRotationY * imageDimensions);
-				
-				for(int xx = xPixL; xx < xPixR; xx++)
-				{
-					double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
-					int xTexture = (int)(pixelRotationX * imageDimensions);
-					boolean seen = false;
-					
-				   /*
-				    * Try to see if the graphics can be drawn on screen or not
-				    * and if there is a problem with temp being out of the
-				    * array index, catch it and continue.
-				    */
-					try
-					{
-						if(zBuffer[(xx) + (yy) * WIDTH] > rotZ)
-						{
-							seen = true;
-						}		
-					}
-					catch(Exception e)
-					{
-						continue;
-					}
-					
-					//If within field of view
-					if(seen)
-					{
-						int color = 0;
-						
-						try
-						{
-							color = corpseGraphics.PIXELS
-									[(xTexture & 255) + (yTexture & 255) * 256];
 						}
 						catch(Exception e)
 						{
 							continue;
-						}
-									
-					   /*
-					    * If color is not white, render it, otherwise don't to
-					    * have transparency around your image. First two ff's
-					    * are the images alpha, 2nd two are red, 3rd two are
-					    * green, 4th two are blue. ff is 255.
-					    */
-						if(color != 0xffffffff)
-						{
-							//Try to render
-							try
-							{
-								PIXELS[xx + yy * WIDTH] = color;
-								zBuffer[(xx) + (yy) * WIDTH] = rotZ;
-							}
-							catch(Exception e)
-							{
-								continue;
-							}
 						}
 					}
 				}
@@ -3096,7 +3593,7 @@ public class Render3D extends Render
     * @param hOffSet
     */
 	public void renderProjectiles(double x, double y, double z, double hOffSet
-			,int ID)
+			,int ID, Projectile proj)
 	{
 		double xC 		        = (x - Player.x) * 1.9;
 		double yC 			    = y + (Player.y * 0.085);
@@ -3219,13 +3716,24 @@ public class Render3D extends Render
 			xPixR = 0;
 		}
 		
+		//boolean xRender = false;
+		
 		for(int yy = yPixL; yy < yPixR; yy+=correction)
 		{
+			//If it can't be rendered then break
+			//if(yy == yPixL + correction && !xRender)
+			//{
+				//break;
+			//}
+			
 			double pixelRotationY = (yy - yPixelR) / (yPixelL - yPixelR);
 			int yTexture = (int)(pixelRotationY * 256);
 			
 			for(int xx = xPixL; xx < xPixR; xx+=correction)
 			{
+				//Can be rendered
+				//xRender = true;
+				
 				double pixelRotationX = (xx - xPixelR) / (xPixelL - xPixelR);
 				int xTexture = (int)(pixelRotationX * 256);
 				boolean seen = false;
@@ -3290,9 +3798,15 @@ public class Render3D extends Render
 							PIXELS[xx + yy * WIDTH] = color;
 							zBuffer[(xx) + (yy) * WIDTH] = rotZ;
 							
+							proj.pixelsOnScreen.add((xx) + yy * WIDTH);
+							
 							//If low res setting on
 							if(lowRes)
 							{
+								proj.pixelsOnScreen.add((xx + 1) + yy * WIDTH);
+								proj.pixelsOnScreen.add(xx + (yy + 1) * WIDTH);
+								proj.pixelsOnScreen.add((xx + 1) + (yy + 1) * WIDTH);
+								
 								PIXELS[(xx + 1) + (yy) * WIDTH] = color;
 								zBuffer[(xx+1) + (yy) * WIDTH] = rotZ;
 								PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
@@ -3309,6 +3823,48 @@ public class Render3D extends Render
 				}
 			}
 		}
+		
+		//TODO FIX
+	   /*
+	    * If off screen, still save the pixels of the enemy in a crude
+	    * way so that projectiles can still hit the enemies if you look
+	    * away from them. Of course in this method it cannot determine
+	    * the color of the pixels so it just gets the entire pixel array
+	    * instead of only the non see through pixels. It's buggy but it works.
+	    */
+		/*
+		if(!xRender)
+		{
+			xPixL = (int)(xPixelL);
+			xPixR = (int)(xPixelR);
+			yPixL = (int)(yPixelL);
+			yPixR = (int)(yPixelR);
+			
+			int lesserX = xPixL;
+			int lesserY = yPixL;
+			int greaterX = xPixR;
+			int greaterY = yPixR;
+			
+			if(xPixR < xPixL)
+			{
+				lesserX = xPixR;
+				greaterX = xPixL;
+			}
+			
+			if(yPixR < yPixL)
+			{
+				lesserY = yPixR;
+				greaterY = yPixL;
+			}
+			
+			for(int i = lesserY; i < greaterY; i++)
+			{
+				for(int j = lesserX; j < greaterX; j++)
+				{
+					proj.pixelsOnScreen.add(i + j * WIDTH);
+				}
+			}
+		}*/
 	}
 	
 	
@@ -3469,12 +4025,60 @@ public class Render3D extends Render
 			}
 			
 		   /*
+		    * Don't render things off the screen
+		    */
+			if(xPixelLeftInt > WIDTH)
+			{
+				xPixelLeftInt = WIDTH;
+			}
+			
+		   /*
+		    * Don't render things off the screen
+		    */
+			if(xPixelRightInt < 0)
+			{
+				xPixelRightInt = 0;
+			}
+			
+		   /*
 		    * Dont render things off the screen
 		    */
 			if(xPixelRightInt > WIDTH)
 			{
 				xPixelRightInt = WIDTH;
 			}
+			
+			/*//TODO for testing
+			    * Don't render things off the screen
+			    
+				if(xPixelLeft < 0)
+				{
+					xPixelLeft += 100;
+				}
+				
+			   /*
+			    * Don't render things off the screen
+			    
+				if(xPixelLeft > WIDTH)
+				{
+					xPixelLeft -= 100;
+				}
+				
+			   /*
+			    * Don't render things off the screen
+			    
+				if(xPixelRight < 0)
+				{
+					xPixelRight += 100;
+				}
+				
+			   /*
+			    * Dont render things off the screen
+			    
+				if(xPixelRight > WIDTH)
+				{
+					xPixelRight -= 100;
+				}
 			
 		   /*
 		    * Sets up vectors to all 4 corners of the wall to define the edges
@@ -3509,7 +4113,9 @@ public class Render3D extends Render
 			//Allows the textures to rotate with the wall.
 			double texture1 = 1 / rotLeftSideZ;
 			double texture2 = 1 / rotRightSideZ;
-			double texture4 = text4Modifier / rotRightSideZ;
+			
+			//TODO check into texture4
+			double texture4 = text4Modifier / (rotRightSideZ);
 			
 			//Walls phase is always updated.
 			block.wallPhase++;
@@ -3994,8 +4600,11 @@ public class Render3D extends Render
 			//Color of current picture
 			int color = 0;
 			
+			
 			//Does something with textures. I don't yet understand this
 			double zWall = (texture1 + (texture2 - texture1));
+			
+			//boolean yRender = false;
 			
 			if(lowRes)
 			{
@@ -4007,6 +4616,12 @@ public class Render3D extends Render
 			    */
 				for(int x = xPixelLeftInt; x < xPixelRightInt; x+=correction)
 				{
+					//If there is nothing to render then break
+					//if(x == xPixelLeftInt + correction && !yRender)
+					//{
+						//break;
+					//}
+					
 				   /*
 				    * How much the pixels are to rotate depending on your movement
 				    * . Your movement is tracked by the change in xPixelLeft and
@@ -4015,9 +4630,13 @@ public class Render3D extends Render
 					double pixelRotation = (x - xPixelLeft) /
 							(xPixelLeft - xPixelRight);
 					
+					//double pixelRotationTest = (x - xPixelLeft) /
+							//(xPixelRight - xPixelLeft);
+					
+					//TODO check this out
 					//Figures out the texture that needs to be rendered
 					int xTexture = (int) (((texture4) * (pixelRotation)) /
-							zWall);
+							(zWall));
 		
 				   /*
 				    * Figures out where the top pixel and bottom pixel are located
@@ -4050,9 +4669,27 @@ public class Render3D extends Render
 				    * If the wall goes below the frame, make it so that it still
 				    * stays in the frame.
 				    */
+					if(yPixelTopInt > HEIGHT)
+					{
+						yPixelTopInt = HEIGHT;
+					}
+					
+				   /*
+				    * If the wall goes below the frame, make it so that it still
+				    * stays in the frame.
+				    */
 					if(yPixelBottomInt > HEIGHT)
 					{
 						yPixelBottomInt = HEIGHT;
+					}
+					
+				   /*
+				    * If the wall goes below the frame, make it so that it still
+				    * stays in the frame.
+				    */
+					if(yPixelBottomInt < 0)
+					{
+						yPixelBottomInt = 0;
 					}
 					
 				   /*
@@ -4072,12 +4709,14 @@ public class Render3D extends Render
 				    */
 					for(int y = yPixelTopInt; y < yPixelBottomInt; y+=correction)
 					{
+						//yRender = true;
+						
 						//Figures out how the pixel should be stretched or look like
 						//in the y direction
 						double pixelRotationY = (y - yPixelTop) / 
 								(yPixelBottom - yPixelTop);
 						
-						int yTexture = (int) (256 * pixelRotationY);
+						int yTexture = (int) (255 * pixelRotationY);
 						
 						try
 						{
@@ -4095,7 +4734,7 @@ public class Render3D extends Render
 							//Set color of pixel to draw to the color of the pixel
 							//it correlates to in the image file
 							color = block.wallImage.PIXELS
-							[(xTexture & 255) + (yTexture & 255) * 256];
+							[((xTexture) & 255) + (yTexture & 255) * 256];
 							
 						}
 						catch(Exception e)
@@ -4125,7 +4764,7 @@ public class Render3D extends Render
 							
 							//Try to render
 							try
-							{
+							{							
 								PIXELS[x + y * WIDTH] = color;
 								zBuffer[(x) + (y) * WIDTH] = rotZ;
 								PIXELS[(x + 1) + (y) * WIDTH] = color;
@@ -4175,6 +4814,12 @@ public class Render3D extends Render
 			    */
 				for(int x = xPixelLeftInt; x < xPixelRightInt; x++)
 				{
+					//If there's nothing to render then break
+					//if(x == xPixelLeftInt + 1 && !yRender)
+					//{
+						//break;
+					//}
+					
 				   /*
 				    * How much the pixels are to rotate depending on your movement
 				    * . Your movement is tracked by the change in xPixelLeft and
@@ -4239,6 +4884,8 @@ public class Render3D extends Render
 				    */
 					for(int y = yPixelTopInt; y < yPixelBottomInt; y++)
 					{
+						//yRender = true;
+						
 						//Figures out how the pixel should be stretched or look like
 						//in the y direction
 						double pixelRotationY = (y - yPixelTop) / 
@@ -4532,70 +5179,78 @@ public class Render3D extends Render
 	public void renderDistanceLimiter()
 	{
 		int skip = 6;
-		
-		if(lowRes)
+
+		//Go through all the pixels on the screen in series of 6
+		for (int i = 0; i < (WIDTH * HEIGHT); i+=skip)
 		{
-			//Go through all the pixels on the screen in series of 6
-			for (int i = 0; i < (WIDTH * HEIGHT); i+=skip)
+			//Color value of this pixel in integer form
+			int color       = PIXELS[i];
+			int color1 = 0;
+			int color2 = 0;
+			int color3 = 0;
+			int color4 = 0;
+			int color5 = 0;
+			
+			//Brightness of color. 255 is Full brightness
+			int brightness = 255;
+			int brightness1 = 255;
+			int brightness2 = 255;
+			int brightness3 = 255;
+			int brightness4 = 255;
+			int brightness5 = 255;
+			
+			int j = Player.vision;
+			
+		   /*
+		    * If player is nearing the end of immortality, or is not
+		    * immortal.
+		    */
+			if(j < 100 * fpsCheck && j % 5 == 0)
 			{
-				//Color value of this pixel in integer form
-				int color       = PIXELS[i];
-				int color1 = 0;
-				int color2 = 0;
-				int color3 = 0;
-				int color4 = 0;
-				int color5 = 0;
-				
-				//Brightness of color. 255 is Full brightness
-				int brightness = 255;
-				int brightness1 = 255;
-				int brightness2 = 255;
-				int brightness3 = 255;
-				int brightness4 = 255;
-				int brightness5 = 255;
-				
-				int j = Player.vision;
-				
 			   /*
-			    * If player is nearing the end of immortality, or is not
-			    * immortal.
+			    * The brightness of each pixel depending on its distance 
+			    * from the player, and the render Distance
 			    */
-				if(j < 100 * fpsCheck && j % 5 == 0)
+				brightness = (int) (renderDistance / (zBuffer[i]));
+				
+				if(skip > 1)
 				{
-				   /*
-				    * The brightness of each pixel depending on its distance 
-				    * from the player, and the render Distance
-				    */
-					brightness = (int) (renderDistance / (zBuffer[i]));
 					brightness1 = (int) (renderDistance / (zBuffer[i+1]));
 					brightness2 = (int) (renderDistance / (zBuffer[i+2]));
 					brightness3 = (int) (renderDistance / (zBuffer[i+3]));
 					brightness4 = (int) (renderDistance / (zBuffer[i+4]));
 					brightness5 = (int) (renderDistance / (zBuffer[i+5]));
 				}
-				//If the player is immortal
-				else
+			}
+			//If the player is immortal
+			else
+			{
+				brightness = 255;
+				
+				if(skip > 1)
 				{
-					brightness = 255;
 					brightness1 = 255;
 					brightness2 = 255;
 					brightness3 = 255;
 					brightness4 = 255;
 					brightness5 = 255;
 				}
-				
-				//Never can be less than 0 brightness
-				if(brightness < 0)
-				{
-					brightness = 0;
-				}
-				
-				color1      = PIXELS[i+1];
-				color2      = PIXELS[i+2];
-				color3      = PIXELS[i+3];
-				color4      = PIXELS[i+4];
-				color5      = PIXELS[i+5];
-				
+			}
+			
+			//Never can be less than 0 brightness
+			if(brightness < 0)
+			{
+				brightness = 0;
+			}
+			
+			color1      = PIXELS[i+1];
+			color2      = PIXELS[i+2];
+			color3      = PIXELS[i+3];
+			color4      = PIXELS[i+4];
+			color5      = PIXELS[i+5];
+			
+			if(skip > 1)
+			{
 				if(brightness1 < 0)
 				{
 					brightness1 = 0;
@@ -4642,51 +5297,55 @@ public class Render3D extends Render
 				{
 					brightness5 = 255;
 				}
-				
-				//Can never be brighter than 255
-				if(brightness > 255)
-				{
-					brightness = 255;
-				}
-				
-			   /*
-			    * Or you can use 0xff. It goes from 0 - 255, and 255 = 0xff.
-			    * The 255 is not technically needed as it just causes the
-			    * number to stay the same, but it does matter for the int b
-			    * for some reason. I think because it causes the render distance
-			    * to fade to blue if not. The shifting of the ints causes the color
-			    * to change.
-			    * 
-			    * Converts the bit value of the color into an int so that it can
-			    * be easily tampered with
-			    */
-				int r = (color >> 16) & 255; 
-				int g = (color >> 8)  & 255;
-				int b =  color        & 255;
-				int r1 = 0; 
-				int g1 = 0;
-				int b1 = 0;
-				int r2 = 0; 
-				int g2 = 0;
-				int b2 = 0;
-				int r3 = 0; 
-				int g3 = 0;
-				int b3 = 0;
-				int r4 = 0; 
-				int g4 = 0;
-				int b4 = 0;
-				int r5 = 0; 
-				int g5 = 0;
-				int b5 = 0;
-				
-			   /*
-			    * Divides that value by 255, then multiplies it by the
-			    * brightness level of the pixel to determine how bright
-			    * the reds, greens, and blues in each pixel will get.
-			    */
-				r     = (r * brightness) / 255;
-				g     = (g * brightness) / 255;
-				b     = (b * brightness) / 255;
+			}
+			
+			//Can never be brighter than 255
+			if(brightness > 255)
+			{
+				brightness = 255;
+			}
+			
+		   /*
+		    * Or you can use 0xff. It goes from 0 - 255, and 255 = 0xff.
+		    * The 255 is not technically needed as it just causes the
+		    * number to stay the same, but it does matter for the int b
+		    * for some reason. I think because it causes the render distance
+		    * to fade to blue if not. The shifting of the ints causes the color
+		    * to change.
+		    * 
+		    * Converts the bit value of the color into an int so that it can
+		    * be easily tampered with
+		    */
+			int r = (color >> 16) & 255; 
+			int g = (color >> 8)  & 255;
+			int b =  color        & 255;
+			int r1 = 0; 
+			int g1 = 0;
+			int b1 = 0;
+			int r2 = 0; 
+			int g2 = 0;
+			int b2 = 0;
+			int r3 = 0; 
+			int g3 = 0;
+			int b3 = 0;
+			int r4 = 0; 
+			int g4 = 0;
+			int b4 = 0;
+			int r5 = 0; 
+			int g5 = 0;
+			int b5 = 0;
+			
+		   /*
+		    * Divides that value by 255, then multiplies it by the
+		    * brightness level of the pixel to determine how bright
+		    * the reds, greens, and blues in each pixel will get.
+		    */
+			r     = (r * brightness) / 255;
+			g     = (g * brightness) / 255;
+			b     = (b * brightness) / 255;
+			
+			if(skip > 1)
+			{
 				r1 = (color1 >> 16) & 255; 
 				g1 = (color1 >> 8)  & 255;
 				b1 =  color1        & 255;
@@ -4717,24 +5376,32 @@ public class Render3D extends Render
 				r5     = (r5 * brightness5) / 255;
 				g5     = (g5 * brightness5) / 255;
 				b5     = (b5 * brightness5) / 255;
-					
-				//Reset the bits of that particular pixel
-				if(Player.alive && Player.playerHurt == 0)
+			}
+				
+			//Reset the bits of that particular pixel
+			if(Player.alive && Player.playerHurt == 0)
+			{
+				int ePT = Player.environProtectionTime;
+				
+				if((ePT < 100 * fpsCheck && ePT % 5 == 0))
 				{
-					int ePT = Player.environProtectionTime;
+					PIXELS[i] = r << 16 | g << 8 | b;
 					
-					if((ePT < 100 * fpsCheck && ePT % 5 == 0))
+					if(skip > 1)
 					{
-						PIXELS[i] = r << 16 | g << 8 | b;
 						PIXELS[i+1] = r1 << 16 | g1 << 8 | b1;
 						PIXELS[i+2] = r2 << 16 | g2 << 8 | b2;
 						PIXELS[i+3] = r3 << 16 | g3 << 8 | b3;
 						PIXELS[i+4] = r4 << 16 | g4 << 8 | b4;
 						PIXELS[i+5] = r5 << 16 | g5 << 8 | b5;
 					}
-					else
+				}
+				else
+				{
+					PIXELS[i] = r << 8 | g << 8 | b << 8;
+					
+					if(skip > 1)
 					{
-						PIXELS[i] = r << 8 | g << 8 | b << 8;
 						PIXELS[i+1] = r1 << 8 | g1 << 8 | b1 << 8;
 						PIXELS[i+2] = r2 << 8 | g2 << 8 | b2 << 8;
 						PIXELS[i+3] = r3 << 8 | g3 << 8 | b3 << 8;
@@ -4742,114 +5409,24 @@ public class Render3D extends Render
 						PIXELS[i+5] = r5 << 8 | g5 << 8 | b5 << 8;
 					}
 				}
-				else
+			}
+			else
+			{
+				PIXELS[i] = r << 16 | g << 16 | b << 16;
+				
+				if(skip > 1)
 				{
-					PIXELS[i] = r << 16 | g << 16 | b << 16;
 					PIXELS[i+1] = r1 << 16 | g1 << 16 | b1 << 16;
 					PIXELS[i+2] = r2 << 16 | g2 << 16 | b2 << 16;
 					PIXELS[i+3] = r3 << 16 | g3 << 16 | b3 << 16;
 					PIXELS[i+4] = r4 << 16 | g4 << 16 | b4 << 16;
 					PIXELS[i+5] = r5 << 16 | g5 << 16 | b5 << 16;
 				}
-				
-				if(i + 6 > WIDTH * HEIGHT)
-				{
-					skip = 1;
-				}
 			}
-		}
-		else
-		{
-			//Go through all the pixels on the screen
-			for (int i = 0; i < (WIDTH * HEIGHT); i++)
+			
+			if(i + 6 > WIDTH * HEIGHT)
 			{
-				//Color value of this pixel in integer form
-				int color       = PIXELS[i];
-				
-				//Brightness of color. 255 is Full brightness
-				int brightness = 255;
-				
-				//Whether the player has enhanced vision or not
-				int j = Player.vision;
-				
-			   /*
-			    * If player is nearing end of enhanced vision
-			    */
-				if(j < 100 * fpsCheck && j % 5 == 0)
-				{
-				   /*
-				    * The brightness of each pixel depending on its distance 
-				    * from the player, and the render Distance
-				    * 
-				    * zBuffer is the distance from the player in terms of z
-				    * the pixel is, and the renderDistance is how far the
-				    * player can see. If the pixel is farther than the
-				    * renderDistance then just make it black.
-				    */
-					brightness = (int) (renderDistance / (zBuffer[i]));
-				}
-				//If the player has enhanced vision
-				else
-				{
-					brightness = 255;
-				}
-				
-				//Never can be less than 0 brightness
-				if(brightness < 0)
-				{
-					brightness = 0;
-				}
-				
-				//Can never be brighter than 255
-				if(brightness > 255)
-				{
-					brightness = 255;
-				}
-				
-			   /*
-			    * Or you can use 0xff. It goes from 0 - 255, and 255 = 0xff.
-			    * The 255 is not technically needed as it just causes the
-			    * number to stay the same, but it does matter for the int b
-			    * for some reason. I think because it causes the render distance
-			    * to fade to blue if not. The shifting of the ints causes the color
-			    * to change.
-			    * 
-			    * Converts the bit value of the color into an int so that it can
-			    * be easily tampered with
-			    */
-				int r = (color >> 16) & 255; 
-				int g = (color >> 8)  & 255;
-				int b =  color        & 255;
-				
-			   /*
-			    * Takes the brightness value and divides it by 255 to put
-			    * it into the range of 0 to 255 so it can be rendered as
-			    * the correct brightness on screen.
-			    */
-				r     = (r * brightness) / 255;
-				g     = (g * brightness) / 255;
-				b     = (b * brightness) / 255;
-					
-				//If Player is not being hurt and is alive
-				if(Player.alive && Player.playerHurt == 0)
-				{
-					int ePT = Player.environProtectionTime;
-					
-					//If the environmental protection suit is wearing off
-					if((ePT < 100 * fpsCheck && ePT % 5 == 0))
-					{
-						PIXELS[i] = r << 16 | g << 8 | b << 0;
-					}
-					else
-					{
-						PIXELS[i] = r << 8 | g << 8 | b << 8;
-					}
-				}
-				//If dead or hurt
-				else
-				{
-					PIXELS[i] = r << 16 | g << 16 | b << 16;
-				}
+				skip = 1;
 			}
 		}
 	}

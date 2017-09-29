@@ -15,6 +15,7 @@ import com.vile.entities.HurtingBlock;
 import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
 import com.vile.entities.Player;
+import com.vile.launcher.FPSLauncher;
 
 /**
  * Title: Level
@@ -121,7 +122,8 @@ public class Level
 				blocks[i + j * width] = block;
 				
 				//If a toxic waste block, add that item to the block as well
-				if(map[i][j].wallID == 16)
+				if(map[i][j].wallID == 16
+						|| itemID == ItemNames.TOXICWASTE.getID())
 				{
 					Item temp = new HurtingBlock( 
 							i + 0.5, 
@@ -132,7 +134,8 @@ public class Level
 					block.wallEntity = temp;
 				}
 				//If lava block, add lava entity to block as well
-				else if(map[i][j].wallID == 17)
+				else if(map[i][j].wallID == 17 
+						|| itemID == ItemNames.LAVA.getID())
 				{
 					Item temp = new HurtingBlock( 
 							i + 0.5, 
@@ -143,276 +146,227 @@ public class Level
 					block.wallEntity = temp;
 				}
 				
-				//Normal items (Keys, healthpacks, ammo, etc...)
-				if(itemID > ItemNames.AIR.getID() 
-						&& itemID <= ItemNames.YELLOWKEY.getID()
-						|| itemID == ItemNames.SHOTGUN.getID()
-						|| itemID > 23 && itemID < 44
-						|| itemID >= 47
-						&& itemID != ItemNames.BUTTON.getID()
-						&& itemID != 58 
-						&& itemID != 59
-						&& itemID != ItemNames.EXPLOSION.getID() 
-						&& itemID != ItemNames.ACTIVATEEXP.getID()
-						&& itemID != ItemNames.WALLBEGONE.getID()
-						&& itemID != ItemNames.ENEMYSPAWN.getID()
-						&& itemID != ItemNames.TELEPORTERENTER.getID()
-						&& itemID != ItemNames.TELEPORTEREXIT.getID())
+				if(!FPSLauncher.loadingGame)
 				{
-					//Item to be added to the map and block
-					Item temp = null;
-
-				   /*
-				    * If its not an explosive canister, add it as a normal
-				    * item. Otherwise add it as an explosive canister
-				    */
-					if(itemID != ItemNames.CANISTER.getID())
+					//All Items that are not entities
+					if(itemID > ItemNames.AIR.getID() 
+							&& itemID <= ItemNames.YELLOWKEY.getID()
+							|| itemID == ItemNames.SHOTGUN.getID()
+							|| itemID == ItemNames.BREAKABLEWALL.getID()
+							|| itemID == ItemNames.SECRET.getID()
+							|| itemID > 23 && itemID < 44
+							|| itemID >= 47
+							&& itemID != ItemNames.BUTTON.getID()
+							&& itemID != 58 
+							&& itemID != 59
+							&& itemID != ItemNames.EXPLOSION.getID())
 					{
-						temp = new Item(10, 
+						//Item to be added to the map and block
+						Item temp = null;
+	
+					   /*
+					    * If its not an explosive canister, add it as a normal
+					    * item. Otherwise add it as an explosive canister
+					    */
+						if(itemID != ItemNames.CANISTER.getID())
+						{
+							temp = new Item(10, 
+									i + 0.5, 
+									block.height - block.y, 
+									j + 0.5, itemID, (int)rotation, itemActID);
+						}
+						else
+						{
+							temp = new ExplosiveCanister(10, 
+									i + 0.5, 
+									block.height - block.y, 
+									j + 0.5, itemID, (int)rotation, itemActID);
+						}
+						
+						//If the item is solid or another interactable block
+						if(temp.isSolid ||
+								itemID == ItemNames.BREAKABLEWALL.getID()
+								|| itemID == ItemNames.SECRET.getID())
+						{
+							//Set item to being the item that is within this
+							//block only if it is solid
+							block.wallItem = temp;
+						}
+						
+						//If satellite dish, add to activatable list as well
+						if(itemID == ItemNames.RADAR.getID())
+						{
+							Game.activatable.add(temp);
+						}
+						//If item supposed to be activated by button
+						else if(itemID == ItemNames.ACTIVATEEXP.getID()
+								|| itemID == ItemNames.ENEMYSPAWN.getID()
+								|| itemID == ItemNames.WALLBEGONE.getID()
+								|| itemID == ItemNames.RADAR.getID())
+						{
+							Game.activatable.add(temp);
+						}
+						else if(itemID == ItemNames.TELEPORTEREXIT.getID()
+								|| itemID == ItemNames.TELEPORTERENTER.getID())
+						{
+							Game.teleporters.add(temp);
+							
+							block.wallEntity = temp;
+						}
+					}	
+					//Players spawn
+					else if(itemID == 8)
+					{
+					   /*
+					    * Corrects for position in map, and places the player
+					    * directly in the center of the block that he/she
+					    * is placed at in the map file.
+					    */
+						Player.x = i + 0.5;
+						Player.z = j + 0.5;
+						Player.y = block.y + block.height;
+						Player.rotation = rotation;
+					}
+					//End button or normal button
+					else if(itemID == ItemNames.BUTTON.getID())
+					{
+						Game.buttons.add(new Button( 
 								i + 0.5, 
-								block.height - block.y, 
-								j + 0.5, itemID, (int)rotation, itemActID);
+								0.77, j + 0.5, itemID, itemActID));
 					}
-					else
+					//Lift/elevator
+					else if(itemID == ItemNames.ELEVATOR.getID())
 					{
-						temp = new ExplosiveCanister(10, 
+						Game.elevators.add(new Elevator( 
 								i + 0.5, 
-								block.height - block.y, 
-								j + 0.5, itemID, (int)rotation, itemActID);
+								0.77, j + 0.5, i, j, itemActID));
 					}
-					
-					//If the item is solid
-					if(temp.isSolid)
+					//Normal door
+					else if(itemID == ItemNames.DOOR.getID())
 					{
-						//Set item to being the item that is within this
-						//block only if it is solid
-						block.wallItem = temp;
+						Game.doors.add(new Door( 
+								i + 0.5, 
+								0.77, j + 0.5, i, j, 0, itemActID));
 					}
-					
-					//If satellite dish, add to activatable list as well
-					if(itemID == ItemNames.RADAR.getID())
+					//Red door
+					else if(itemID == ItemNames.REDDOOR.getID())
 					{
-						Game.activatable.add(temp);
+						Game.doors.add(new Door( 
+								i + 0.5, 
+								0.77, j + 0.5, i, j, 1, itemActID));
 					}
-				}	
-				//Players spawn
-				else if(itemID == 8)
-				{
-				   /*
-				    * Corrects for position in map, and places the player
-				    * directly in the center of the block that he/she
-				    * is placed at in the map file.
-				    */
-					Player.x = i + 0.5;
-					Player.z = j + 0.5;
-					Player.y = block.y + block.height;
-					Player.rotation = rotation;
-				}
-				//End button or normal button
-				else if(itemID == ItemNames.BUTTON.getID())
-				{
-					Game.buttons.add(new Button( 
-							i + 0.5, 
-							0.77, j + 0.5, itemID, itemActID));
-				}
-				//Lift/elevator
-				else if(itemID == ItemNames.ELEVATOR.getID())
-				{
-					Game.elevators.add(new Elevator( 
-							i + 0.5, 
-							0.77, j + 0.5, i, j, itemActID));
-				}
-				//Normal door
-				else if(itemID == ItemNames.DOOR.getID())
-				{
-					Game.doors.add(new Door( 
-							i + 0.5, 
-							0.77, j + 0.5, i, j, 0, itemActID));
-				}
-				//Red door
-				else if(itemID == ItemNames.REDDOOR.getID())
-				{
-					Game.doors.add(new Door( 
-							i + 0.5, 
-							0.77, j + 0.5, i, j, 1, itemActID));
-				}
-				//Blue door
-				else if(itemID == ItemNames.BLUEDOOR.getID())
-				{
-					Game.doors.add(new Door( 
-							i + 0.5, 
-							0.77, j + 0.5, i, j, 2, itemActID));
-				}
-				//Green Door
-				else if(itemID == ItemNames.GREENDOOR.getID())
-				{
-					Game.doors.add(new Door( 
-							i + 0.5, 
-							0.77, j + 0.5, i, j, 3, itemActID));
-				}
-				//Yellow door
-				else if(itemID == ItemNames.YELLOWDOOR.getID())
-				{
-					Game.doors.add(new Door( 
-							i + 0.5, 
-							0.77, j + 0.5, i, j, 4, itemActID));
-				}
-				//Adds Brainomorpth
-				else if(itemID == 16)
-				{
-					Enemy temp = new Enemy(
-							i + 0.5, 0, 
-							j + 0.5, 1, rotation, itemActID);
-					
-					Game.enemies.add(temp);
-					block.enemiesOnBlock.add(temp);
-				}
-				//Adds Sentinel enemy
-				else if(itemID == 17)
-				{
-					Enemy temp = new Enemy(
-							i + 0.5, 0.77, 
-							j + 0.5, 2, rotation, itemActID);
-					
-					Game.enemies.add(temp);
-					block.enemiesOnBlock.add(temp);
-				}
-				//Adds Mutated Commando
-				else if(itemID == 18)
-				{
-					Enemy temp = new Enemy(
-							i + 0.5, 0.77, 
-							j + 0.5, 3, rotation, itemActID);
-					
-					Game.enemies.add(temp);
-					block.enemiesOnBlock.add(temp);
-				}
-				//Adds a Reaper
-				else if(itemID == 19)
-				{
-					Enemy temp = new Enemy(
-							i + 0.5, 0.77, 
-							j + 0.5, 4, rotation, itemActID);
-					
-					Game.enemies.add(temp);
-					block.enemiesOnBlock.add(temp);
-				}
-				//Adds Vile Warrior at this location
-				else if(itemID == 58)
-				{
-					Enemy temp = new Enemy(
-							i + 0.5, 0.77, 
-							j + 0.5, 7, rotation, itemActID);
-					
-					Game.enemies.add(temp);
-					block.enemiesOnBlock.add(temp);
-				}
-				//Belegoth is added
-				else if(itemID == 59)
-				{
-					Enemy temp = new Enemy(
-							i + 0.5, 0.77, 
-							j + 0.5, 8, rotation, itemActID);
-					
-					Game.enemies.add(temp);
-					block.enemiesOnBlock.add(temp);
-				}
-				//Adds secret at this location
-				else if(itemID == ItemNames.SECRET.getID())
-				{
-					Item temp = new Item(5, 
-							i + 0.5, 
-							0, j + 0.5, itemID, (int)rotation,
-							itemActID);
-
-					block.wallItem = temp;
-				}
-				//Toxic waste
-				else if(itemID == ItemNames.TOXICWASTE.getID())
-				{
-					Item temp = new HurtingBlock( 
-							i + 0.5, 
-							0.77, j + 0.5, i, j, 0);
-					
-					Game.hurtingBlocks.add((HurtingBlock)temp);
-					
-					block.wallEntity = temp;
-				}
-				//Lava
-				else if(itemID == ItemNames.LAVA.getID())
-				{
-					Item temp = new HurtingBlock( 
-							i + 0.5, 
-							0.77, j + 0.5, i, j, 1);
-					
-					Game.hurtingBlocks.add((HurtingBlock)temp);
-					
-					block.wallEntity = temp;
-				}
-				//Default Corpse
-				else if(itemID == ItemNames.CORPSE.getID())
-				{
-					Game.corpses.add(new Corpse( 
-							i + 0.5,  
-							j + 0.5,
-							block.height - block.y, 0,0,0,0));
-				}
-				//Adds Magistrate at this location
-				else if(itemID == 45)
-				{
-					Game.enemies.add(new Enemy(
-							i + 0.5, 0.77, 
-							j + 0.5, 5, rotation, itemActID));
-				}
-				//The boss MORGOTH
-				else if(itemID == 46)
-				{
-					Enemy temp = new Enemy(
-							i + 0.5, 0.77, 
-							j + 0.5, 6, rotation, itemActID);
-					
-					Game.enemies.add(temp);
-					block.enemiesOnBlock.add(temp);
-				}
-				//Explosion. Just create an instant explosion. For effects
-				else if(itemID == ItemNames.EXPLOSION.getID())
-				{
-					new Explosion(i + 0.5, 0, 
-							j + 0.5, 0, 0);
-				}
-				
-				//If item supposed to be activated by button
-				else if(itemID == ItemNames.ACTIVATEEXP.getID()
-						|| itemID == ItemNames.ENEMYSPAWN.getID()
-						|| itemID == ItemNames.WALLBEGONE.getID())
-				{
-					Item temp = new Item(5, 
-							i + 0.5, 
-							0, j + 0.5, itemID, (int)rotation
-							, itemActID);
-					
-					Game.activatable.add(temp);
-				}
-				else if(itemID == ItemNames.BREAKABLEWALL.getID())
-				{
-					Item temp = new Item(10, 
-							i + 0.5, 
-							block.height - block.y, 
-							j + 0.5, itemID, (int)rotation, 0);
-					
-					block.wallItem = temp;
-				}
-				else if(itemID == ItemNames.TELEPORTEREXIT.getID()
-						|| itemID == ItemNames.TELEPORTERENTER.getID())
-				{
-					Item temp = new Item(10, 
-							i + 0.5, 
-							block.height - block.y, 
-							j + 0.5, itemID, (int)rotation, itemActID);
-					
-					Game.teleporters.add(temp);
-					
-					block.wallEntity = temp;
+					//Blue door
+					else if(itemID == ItemNames.BLUEDOOR.getID())
+					{
+						Game.doors.add(new Door( 
+								i + 0.5, 
+								0.77, j + 0.5, i, j, 2, itemActID));
+					}
+					//Green Door
+					else if(itemID == ItemNames.GREENDOOR.getID())
+					{
+						Game.doors.add(new Door( 
+								i + 0.5, 
+								0.77, j + 0.5, i, j, 3, itemActID));
+					}
+					//Yellow door
+					else if(itemID == ItemNames.YELLOWDOOR.getID())
+					{
+						Game.doors.add(new Door( 
+								i + 0.5, 
+								0.77, j + 0.5, i, j, 4, itemActID));
+					}
+					//Adds Brainomorpth
+					else if(itemID == 16)
+					{
+						Enemy temp = new Enemy(
+								i + 0.5, 0, 
+								j + 0.5, 1, rotation, itemActID);
+						
+						Game.enemies.add(temp);
+						block.enemiesOnBlock.add(temp);
+					}
+					//Adds Sentinel enemy
+					else if(itemID == 17)
+					{
+						Enemy temp = new Enemy(
+								i + 0.5, 0.77, 
+								j + 0.5, 2, rotation, itemActID);
+						
+						Game.enemies.add(temp);
+						block.enemiesOnBlock.add(temp);
+					}
+					//Adds Mutated Commando
+					else if(itemID == 18)
+					{
+						Enemy temp = new Enemy(
+								i + 0.5, 0.77, 
+								j + 0.5, 3, rotation, itemActID);
+						
+						Game.enemies.add(temp);
+						block.enemiesOnBlock.add(temp);
+					}
+					//Adds a Reaper
+					else if(itemID == 19)
+					{
+						Enemy temp = new Enemy(
+								i + 0.5, 0.77, 
+								j + 0.5, 4, rotation, itemActID);
+						
+						Game.enemies.add(temp);
+						block.enemiesOnBlock.add(temp);
+					}
+					//Adds Vile Warrior at this location
+					else if(itemID == 58)
+					{
+						Enemy temp = new Enemy(
+								i + 0.5, 0.77, 
+								j + 0.5, 7, rotation, itemActID);
+						
+						Game.enemies.add(temp);
+						block.enemiesOnBlock.add(temp);
+					}
+					//Belegoth is added
+					else if(itemID == 59)
+					{
+						Enemy temp = new Enemy(
+								i + 0.5, 0.77, 
+								j + 0.5, 8, rotation, itemActID);
+						
+						Game.enemies.add(temp);
+						block.enemiesOnBlock.add(temp);
+					}
+					//Default Corpse
+					else if(itemID == ItemNames.CORPSE.getID())
+					{
+						Game.corpses.add(new Corpse( 
+								i + 0.5,  
+								j + 0.5,
+								block.height - block.y, 0,0,0,0));
+					}
+					//Adds Magistrate at this location
+					else if(itemID == 45)
+					{
+						Game.enemies.add(new Enemy(
+								i + 0.5, 0.77, 
+								j + 0.5, 5, rotation, itemActID));
+					}
+					//The boss MORGOTH
+					else if(itemID == 46)
+					{
+						Enemy temp = new Enemy(
+								i + 0.5, 0.77, 
+								j + 0.5, 6, rotation, itemActID);
+						
+						Game.enemies.add(temp);
+						block.enemiesOnBlock.add(temp);
+					}
+					//Explosion. Just create an instant explosion. For effects
+					else if(itemID == ItemNames.EXPLOSION.getID())
+					{
+						new Explosion(i + 0.5, 0, 
+								j + 0.5, 0, 0);
+					}
 				}
 			}
 		}

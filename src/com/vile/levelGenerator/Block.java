@@ -50,7 +50,6 @@ public class Block implements Comparable
     * doorway or elevator. 
     */
 	public boolean isaDoor = false;
-	public boolean isaElevator = false;
 	
 	public int wallID = 0;
 	public int wallPhase = 0;
@@ -79,9 +78,6 @@ public class Block implements Comparable
     * something.
     */
 	public Item wallEntity = null;
-	
-	//To maybe be used later
-	public List<Sprite> sprites = new ArrayList<Sprite>();
 	
 	//Image for the game to render
 	public Render wallImage = null;
@@ -118,15 +114,6 @@ public class Block implements Comparable
 		{
 			isSolid = true;
 		}
-	}
-	
-   /**
-    * Adds sprites to this blocks sprites.
-    * @param s
-    */
-	public void addSprites(Sprite s)
-	{
-		sprites.add(s);
 	}
 
 	@Override

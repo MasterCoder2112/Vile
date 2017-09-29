@@ -5,6 +5,7 @@ import com.vile.Display;
 import com.vile.Game;
 import com.vile.entities.Player;
 
+
 /**
  * Title: Screen
  * @author Alex Byrd
@@ -17,7 +18,7 @@ import com.vile.entities.Player;
  * looks.
  *
  */
-public class Screen
+public class Screen implements Runnable
 {
 	//private Render test;
 	
@@ -80,32 +81,53 @@ public class Screen
 		//Draw the floor, ceiling, and all other textures
 		render3D.floor(game);
 		
-		//Does the render distance need to be limited
-		boolean limitDistance = true;
-		
-		//If its one of the themes that doesn't need a render
-		//distance, only render the extra pixels if the player
-		//is dead or hurt
-		if(Display.themeNum == 0 || Display.themeNum == 4)
-		{
-			if(!Player.alive || Player.playerHurt > 0)
+		Display.thread2.run();
+	}
+	
+   /**
+    * Runs the renderDistanceLimiter method seperately to greatly speed
+    * up the game.
+    */
+	public void run()
+	{
+		//while(Display.isRunning)
+		//{	
+			//Does the render distance need to be limited
+			boolean limitDistance = true;
+			
+			//If its one of the themes that doesn't need a render
+			//distance, only render the extra pixels if the player
+			//is dead or hurt
+			if(Display.themeNum == 0 || Display.themeNum == 4)
 			{
-				limitDistance = true;
+				if(!Player.alive || Player.playerHurt > 0)
+				{
+					limitDistance = true;
+				}
+				else
+				{
+					limitDistance = false;
+				}
 			}
-			else
+			
+			//Only create a render distance if needed. Otherwise don't because
+			//it makes the game slower. Outdoors and moon themes don't need
+			//it, nor does maps with a renderDistance greater than 100000 
+			//because at that point it might as well not have a render
+			//distance.
+			if(limitDistance && Render3D.renderDistanceDefault <= 100000)
 			{
-				limitDistance = false;
+				render3D.renderDistanceLimiter();
 			}
-		}
-		
-		//Only create a render distance if needed. Otherwise don't because
-		//it makes the game slower. Outdoors and moon themes don't need
-		//it, nor does maps with a renderDistance greater than 100000 
-		//because at that point it might as well not have a render
-		//distance.
-		if(limitDistance && Render3D.renderDistanceDefault <= 100000)
-		{
-			render3D.renderDistanceLimiter();
-		}
+			
+			//try
+			//{
+				//Thread.sleep(10);
+			//}
+			//catch(Exception ex)
+			//{
+				
+			//}
+		//}
 	}
 }

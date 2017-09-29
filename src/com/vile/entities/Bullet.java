@@ -70,59 +70,128 @@ public class Bullet extends Projectile
 	    */
 		if(Display.graphicsSelection >= 4)
 		{
+			//System.out.println(Player.upRotate);
 			angleChanger = 0.5;
 			
-			if(Player.upRotate < 0.44)
+			if(Player.upRotate <= 0.31)
 			{
-				angleChanger = 5.25;
+				angleChanger = 12;
+			}
+			else if(Player.upRotate < 0.35)
+			{
+				angleChanger = 5.4;
+			}
+			else if(Player.upRotate < 0.4)
+			{
+				angleChanger = 5;
+			}
+			else if(Player.upRotate < 0.44)
+			{
+				angleChanger = 4.8;
+			}
+			else if(Player.upRotate < 0.47)
+			{
+				angleChanger = 4.45;
+			}
+			else if(Player.upRotate < 0.49)
+			{
+				angleChanger = 4.3;
 			}
 			else if(Player.upRotate < 0.51)
 			{
-				angleChanger = 4.75;
+				angleChanger = 4.2;
+			}
+			else if(Player.upRotate < 0.535)
+			{
+				angleChanger = 4.1;
 			}
 			else if(Player.upRotate < 0.57)
 			{
-				angleChanger = 4.25;
+				angleChanger = 4;
+			}
+			else if(Player.upRotate < 0.6)
+			{
+				angleChanger = 3.9;
 			}
 			else if(Player.upRotate < 0.62)
 			{
-				angleChanger = 3.75;
+				angleChanger = 3.65;
+			}
+			else if(Player.upRotate < 0.65)
+			{
+				angleChanger = 3.6;
 			}
 			else if(Player.upRotate < 0.67)
 			{
-				angleChanger = 3.25;
+				angleChanger = 3.5;
+			}
+			else if(Player.upRotate < 0.695)
+			{
+				angleChanger = 3.4;
 			}
 			else if(Player.upRotate < 0.72)
 			{
-				angleChanger = 2.75;
+				angleChanger = 3.3;
+			}
+			else if(Player.upRotate < 0.75)
+			{
+				angleChanger = 3.2;
 			}
 			else if(Player.upRotate < 0.77)
 			{
-				angleChanger = 2.5;
+				angleChanger = 3.1;
+			}
+			else if(Player.upRotate < 0.795)
+			{
+				angleChanger = 3;
 			}
 			else if(Player.upRotate < 0.82)
 			{
-				angleChanger = 2.25;
+				angleChanger = 2.9;
+			}
+			else if(Player.upRotate < 0.85)
+			{
+				angleChanger = 2.85;
 			}
 			else if(Player.upRotate < 0.87)
 			{
-				angleChanger = 2;
+				angleChanger = 2.75;
 			}
 			else if(Player.upRotate < 0.91)
 			{
-				angleChanger = 1.75;
+				angleChanger = 2.55;
 			}
 			else if(Player.upRotate < 0.95)
 			{
-				angleChanger = 1.5;
+				angleChanger = 2.3;
 			}
 			else if(Player.upRotate < 1)
 			{
-				angleChanger = 1.25;
+				angleChanger = 2.05;
 			}
 			else if(Player.upRotate < 1.05)
 			{
+				angleChanger = 1.5;
+			}
+			else if(Player.upRotate < 1.07)
+			{
 				angleChanger = 1;
+			}
+			else if(Player.upRotate < 1.085)
+			{
+				angleChanger = 0.65;
+			}
+			else if(Player.upRotate < 1.1)
+			{
+				angleChanger = 0.4;
+			}
+			else if(Player.upRotate < 1.15)
+			{
+				angleChanger = 0;
+			}
+			else if(Player.upRotate >= 1.15)
+			{
+				angleChanger = 3;
 			}
 			else if(Player.upRotate > 1.2)
 			{
@@ -174,23 +243,20 @@ public class Bullet extends Projectile
 	    */
 		y += upRotation;
 		
-		//System.out.println(y);
-
-		
 		//Checks to make sure bullet can move and move it if it can
-		//move and play sound if a teddy bear
+		//move and play sound if it is a rocket
 		if(isFree(x + xa, z)
 				&& isFree(x, z + za))
 		{
 			x += xa;
 			z += za;
 			
-			//If teddy bear, continue playing wee sound
+			//If a rocket, continue playing rocket sound
 			if(this.ID == 3)
 			{
 				if(!SoundController.rocketFly.isStillActive())
 				{
-					SoundController.rocketFly.playAudioFile();
+					SoundController.rocketFly.playAudioFile(distanceFromPlayer);
 				}
 			}
 		}

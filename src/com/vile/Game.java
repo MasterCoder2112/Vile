@@ -11,6 +11,7 @@ import java.util.Scanner;
 import com.vile.entities.*;
 import com.vile.graphics.Render3D;
 import com.vile.input.Controller;
+import com.vile.launcher.FPSLauncher;
 import com.vile.levelGenerator.*;
 
 /**
@@ -33,16 +34,13 @@ import com.vile.levelGenerator.*;
  * the screen. So instead of running through all of the enemies and items
  * twice, it just does it once in there. 
  */
-public class Game 
+public class Game implements Runnable
 {
 	//Time games been running in ticks
 	public static int time;
 	
 	//Handles all controls and player movements
 	public Controller controls;
-	
-	//Is this a pre-made map or a randomly generated one?
-	public static boolean setMap = false;
 	
    /*
     * A ValueHolder is an Object which holds multiple values for a new map
@@ -108,6 +106,8 @@ public class Game
 				= new ArrayList<Item>();
 	public static ArrayList<Item> teleporters
 	 			= new ArrayList<Item>();
+	public static ArrayList<HitSprite> sprites 
+				= new ArrayList<HitSprite>();
 	
 	//Keeps track of all controls, and whether they are pressed or not
 	private static boolean key[];
@@ -162,176 +162,26 @@ public class Game
 		//Set the games display object to the display sent in
 		this.display = display;
 		
-		//Everything is reset
-		enemies       = new ArrayList<Enemy>();
-		bosses        = new ArrayList<Enemy>();
-		items         = new ArrayList<Item>();
-		bullets       = new ArrayList<Bullet>();
-		enemyProjectiles = new ArrayList<EnemyFire>();
-		buttons    	  = new ArrayList<Button>();
-		hurtingBlocks = new ArrayList<HurtingBlock>();
-		doors         = new ArrayList<Door>();
-		elevators     = new ArrayList<Elevator>();
-		corpses       = new ArrayList<Corpse>();
-		explosions    = new ArrayList<Explosion>();
-		solidItems    = new ArrayList<Item>();
-		canisters 	  = new ArrayList<ExplosiveCanister>();
-		activatable   = new ArrayList<Item>();
+		//Resets all the lists
+		resetLists();
 		
-		//If a survival map
-		if(!setMap)
+		if(!FPSLauncher.loadingGame)
 		{
-			calculatedSize = 100;
-			
-			if(Display.levelSize == 0)
+			//If a survival map
+			if(FPSLauncher.gameMode == 1)
 			{
-				calculatedSize = 10;
-			}
-			else if(Display.levelSize == 1)
-			{
-				calculatedSize = 25;
-			}
-			else if(Display.levelSize == 2)
-			{
-				calculatedSize = 50;
-			}
-			else if(Display.levelSize == 3)
-			{
-				calculatedSize = 100;
-			}
-			else if(Display.levelSize == 4)
-			{
-				calculatedSize   = 250;
+				setUpSurvival();
 			}
 			else
 			{
-				calculatedSize   = 100;
+				//Load either the first map or custom map if that is chosen
+				mapNum = 0;
+				loadNextMap(newStartMap, newMapName);
 			}
-			
-			//Reset level size to calculated size
-			levelSize = calculatedSize;
-			
-			//Set up new level with this size
-			level    = new Level(levelSize, levelSize);
-			
-			//Add initial enemy
-			addEnemy();
-			
-		   /*
-		    * Put 500 of either health packs, armor, or megahealth
-		    */
-			for(int i = 0; i < 500; i++)
-			{
-				Random rand = new Random();
-				
-				int ammoType = rand.nextInt(102);
-				
-				//Place random ammo type in map
-				if(ammoType <= 70)
-				{
-					ammoType = 2;
-				}
-				else if(ammoType <= 98)
-				{
-					ammoType = 33;
-				}
-				else if(ammoType == 99)
-				{
-					ammoType = 1;
-				}
-				else if(ammoType == 100)
-				{
-					ammoType = 34;
-				}
-				else
-				{
-					ammoType = 35;
-				}
-				
-				//Item adds itself when instantiated
-				new Item(2, rand.nextInt(calculatedSize), 
-						0, rand.nextInt(calculatedSize), ammoType, 0, 0);
-			}
-			
-		   /*
-		    * Add 500 random ammo types to the map
-		    */
-			for(int i = 0; i < 500; i++)
-			{
-				Random rand = new Random();
-				
-				int ammoType = rand.nextInt(4);
-				
-				//Place random ammo type in map
-				if(ammoType == 0)
-				{
-					ammoType = 3;
-				}
-				else if(ammoType == 1)
-				{
-					ammoType = 50;
-				}
-				else if(ammoType == 2)
-				{
-					ammoType = 56;
-				}
-				else
-				{
-					ammoType = 61;
-				}
-				
-				//Item adds itself when instantiated
-				new Item(2, rand.nextInt(calculatedSize), 
-						0, rand.nextInt(calculatedSize), ammoType, 0, 0);
-			}
-			
-			//Player has all weapons for survival mode
-			Player.weapons[0].dualWield = true;
-			Player.weapons[1].canBeEquipped = true;
-			Player.weapons[2].canBeEquipped = true;
-			Player.weapons[3].canBeEquipped = true;
-			
-			//Depending on the theme set the ceiling and floor textures
-			switch(Display.themeNum)
-			{
-				case 1:
-					mapFloor = 9;
-					mapCeiling = 10;
-					break;
-					
-				case 2:
-					mapFloor = 1;
-					mapCeiling = 3;
-					break;
-					
-				case 3:
-					mapFloor = 12;
-					mapCeiling = 12;
-					break;
-					
-				case 4:
-					mapFloor = 11;
-					mapCeiling = 10;
-					break;
-					
-				case 5:
-					mapFloor = 13;
-					mapCeiling = 13;
-					break;
-					
-				default:
-					mapFloor = 9;
-					mapCeiling = 10;
-					break;
-			}
-			
-			
 		}
 		else
 		{
-			//Load either the first map or custom map if that is chosen
-			mapNum = 0;
-			loadNextMap(newStartMap, newMapName);
+			loadGame();
 		}
 
 		//Set up the controller to control player movements and actions
@@ -388,7 +238,7 @@ public class Game
 		
 		//Sort enemies according to their distance to you but only if
 		//not in survival
-		if(setMap)
+		if(FPSLauncher.gameMode == 1)
 		{
 			Collections.sort(enemies);
 		}
@@ -428,15 +278,25 @@ public class Game
 				//Depends on game theme
 				if(Display.themeNum == 3)
 				{
-					SoundController.nickDeath.playAudioFile();
+					SoundController.nickDeath.playAudioFile(0);
 				}
 				else if(Display.themeNum == 5)
 				{
-					SoundController.mlgDeath.playAudioFile();
+					SoundController.mlgDeath.playAudioFile(0);
 				}
 				else
 				{
-					SoundController.playerDeath.playAudioFile();
+					SoundController.playerDeath.playAudioFile(0);
+				}
+				
+				//If survival mode, see if its a new max number of kills
+				//or not and if it is then save the new max.
+				if(FPSLauncher.gameMode == 1)
+				{
+					if(Display.kills > Player.maxKills)
+					{
+						Player.maxKills = Display.kills;
+					}
 				}
 			}
 			else
@@ -445,8 +305,7 @@ public class Game
 				Player.resurrections--;
 				
 				//Display that the player was restored to full happiness
-				Display.itemPickup = "RESURRECTED WITH SKULL!";
-				Display.itemPickupTime = 1;
+				Display.messages.add(new PopUp("RESURRECTED WITH SKULL!"));
 				
 				//Reset values, and give brief immortality
 				Player.health = 100;
@@ -501,6 +360,20 @@ public class Game
 					}
 				}
 				
+				//Search through all the elevators
+				for(int k = 0; k < Game.elevators.size(); k++)
+				{
+					Elevator e = Game.elevators.get(k);
+					
+					//If elevator has the same activation ID as the 
+					//button then activate it.
+					if(e.itemActivationID 
+							== temp.itemActivationID)
+					{
+						e.activated = true;
+					}
+				}
+				
 				//Stores Items to be deleted
 				ArrayList<Item> tempItems2 = new ArrayList<Item>();
 				
@@ -509,7 +382,7 @@ public class Game
 				{
 					Item item = activatable.get(j);
 					
-					//If Item is a Happiness Tower, activate it and
+					//If Item is a Com satellite dish, activate it and
 					//state that it is activated
 					if(item.itemID == ItemNames.RADAR.getID()
 							&& !item.activated &&
@@ -517,8 +390,8 @@ public class Game
 							item.itemActivationID)
 					{
 						item.activated = true;
-						Display.itemPickup = "COM SYSTEM ACTIVATED!";
-						Display.itemPickupTime = 1;
+						Display.messages.add(new PopUp("COM SYSTEM ACTIVATED!"));
+						SoundController.uplink.playAudioFile(0);
 					}
 					else
 					{				
@@ -679,8 +552,8 @@ public class Game
 		
 		//Add new enemy to game
 		enemies.add(new Enemy( 
-				0.5 + rand.nextInt(calculatedSize), yPos,
-				0.5 + rand.nextInt(calculatedSize), ID, 0, 0));
+				0.5 + rand.nextInt(Level.width), yPos,
+				0.5 + rand.nextInt(Level.height), ID, 0, 0));
 	}
 	
 	/**
@@ -734,7 +607,928 @@ public class Game
 		enemies.add(enemy);
 		block.enemiesOnBlock.add(enemy);
 		
-		SoundController.teleportation.playAudioFile();
+		SoundController.teleportation.playAudioFile
+				(enemy.distanceFromPlayer);
+	}
+	
+   /**
+    * Loads a game from a save file. Takes a lot more work than normal
+    * map loading because entities could be in different positions,
+    * phases, etc... when the player pauses the game and saves it. So
+    * this has to handle everything!
+    */
+	public void loadGame()
+	{	
+		//A new scanner object that is defaultly set to null
+		Scanner sc = null;  
+		
+	   /*
+	    * Try to read the file and if not,
+	    * state the error
+	    */
+		try 
+		{
+			//Creates a Scanner that can read the file
+			sc = new Scanner(new BufferedReader
+					(new FileReader("Users/"
+							+FPSLauncher.currentUserName+"/"
+							+FPSLauncher.fileToLoad+".txt")));
+			
+			String currentLine = "";
+			
+			///////////////////// Map stuff
+			currentLine = sc.nextLine();
+		    
+			String[] elements = currentLine.split(":");
+			
+			//Was it survival or campaign mode
+			int gM = Integer.parseInt(elements[1]);
+			
+			FPSLauncher.gameMode = gM;
+			
+			//Resets all the lists
+			resetLists();
+			
+			secretsFound = Integer.parseInt(elements[2]);
+			enemiesInMap = Integer.parseInt(elements[3]);
+			Display.kills = Integer.parseInt(elements[4]);
+			Display.themeNum = Integer.parseInt(elements[5]);
+			
+			//////////////////////////Player stuff now
+			currentLine = sc.nextLine();
+			
+			String weaponStuff = "";
+			String otherStuff = "";
+			
+			//Split between weapon equipped and weapon attributes
+			elements = currentLine.split(",");
+			
+			weaponStuff = elements[1];
+			otherStuff = elements[0];
+			
+			//Don't replay first sound effect
+			firstSound = true;
+			
+			elements = otherStuff.split(":");
+			
+			Player.health = Integer.parseInt(elements[0]);
+			Player.maxHealth = Integer.parseInt(elements[1]);
+			Player.armor = Integer.parseInt(elements[2]);
+			Player.x = Double.parseDouble(elements[3]);
+			Player.y = Double.parseDouble(elements[4]);
+			Player.z = Double.parseDouble(elements[5]);
+			Player.rotation = Double.parseDouble(elements[6]);
+			Player.maxHeight = Double.parseDouble(elements[7]);
+			Player.hasRedKey = Boolean.parseBoolean(elements[8]);
+			Player.hasBlueKey = Boolean.parseBoolean(elements[9]);
+			Player.hasGreenKey = Boolean.parseBoolean(elements[10]);
+			Player.hasYellowKey = Boolean.parseBoolean(elements[11]);
+			Player.upRotate = Double.parseDouble(elements[12]);
+			Player.extraHeight = Double.parseDouble(elements[13]);
+			Player.resurrections = Integer.parseInt(elements[14]);
+			Player.environProtectionTime = Integer.parseInt(elements[15]);
+			Player.immortality = Integer.parseInt(elements[16]);
+			Player.vision = Integer.parseInt(elements[17]);
+			Player.invisibility = Integer.parseInt(elements[18]);	
+			Player.weaponEquipped = Integer.parseInt(elements[19]);
+			Player.godModeOn = Boolean.parseBoolean(elements[20]);
+			Player.noClipOn = Boolean.parseBoolean(elements[21]);
+			Player.flyOn = Boolean.parseBoolean(elements[22]);
+			Player.superSpeedOn = Boolean.parseBoolean(elements[23]);
+			Player.unlimitedAmmoOn = Boolean.parseBoolean(elements[24]);
+			Player.upgradePoints = Integer.parseInt(elements[25]);
+			Level.width = Integer.parseInt(elements[26]);
+			Level.height = Integer.parseInt(elements[27]);
+			mapNum = Integer.parseInt(elements[28]);
+			mapAudio = elements[29];
+			mapFloor = Integer.parseInt(elements[30]);
+			mapCeiling = Integer.parseInt(elements[31]);
+			Render3D.ceilingDefaultHeight = Double.parseDouble(elements[32]);
+			Render3D.renderDistanceDefault = Double.parseDouble(elements[33]);
+			
+			//Because map names are normally named as Map#: Name. 
+			//The colon causes issues so this fixes that. And adds
+			//the colon back in because its split out
+			try
+			{
+				mapName = elements[34] +":"+ elements[35];
+			}
+			catch(Exception ex)
+			{
+				//If there's an issue, its probably because the map name
+				//does not include the colon
+				mapName = elements[34];
+			}
+			
+			//Set up new level with this size
+			level    = new Level(Level.width, Level.height);
+			
+			//Split up weapon Attributes
+			elements = weaponStuff.split(";");
+    		
+		   /*
+		    * For each weapon, load in its attributes depending on what
+		    * they were when the game was saved.
+		    */
+    		for(int i = 0; i < elements.length; i++)
+    		{
+    			Weapon w = Player.weapons[i];
+    			
+    			String[] weaponStats = elements[i].split(":");
+    			
+    			int size = weaponStats.length - 4;
+    			
+    			w.weaponID = Integer.parseInt(weaponStats[0]);
+    			w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
+    			w.dualWield = Boolean.parseBoolean(weaponStats[2]);
+    			w.ammo = Integer.parseInt(weaponStats[3]);
+    			
+    			for(int j = 0; j < size; j++)
+    			{
+    				w.cartridges.add(new Cartridge
+    						(Integer.parseInt(weaponStats[4 + j])));
+    			}
+    		}
+    		
+    		//////////////////Walls
+			sc.nextLine();
+			
+			String thisLine ="";
+			
+			currentLine = sc.nextLine();
+			
+			//Stop reading when it reaches where the next element of the
+			//game is being loaded in.
+			while(!thisLine.equals("Enemies:"))
+			{
+				thisLine = sc.nextLine();
+				
+				if(thisLine.equals("Enemies:"))
+				{
+					break;
+				}
+				
+				currentLine += thisLine;
+			}
+			
+			elements = currentLine.split(";");
+			
+			for(int i = 0; i < elements.length; i++)
+			{
+				otherStuff = elements[i];
+				String[] bAt = otherStuff.split(":");
+				
+				//Create enemy with its needed values
+				Block b = new Block(Double.parseDouble(bAt[6]),
+						Integer.parseInt(bAt[4]), 
+						Double.parseDouble(bAt[2]),
+						Integer.parseInt(bAt[1]),
+						Integer.parseInt(bAt[3]));
+				
+				b.health = Integer.parseInt(bAt[0]);
+				b.wallPhase = Integer.parseInt(bAt[5]);
+				b.isSolid = Boolean.parseBoolean(bAt[7]);
+				b.seeThrough = Boolean.parseBoolean(bAt[8]);
+		
+				Level.blocks[b.x + b.z * Level.width] = b;
+			}
+    		
+    		////////////////// Enemies
+    		thisLine = "";
+    		
+    		currentLine = sc.nextLine();
+    		
+    		while(!thisLine.equals("Bosses:"))
+    		{
+    			thisLine = sc.nextLine();
+    			
+    			if(thisLine.equals("Bosses:"))
+    			{
+    				break;
+    			}
+    			
+    			currentLine += thisLine;
+    		}
+    		
+    		elements = currentLine.split(";");
+    		
+    		for(int i = 0; i < elements.length; i++)
+    		{
+    			otherStuff = elements[i];
+    			String[] enAt = otherStuff.split(":");
+    			
+    			//Create enemy with its needed values
+    			Enemy en = new Enemy(Double.parseDouble(enAt[1]),
+    					Double.parseDouble(enAt[2]),
+    					Double.parseDouble(enAt[3]),
+    					Integer.parseInt(enAt[4]),
+    					Double.parseDouble(enAt[12]),
+    					Integer.parseInt(enAt[5]));
+    			
+    			en.maxHeight = Double.parseDouble(enAt[6]);
+    			en.newTarget = Boolean.parseBoolean(enAt[7]);
+    			en.targetX = Double.parseDouble(enAt[8]);
+    			en.targetY = Double.parseDouble(enAt[9]);
+    			en.targetZ = Double.parseDouble(enAt[10]);
+    			en.activated = Boolean.parseBoolean(enAt[11]);
+    			en.isAttacking = Boolean.parseBoolean(enAt[13]);
+    			en.isFiring = Boolean.parseBoolean(enAt[14]);
+    			en.isABoss = Boolean.parseBoolean(enAt[15]);
+    			en.xEffects = Double.parseDouble(enAt[16]);
+    			en.yEffects = Double.parseDouble(enAt[17]);
+    			en.zEffects = Double.parseDouble(enAt[18]);
+    			en.tick = Integer.parseInt(enAt[19]);
+    			en.tickRound = Integer.parseInt(enAt[20]);
+    			en.tickAmount = Integer.parseInt(enAt[21]);
+		
+    			Game.enemies.add(en);
+    			
+    			Block blockOn = Level.getBlock((int)en.xPos, (int)en.zPos);
+    			
+    			//Only if in campaign mode, survival mode acts weird here
+    			if(gM == 0)
+    			{
+    				blockOn.enemiesOnBlock.add(en);
+    			}
+    		}
+    		
+    		thisLine = "";
+    		
+    		currentLine = sc.nextLine();
+    		
+    		while(!thisLine.equals("Items:"))
+    		{
+    			thisLine = sc.nextLine();
+    			
+    			if(thisLine.equals("Items:"))
+    			{
+    				break;
+    			}
+    			
+    			currentLine += thisLine;
+    		}
+    		
+    		int length = 0;
+    		
+    		if(currentLine.equals(""))
+    		{
+    			elements = null;
+    		}
+    		else
+    		{
+    			elements = currentLine.split(";");
+    			length = elements.length;
+    		}
+    		
+    		for(int i = 0; i < length; i++)
+    		{
+    			otherStuff = elements[i];
+    			String[] enAt = otherStuff.split(":");
+    			
+    			//Create enemy with its needed values
+    			Enemy en = new Enemy(Double.parseDouble(enAt[1]),
+    					Double.parseDouble(enAt[2]),
+    					Double.parseDouble(enAt[3]),
+    					Integer.parseInt(enAt[4]),
+    					Double.parseDouble(enAt[12]),
+    					Integer.parseInt(enAt[5]));
+    			
+    			en.maxHeight = Double.parseDouble(enAt[6]);
+    			en.newTarget = Boolean.parseBoolean(enAt[7]);
+    			en.targetX = Double.parseDouble(enAt[8]);
+    			en.targetY = Double.parseDouble(enAt[9]);
+    			en.targetZ = Double.parseDouble(enAt[10]);
+    			en.activated = Boolean.parseBoolean(enAt[11]);
+    			en.isAttacking = Boolean.parseBoolean(enAt[13]);
+    			en.isFiring = Boolean.parseBoolean(enAt[14]);
+    			en.isABoss = Boolean.parseBoolean(enAt[15]);
+    			en.xEffects = Double.parseDouble(enAt[16]);
+    			en.yEffects = Double.parseDouble(enAt[17]);
+    			en.zEffects = Double.parseDouble(enAt[18]);
+    			en.tick = Integer.parseInt(enAt[19]);
+    			en.tickRound = Integer.parseInt(enAt[20]);
+    			en.tickAmount = Integer.parseInt(enAt[21]);
+		
+    			Game.bosses.add(en);
+    		}
+    		
+    		thisLine = "";
+    		
+    		currentLine = sc.nextLine();
+    		
+    		while(!thisLine.equals("Bullets:"))
+    		{
+    			thisLine = sc.nextLine();
+    			
+    			if(thisLine.equals("Bullets:"))
+    			{
+    				break;
+    			}
+    			
+    			currentLine += thisLine;
+    		}
+    		
+    		length = 0;
+    		
+    		if(currentLine.equals(""))
+    		{
+    			elements = null;
+    		}
+    		else
+    		{
+    			elements = currentLine.split(";");
+    			length = elements.length;
+    		}
+    		
+    		for(int i = 0; i < length; i++)
+    		{
+    			otherStuff = elements[i];
+    			String[] itemAtt = otherStuff.split(":");
+    			
+    			int itemID = Integer.parseInt(itemAtt[1]);
+    			
+    			Item temp = null;
+    			
+    		   /*
+			    * If its not an explosive canister, add it as a normal
+			    * item. Otherwise add it as an explosive canister
+			    */
+				if(itemID != ItemNames.CANISTER.getID())
+				{
+					temp = new Item(10, 
+							Double.parseDouble(itemAtt[2]), 
+							Double.parseDouble(itemAtt[3]), 
+							Double.parseDouble(itemAtt[4]),
+							itemID, Integer.parseInt(itemAtt[5]),
+							Integer.parseInt(itemAtt[0]));
+				}
+				else
+				{
+					temp = new ExplosiveCanister(10, 
+							Double.parseDouble(itemAtt[2]), 
+							Double.parseDouble(itemAtt[3]), 
+							Double.parseDouble(itemAtt[4]),
+							itemID, Integer.parseInt(itemAtt[5]),
+							Integer.parseInt(itemAtt[0]));
+				}
+				
+				Block itemBlock = Level.getBlock((int)temp.x, (int)temp.z);
+				
+				//If the item is solid
+				if(temp.isSolid ||
+						itemID == ItemNames.BREAKABLEWALL.getID()
+						|| itemID == ItemNames.SECRET.getID())
+				{
+					//Set item to being the item that is within this
+					//block only if it is solid
+					itemBlock.wallItem = temp;
+				}
+				
+				//If satellite dish, add to activatable list as well
+				if(itemID == ItemNames.RADAR.getID())
+				{
+					Game.activatable.add(temp);
+				}
+				//If item supposed to be activated by button
+				else if(itemID == ItemNames.ACTIVATEEXP.getID()
+						|| itemID == ItemNames.ENEMYSPAWN.getID()
+						|| itemID == ItemNames.WALLBEGONE.getID())
+				{
+					Game.activatable.add(temp);
+				}
+				else if(itemID == ItemNames.TELEPORTEREXIT.getID()
+						|| itemID == ItemNames.TELEPORTERENTER.getID())
+				{
+					Game.teleporters.add(temp);
+					
+					itemBlock.wallEntity = temp;
+				} 			
+    		}
+    		
+    		////////////////////////Bullets
+    		thisLine = "";
+
+    		currentLine = sc.nextLine();
+    		
+    		while(!thisLine.equals("Enemy Projectiles:"))
+    		{
+    			thisLine = sc.nextLine();
+    			
+    			if(thisLine.equals("Enemy Projectiles:"))
+    			{
+    				break;
+    			}
+    			
+    			currentLine += thisLine;
+    		}
+    		
+    		length = 0;
+    		
+    		if(currentLine.equals(""))
+    		{
+    			elements = null;
+    		}
+    		else
+    		{
+    			elements = currentLine.split(";");
+    			length = elements.length;
+    		}
+    		
+    		for(int i = 0; i < length; i++)
+    		{
+    			Bullet b = null;
+    			
+    			String[] bAtt = elements[i].split(":");
+    			
+    			b = new Bullet(Integer.parseInt(bAtt[1]),
+    					Double.parseDouble(bAtt[2]),
+    					Double.parseDouble(bAtt[3]),
+    					Double.parseDouble(bAtt[4]),
+    					Double.parseDouble(bAtt[5]),
+    					Integer.parseInt(bAtt[0]),
+    					0);
+    			
+    			b.xa = Double.parseDouble(bAtt[6]);
+    			b.za = Double.parseDouble(bAtt[7]);
+    			b.initialSpeed = Double.parseDouble(bAtt[8]);
+    			
+    			Game.bullets.add(b);
+    		}
+    		
+    		///////////////////////////Enemy Fire
+    		thisLine = "";
+
+    		currentLine = sc.nextLine();
+    		
+    		while(!thisLine.equals("Explosions:"))
+    		{
+    			thisLine = sc.nextLine();
+    			
+    			if(thisLine.equals("Explosions:"))
+    			{
+    				break;
+    			}
+    			
+    			currentLine += thisLine;
+    		}
+    		
+    		length = 0;
+    		
+    		if(currentLine.equals(""))
+    		{
+    			elements = null;
+    		}
+    		else
+    		{
+    			elements = currentLine.split(";");
+    			length = elements.length;
+    		}
+    		
+    		for(int i = 0; i < length; i++)
+    		{
+    			EnemyFire b = null;
+    			
+    			String[] bAtt = elements[i].split(":");
+    			
+    			//Given all the information we have, construct
+    			//the enemy projectile the best we can after a save
+    			b = new EnemyFire(Integer.parseInt(bAtt[1]),
+    					Double.parseDouble(bAtt[2]),
+    					Double.parseDouble(bAtt[3]),
+    					Double.parseDouble(bAtt[4]),
+    					Double.parseDouble(bAtt[5]),
+    					Integer.parseInt(bAtt[0]),
+    					0,0,0,0,null);
+    			
+    			b.xa = Double.parseDouble(bAtt[6]);
+    			b.za = Double.parseDouble(bAtt[7]);
+    			b.initialSpeed = Double.parseDouble(bAtt[8]);
+    			
+    			Game.enemyProjectiles.add(b);
+    		}
+    		
+    		///////////////////////////////////Explosions
+    		thisLine = "";
+
+    		currentLine = sc.nextLine();
+    		
+    		while(!thisLine.equals("Buttons:"))
+    		{
+    			thisLine = sc.nextLine();
+    			
+    			if(thisLine.equals("Buttons:"))
+    			{
+    				break;
+    			}
+    			
+    			currentLine += thisLine;
+    		}
+    		
+    		length = 0;
+    		
+    		if(currentLine.equals(""))
+    		{
+    			elements = null;
+    		}
+    		else
+    		{
+    			elements = currentLine.split(";");
+    			length = elements.length;
+    		}
+    		
+    		for(int i = 0; i < length; i++)
+    		{
+    			Explosion exp = null;
+    			
+    			String[] expAtt = elements[i].split(":");
+    			
+    			exp = new Explosion(Double.parseDouble(expAtt[2]),
+    					Double.parseDouble(expAtt[3]),
+    					Double.parseDouble(expAtt[4]),
+    					Integer.parseInt(expAtt[0]),
+    					Integer.parseInt(expAtt[6]));
+    			
+    			exp.exploded = Boolean.parseBoolean(expAtt[5]);
+    			exp.phaseTime = Integer.parseInt(expAtt[1]);
+    			
+    			Game.explosions.add(exp);
+    		}
+    		
+    		////////////////////////////Buttons
+    		thisLine = "";
+
+    		currentLine = sc.nextLine();
+    		
+    		while(!thisLine.equals("Doors:"))
+    		{
+    			thisLine = sc.nextLine();
+    			
+    			if(thisLine.equals("Doors:"))
+    			{
+    				break;
+    			}
+    			
+    			currentLine += thisLine;
+    		}
+    		
+    		length = 0;
+    		
+    		if(currentLine.equals(""))
+    		{
+    			elements = null;
+    		}
+    		else
+    		{
+    			elements = currentLine.split(";");
+    			length = elements.length;
+    		}
+    		
+    		for(int i = 0; i < length; i++)
+    		{
+    			Button b = null;
+    			
+    			String[] bAtt = elements[i].split(":");
+    			
+    			b = new Button(Double.parseDouble(bAtt[2]),
+    					Double.parseDouble(bAtt[3]),
+    					Double.parseDouble(bAtt[4]),
+    					Integer.parseInt(bAtt[0]),
+    					Integer.parseInt(bAtt[1]));
+    			
+    			b.pressed = Boolean.parseBoolean(bAtt[5]);
+    			
+    			Game.buttons.add(b);
+    		}
+    		
+			////////////////////////////Doors
+    		thisLine = "";
+
+    		currentLine = sc.nextLine();
+    		
+    		while(!thisLine.equals("Elevators:"))
+    		{
+    			thisLine = sc.nextLine();
+    			
+    			if(thisLine.equals("Elevators:"))
+    			{
+    				break;
+    			}
+    			
+    			currentLine += thisLine;
+    		}
+			
+    		length = 0;
+    		
+    		if(currentLine.equals(""))
+    		{
+    			elements = null;
+    		}
+    		else
+    		{
+    			elements = currentLine.split(";");
+    			length = elements.length;
+    		}
+			
+			for(int i = 0; i < length; i++)
+			{
+				Door d = null;
+				
+				String[] dAtt = elements[i].split(":");
+				
+				d = new Door(Double.parseDouble(dAtt[2]),
+						Double.parseDouble(dAtt[3]),
+						Double.parseDouble(dAtt[4]),
+						Integer.parseInt(dAtt[5]),
+						Integer.parseInt(dAtt[6]),
+						Integer.parseInt(dAtt[9]),
+						Integer.parseInt(dAtt[1]));
+				
+				d.time = Integer.parseInt(dAtt[7]);
+				d.soundTime = Integer.parseInt(dAtt[8]);
+				d.ID = Integer.parseInt(dAtt[0]);
+				d.doorY = Double.parseDouble(dAtt[10]);
+				
+				Block thisBlock = Level.getBlock
+						((int) d.doorX, (int)d.doorZ);
+				
+				thisBlock.y = d.doorY;
+				
+				if(thisBlock.y > 0)
+				{
+					thisBlock.isaDoor = true;
+				}
+				
+				Game.doors.add(d);
+			}
+			
+			////////////////////////////Elevators
+			thisLine = "";
+			
+    		currentLine = sc.nextLine();
+    		
+    		while(!thisLine.equals("Corpses:"))
+    		{
+    			thisLine = sc.nextLine();
+    			
+    			if(thisLine.equals("Corpses:"))
+    			{
+    				break;
+    			}
+    			
+    			currentLine += thisLine;
+    		}
+			
+    		length = 0;
+    		
+    		if(currentLine.equals(""))
+    		{
+    			elements = null;
+    		}
+    		else
+    		{
+    			elements = currentLine.split(";");
+    			length = elements.length;
+    		}
+			
+			for(int i = 0; i < length; i++)
+			{
+				Elevator e = null;
+				
+				String[] eAtt = elements[i].split(":");
+				
+				e = new Elevator(Double.parseDouble(eAtt[2]),
+						Double.parseDouble(eAtt[3]),
+						Double.parseDouble(eAtt[4]),
+						Integer.parseInt(eAtt[5]),
+						Integer.parseInt(eAtt[6]),
+						Integer.parseInt(eAtt[1]));
+				
+				e.height = Integer.parseInt(eAtt[7]);
+				e.soundTime = Integer.parseInt(eAtt[8]);
+				e.ID = Integer.parseInt(eAtt[0]);
+				e.waitTime = Integer.parseInt(eAtt[11]);
+				e.upHeight = Double.parseDouble(eAtt[12]);
+				e.movingUp = Boolean.parseBoolean(eAtt[9]);
+				e.movingDown = Boolean.parseBoolean(eAtt[10]);
+				e.activated = Boolean.parseBoolean(eAtt[13]);
+				
+				Game.elevators.add(e);
+				
+				Block thisBlock = Level.getBlock
+						((int) e.elevatorX, (int)e.elevatorZ);
+				
+				thisBlock.height = e.height;
+			}
+			
+			///////////////////////////////Corpses
+			thisLine = "";
+    		
+			//Sometimes theres not a next line
+			try
+			{
+				currentLine = sc.nextLine();
+			}
+			catch(Exception e)
+			{
+				
+			}
+    		
+    		while(sc.hasNextLine())
+    		{
+    			thisLine = sc.nextLine();
+    				
+    			currentLine += thisLine;
+    		}
+    		
+    		length = 0;
+    		
+    		if(currentLine.equals(""))
+    		{
+    			elements = null;
+    		}
+    		else
+    		{
+    			elements = currentLine.split(";");
+    			length = elements.length;
+    		}
+    		
+    		for(int i = 0; i < length; i++)
+    		{
+    			Corpse c = null;
+    			
+    			String[] cAtt = elements[i].split(":");
+    			
+    			c = new Corpse(Double.parseDouble(cAtt[2]),
+    					Double.parseDouble(cAtt[4]),
+    					Double.parseDouble(cAtt[3]),
+    					Integer.parseInt(cAtt[0]),
+    					Double.parseDouble(cAtt[6]),
+    					Double.parseDouble(cAtt[8]),
+    					Double.parseDouble(cAtt[7]));
+    			
+    			c.time = Integer.parseInt(cAtt[5]);
+    			c.phaseTime = Integer.parseInt(cAtt[1]);
+    			
+    			Game.corpses.add(c);
+    		}
+			
+			sc.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println(e);
+			System.exit(0);
+		}
+	}
+	
+   /**
+    * Sets up the survival game mode.
+    */
+	public void setUpSurvival()
+	{
+		calculatedSize = 100;
+		
+		if(Display.levelSize == 0)
+		{
+			calculatedSize = 10;
+		}
+		else if(Display.levelSize == 1)
+		{
+			calculatedSize = 25;
+		}
+		else if(Display.levelSize == 2)
+		{
+			calculatedSize = 50;
+		}
+		else if(Display.levelSize == 3)
+		{
+			calculatedSize = 100;
+		}
+		else if(Display.levelSize == 4)
+		{
+			calculatedSize   = 250;
+		}
+		else
+		{
+			calculatedSize   = 100;
+		}
+		
+		//Reset level size to calculated size
+		levelSize = calculatedSize;
+		
+		//Set up new level with this size
+		level    = new Level(levelSize, levelSize);
+		
+		//Add initial enemy
+		addEnemy();
+		
+	   /*
+	    * Put 500 of either health packs, armor, or megahealth
+	    */
+		for(int i = 0; i < 500; i++)
+		{
+			Random rand = new Random();
+			
+			int ammoType = rand.nextInt(102);
+			
+			//Place random ammo type in map
+			if(ammoType <= 70)
+			{
+				ammoType = 2;
+			}
+			else if(ammoType <= 98)
+			{
+				ammoType = 33;
+			}
+			else if(ammoType == 99)
+			{
+				ammoType = 1;
+			}
+			else if(ammoType == 100)
+			{
+				ammoType = 34;
+			}
+			else
+			{
+				ammoType = 35;
+			}
+			
+			//Item adds itself when instantiated
+			new Item(2, rand.nextInt(calculatedSize), 
+					0, rand.nextInt(calculatedSize), ammoType, 0, 0);
+		}
+		
+	   /*
+	    * Add 500 random ammo types to the map
+	    */
+		for(int i = 0; i < 500; i++)
+		{
+			Random rand = new Random();
+			
+			int ammoType = rand.nextInt(4);
+			
+			//Place random ammo type in map
+			if(ammoType == 0)
+			{
+				ammoType = 3;
+			}
+			else if(ammoType == 1)
+			{
+				ammoType = 50;
+			}
+			else if(ammoType == 2)
+			{
+				ammoType = 56;
+			}
+			else
+			{
+				ammoType = 61;
+			}
+			
+			//Item adds itself when instantiated
+			new Item(2, rand.nextInt(calculatedSize), 
+					0, rand.nextInt(calculatedSize), ammoType, 0, 0);
+		}
+		
+		//Player has all weapons for survival mode
+		Player.weapons[0].dualWield = true;
+		Player.weapons[1].canBeEquipped = true;
+		Player.weapons[2].canBeEquipped = true;
+		Player.weapons[3].canBeEquipped = true;
+		
+		//Depending on the theme set the ceiling and floor textures
+		switch(Display.themeNum)
+		{
+			case 1:
+				mapFloor = 9;
+				mapCeiling = 10;
+				break;
+				
+			case 2:
+				mapFloor = 1;
+				mapCeiling = 3;
+				break;
+				
+			case 3:
+				mapFloor = 12;
+				mapCeiling = 12;
+				break;
+				
+			case 4:
+				mapFloor = 11;
+				mapCeiling = 10;
+				break;
+				
+			case 5:
+				mapFloor = 13;
+				mapCeiling = 13;
+				break;
+				
+			default:
+				mapFloor = 9;
+				mapCeiling = 10;
+				break;
+		}
 	}
 	
    /**
@@ -779,21 +1573,8 @@ public class Game
 			//Default player rotation
 			Player.rotation = 0;
 			
-			//Reset all entities in game
-			enemies       = new ArrayList<Enemy>();
-			bosses        = new ArrayList<Enemy>();
-			items         = new ArrayList<Item>();
-			bullets       = new ArrayList<Bullet>();
-			buttons    	  = new ArrayList<Button>();
-			hurtingBlocks = new ArrayList<HurtingBlock>();
-			doors         = new ArrayList<Door>();
-			elevators     = new ArrayList<Elevator>();
-			corpses       = new ArrayList<Corpse>();
-			canisters     = new ArrayList<ExplosiveCanister>();
-			explosions    = new ArrayList<Explosion>();
-			solidItems    = new ArrayList<Item>();
-			enemyProjectiles = new ArrayList<EnemyFire>();
-			activatable   = new ArrayList<Item>();
+			//Resets all the lists
+			resetLists();
 			
 			//First sets up default map name to be read
 			Scanner sc = new Scanner(new BufferedReader
@@ -803,7 +1584,7 @@ public class Game
 			if(newMap)
 			{
 				sc = new Scanner(new BufferedReader
-						(new FileReader(mapNameNew+".txt")));
+						(new FileReader(mapNameNew+".txt")));		
 			}
 			
 			//The very first part of any map file now is the name
@@ -830,9 +1611,9 @@ public class Game
 				
 				mapAudio = temp2[3];
 				
-				Game.mapFloor = Integer.parseInt(temp2[4]);
+				mapFloor = Integer.parseInt(temp2[4]);
 				
-				Game.mapCeiling = Integer.parseInt(temp2[5]);
+				mapCeiling = Integer.parseInt(temp2[5]);
 			}
 			catch(Exception e)
 			{
@@ -1008,13 +1789,40 @@ public class Game
 			//Quit game is true
 			Controller.quitGame = true;
 			
-			//No longer a setMap
-			Game.setMap = false;
-			
 			//Restart the game to quit
 			new Game(display, false, "");
 		}
 		
 		firstSound = false;
 	}
+	
+   /**
+    * Used so much that I just created a method that can be called to 
+    * do it.
+    */
+	public void resetLists()
+	{
+		//Reset all entities in game
+		enemies       = new ArrayList<Enemy>();
+		bosses        = new ArrayList<Enemy>();
+		items         = new ArrayList<Item>();
+		bullets       = new ArrayList<Bullet>();
+		buttons    	  = new ArrayList<Button>();
+		hurtingBlocks = new ArrayList<HurtingBlock>();
+		doors         = new ArrayList<Door>();
+		elevators     = new ArrayList<Elevator>();
+		corpses       = new ArrayList<Corpse>();
+		canisters     = new ArrayList<ExplosiveCanister>();
+		explosions    = new ArrayList<Explosion>();
+		solidItems    = new ArrayList<Item>();
+		enemyProjectiles = new ArrayList<EnemyFire>();
+		activatable   = new ArrayList<Item>();
+		sprites 	  = new ArrayList<HitSprite>();
+	}
+
+@Override
+public void run() {
+	// TODO Auto-generated method stub
+	tick(Display.input.key);
+}
 }

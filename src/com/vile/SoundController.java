@@ -82,8 +82,17 @@ public class SoundController
 	public static Sound computerShutdown;
 	public static Sound specialPickup;
 	public static Sound creepySound;
+	public static Sound phaseCannonHit;
 	
-	private int defaultSize = 6;
+	public static Sound activated;
+	public static Sound doorStart;
+	public static Sound doorEnd;
+	public static Sound healthBig;
+	public static Sound keyUse;
+	public static Sound keyTry;
+	public static Sound uplink;
+	
+	private int defaultSize = 4;
 	
    /**
     * Contructs all sounds held in the sound controller
@@ -112,7 +121,7 @@ public class SoundController
 		enemyActivate     =  new Sound(defaultSize, "/test/enemyActivate.wav");
 		bossDeath         =  new Sound(defaultSize, "/test/bossDeath.wav");
 		phaseShot         =  new Sound(defaultSize, "/test/phaseShot.wav");
-		explosion   =  new Sound(defaultSize, "/test/barrelexplosion.wav");
+		explosion         =  new Sound(defaultSize, "/test/barrelexplosion.wav");
 		pistol            =  new Sound(defaultSize, "/test/pistol.wav");
 		enemy2Activate    =  new Sound(defaultSize, "/test/enemy2Activate.wav");
 		enemy3Activate    =  new Sound(defaultSize, "/test/enemy3Activate.wav");
@@ -130,18 +139,26 @@ public class SoundController
 		enemy4Death       =  new Sound(defaultSize, "/test/enemy4Death.wav");
 		enemy7Death       =  new Sound(defaultSize, "/test/enemy7Death.wav");
 		teleportation     =  new Sound(defaultSize, "/test/teleportation.wav");
-		mlgDeath          =  new Sound(1, "/test/mlgDeath.wav");
-		nickDeath         =  new Sound(1, "/test/nickDeath.wav");
+		mlgDeath          =  new Sound(defaultSize, "/test/mlgDeath.wav");
+		nickDeath         =  new Sound(defaultSize, "/test/nickDeath.wav");
 		rocketFire        =  new Sound(defaultSize, "/test/rocketFire.wav");
-		rocketFly         =  new Sound(1, "/test/rocketFly.wav");
+		rocketFly         =  new Sound(defaultSize, "/test/rocketFly.wav");
 		glassBreak        =  new Sound(defaultSize, "/test/glassBreak.wav");
-		belegothActivate  =  new Sound(1, "/test/belegothActivate.wav");
-		belegothDeath     =  new Sound(1, "/test/belegothDeath.wav");
-		level1Anouncement = new Sound(1, "/test/level1Anouncement.wav");
+		belegothActivate  =  new Sound(defaultSize, "/test/belegothActivate.wav");
+		belegothDeath     =  new Sound(defaultSize, "/test/belegothDeath.wav");
+		level1Anouncement =  new Sound(defaultSize, "/test/level1Anouncement.wav");
 		armorPickup       =  new Sound(defaultSize, "/test/armorPickup.wav");
 		computerShutdown  =  new Sound(defaultSize, "/test/computerShutdown.wav");
 		specialPickup     =  new Sound(defaultSize, "/test/specialItems.wav");
 		creepySound       =  new Sound(defaultSize, "/test/creepySound.wav");
+		phaseCannonHit    =  new Sound(defaultSize, "/test/phaseCannonHit.wav");
+		activated         =  new Sound(defaultSize, "/test/activated.wav");
+		doorStart         =  new Sound(defaultSize, "/test/doorStart.wav");
+		doorEnd			  =  new Sound(defaultSize, "/test/doorEnd.wav");
+		healthBig		  =  new Sound(defaultSize, "/test/healthBig.wav");
+		keyUse			  =  new Sound(1, "/test/keyuse.wav");
+		keyTry			  =  new Sound(1, "/test/keytry.wav");
+		uplink			  =  new Sound(defaultSize, "/test/uplink.wav");
 	}
 	
    /**
@@ -203,6 +220,14 @@ public class SoundController
 		computerShutdown.resetVolume(newVolume);
 		specialPickup.resetVolume(newVolume);
 		creepySound.resetVolume(newVolume);
+		phaseCannonHit.resetVolume(newVolume);
+		activated.resetVolume(newVolume);
+		doorStart.resetVolume(newVolume);
+		doorEnd.resetVolume(newVolume);
+		uplink.resetVolume(newVolume);
+		keyUse.resetVolume(newVolume);
+		healthBig.resetVolume(newVolume);
+		keyTry.resetVolume(newVolume);
 	}
 
 }

@@ -37,7 +37,7 @@ public class PhaseCannon extends Weapon implements WeaponInterface
 			//Play firing sound from the beginning of being fired
 			if(weaponShootTime == 1)
 			{
-				SoundController.phaseShot.playAudioFile();
+				SoundController.phaseShot.playAudioFile(0);
 			}
 			
 		   /*
@@ -65,15 +65,39 @@ public class PhaseCannon extends Weapon implements WeaponInterface
 			if(weaponShootTime == 46)
 			{
 				//If unlimited ammo is not on
-				if(!Controller.unlimitedAmmoOn)
+				if(!Player.unlimitedAmmoOn)
 				{
 					ammo--;
 				}
 				
 				weaponPhase = 0;
 				
-				Game.addBullet(damage, weaponID, 0.2, 
-						Player.rotation);
+				//Create the bullet
+				Bullet bullet = new Bullet(damage, 0.03, Player.x,
+						-(Player.y * 0.085), Player.z, weaponID, Player.rotation);
+				
+				int crossWidth = Display.WIDTH;
+				int crossHeight = Display.HEIGHT;
+				
+				if(Display.graphicsSelection < 2)
+				{
+					crossHeight -= 100;
+				}
+				
+				bullet.pixelsOnScreen.add((crossWidth / 2) + 
+						(crossHeight / 2) * crossWidth);
+				
+			   /*
+			    * Instead of rendering the bullet and all that, just check
+			    * its movement instantaneously in small increments to make 
+			    * it look like it hits the enemy instantaneously and also
+			    * makes it more precise.
+			    */
+				while(bullet.move())
+				{
+					//System.out.println(bullet.y);
+					//Do nothing, just call the move method
+				}
 			}
 			
 			weaponShootTime++;

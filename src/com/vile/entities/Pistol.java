@@ -1,6 +1,6 @@
 package com.vile.entities;
 
-import com.vile.Game;
+import com.vile.Display;
 import com.vile.SoundController;
 import com.vile.input.Controller;
 
@@ -42,7 +42,7 @@ public class Pistol extends Weapon implements WeaponInterface
 			if(weaponShootTime == 1)
 			{
 				//If unlimited ammo is not on
-				if(!Controller.unlimitedAmmoOn)
+				if(!Player.unlimitedAmmoOn)
 				{
 					ammo--;
 				}
@@ -50,8 +50,19 @@ public class Pistol extends Weapon implements WeaponInterface
 				weaponPhase = 1;
 				
 				//Create the bullet
-				Bullet bullet = new Bullet(damage, 0.01, Player.x,
+				Bullet bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID, Player.rotation);
+				
+				int crossWidth = Display.WIDTH;
+				int crossHeight = Display.HEIGHT;
+				
+				if(Display.graphicsSelection < 2)
+				{
+					crossHeight -= 100;
+				}
+				
+				bullet.pixelsOnScreen.add((crossWidth / 2) + 
+						(crossHeight / 2) * crossWidth);
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -65,7 +76,7 @@ public class Pistol extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				SoundController.pistol.playAudioFile();
+				SoundController.pistol.playAudioFile(0);
 			}
 			else if(weaponShootTime == 5)
 			{
@@ -108,7 +119,7 @@ public class Pistol extends Weapon implements WeaponInterface
 			if(weaponShootTime2 == 1)
 			{
 				//If unlimited ammo is not on
-				if(!Controller.unlimitedAmmoOn)
+				if(!Player.unlimitedAmmoOn)
 				{
 					ammo--;
 				}
@@ -116,8 +127,19 @@ public class Pistol extends Weapon implements WeaponInterface
 				weaponPhase2 = 1;
 				
 				//Create the bullet
-				Bullet bullet = new Bullet(damage, 0.01, Player.x,
+				Bullet bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID, Player.rotation);
+				
+				int crossWidth = Display.WIDTH;
+				int crossHeight = Display.HEIGHT;
+				
+				if(Display.graphicsSelection < 2)
+				{
+					crossHeight -= 100;
+				}
+				
+				bullet.pixelsOnScreen.add((crossWidth / 2) + 
+						(crossHeight / 2) * crossWidth);
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -130,7 +152,7 @@ public class Pistol extends Weapon implements WeaponInterface
 					//Do nothing, just call the move method
 				}
 				
-				SoundController.pistol.playAudioFile();
+				SoundController.pistol.playAudioFile(0);
 			}
 			else if(weaponShootTime2 == 5)
 			{

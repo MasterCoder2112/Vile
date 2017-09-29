@@ -13,11 +13,11 @@ public class Elevator extends Entity
 	public int elevatorX;
 	public int elevatorZ;
 	
-	private int waitTime = 0;
-	private boolean movingDown;
-	private boolean movingUp;
+	public int waitTime = 0;
+	public boolean movingDown;
+	public boolean movingUp;
 	
-	private int soundTime = 0;
+	public int soundTime = 0;
 	
    /**
     * Constructs a new elevator with a x and z value coordinating
@@ -37,6 +37,7 @@ public class Elevator extends Entity
 		elevatorX = wallX;
 		elevatorZ = wallZ;
 		upHeight = Level.getBlock(elevatorX, elevatorZ).height;
+		height = (int)upHeight;
 	}
 	
    /**
@@ -48,28 +49,32 @@ public class Elevator extends Entity
 		//Get block
 		Block temp = Level.getBlock(elevatorX, elevatorZ);
 		
+		distanceFromPlayer = Math.sqrt(((Math.abs(xPos - Player.x))
+				* (Math.abs(xPos - Player.x)))
+				+ ((Math.abs(zPos - Player.z))
+						* (Math.abs(zPos - Player.z))));
+		
 		//Is see through while it is moving.
 		temp.seeThrough = true;
-		
-		//Normal collision detection is altered to work for doorways/lifts
-		temp.isaElevator = true;
 		
 		//If just activated, begin moving down
 		if(!movingDown && !movingUp && waitTime == 0)
 		{
 			movingDown = true;
 			soundTime = 0;
+			SoundController.doorStart.playAudioFile(distanceFromPlayer);
 		}
 		
 		//As long as it hasn't reached ground, keep moving the height down
 		if(movingDown && temp.height > 0)
 		{
 			temp.height -= 0.1;
+			this.height -= 0.1;
 			
 			//Only play sound every 10 ticks
 			if(soundTime == 0)
 			{
-				SoundController.lifting.playAudioFile();	
+				SoundController.lifting.playAudioFile(distanceFromPlayer);	
 				
 				soundTime++;
 			}
@@ -79,7 +84,11 @@ public class Elevator extends Entity
 		{
 			waitTime++;
 			temp.height = 0;
+			this.height = 0;
 			movingDown = false;
+			
+			SoundController.lifting.stopAll();
+			SoundController.doorEnd.playAudioFile(distanceFromPlayer);
 			
 			soundTime = 0;
 		}
@@ -88,16 +97,18 @@ public class Elevator extends Entity
 		{
 			movingUp = true;
 			waitTime = 0;
+			SoundController.doorStart.playAudioFile(distanceFromPlayer);
 		}
 		
 		//While not at top, keep moving up
 		if(movingUp && temp.height < upHeight)
 		{
 			temp.height += 0.1;
+			this.height += 0.1;
 			
 			if(soundTime == 0)
 			{
-				SoundController.lifting.playAudioFile();
+				SoundController.lifting.playAudioFile(distanceFromPlayer);
 				
 				soundTime++;
 			}
@@ -107,8 +118,12 @@ public class Elevator extends Entity
 		if(movingUp && temp.height >= upHeight)
 		{
 			temp.height = (int)upHeight;
+			this.height = (int)upHeight;
 			movingUp = false;
 			activated = false;
+			
+			SoundController.lifting.stopAll();
+			SoundController.doorEnd.playAudioFile(distanceFromPlayer);
 			
 		   /*
 		    * Unless the block was already seeThrough, set it back to not
@@ -117,7 +132,6 @@ public class Elevator extends Entity
 			if(temp.wallID != 4)
 			{
 				temp.seeThrough = false;
-				temp.isaElevator = false;
 			}
 		}
 		

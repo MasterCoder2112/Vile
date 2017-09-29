@@ -6,6 +6,23 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Scanner;
+
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -15,15 +32,32 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
 import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
 import com.vile.Display;
 import com.vile.Game;
 import com.vile.RunGame;
 import com.vile.Sound;
+import com.vile.entities.Bullet;
+import com.vile.entities.Button;
+import com.vile.entities.Corpse;
+import com.vile.entities.Door;
+import com.vile.entities.Elevator;
+import com.vile.entities.Enemy;
+import com.vile.entities.EnemyFire;
+import com.vile.entities.Explosion;
+import com.vile.entities.Item;
+import com.vile.entities.Player;
+import com.vile.entities.Weapon;
+import com.vile.graphics.Render3D;
+import com.vile.levelGenerator.Block;
+import com.vile.levelGenerator.Level;
 
 /**
  * @title  FPSLauncher
@@ -40,49 +74,63 @@ public class FPSLauncher extends JFrame
 	private static final long serialVersionUID = 1L;
 	
 	//Version of the main menu
-	private static final double versionNumber = 0.9;
+	private static final double versionNumber = 1;
 	
-	//Music clip
-	private static Clip clip;
+	//Music volume control
+	public static FloatControl musicVolumeControl;
 	
 	//Click sound for main menu only
 	private static Sound click;
 	
+	//Is the game audio on
 	private static boolean audioOn = false;
 	
-	//Controls Gain (Volume) for both music and sounds
-	private static FloatControl musicControl;
+	//For flashing text if needed
+	private Thread t = null;
 	
 	/* Java Swing elements **********************************/
 	private JLayeredPane panel = new JLayeredPane();
 	
-	private JButton play;
-	private JButton playGame;
-	private JButton options;
-	private JButton controls;
-	private JButton quit;
-	private JButton back1;
-	private JButton back2;
-	private JButton mouse;
-	private JButton returnToGame;
-	private JButton customMap;
-	private JButton sFPS;
+	private static JButton play;
+	private static JButton playGame;
+	private static JButton saveGame;
+	private static JButton loadGame;
+	private static JButton options;
+	private static JButton controls;
+	private static JButton quit;
+	private static JButton back;
+	private static JButton mouse;
+	private static JButton returnToGame;
+	private static JButton customMap;
+	private static JButton sFPS;
+	private static JButton logIn;
+	private static JButton logOut;
+	private static JButton removeUser;
+	private static JButton saveGameMenu;
+	private static JButton removeSave;
 	
-	private JLabel  resolutionTitle;
-	private JLabel  themeTitle;
-	private JLabel  levelSizeTitle;
-	private JLabel  modeTitle;
-	private JLabel  musicTitle;
-	private JLabel  musicVolumeTitle;
-	private JLabel  soundVolumeTitle;
-	private JLabel  title;
-	private JLabel  newMapTitle;
+	private static JLabel  resolutionTitle;
+	private static JLabel  themeTitle;
+	private static JLabel  levelSizeTitle;
+	private static JLabel  modeTitle;
+	private static JLabel  musicTitle;
+	private static JLabel  musicVolumeTitle;
+	private static JLabel  soundVolumeTitle;
+	private static JLabel  title;
+	private static JLabel  newMapTitle;
+	private static JLabel  userTitle;
+	private static JLabel  newUserTitle;
+	private static JLabel  error;
+	private static JLabel  availableGames;
+	private static JLabel  saveName;
 	
-	private JTextArea readMeText;
-	private JTextField newMapName;
+	private static JTextArea readMeText;
+	private static JTextField newMapName;
+	private static JTextField newUserName;
+	private static JTextField saveTextfield;
 	/*********************************************End elements*/
 	
-	private ImageIcon titleImage;
+	private static ImageIcon titleImage;
 	
 	//Has scroll box you can put choices on
 	private Choice resolution = new Choice();
@@ -90,17 +138,31 @@ public class FPSLauncher extends JFrame
 	private Choice levelSize  = new Choice();
 	private Choice mode       = new Choice();
 	private Choice music      = new Choice();
+	private Choice users	  = new Choice();
+	private Choice savedGames = new Choice();
+	
+	private static int resolutionChoice = 4;
+	private static int themeChoice = 0;
+	private static int levelSizeChoice = 3;
+	private static int modeChoice = 2;
+	private static int musicChoice = 2;
+	private static int usersChoice = 0;
+	private static int saveChoice = 0;
+	
 	
 	//Volume Knobs
-	public JSlider musicVolume;
-	public JSlider soundVolume;
+	public static JSlider musicVolume;
+	public static JSlider soundVolume;
 	
    /*
-    * Level of sound in decibals above or below the original set amount 
-    * by the computer. 
+    * On a scale from 0 to 100% of the volume, what level is it at right
+    * now? 
     */
-	public static float  musicVolumeLevel = -20.0f;
-	public static float  soundVolumeLevel = -20.0f;
+	public static float  musicVolumeLevel = 50;
+	public static float  soundVolumeLevel = 50;
+	
+	//In Story, or survival mode? Or no mode at all?
+	public static int gameMode = 2;
 	
 	//Whether sound files have been opened yet
 	private static boolean opened      = false;
@@ -111,15 +173,53 @@ public class FPSLauncher extends JFrame
 	//Is custom map option on?
 	private static boolean nonDefaultMap = false;
 	
+	//All the usernames created thus far
+	private static ArrayList<String> usernames = new ArrayList<String>();
+	
+	//All the saved games created thus far
+	private static ArrayList<String> saves = new ArrayList<String>();
+	
+	//The File where all the current users info is based
+	public static File userFile;
+	
 	//Is smooth FPS on?
 	public static boolean smoothFPS = false;
 	
+	//Is the user trying to load a game?
+	public static boolean loadingGame = false;
+	
 	//Width and height of the Jframe here
 	public static final int WIDTH  = 800;
-	public static final int HEIGHT = 400;
+	public static final int HEIGHT = 600;
+	
+	//Current users ID number and name
+	public static int currentUserID = 0;
+	public static String currentUserName = "";
 	
 	//Default starting map name
 	public static String startMap = "map0";
+	
+	//File name of the file being loaded 
+	public static String fileToLoad = "";
+	
+	//The ID of the launcher menu. Either main menu, options, controls,
+	//or Log in screen.
+	public int idNum = 3;
+	
+   /*
+    * Listens for if an item in a choice element was pressed. Right now I
+    * am only using this for the save and loading choices
+    */
+	ItemListener iL = new ItemListener()
+	{
+		@Override
+		public void itemStateChanged(ItemEvent e) 
+		{
+			//Set the textfields text to being the name of the saved game
+			saveTextfield.setText(savedGames.getItem
+					(savedGames.getSelectedIndex()));
+		}	
+	};
 	
    /*
     * Instantiates a new ActionListener that listens to whether Buttons 
@@ -130,16 +230,27 @@ public class FPSLauncher extends JFrame
 		public void actionPerformed(ActionEvent e)
 		{
 			//Call the play audio method to play the sound
-			click.playAudioFile();	
+			click.playAudioFile(0);	
 			
 			//If Survival mode is pressed then close the main menu
 			//music, dispose of the menu, and start new game
 			if(e.getSource() == play)
 			{
-				clip.close();
+				Display.music.stop();
 				audioOn = false;
 				dispose();
-				Game.setMap = false;
+				gameMode = 1;
+				
+				Display.graphicsSelection = resolutionChoice;
+				Display.themeNum          = themeChoice;
+				Display.levelSize         = levelSizeChoice;
+				Display.mouseOn           = mouseStatus;
+				Display.skillMode         = modeChoice;
+				Display.musicTheme        = musicChoice;
+				Display.smoothFPS         = smoothFPS;
+				
+				loadingGame = false;
+
 				new RunGame();
 			}
 			
@@ -147,17 +258,28 @@ public class FPSLauncher extends JFrame
 			//custom map or the default map
 			if(e.getSource() == playGame)
 			{
-				clip.close();
+				Display.music.stop();
 				audioOn = false;
 				dispose();
-				Game.setMap = true;
+				gameMode = 0;
+				
+				Display.graphicsSelection = resolutionChoice;
+				Display.themeNum          = 2;
+				Display.levelSize         = levelSizeChoice;
+				Display.mouseOn           = mouseStatus;
+				Display.skillMode         = modeChoice;
+				Display.musicTheme        = musicChoice;
+				Display.smoothFPS         = smoothFPS;
 				
 				//If custom map, send these values so the game knows
 				//what to load up
 				Display.nonDefaultMap = nonDefaultMap;
 				Display.newMapName = startMap;
 				
+				loadingGame = false;
+				
 				Display.themeNum = 2;
+
 				new RunGame();
 			}
 			
@@ -175,23 +297,36 @@ public class FPSLauncher extends JFrame
 				new Controls();
 			}
 			
-			//Quit game
+			//Quit game button is clicked
 			if(e.getSource() == quit)
 			{
-				System.exit(0);
+				quitGame();
 			}
 			
 			//Save options menu changes and go back to menu screen
-			if(e.getSource() == back1)
+			if(e.getSource() == back)
 			{
-				Display.graphicsSelection = resolution.getSelectedIndex();
-				Display.themeNum          = theme.getSelectedIndex();
-				Display.levelSize         = levelSize.getSelectedIndex();
-				Display.mouseOn           = mouseStatus;
-				Display.skillMode         = mode.getSelectedIndex();
-				Display.musicTheme        = music.getSelectedIndex();
-				Display.smoothFPS         = smoothFPS;
-				startMap                  = newMapName.getText();
+				//Only sets these if exiting out of the options
+				//menu
+				if(idNum == 1)
+				{
+					resolutionChoice		  = resolution.getSelectedIndex();
+					themeChoice				  = theme.getSelectedIndex();
+					levelSizeChoice			  = levelSize.getSelectedIndex();
+					modeChoice				  = mode.getSelectedIndex();
+					musicChoice				  = music.getSelectedIndex();
+					
+					//If the map name is null. Catch the exception
+					try
+					{
+						startMap 				  = newMapName.getText();
+					}
+					catch(Exception ex)
+					{
+						startMap = "map0";
+					}
+				}
+				
 				dispose();
 				new FPSLauncher(0);
 			}
@@ -200,17 +335,18 @@ public class FPSLauncher extends JFrame
 			if(e.getSource() == returnToGame)
 			{
 				Display.resetGame = true;
-				clip.close();
 				audioOn = false;
+				
+				Display.graphicsSelection = resolutionChoice;
+				Display.themeNum          = 2;
+				Display.levelSize         = levelSizeChoice;
+				Display.mouseOn           = mouseStatus;
+				Display.skillMode         = modeChoice;
+				Display.musicTheme        = musicChoice;
+				Display.smoothFPS         = smoothFPS;
+				
 				dispose();
 				new RunGame();
-			}
-			
-			//Go back to menu screen
-			if(e.getSource() == back2)
-			{
-				dispose();
-				new FPSLauncher(0);
 			}
 			
 			//Turn mouse on or off
@@ -257,6 +393,624 @@ public class FPSLauncher extends JFrame
 					customMap.setText("Custom Map: On");
 				}
 			}
+			
+			//Logs out back to the log in screen for a new user
+			if(e.getSource() == logOut)
+			{
+				//Prompt user to say yes or no to removing the user
+				int response = JOptionPane.showConfirmDialog
+				(null, "Are you sure you want to Log out? Any unsaved data will be erased."
+						, "Log out?", JOptionPane.YES_NO_OPTION);
+				
+				//If no then return, if yes then continue
+				if(response == JOptionPane.NO_OPTION)
+				{
+					return;
+				}
+				
+				Display.music.stop();
+				audioOn = false;
+				
+				saveStats();
+				
+				saves = new ArrayList<String>();
+				
+				Display.pauseGame = false;
+				
+				resolutionChoice = 4;
+	        	themeChoice = 0;
+	        	levelSizeChoice = 3;
+	        	modeChoice = 2;
+	        	musicChoice = 2;
+	        	usersChoice = 0;
+	        	saveChoice = 0;
+	        	mouseStatus = true;
+	        	nonDefaultMap = false;
+	        	smoothFPS = false;
+	        	soundVolumeLevel = 50;
+	        	musicVolumeLevel = 50;
+				
+				dispose();
+				new LogIn();
+			}
+			
+			//Opens up the save/load game menu
+			if(e.getSource() == saveGameMenu)
+			{
+				dispose();
+				new SaveScreen();
+			}
+			
+			//Saves Game for the player
+			if(e.getSource() == saveGame)
+			{
+				//If not in a game, then don't try to save
+				if(gameMode == 2)
+				{
+					displayError("YOU ARE NOT CURRENTLY IN A GAME!!!");
+					return;
+				}
+
+				//Get text from saveName textfield. Will contain the name
+				//of the file you're trying to save
+				String n = saveTextfield.getText();
+				
+				//If special character is found
+				if(n.contains(":") || n.contains("/") || n.contains("\\")
+						|| n.contains("|") || n.contains("?") || n.contains("*")
+						|| n.contains("\"") || n.contains(">") || n.contains("<"))
+				{
+					displayError("INVALID CHARACTERS! TRY AGAIN!");
+					return;
+				}
+				
+				//If name is too long
+				if(n.length() >= 50)
+				{
+					displayError("NAME IS TOO LONG!!!");
+			        return;
+				}
+				
+				String fileName;
+				
+				try
+				{
+					fileName = saveTextfield.getText();
+					
+					if(fileName == "")
+					{
+						displayError("THERE IS NO FILE NAME!");
+						return;
+					}
+				}
+				catch(Exception ex)
+				{
+					displayError("THERE IS NO FILE NAME!");
+					return;
+				}
+
+				BufferedWriter rewrite;
+				
+			   /*
+			    * Tries to write game data into a save file within the
+			    * current users directory
+			    */
+	        	try 
+				{
+	        		rewrite = new BufferedWriter(new FileWriter
+	        				("Users/"+currentUserName+"/"+fileName+".txt"));
+	        		
+	        		rewrite.write(Game.mapNum+":"+gameMode+":"+Game.secretsFound+":"
+	        				+Game.enemiesInMap+":"+Display.kills+":"+Display.themeNum);
+	        		
+	        		rewrite.newLine();
+	        		
+	        		//Player and level stuff
+	        		rewrite.write(Player.health+":"+Player.maxHealth+
+	        				":"+Player.armor+":"+Player.x+":"+Player.y+
+	        				":"+Player.z+":"+Player.rotation+":"
+	        				+Player.maxHeight+":"+Player.hasRedKey+":"
+	        				+Player.hasBlueKey+":"+Player.hasGreenKey+
+	        				":"+Player.hasYellowKey+":"
+	        				+Player.upRotate+":"+Player.extraHeight+":"
+	        				+Player.resurrections+":"
+	        				+Player.environProtectionTime+":"+Player.immortality+
+	        				":"+Player.vision+":"+Player.invisibility+":"+
+	        				Player.weaponEquipped+":"+Player.godModeOn+
+	        				":"+Player.noClipOn+":"+Player.flyOn+":"
+	        				+Player.superSpeedOn+":"+Player.unlimitedAmmoOn+
+	        				":"+Player.upgradePoints+":"+Level.width+
+	        				":"+Level.height+":"+Game.mapNum+":"+
+	        				Game.mapAudio+":"+Game.mapFloor+":"+
+	        				Game.mapCeiling+":"+Render3D.ceilingDefaultHeight+
+	        				":"+Render3D.renderDistanceDefault+":"+Game.mapName+",");
+	        		
+	        		//Weapons
+	        		for(int i = 0; i < Player.weapons.length; i++)
+	        		{
+	        			Weapon w = Player.weapons[i];
+	        			int size = w.cartridges.size();
+	        			
+	        			rewrite.write(w.weaponID+":"+w.canBeEquipped+":"
+	        					+w.dualWield+":"+w.ammo);
+	        			
+	        			for(int j = 0; j < size; j++)
+	        			{
+	        				int cartSize = w.cartridges.get(j).ammo;
+	        				rewrite.write(":"+cartSize);
+	        			}
+	        			
+	        			rewrite.write(";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Walls:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Level.blocks.length; i++)
+	        		{
+	        			Block b = Level.blocks[i];
+	        			rewrite.write(b.health+":"+b.x+":"+b.y+":"
+	        					+b.z+":"+b.wallID+":"+b.wallPhase+
+	        					":"+b.height+":"+b.isSolid+":"
+	        					+b.seeThrough+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Enemies:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.enemies.size(); i++)
+	        		{
+	        			Enemy en = Game.enemies.get(i);
+	        			rewrite.write(en.health+":"+en.xPos+":"+en.yPos+":"
+	        					+en.zPos+":"+en.ID+":"+en.itemActivationID+":"
+	        					+en.maxHeight+":"+en.newTarget+":"+en.targetX+":"
+	        					+en.targetY+":"+en.targetZ+":"+en.activated+":"
+	        					+en.rotation+":"+en.isAttacking+":"+en.isFiring+
+	        					":"+en.isABoss+":"+en.xEffects+":"+en.yEffects+
+	        					":"+en.zEffects+":"+en.tick+":"+en.tickRound+
+	        					":"+en.tickAmount+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Bosses:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.bosses.size(); i++)
+	        		{
+	        			Enemy en = Game.bosses.get(i);
+	        			rewrite.write(en.health+":"+en.xPos+":"+en.yPos+":"
+	        					+en.zPos+":"+en.ID+":"+en.itemActivationID+":"
+	        					+en.maxHeight+":"+en.newTarget+":"+en.targetX+":"
+	        					+en.targetY+":"+en.targetZ+":"+en.activated+":"
+	        					+en.rotation+":"+en.isAttacking+":"+en.isFiring+
+	        					":"+en.isABoss+":"+en.xEffects+":"+en.yEffects+
+	        					":"+en.zEffects+":"+en.tick+":"+en.tickRound+
+	        					":"+en.tickAmount+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Items:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.items.size(); i++)
+	        		{
+	        			Item item = Game.items.get(i);
+	        			rewrite.write(item.itemActivationID+":"+item.itemID+
+	        					":"+item.x+":"+item.y+":"+item.z+":"
+	        					+item.rotation+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Bullets:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.bullets.size(); i++)
+	        		{
+	        			Bullet b = Game.bullets.get(i);
+	        			rewrite.write(b.ID+":"+b.damage+":"+b.speed+
+	        					":"+b.x+":"+b.y+":"+b.z+":"+b.xa+":"+b.za+
+	        					":"+b.initialSpeed+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Enemy Projectiles:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.enemyProjectiles.size(); i++)
+	        		{
+	        			EnemyFire b = Game.enemyProjectiles.get(i);
+	        			rewrite.write(b.ID+":"+b.damage+":"+b.speed+
+	        					":"+b.x+":"+b.y+":"+b.z+":"+b.xa+":"+b.za+
+	        					":"+b.initialSpeed+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Explosions:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.explosions.size(); i++)
+	        		{
+	        			Explosion exp = Game.explosions.get(i);
+	        			rewrite.write(exp.ID+":"+exp.phaseTime+":"+
+	        			exp.x+":"+exp.y+":"+exp.z+":"+exp.exploded+
+	        			":"+exp.itemActivationID+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Buttons:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.buttons.size(); i++)
+	        		{
+	        			Button b = Game.buttons.get(i);
+	        			rewrite.write(b.ID+":"+b.itemActivationID+":"+
+	        			b.xPos+":"+b.yPos+":"+b.zPos+":"+b.pressed+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Doors:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.doors.size(); i++)
+	        		{
+	        			Door d = Game.doors.get(i);
+	        			rewrite.write(d.ID+":"+d.itemActivationID+":"+
+	        			d.xPos+":"+d.yPos+":"+d.zPos+":"+d.doorX+":"+
+	        					d.doorZ+":"+d.time+":"+d.soundTime+":"
+	        					+d.doorType+":"+d.doorY+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Elevators:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.elevators.size(); i++)
+	        		{
+	        			Elevator ele = Game.elevators.get(i);
+	        			rewrite.write(ele.ID+":"+ele.itemActivationID+":"+
+	        			ele.xPos+":"+ele.yPos+":"+ele.zPos+":"+ele.elevatorX+":"+
+	        					ele.elevatorZ+":"+ele.height+":"+ele.soundTime+":"
+	        					+ele.movingUp+":"+ele.movingDown+":"+ele.waitTime+
+	        					":"+ele.upHeight+":"+ele.activated+";");
+	        		}
+	        		
+	        		rewrite.newLine();		
+	        		rewrite.write("Corpses:");
+	        		rewrite.newLine();
+	        		
+	        		for(int i = 0; i < Game.corpses.size(); i++)
+	        		{
+	        			Corpse cor = Game.corpses.get(i);
+	        			rewrite.write(cor.enemyID+":"+cor.phaseTime+":"+
+	        			cor.x+":"+cor.y+":"+cor.z+":"+cor.time+
+	        			":"+cor.xEffects+":"+cor.yEffects+":"+cor.zEffects+";");
+	        		}
+	        		
+	        		rewrite.close();
+				}
+				catch (IOException ex) 
+				{
+					System.out.println(ex);
+				    //exception handling left as an exercise for the reader
+				}
+	        	
+	        	//If there is not already a save file by this name
+	        	if(!saves.contains(fileName))
+	        	{
+	        		saves.add(fileName);
+	        	}
+	        	
+	        	//The saves arraylist has the same indexes as does the
+	        	//savedGames choice element. So this chooses the most
+	        	//recently changed index.
+	        	saveChoice = saves.indexOf(fileName);
+	        	
+	        	//Refreshes the page
+	        	dispose();
+	        	new SaveScreen();
+			}
+			
+			//Loads Game for the player
+			if(e.getSource() == loadGame)
+			{
+				try
+				{
+					fileToLoad = saveTextfield.getText();
+					
+					//If no file is entered, or the file doesn't exist
+					if(fileToLoad == ""
+							|| !saves.contains(fileToLoad))
+					{
+						displayError("THAT FILE DOES NOT EXIST!!!");
+						return;
+					}
+					
+					//The saves arraylist has the same indexes as does the
+		        	//savedGames choice element. So this chooses the most
+		        	//recently changed index.
+		        	saveChoice = saves.indexOf(fileToLoad);
+				}
+				catch(Exception ex)
+				{
+					displayError("THAT FILE DOES NOT EXIST!!!");
+					return;
+				}
+				
+				loadingGame = true;
+				Display.music.stop();
+				audioOn = false;
+				dispose();
+				gameMode = 0;
+				Display.themeNum = 2;
+
+				new RunGame();
+			}
+			
+			//Removes the user from the list
+			if(e.getSource() == removeUser)
+			{
+				//Prompt user to say yes or no to removing the user
+				int response = JOptionPane.showConfirmDialog
+				(null, "Are you sure you want to remove this user?"
+						, "Remove User?", JOptionPane.YES_NO_OPTION);
+				
+				//If no then return, if yes then continue
+				if(response == JOptionPane.NO_OPTION)
+				{
+					return;
+				}
+				
+				currentUserID = users.getSelectedIndex();
+				currentUserName = users.getSelectedItem();
+				
+				users.remove(currentUserID);
+				usernames.remove(currentUserName);
+				
+				BufferedWriter rewrite;
+				
+			   /*
+			    * Tries to write the new user to the user file
+			    */
+	        	try 
+				{
+	        		rewrite = new BufferedWriter(new FileWriter("users.txt"));
+	        		
+	        		for(String temp: usernames)
+	        		{
+	        			if(temp.length() > 0)
+	        			{
+	        				rewrite.write(temp+",");
+	        			}
+	        		}
+	        		
+	        		rewrite.close();
+				}
+				catch (IOException ex) 
+				{
+				    
+				}
+	        	
+	        	deleteFolder(new File("Users/"+currentUserName));
+	        	
+	        	dispose();
+	        	new LogIn();
+			}
+			
+			//If removing a save file
+			if(e.getSource() == removeSave)
+			{
+				String temp = saveTextfield.getText();
+				
+				//If the file you're trying to delete is not in the saves
+				//list, or is blank
+				if(temp == "" || !saves.contains(temp))
+				{
+					displayError("THAT FILE IS NOT AVAILABLE!!!");
+					return;
+				}
+				
+				deleteFolder(new File("Users/"+currentUserName+"/"
+						+temp+".txt"));
+				
+				saves.remove(temp);
+				
+				saveChoice = 0;
+				
+				//Refresh the screen
+				dispose();
+				new SaveScreen();
+			}
+
+			//If logging in
+			if(e.getSource() == logIn)
+			{
+				try
+				{
+					//If the user did not type in a new username
+					if(newUserName.getText().length() == 0)
+					{
+						//If there is no user to log in
+						if(users.getItemCount() == 0
+								|| users.getSelectedItem() == "")
+						{
+							displayError("YOU NEED TO ENTER A USERNAME!!!");
+							return;
+						}
+						
+						//Load the user that is shown on the currently
+						//selected index
+						currentUserID = users.getSelectedIndex();
+						currentUserName = users.getSelectedItem();
+						
+						//Keep track of the index chosen
+						usersChoice = users.getSelectedIndex();
+						
+						//File used for saving
+						userFile = new File("Users/"+currentUserName);
+							
+						//A new scanner object that is defaultly set to null
+						Scanner sc = null;  
+						
+					   /*
+					    * Try to read the settings file and if not,
+					    * state the error
+					    */
+						try 
+						{
+							//Creates a Scanner that can read the file
+							sc = new Scanner(new BufferedReader
+									(new FileReader("Users/"
+											+currentUserName+"/stats/settings.txt")));
+											//+FPSLauncher.saveFileName.getText())));
+							
+							String file = "";
+							
+							//Read in all the lines of the file
+							while(sc.hasNextLine())
+							{
+								file += sc.nextLine();
+							}
+							
+							//Captures all the individual elements
+							String[] elements = file.split(":");
+							
+							//Set up values based on loaded elements
+							resolutionChoice = (Integer.parseInt(elements[0]));
+							Player.maxKills = Integer.parseInt(elements[1]);
+							levelSizeChoice = (Integer.parseInt(elements[2]));
+							startMap = elements[3];
+							themeChoice = (Integer.parseInt(elements[4]));
+							modeChoice = (Integer.parseInt(elements[5]));
+							musicChoice = (Integer.parseInt(elements[6]));
+							soundVolumeLevel = Float.parseFloat(elements[7]);
+							musicVolumeLevel = Float.parseFloat(elements[8]);
+							smoothFPS = Boolean.parseBoolean(elements[9]);
+							mouseStatus = Boolean.parseBoolean(elements[10]);
+							nonDefaultMap = Boolean.parseBoolean(elements[11]);
+							
+							//Everything else in the file will be the saved game
+							//names this user has
+							for(int i = 12; i < elements.length; i++)
+							{
+								saves.add(elements[i]);
+							}
+							
+							//No values are allowed to be below zero
+							//otherwise they'd throw exceptions
+							if(resolutionChoice < 0)
+							{
+								resolutionChoice = 0;
+							}
+							
+							if(levelSizeChoice < 0)
+							{
+								levelSizeChoice = 0;
+							}
+							
+							if(themeChoice < 0)
+							{
+								themeChoice = 0;
+							}
+							
+							if(modeChoice < 0)
+							{
+								modeChoice = 0;
+							}
+							
+							if(musicChoice < 0)
+							{
+								musicChoice = 0;
+							}
+						}
+						catch(Exception ex)
+						{
+							System.out.println(ex);
+						}
+						
+						dispose();
+						new FPSLauncher(0);
+					}
+					else
+					{
+						//If name already exists flash error
+						if(usernames.contains(newUserName.getText()))
+						{
+							displayError("THAT USER ALREADY EXISTS! TRY ANOTHER!");	
+							return;
+						}
+						else
+						{			
+							String n = newUserName.getText();
+							
+							//If special character is found
+							if(n.contains(":") || n.contains("/") || n.contains("\\")
+									|| n.contains("|") || n.contains("?") || n.contains("*")
+									|| n.contains("\"") || n.contains(">") || n.contains("<"))
+							{
+								displayError("INVALID CHARACTERS! TRY AGAIN!");
+						        return;
+							}
+							
+							if(n.length() >= 50)
+							{
+								displayError("NAME IS TOO LONG!!!");
+						        return;
+							}
+								
+							currentUserID = users.getItemCount() + 1;
+							currentUserName = n;
+							
+							String temp = currentUserName;
+						   /*
+						    * Tries to write the new user to the user file
+						    */
+				        	try 
+							{
+							    Files.write(Paths.get("users.txt"),
+							    		(temp+",").getBytes(),
+							    		StandardOpenOption.APPEND);
+							}
+							catch (IOException ex) 
+							{
+							    //exception handling left as an exercise for the reader
+							}
+				        	
+				        	//Make directories for the users
+				        	boolean fileMade = 
+				        			new File
+				        	("Users/"+currentUserName+"/stats").mkdirs();
+				        	
+				        	//If the file was successfully made
+				        	if(fileMade)
+				        	{
+				        		userFile = new File("Users/"+currentUserName);
+				        	}
+				        	
+				        	resolutionChoice = 4;
+				        	themeChoice = 0;
+				        	levelSizeChoice = 3;
+				        	modeChoice = 2;
+				        	musicChoice = 2;
+				        	usersChoice = 0;
+				        	saveChoice = 0;
+				        	mouseStatus = true;
+				        	nonDefaultMap = false;
+				        	smoothFPS = false;
+				        	soundVolumeLevel = 50;
+				        	musicVolumeLevel = 50;
+
+				        	dispose();
+							new FPSLauncher(0);
+						}
+					}
+				}
+				catch(Exception ex)
+				{
+					System.out.println(ex);
+				}
+			}
 		}
 	};
 	
@@ -277,36 +1031,12 @@ public class FPSLauncher extends JFrame
 			{
 				float newVolume = musicVolume.getValue();
 				musicVolumeLevel     = newVolume;
-				
-				//If newVolume is less than the volume limit, set it to limit
-				if(newVolume < -80)
-				{
-					newVolume = -80;
-				}
-				
-				musicControl.setValue(newVolume);	
-				
-				//Only do if there is music playing
-				if(Display.audioOn)
-				{
-					   /*
-					    * If the music volume is as lower than it can go (Meaning off) 
-					    * then just set it to the limit. Otherwise just set the
-					    * music volume to the correct level.
-					    */
-						if(musicVolumeLevel < -80)
-						{
-							Display.musicControl.setValue(-80.0f);
-						}
-						else
-						{
-							Display.musicControl.setValue(musicVolumeLevel);
-						}
-				}
-				
+
+				Sound.setMusicVolume(Display.music);
+						
 				//This is the volume level that makes since to us
-				int temp  = (int) musicVolumeLevel + 94;
-				musicVolume.setToolTipText("Music Volume Level: "+temp);
+				musicVolume.setToolTipText("Music Volume Level: "
+						+musicVolumeLevel);
 			}
 
 			//Change sound volume as slider is moved
@@ -316,18 +1046,12 @@ public class FPSLauncher extends JFrame
 				float newVolume2 = soundVolume.getValue();
 				soundVolumeLevel     = newVolume2;
 			
-				//If newVolume is less than the volume limit, set it to limit
-				if(newVolume2 < -80)
-				{
-					newVolume2 = -80;
-				}
-			
 				//Resets sound volumes
 				click.resetVolume(newVolume2);
 			
 				//Show the volume level that makes since to us
-				int temp2  = (int) soundVolumeLevel + 94;
-				soundVolume.setToolTipText("Sound Volume Level: "+temp2);
+				soundVolume.setToolTipText("Sound Volume Level: "
+						+soundVolumeLevel);
 			}
 		}
 	};
@@ -339,6 +1063,7 @@ public class FPSLauncher extends JFrame
     */
 	public FPSLauncher(int idNum)
 	{
+		this.idNum = idNum;
 	   /*
 	    * If the game was running, dispose of its frame so that the
 	    * pause menu can show
@@ -364,7 +1089,20 @@ public class FPSLauncher extends JFrame
 		
 		//Self explainitory shtuff
 		setSize(new Dimension(WIDTH, HEIGHT));
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		
+		//Does nothing when you try to close the window initially
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		
+		//A listener, which checks to see if you are exiting out or not, and
+		//if you are it calls the quitGame method and checks to make sure the
+		//user really wants to quit, as well as saving their settings.
+	    addWindowListener(new WindowAdapter() {
+	        @Override
+	        public void windowClosing(WindowEvent event) {
+	            quitGame();
+	        }
+	    });
+	    
 		setContentPane(panel);
 		setLocationRelativeTo(null);	
 		setResizable(false);
@@ -380,7 +1118,6 @@ public class FPSLauncher extends JFrame
 			drawBackground();
 		}	
 	
-		
 	   /*
 	    * Try to open up the title theme audio clip and let it loop
 	    * continuously
@@ -389,12 +1126,14 @@ public class FPSLauncher extends JFrame
 		{
 			if(!audioOn && !Display.pauseGame)
 			{
-				clip = AudioSystem.getClip();
-				AudioInputStream input = AudioSystem.getAudioInputStream
-						(this.getClass().getResource("/test/title.wav"));
-				clip.open(input);
-				clip.loop(Clip.LOOP_CONTINUOUSLY);
-				clip.start();
+				Display.music = AudioSystem.getClip();
+				AudioInputStream input =
+						AudioSystem.getAudioInputStream
+						(this.getClass().getResource
+								("/test/title.wav"));
+				Display.music.open(input);
+				Display.music.loop(Clip.LOOP_CONTINUOUSLY);
+				Display.music.start();
 				audioOn = true;
 			}
 		}
@@ -403,41 +1142,24 @@ public class FPSLauncher extends JFrame
 			
 		}
 		
-		
-	   /*
-	    * A FloatControl object is something that allows you to control 
-	    * certain values of a sound object such as a clip, but in float
-	    * form so that it is more accurate. The type MASTER_GAIN gets the
-	    * volume level in decibals of the sound clip. So basically this
-	    * just gains control of the decibal level of the sound clip.
-	    */
-		musicControl = (FloatControl) clip.getControl
-			    		(FloatControl.Type.MASTER_GAIN);
-		
-	   /*
-	    * Sets the value of a given control. In this case it is a 
-	    * FloatControl that determines the volume level of the clip in
-	    * decibals. The f after the number determines that the number
-	    * is indeed a float and not a double. The highest the number 
-	    * can be raised in terms of decibals is 6. The decibals can
-	    * pretty much be decreased infinitely low though. 80 is usually
-	    * all you need to complete get rid of the sound.
-	    * 
-	    * If the volume level is less than -80, just set the volume to
-	    * -80. Otherwise, set the volume to the correct volume level.
-	    */
-		if(musicVolumeLevel < -80)
+		try
 		{
-			musicControl.setValue(-80.0f);
+			musicVolumeControl = (FloatControl) 
+					Display.music.getControl
+					(FloatControl.Type.MASTER_GAIN);
 		}
-		else
+		//For master gain issues
+		catch(Exception e)
 		{
-			musicControl.setValue(musicVolumeLevel);
+			System.out.println(e);
 		}
+		
+		//Reset music volume
+		Sound.setMusicVolume(Display.music);
 
 		if (!opened) 
 		{
-			click = new Sound(20, "/test/titleClick.wav");
+			click = new Sound(4, "/test/titleClick.wav");
 
 			opened = true;
 		}
@@ -466,7 +1188,7 @@ public class FPSLauncher extends JFrame
 		
 		play = new JButton("Survival Mode");
 		
-		play.setBounds(0, 250, 295, 40);
+		play.setBounds(0, 200, 295, 40);
 		
 		//Button blends with background
 		play.setOpaque(false);
@@ -566,8 +1288,35 @@ public class FPSLauncher extends JFrame
 			panel.add(returnToGame);
 		}
 		
+		saveGameMenu   = new JButton("Save/Load Game");
+		saveGameMenu.setBounds(30, 150, 270, 40);
+		
+		saveGameMenu.setOpaque(false);
+		saveGameMenu.setContentAreaFilled(false);
+		saveGameMenu.setBorderPainted(false);
+		
+		//Removes textbox focus so the textbox border is removed
+		saveGameMenu.setFocusPainted(false);
+		
+		saveGameMenu.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
+		
+		saveGameMenu.setForeground(defaultColor);
+		
+		saveGameMenu.addMouseListener(new java.awt.event.MouseAdapter() {
+		    public void mouseEntered(java.awt.event.MouseEvent evt) {
+		        saveGameMenu.setForeground(mouseColor);
+		    }
+
+		    public void mouseExited(java.awt.event.MouseEvent evt) {
+		        saveGameMenu.setForeground(defaultColor);
+		    }
+		});
+		
+		saveGameMenu.addActionListener(aL);
+		panel.add(saveGameMenu);
+		
 		options  = new JButton("Options");
-		options.setBounds(0, 150, 230, 40);
+		options.setBounds(0, 250, 230, 40);
 		
 		//Button blends with background
 		options.setOpaque(false);
@@ -603,7 +1352,7 @@ public class FPSLauncher extends JFrame
 		panel.add(options);
 		
 		controls  = new JButton("Controls");
-		controls.setBounds(0, 200, 235, 40);
+		controls.setBounds(0, 300, 235, 40);
 		
 		//Button blends with background
 		controls.setOpaque(false);
@@ -639,7 +1388,7 @@ public class FPSLauncher extends JFrame
 		panel.add(controls);
 		
 		quit      = new JButton("Quit");
-		quit.setBounds(0, 300, 180, 40);
+		quit.setBounds(0, 350, 180, 40);
 		
 		//Button blends with background
 		quit.setOpaque(false);
@@ -650,12 +1399,7 @@ public class FPSLauncher extends JFrame
 		quit.setFocusPainted(false);
 		
 		//Sets font type, mode, and size
-		quit.setFont(new Font("Nasalization", Font.BOLD, 24));
-		
-		//Uses a bitwise operator to merge the fonts of bold and italic
-		//for the text
-		quit.setFont(quit.getFont()
-				.deriveFont(Font.BOLD | Font.ITALIC));
+		quit.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		
 		quit.setForeground(defaultColor);
 		
@@ -674,6 +1418,50 @@ public class FPSLauncher extends JFrame
 		quit.addActionListener(aL);
 		panel.add(quit);
 		
+		userTitle = new JLabel("Current User: "+currentUserName);
+		userTitle.setFont(new Font("Nasalization",
+				Font.BOLD | Font.ITALIC, 24));
+		userTitle.setBounds(WIDTH - ((currentUserName.length() * 11) + 300),
+				25, 200 + (currentUserName.length() * 11), 25); 
+		userTitle.setForeground(Color.RED);
+		userTitle.setBackground(Color.BLACK);
+		userTitle.setOpaque(true);
+		panel.add(userTitle);
+		
+		logOut = new JButton("Log Out");
+		
+		logOut.setBounds((WIDTH) - 200, 75, 150, 40);
+		
+		//Button blends with background
+		logOut.setContentAreaFilled(false);
+		logOut.setBorderPainted(false);
+		
+		//Removes textbox focus so the textbox border is removed
+		logOut.setFocusPainted(false);
+		
+		//Sets font type, mode, and size
+		logOut.setFont(new Font("Nasalization",
+				Font.BOLD, 24));
+		
+		logOut.setForeground(Color.RED);
+		logOut.setBackground(Color.BLACK);
+		logOut.setOpaque(true);
+		
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		logOut.addMouseListener(new java.awt.event.MouseAdapter() {
+		    public void mouseEntered(java.awt.event.MouseEvent evt) {
+		        logOut.setForeground(Color.GREEN);
+		    }
+
+		    public void mouseExited(java.awt.event.MouseEvent evt) {
+		        logOut.setForeground(Color.RED);
+		    }
+		});
+		
+		logOut.addActionListener(aL);
+		panel.add(logOut);
+		
 		//Refreashes title screen to show all buttons and title perfectly
 		panel.repaint();
 	}
@@ -684,41 +1472,41 @@ public class FPSLauncher extends JFrame
     */
 	public void drawOptionsMenu()
 	{
-		back1     = new JButton("Back To Main Menu");
-		back1.setBounds(0, 325, 300, 40);
+		back     = new JButton("Back To Main Menu");
+		back.setBounds(0, 325, 300, 40);
 		
 		//Button blends with background
-		back1.setOpaque(false);
-		back1.setContentAreaFilled(false);
-		back1.setBorderPainted(false);
+		back.setOpaque(false);
+		back.setContentAreaFilled(false);
+		back.setBorderPainted(false);
 		
 		//Removes textbox focus so the textbox border is removed
-		back1.setFocusPainted(false);
+		back.setFocusPainted(false);
 		
 		//Sets font type, mode, and size
-		back1.setFont(new Font("Nasalization", Font.BOLD, 18));
+		back.setFont(new Font("Nasalization", Font.BOLD, 18));
 		
 		//Uses a bitwise operator to merge the fonts of bold and italic
 		//for the text
-		back1.setFont(back1.getFont()
+		back.setFont(back.getFont()
 				.deriveFont(Font.BOLD | Font.ITALIC));
 		
-		back1.setForeground(Color.RED);
+		back.setForeground(Color.RED);
 		
 		//Listens for whether the mouse has entered or exited the button
 		//area and if it has or has not, change color accordingly
-		back1.addMouseListener(new java.awt.event.MouseAdapter() {
+		back.addMouseListener(new java.awt.event.MouseAdapter() {
 		    public void mouseEntered(java.awt.event.MouseEvent evt) {
-		        back1.setForeground(Color.GREEN);
+		        back.setForeground(Color.GREEN);
 		    }
 
 		    public void mouseExited(java.awt.event.MouseEvent evt) {
-		        back1.setForeground(Color.RED);
+		        back.setForeground(Color.RED);
 		    }
 		});
 		
-		back1.addActionListener(aL);
-		panel.add(back1);
+		back.addActionListener(aL);
+		panel.add(back);
 		
 		if(smoothFPS)
 		{
@@ -866,7 +1654,7 @@ public class FPSLauncher extends JFrame
 		resolution.add("1020 x 700 High Res");
 		resolution.add("Fullscreen Low Res");
 		resolution.add("Fullscreen High Res");
-		resolution.select(Display.graphicsSelection);
+		resolution.select(resolutionChoice);
 		panel.add(resolution);	
 		
 		themeTitle = new JLabel("Themes:");
@@ -881,7 +1669,7 @@ public class FPSLauncher extends JFrame
 		theme.add("Nick Cage");
 		theme.add("Moon");
 		theme.add("MLG");
-		theme.select(Display.themeNum);
+		theme.select(themeChoice);
 		panel.add(theme);
 		
 		levelSizeTitle = new JLabel("Level Size (Survival only):");
@@ -895,7 +1683,7 @@ public class FPSLauncher extends JFrame
 		levelSize.add("50x50");
 		levelSize.add("100x100");
 		levelSize.add("250x250");
-		levelSize.select(Display.levelSize);
+		levelSize.select(levelSizeChoice);
 		panel.add(levelSize);
 		
 		modeTitle = new JLabel("Game Mode:");
@@ -909,7 +1697,7 @@ public class FPSLauncher extends JFrame
 		mode.add("I can handle it!");
 		mode.add("Bring it on!");
 		mode.add("Death cannot touch me!");
-		mode.select(Display.skillMode);
+		mode.select(modeChoice);
 		panel.add(mode);
 		
 		musicTitle = new JLabel("Music Options:");
@@ -923,11 +1711,7 @@ public class FPSLauncher extends JFrame
 		music.add("Music Option 3");
 		
 	   /*
-	    * If musicTheme is not one of the normal themes (because the 
-	    * game theme is mlg or koester) then just have it select the
-	    * 2nd music choice. If the music theme is one of the first
-	    * 4 themes available (including music off) then have that
-	    * selected as is.
+	    * Music choice depends on theme or what the user chooses
 	    */
 		if(Display.musicTheme > 2)
 		{
@@ -935,7 +1719,7 @@ public class FPSLauncher extends JFrame
 		}
 		else
 		{
-			music.select(Display.musicTheme);
+			music.select(musicChoice);
 		}
 		
 		panel.add(music);
@@ -947,14 +1731,11 @@ public class FPSLauncher extends JFrame
 		
 		musicVolume     = new JSlider();
 		musicVolume.setBounds(550, 220, 200, 40);
-		musicVolume.setMaximum(6);
-		musicVolume.setMinimum(-94);
+		musicVolume.setMaximum(100);
+		musicVolume.setMinimum(0);
 		musicVolume.setValue((int) musicVolumeLevel); 
 		musicVolume.setOpaque(true);
-		
-		int temp  = (int) musicVolumeLevel + 94;
-		musicVolume.setToolTipText("Music Volume Level: "+temp);
-		
+		musicVolume.setToolTipText("Music Volume Level: "+musicVolumeLevel);
 		musicVolume.addChangeListener(change);
 		panel.add(musicVolume);
 		
@@ -966,14 +1747,12 @@ public class FPSLauncher extends JFrame
 		
 		soundVolume     = new JSlider();
 		soundVolume.setBounds(550, 120, 200, 40);
-		soundVolume.setMaximum(6);
-		soundVolume.setMinimum(-94);
+		soundVolume.setMaximum(100);
+		soundVolume.setMinimum(0);
 		soundVolume.setValue((int) soundVolumeLevel); 
 		soundVolume.setOpaque(true);
-		
-		int temp2  = (int) soundVolumeLevel + 94;
-		soundVolume.setToolTipText("Sound Volume Level: "+temp2);
-		
+		soundVolume.setToolTipText("Sound Volume Level: "
+					+soundVolumeLevel);
 		soundVolume.addChangeListener(change);
 		panel.add(soundVolume);
 		
@@ -989,6 +1768,8 @@ public class FPSLauncher extends JFrame
 		newMapName.setText(startMap);
 		newMapName.setEditable(true);
 		panel.add(newMapName);
+		
+		panel.repaint();
 	}
 	
    /**
@@ -1023,10 +1804,43 @@ public class FPSLauncher extends JFrame
 		readMeText.setWrapStyleWord(true);
 		panel.add(readMeText);
 		
-		back2     = new JButton("Back To Main Menu");
-		back2.setBounds(300, 300, 200, 40);
-		back2.addActionListener(aL);
-		panel.add(back2);
+		back     = new JButton("Back To Main Menu");
+		back.setBounds(0, 325, 300, 40);
+		
+		//Button blends with background
+		back.setOpaque(false);
+		back.setContentAreaFilled(false);
+		back.setBorderPainted(false);
+		
+		//Removes textbox focus so the textbox border is removed
+		back.setFocusPainted(false);
+		
+		//Sets font type, mode, and size
+		back.setFont(new Font("Nasalization", Font.BOLD, 18));
+		
+		//Uses a bitwise operator to merge the fonts of bold and italic
+		//for the text
+		back.setFont(back.getFont()
+				.deriveFont(Font.BOLD | Font.ITALIC));
+		
+		back.setForeground(Color.RED);
+		
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		back.addMouseListener(new java.awt.event.MouseAdapter() {
+		    public void mouseEntered(java.awt.event.MouseEvent evt) {
+		        back.setForeground(Color.GREEN);
+		    }
+
+		    public void mouseExited(java.awt.event.MouseEvent evt) {
+		        back.setForeground(Color.RED);
+		    }
+		});
+		
+		back.addActionListener(aL);
+		panel.add(back);
+		
+		panel.repaint();
 	}
 	
    /**
@@ -1043,5 +1857,557 @@ public class FPSLauncher extends JFrame
 		
 		//Reset panel after drawing the background
 		panel.repaint();
+	}
+	
+   /**
+    * Sets the elements on the logInScreen to being visible
+    */
+	public void logInScreen()
+	{
+		userTitle = new JLabel("Users:");
+		userTitle.setFont(new Font("Nasalization",
+				Font.BOLD | Font.ITALIC, 24));
+		userTitle.setBounds(WIDTH / 6, HEIGHT / 3, 200, 25); 
+		userTitle.setForeground(Color.RED);
+		userTitle.setBackground(Color.BLACK);
+		userTitle.setOpaque(true);
+		panel.add(userTitle);
+		
+		newUserTitle = new JLabel("New User:");
+		newUserTitle.setFont(new Font("Nasalization",
+				Font.BOLD | Font.ITALIC, 24));
+		newUserTitle.setBounds((int)(WIDTH / 1.6), HEIGHT / 3, 200, 25); 
+		newUserTitle.setForeground(Color.RED);
+		newUserTitle.setBackground(Color.BLACK);
+		newUserTitle.setOpaque(true);
+		panel.add(newUserTitle);
+		
+		error = new JLabel("THAT USER ALREADY EXISTS! TRY ANOTHER!");
+		error.setFont(new Font("Nasalization",
+				Font.BOLD | Font.ITALIC, 24));
+		error.setBounds((int)(WIDTH / 2) - 260, HEIGHT - 250, 550, 25); 
+		error.setForeground(Color.GREEN);
+		error.setBackground(Color.BLACK);
+		error.setOpaque(true);
+		error.setVisible(false);
+		panel.add(error);
+		
+		//A new scanner object that is defaultly set to null
+		Scanner sc = null;  
+		
+		usernames = new ArrayList<String>();
+		
+	   /*
+	    * Try to read the file full of usernames and if not,
+	    * state the error
+	    */
+		try 
+		{
+			//Creates a Scanner that can read the file
+			sc = new Scanner(new BufferedReader
+					(new FileReader("users.txt")));
+			
+			String wholeFile = "";
+			
+			//Read all the lines of the file
+			while(sc.hasNextLine())
+			{
+				wholeFile += sc.nextLine();
+			}
+		    
+			String[] usernamesTemp = wholeFile.split(",");
+			
+			//Add all the usernames to the array list
+			for(String s:usernamesTemp)
+			{
+				usernames.add(s);
+			}
+			
+			sc.close();
+		}
+		catch(Exception e)
+		{
+			System.out.println(e);
+		}
+		
+		users = new Choice();
+		
+		//This Swing component allows a slide down menu with all the
+		//options you add here to choose from.
+		users.setBounds(WIDTH / 6, (HEIGHT / 3) + 50, 200, 40);
+
+		//Add all the usernames to the drop down menu
+		for(String s:usernames)
+		{
+			users.add(s);
+		}
+		
+		//If usersChoice is out of the bounds of the users available
+		if(users.getItemCount() < usersChoice - 1)
+		{
+			usersChoice = 0;
+		}
+		
+		try
+		{
+			users.select(usersChoice);
+		}
+		catch(Exception e)
+		{
+			//If no users just forget selecting one
+		}
+		
+		panel.add(users);
+		
+		//Textfield to add a new user to the game file
+		newUserName = new JTextField("");
+		newUserName.setBounds((int)(WIDTH / 1.6),
+				(HEIGHT / 3) + 50, 200, 25);
+		newUserName.setEditable(true);
+		panel.add(newUserName);
+		
+		logIn = new JButton("Log In");
+		
+		logIn.setBounds((WIDTH / 2) - 62, HEIGHT - 200, 150, 40);
+		
+		//Button blends with background
+		logIn.setContentAreaFilled(false);
+		logIn.setBorderPainted(false);
+		
+		//Removes textbox focus so the textbox border is removed
+		logIn.setFocusPainted(false);
+		
+		//Sets font type, mode, and size
+		logIn.setFont(new Font("Nasalization",
+				Font.BOLD, 24));
+		
+		logIn.setForeground(Color.RED);
+		logIn.setBackground(Color.BLACK);
+		logIn.setOpaque(true);
+		
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		logIn.addMouseListener(new java.awt.event.MouseAdapter() {
+		    public void mouseEntered(java.awt.event.MouseEvent evt) {
+		        logIn.setForeground(Color.GREEN);
+		    }
+
+		    public void mouseExited(java.awt.event.MouseEvent evt) {
+		        logIn.setForeground(Color.RED);
+		    }
+		});
+		
+		logIn.addActionListener(aL);
+		panel.add(logIn);
+		
+		removeUser = new JButton("Remove User");
+		
+		removeUser.setBounds((WIDTH / 2) - 85, HEIGHT - 500, 200, 40);
+		
+		//Button blends with background
+		removeUser.setContentAreaFilled(false);
+		removeUser.setBorderPainted(false);
+		
+		//Removes textbox focus so the textbox border is removed
+		removeUser.setFocusPainted(false);
+		
+		//Sets font type, mode, and size
+		removeUser.setFont(new Font("Nasalization",
+				Font.BOLD, 24));
+		
+		removeUser.setForeground(Color.RED);
+		removeUser.setBackground(new Color(0,0,0));
+		removeUser.setOpaque(true);
+		
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		removeUser.addMouseListener(new java.awt.event.MouseAdapter() {
+		    public void mouseEntered(java.awt.event.MouseEvent evt) {
+		        removeUser.setForeground(Color.GREEN);
+		    }
+
+		    public void mouseExited(java.awt.event.MouseEvent evt) {
+		        removeUser.setForeground(Color.RED);
+		    }
+		});
+		
+		removeUser.addActionListener(aL);
+		panel.add(removeUser);	
+		
+		panel.repaint();
+	}
+	
+   /**
+    * Used to delete a folder and all of its contents
+    * @param file
+    */
+	public void deleteFolder(File file) 
+	{
+	   /*
+	    * Gets all contents of the folder/file (Which could be more
+	    * folders) and recursivly runs through them all to delete
+	    * all the contents of it. Mainly used for removing users
+	    * from the game.
+	    */
+	    File[] contents = file.listFiles();
+	    
+	    //Recursively run through the files to get rid of everything
+	    //in the folder
+	    if (contents != null) 
+	    {
+	        for (File folder: contents) 
+	        {
+	            deleteFolder(folder);
+	        }
+	    }
+	    
+	    //Delete parent file
+	    file.delete();
+	}
+	
+   /**
+    * Sets up the saving and loading menu. Putting them both on the same 
+    * page makes it easy to access these functions.
+    */
+	public void saveLoadMenuSetup()
+	{
+		//Colors of buttons when mouse is not over them or when it is
+		Color defaultColor = Color.RED;
+		Color mouseColor = Color.GREEN;
+				
+		saveGame   = new JButton("Save Game");
+		saveGame.setBounds(0, 150, 270, 40);
+		
+		saveGame.setOpaque(false);
+		saveGame.setContentAreaFilled(false);
+		saveGame.setBorderPainted(false);
+		
+		//Removes textbox focus so the textbox border is removed
+		saveGame.setFocusPainted(false);
+		
+		saveGame.setFont(new Font("Nasalization", Font.BOLD, 24));
+		
+		saveGame.setForeground(defaultColor);
+		
+		saveGame.addMouseListener(new java.awt.event.MouseAdapter() {
+		    public void mouseEntered(java.awt.event.MouseEvent evt) {
+		        saveGame.setForeground(mouseColor);
+		    }
+
+		    public void mouseExited(java.awt.event.MouseEvent evt) {
+		        saveGame.setForeground(defaultColor);
+		    }
+		});
+		
+		saveGame.addActionListener(aL);
+		panel.add(saveGame);
+		
+		loadGame   = new JButton("Load Game");
+		loadGame.setBounds(0, 200, 270, 40);
+		
+		loadGame.setOpaque(false);
+		loadGame.setContentAreaFilled(false);
+		loadGame.setBorderPainted(false);
+		
+		//Removes textbox focus so the textbox border is removed
+		loadGame.setFocusPainted(false);
+		
+		loadGame.setFont(new Font("Nasalization", Font.BOLD, 24));
+		
+		loadGame.setForeground(defaultColor);
+		
+		loadGame.addMouseListener(new java.awt.event.MouseAdapter() {
+		    public void mouseEntered(java.awt.event.MouseEvent evt) {
+		        loadGame.setForeground(mouseColor);
+		    }
+
+		    public void mouseExited(java.awt.event.MouseEvent evt) {
+		        loadGame.setForeground(defaultColor);
+		    }
+		});
+		
+		loadGame.addActionListener(aL);
+		panel.add(loadGame);
+		
+		removeSave   = new JButton("Remove a Save");
+		removeSave.setBounds(0, 250, 315, 40);
+		
+		removeSave.setOpaque(false);
+		removeSave.setContentAreaFilled(false);
+		removeSave.setBorderPainted(false);
+		
+		//Removes textbox focus so the textbox border is removed
+		removeSave.setFocusPainted(false);
+		
+		removeSave.setFont(new Font("Nasalization", Font.BOLD, 24));
+		
+		removeSave.setForeground(defaultColor);
+		
+		removeSave.addMouseListener(new java.awt.event.MouseAdapter() {
+		    public void mouseEntered(java.awt.event.MouseEvent evt) {
+		    	removeSave.setForeground(mouseColor);
+		    }
+
+		    public void mouseExited(java.awt.event.MouseEvent evt) {
+		    	removeSave.setForeground(defaultColor);
+		    }
+		});
+		
+		removeSave.addActionListener(aL);
+		panel.add(removeSave);
+		
+		//Saved Games choice list bounds
+		savedGames.setBounds((WIDTH / 2) - 100,
+				(HEIGHT / 2) - 100, 200, 100);
+		
+		//Add all the saved file names to the list
+		for(String s: saves)
+		{
+			savedGames.addItem(s);
+		}
+		
+		try
+		{
+			savedGames.select(saveChoice);
+		}
+		catch(Exception e)
+		{
+			//If no saved games yet just don't have anything
+		}
+		
+		savedGames.addItemListener(iL);
+		panel.add(savedGames);
+		
+		String temp = "";
+		
+		try
+		{
+			temp = savedGames.getItem(saveChoice);
+		}
+		catch(Exception ex)
+		{
+			//If there is no saved games, just leave blank
+		}
+		
+		//Textfield to add a new user to the game file
+		saveTextfield = new JTextField(temp);
+		saveTextfield.setBounds((int)(WIDTH / 2) + 150,
+				(HEIGHT / 2) - 100, 200, 25);
+		saveTextfield.setEditable(true);
+		panel.add(saveTextfield);
+		
+		availableGames = new JLabel("Saved Games");
+		availableGames.setFont(new Font("Nasalization",
+				Font.BOLD | Font.ITALIC, 24));
+		availableGames.setBounds((int)(WIDTH / 2) - 100,
+				(HEIGHT / 2) - 150, 200, 25); 
+		availableGames.setForeground(Color.GREEN);
+		availableGames.setBackground(Color.BLACK);
+		availableGames.setOpaque(true);
+		availableGames.setVisible(true);
+		panel.add(availableGames);
+		
+		saveName = new JLabel("File Name: (Can add new name)");
+		saveName.setFont(new Font("Nasalization",
+				Font.BOLD | Font.ITALIC, 13));
+		saveName.setBounds((int)(WIDTH / 2) + 150,
+				(HEIGHT / 2) - 150, 200, 25); 
+		saveName.setForeground(Color.GREEN);
+		saveName.setBackground(Color.BLACK);
+		saveName.setOpaque(true);
+		saveName.setVisible(true);
+		panel.add(saveName);
+		
+		back     = new JButton("Back To Main Menu");
+		back.setBounds(0, 325, 300, 40);
+		
+		//Button blends with background
+		back.setOpaque(false);
+		back.setContentAreaFilled(false);
+		back.setBorderPainted(false);
+		
+		//Removes textbox focus so the textbox border is removed
+		back.setFocusPainted(false);
+		
+		//Sets font type, mode, and size
+		back.setFont(new Font("Nasalization", Font.BOLD, 18));
+		
+		//Uses a bitwise operator to merge the fonts of bold and italic
+		//for the text
+		back.setFont(back.getFont()
+				.deriveFont(Font.BOLD | Font.ITALIC));
+		
+		back.setForeground(Color.RED);
+		
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		back.addMouseListener(new java.awt.event.MouseAdapter() {
+		    public void mouseEntered(java.awt.event.MouseEvent evt) {
+		        back.setForeground(Color.GREEN);
+		    }
+
+		    public void mouseExited(java.awt.event.MouseEvent evt) {
+		        back.setForeground(Color.RED);
+		    }
+		});
+		
+		back.addActionListener(aL);
+		panel.add(back);
+		
+		panel.repaint();
+	}
+	
+   /**
+    * Called when the user attempts to quit the game. First this method checks
+    * to see whether the user is sure about leaving or not, and if he/she is,
+    * then the game saves the users settings in the settings file and exits the
+    * game.
+    */
+	public void quitGame()
+	{
+		Random rand = new Random();
+		
+		int random = rand.nextInt(11);
+		
+		String exitString = "";
+		
+		//Set a random exit message to display
+		switch(random)
+		{
+			case 0:
+				exitString = "Quitting is for the weak! Are you weak?!";
+				break;
+			case 1:
+				exitString = "The VILE are invading! Are you really going to let them win?!";
+				break;
+			case 2:
+				exitString = "Do you really want to go back to having a life?";
+				break;
+			case 3:
+				exitString = "Don't leave yet! There's a rocket launcher in that next room! Are you sure?";
+				break;
+			case 4:
+				exitString = "Are you really going to leave all your comrades in the hands of the VILE?";
+				break;
+			case 5:
+				exitString = "Do you know how hard it was to make this game?! You're really going to quit now?!";
+				break;
+			case 6:
+				exitString = "That Brainomorph called you a dummy! You really going to let him say that?!";
+				break;
+			case 7:
+				exitString = "Morty! I need your help to defeat the VILE! You really going to quit on your grandpa?!";
+				break;
+			case 8:
+				exitString = "Rush is the greatest band ever! You have to agree or you can't leave.";
+				break;
+			case 9:
+				exitString = "Leaving so soon? Don't worry.... I'll be waiting... mwah haha!";
+				break;
+			default:
+				exitString = "Are you sure you want to quit?";
+				break;
+		}
+		
+		//Prompt user to say yes or no to removing the user
+		int response = JOptionPane.showConfirmDialog
+		(null, exitString, "Quit Game", JOptionPane.YES_NO_OPTION);
+		
+		//If no then return, if yes then continue
+		if(response == JOptionPane.NO_OPTION)
+		{
+			return;
+		}
+		
+		saveStats();
+		
+		System.exit(0);
+	}
+	
+   /**
+    * Called when the settings file (that holds the games stats) needs to
+    * be saved.
+    */
+	public void saveStats()
+	{
+		//The buffered writer that will write to a file
+		BufferedWriter writeSettings;
+		
+	   /*
+	    * Save settings and stats into the settings text file
+	    */
+     	try 
+		{
+     		writeSettings = new BufferedWriter(new FileWriter
+     				("Users/"+currentUserName+"/stats/settings.txt"));
+
+    		//Player and level stuff
+    		writeSettings.write(resolutionChoice+":"
+    				+Player.maxKills+":"+levelSizeChoice+
+    				":"+startMap+":"+themeChoice+
+    				":"+modeChoice+":"+musicChoice+":"
+    				+soundVolumeLevel+":"+musicVolumeLevel+":"
+    				+smoothFPS+":"+mouseStatus+
+    				":"+nonDefaultMap);
+    		
+    		//For all the save names. Write them into the file
+    		for(String s: saves)
+    		{
+    			writeSettings.write(":"+s);
+    		}
+    		
+    		writeSettings.close();
+		}
+     	catch(Exception e)
+     	{
+     		System.out.println(e);
+     	}
+	}
+	
+   /**
+    * Displays an error on the menu page with a custom message sent in
+    * through the parameters.
+    * @param errorMessage
+    */
+	public void displayError(String errorMessage)
+	{
+		//Initialize error
+		error = new JLabel(errorMessage);
+		error.setFont(new Font("Nasalization",
+				Font.BOLD | Font.ITALIC, 24));
+		error.setBounds((int)(WIDTH / 2) - 260, HEIGHT - 100, 550, 25); 
+		error.setForeground(Color.GREEN);
+		error.setBackground(Color.BLACK);
+		error.setOpaque(true);
+		error.setVisible(true);
+		panel.add(error);
+		
+		//Start new thread to have flashing text
+		t = new Thread(new Runnable(){
+            private int counter = 0;
+            public void run() {
+                while (true){
+                    counter++;
+                    SwingUtilities.invokeLater(new Runnable(){
+                        public void run() {
+                            if (counter % 2 == 0){
+                                error.setForeground(Color.GREEN);
+                                counter = 0;
+                            } else {
+                                error.setForeground(Color.WHITE);
+                            }
+                        }
+                    });
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+		
+        t.start();
+        return;
 	}
 }

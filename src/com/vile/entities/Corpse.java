@@ -5,6 +5,7 @@ import java.util.Random;
 import com.vile.Game;
 import com.vile.graphics.Render;
 import com.vile.graphics.Textures;
+import com.vile.launcher.FPSLauncher;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -111,7 +112,7 @@ public class Corpse
 			
 			//If in survival, corpses disappear after a bit
 			//to make the game faster.
-			if(!Game.setMap)
+			if(FPSLauncher.gameMode == 1)
 			{
 				Game.corpses.remove(this);
 				return;

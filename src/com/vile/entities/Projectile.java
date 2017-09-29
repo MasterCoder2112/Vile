@@ -1,10 +1,11 @@
 package com.vile.entities;
 
+import java.util.ArrayList;
+
 import com.vile.Display;
 import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.graphics.Render3D;
-import com.vile.input.Controller;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -22,6 +23,9 @@ public abstract class Projectile
 {
 	//Has projectile hit something?
 	public boolean hit = false;
+	
+	//If the bullet hits something its supposed to disappear from
+	private boolean disappear = false;
 	
 	//Has this projectile hit an enemy?
 	public static boolean enemyHit = false;
@@ -44,6 +48,9 @@ public abstract class Projectile
 	public double y = 0;
 	public double z = 0;
 	
+	//Distance from Player
+	public double distanceFromPlayer = 0;
+	
 	//The type of projectile
 	public int ID = 0;
 	
@@ -53,6 +60,10 @@ public abstract class Projectile
 	//Change in x and z values.
 	public double xa = 0;
 	public double za = 0;
+	
+	//Pixels that the projectile occupies on screen when rendered
+	public ArrayList<Integer> pixelsOnScreen 
+			= new ArrayList<Integer>();
 	
    /**
     * Sets up typical new projectile
@@ -91,8 +102,14 @@ public abstract class Projectile
 		//Distance from object the projectile can hit
 		double z = 0;
 		
+		//The projectiles distance from the player. Updated every tick
+		distanceFromPlayer = Math.sqrt(((Math.abs(x - Player.x))
+				* (Math.abs(x - Player.x)))
+				+ ((Math.abs(this.z - Player.z))
+						* (Math.abs(this.z - Player.z))));
+		
 		//If projectile hits ceiling or floor. Stop it
-		if(y > 1 || -y * 10 >= Render3D.ceilingDefaultHeight)
+		if((y > 1 || -y * 10 >= Render3D.ceilingDefaultHeight) && ID != 1)
 		{		
 			//Fixes bug where a rocket goes way below the floor
 			//before it hits.
@@ -109,8 +126,12 @@ public abstract class Projectile
 				y = 1;
 			}
 			
-			projectileHit();
-			normalHit();
+			//Add HitSprite to the game
+			HitSprite hS = new HitSprite(this.x, this.z, this.y, this.ID);
+			
+			Game.sprites.add(hS);
+			
+			projectileHit(true);
 			
 			return false;
 		}
@@ -119,8 +140,12 @@ public abstract class Projectile
 		if(x < 0 || this.z < 0 || x > Level.width 
 				|| this.z > Level.height)
 		{
-			projectileHit();
-			normalHit();
+			//Add HitSprite to the game
+			HitSprite hS = new HitSprite(this.x, this.z, this.y, this.ID);
+			
+			Game.sprites.add(hS);
+			
+			projectileHit(true);
 			return false;
 		}
 		
@@ -168,33 +193,91 @@ public abstract class Projectile
 							* (Math.abs(temp.z - nextZ))));
 			
 			//Difference in y
-			double yDifference = Math.abs((-y * 13) - Math.abs(temp.y));
+			//double yDifference = Math.abs((-y * 13) - Math.abs(temp.y));
 			
-			//If close enough, don't allow bullet to pass
-			if(distance <= 0.3 && temp.isSolid && 
-					(yDifference <= temp.height
-					|| y >= 0))
+			//If explosive canister
+			if(temp.itemID == ItemNames.CANISTER.getID())
 			{
-				//If an explosive canister
-				if(temp.itemID == 32)
+				//If close enough, don't allow bullet to pass
+				if(distance <= 0.3)
 				{
-					//Cast the item type as being an ExplosiveCanister
-					ExplosiveCanister can = (ExplosiveCanister)temp;
-					
-					//Damage canister the amount the projectile has
-					can.health -= damage;
-					
-					//If canister is damaged enough, blow it up
-					if(can.health <= 0)
+					if(this.pixelsOnScreen.size() > 0
+							&& temp.pixelsOnScreen.size() > 0
+							&& (ID == 0 || ID == 2))
 					{
-						Game.explosions.add(
-								new Explosion(can.x,
-										-can.y/10, can.z, 1, 0));
-						block.wallItem = null;
-						can.removeCanister();
-						projectileHit();
-						normalHit();
-						return false;
+						boolean hitObject = false;
+
+						for(int j = 0; j < this.pixelsOnScreen.size(); j++)
+						{
+							int temp2 = this.pixelsOnScreen.get(j);
+							
+							if(temp.pixelsOnScreen.contains(temp2))
+							{
+								hitObject = true;
+								break;
+							}
+
+						}
+						
+						//If the enemy is indeed hit
+						if(hitObject)
+						{
+							//Cast the item type as being an ExplosiveCanister
+							ExplosiveCanister can = (ExplosiveCanister)temp;
+							
+							//Damage canister the amount the projectile has
+							can.health -= damage;
+							
+							//If canister is damaged enough, blow it up
+							if(can.health <= 0)
+							{
+								Game.explosions.add(
+										new Explosion(can.x,
+												-can.y/10, can.z, 1, 0));
+								block.wallItem = null;
+								can.removeCanister();
+								
+								//Add HitSprite to the game
+								HitSprite hS = new HitSprite(this.x, this.z, this.y, 3);
+								
+								Game.sprites.add(hS);
+								
+								disappear = true;
+								
+								projectileHit(true);
+								return false;
+							}
+						}
+					}
+					else if(((Math.abs((this.y) - ((temp.y)
+								/ 12)) <= 0.8)))
+					{
+
+						//Cast the item type as being an ExplosiveCanister
+						ExplosiveCanister can = (ExplosiveCanister)temp;
+						
+						//Damage canister the amount the projectile has
+						can.health -= damage;
+						
+						//If canister is damaged enough, blow it up
+						if(can.health <= 0)
+						{
+							Game.explosions.add(
+									new Explosion(can.x,
+											-can.y/10, can.z, 1, 0));
+							block.wallItem = null;
+							can.removeCanister();
+							
+							//Add HitSprite to the game
+							HitSprite hS = new HitSprite(this.x, this.z, this.y, 3);
+							
+							Game.sprites.add(hS);
+							
+							disappear = true;
+							
+							projectileHit(true);
+							return false;
+						}
 					}
 				}
 			}
@@ -225,66 +308,174 @@ public abstract class Projectile
 			}
 			else
 			{	
-				//If close enough, hit boss. It can be hit at
-				//any y value for now
+				//If close enough, hit boss.
 				if(distance <= 2)
 				{
-					boss.searchMode = false;
-				   /*
-				    * If enemy that shot projectile is still alive
-				    * Then reset target to that unless that target
-				    * is the same type of enemy as the enemy that
-				    * fired it because they are immune to their
-				    * own attack.
-				    */
-					if(this.sourceEnemy != null
-							&& this.sourceEnemy.ID !=
-							boss.ID)
+					//If enemy can be seen on the screen
+					if(boss.pixelsOnScreen.size() > 0
+							&& this.pixelsOnScreen.size() > 0
+							&& (ID == 0 || ID == 2))
 					{
-						boss.targetEnemy 
-							= this.sourceEnemy;
+						boolean hitObject = false;
+
+						for(int j = 0; j < this.pixelsOnScreen.size(); j++)
+						{
+							int temp = this.pixelsOnScreen.get(j);
+							
+							if(boss.pixelsOnScreen.contains(temp))
+							{
+								hitObject = true;
+								break;
+							}
+
+						}
 						
-						//Hurt enemy, and activate
-						//the enemy if not already.
-						boss.hurt(this.damage, bossHit);
-						boss.activated = true;
+						//If the enemy is indeed hit
+						if(hitObject)
+						{
+							boss.searchMode = false;
+						   /*
+						    * If enemy that shot projectile is still alive
+						    * Then reset target to that unless that target
+						    * is the same type of enemy as the enemy that
+						    * fired it because they are immune to their
+						    * own attack.
+						    */
+							if(this.sourceEnemy != null
+									&& this.sourceEnemy.ID !=
+									boss.ID)
+							{
+								boss.targetEnemy 
+									= this.sourceEnemy;
+								
+								//Hurt enemy, and activate
+								//the enemy if not already. Can't be a rocket
+								//to hurt. The explosion is what hurts the
+								//enemy.
+								if(ID != 3)
+								{
+									boss.hurt(this.damage, enemyHit);
+								}
+								
+								boss.activated = true;
+								boss.searchMode = false;
+							}
+							else
+							{
+								//Hurt enemy if not a rocket. The explosion is
+								//what harms the enemy from the rocket.
+								if(ID != 3)
+								{
+									boss.hurt(this.damage, enemyHit);
+								}	
+								
+								//Activate the enemy if not already.
+								boss.activated = true;
+								
+								//Enemies target is now you
+								boss.targetEnemy = null;
+								
+								//Not searching for you anymore, it will just come
+								//right towards your position
+								boss.searchMode = false;
+							}
+							
+							/*
+							 * If an enemy is made happy, then remove that enemy from
+							 * the game, and call the death function to drop any items
+							 * or add to the made happy count of the game as needed.
+							 */
+							if (boss.health <= 0) 
+							{
+								boss.enemyDeath();
+							}
+							
+							//If shotgun spread bullet
+							if(ID == 1)
+							{
+								enemyHit = true;
+							}
+							
+							//Add HitSprite to the game
+							HitSprite hS = new HitSprite(this.x, this.z, this.y, 3);
+							
+							Game.sprites.add(hS);
+							
+							//Bullet texture does not stay in mid-air
+							disappear = true;
+							
+							projectileHit(false);
+							
+							return false;	
+						}
 					}
 					else
 					{
-						//Hurt enemy
-						boss.hurt(this.damage, bossHit);
-						
-						//Activate the enemy if not already.
-						boss.activated = true;
-						
-						//Enemies target is now you
-						boss.targetEnemy = null;
-						
-						//Not searching for you anymore, it will just come
-						//right towards your position
 						boss.searchMode = false;
+						
+					   /*
+					    * If enemy that shot projectile is still alive
+					    * Then reset target to that unless that target
+					    * is the same type of enemy as the enemy that
+					    * fired it because they are immune to their
+					    * own attack.
+					    */
+						if(this.sourceEnemy != null
+								&& this.sourceEnemy.ID !=
+								boss.ID)
+						{
+							boss.targetEnemy 
+								= this.sourceEnemy;
+							
+							//Hurt enemy, and activate
+							//the enemy if not already.
+							boss.hurt(this.damage, bossHit);
+							boss.activated = true;
+						}
+						else
+						{
+							//Hurt enemy
+							boss.hurt(this.damage, bossHit);
+							
+							//Activate the enemy if not already.
+							boss.activated = true;
+							
+							//Enemies target is now you
+							boss.targetEnemy = null;
+							
+							//Not searching for you anymore, it will just come
+							//right towards your position
+							boss.searchMode = false;
+						}
+						
+						/*
+						 * If an enemy is made happy, then remove that enemy from
+						 * the game, and call the death function to drop any items
+						 * or add to the made happy count of the game as needed.
+						 */
+						if (boss.health <= 0) 
+						{
+							boss.enemyDeath();
+						}
+						
+						//If shotgun spread bullet
+						if(ID == 1)
+						{
+							bossHit = true;
+						}
+						
+						//Add HitSprite to the game
+						HitSprite hS = new HitSprite(this.x, this.z, this.y, 3);
+						
+						Game.sprites.add(hS);
+						
+						//Bullet texture does not stay in mid-air
+						disappear = true;
+						
+						projectileHit(false);
+						
+						return false;
 					}
-					
-					/*
-					 * If an enemy is made happy, then remove that enemy from
-					 * the game, and call the death function to drop any items
-					 * or add to the made happy count of the game as needed.
-					 */
-					if (boss.health <= 0) 
-					{
-						boss.enemyDeath();
-					}
-					
-					//If shotgun spread bullet
-					if(ID == 1)
-					{
-						bossHit = true;
-					}
-					
-					projectileHit();
-					normalHit();
-					
-					return false;	
 				}
 			}
 		}
@@ -311,78 +502,200 @@ public abstract class Projectile
 				}
 				else
 				{	
-					//If close enough, hit enemy.
-					if(distance <= 0.35
-						&& ((Math.abs((this.y) - (enemy.getY() 
-								/ enemy.heightCorrect)) <= 1)))
+					double distanceCheck = 0.35;
+					
+					//So that even though reapers are faster, the
+					//projectile will still hit them and not miss if
+					//they are running towards or away from you.
+					if(enemy.ID == 4)
 					{
-						enemy.searchMode = false;
-					   /*
-					    * If enemy that shot projectile is still alive
-					    * Then reset target to that unless that target
-					    * is the same type of enemy as the enemy that
-					    * fired it because they are immune to their
-					    * own attack.
-					    */
-						if(this.sourceEnemy != null
-								&& this.sourceEnemy.ID !=
-								enemy.ID)
+						distanceCheck = 0.7;
+					}
+					
+					//TODO check
+					//If close enough, hit enemy. If faster enemy then
+					//have a greater hit distance as the enemy may be
+					//speeding toward you or away from you.
+					if(distance <= distanceCheck)
+					{
+						//If enemy can be seen on the screen
+						if(enemy.pixelsOnScreen.size() > 0
+								&& this.pixelsOnScreen.size() > 0
+								&& (ID == 0 || ID == 2))
 						{
-							enemy.targetEnemy 
-								= this.sourceEnemy;
-							
-							//Hurt enemy, and activate
-							//the enemy if not already. Can't be a rocket
-							//to hurt. The explosion is what hurts the
-							//enemy.
-							if(ID != 3)
+							boolean hitObject = false;
+
+							for(int j = 0; j < this.pixelsOnScreen.size(); j++)
 							{
-								enemy.hurt(this.damage, enemyHit);
+								int temp = this.pixelsOnScreen.get(j);
+								
+								if(enemy.pixelsOnScreen.contains(temp))
+								{
+									hitObject = true;
+									break;
+								}
+
 							}
 							
-							enemy.activated = true;
-							enemy.searchMode = false;
-						}
-						else
-						{
-							//Hurt enemy if not a rocket. The explosion is
-							//what harms the enemy from the rocket.
-							if(ID != 3)
+							//If the enemy is indeed hit
+							if(hitObject)
 							{
-								enemy.hurt(this.damage, enemyHit);
-							}	
-							
-							//Activate the enemy if not already.
-							enemy.activated = true;
-							
-							//Enemies target is now you
-							enemy.targetEnemy = null;
-							
-							//Not searching for you anymore, it will just come
-							//right towards your position
+								enemy.searchMode = false;
+							   /*
+							    * If enemy that shot projectile is still alive
+							    * Then reset target to that unless that target
+							    * is the same type of enemy as the enemy that
+							    * fired it because they are immune to their
+							    * own attack.
+							    */
+								if(this.sourceEnemy != null
+										&& this.sourceEnemy.ID !=
+										enemy.ID)
+								{
+									enemy.targetEnemy 
+										= this.sourceEnemy;
+									
+									//Hurt enemy, and activate
+									//the enemy if not already. Can't be a rocket
+									//to hurt. The explosion is what hurts the
+									//enemy.
+									if(ID != 3)
+									{
+										enemy.hurt(this.damage, enemyHit);
+									}
+									
+									enemy.activated = true;
+									enemy.searchMode = false;
+								}
+								else
+								{
+									//Hurt enemy if not a rocket. The explosion is
+									//what harms the enemy from the rocket.
+									if(ID != 3)
+									{
+										enemy.hurt(this.damage, enemyHit);
+									}	
+									
+									//Activate the enemy if not already.
+									enemy.activated = true;
+									
+									//Enemies target is now you
+									enemy.targetEnemy = null;
+									
+									//Not searching for you anymore, it will just come
+									//right towards your position
+									enemy.searchMode = false;
+								}
+								
+								/*
+								 * If an enemy is made happy, then remove that enemy from
+								 * the game, and call the death function to drop any items
+								 * or add to the made happy count of the game as needed.
+								 */
+								if (enemy.health <= 0) 
+								{
+									enemy.enemyDeath();
+								}
+								
+								//If shotgun spread bullet
+								if(ID == 1)
+								{
+									enemyHit = true;
+								}
+								
+								//Add HitSprite to the game
+								HitSprite hS = new HitSprite(this.x, this.z, this.y, 3);
+								
+								Game.sprites.add(hS);
+								
+								//Bullet texture does not stay in mid-air
+								disappear = true;
+								
+								projectileHit(false);
+								
+								return false;	
+							}
+						}
+						//The old method of checking collision
+						else if(((Math.abs((this.y) - ((enemy.getY())
+								/ enemy.heightCorrect)) <= 0.8)))
+						{
 							enemy.searchMode = false;
+							
+						   /*
+						    * If enemy that shot projectile is still alive
+						    * Then reset target to that unless that target
+						    * is the same type of enemy as the enemy that
+						    * fired it because they are immune to their
+						    * own attack.
+						    */
+							if(this.sourceEnemy != null
+									&& this.sourceEnemy.ID !=
+									enemy.ID)
+							{
+								enemy.targetEnemy 
+									= this.sourceEnemy;
+								
+								//Hurt enemy, and activate
+								//the enemy if not already. Can't be a rocket
+								//to hurt. The explosion is what hurts the
+								//enemy.
+								if(ID != 3)
+								{
+									enemy.hurt(this.damage, enemyHit);
+								}
+								
+								enemy.activated = true;
+								enemy.searchMode = false;
+							}
+							else
+							{
+								//Hurt enemy if not a rocket. The explosion is
+								//what harms the enemy from the rocket.
+								if(ID != 3)
+								{
+									enemy.hurt(this.damage, enemyHit);
+								}	
+								
+								//Activate the enemy if not already.
+								enemy.activated = true;
+								
+								//Enemies target is now you
+								enemy.targetEnemy = null;
+								
+								//Not searching for you anymore, it will just come
+								//right towards your position
+								enemy.searchMode = false;
+							}
+							
+							/*
+							 * If an enemy is made happy, then remove that enemy from
+							 * the game, and call the death function to drop any items
+							 * or add to the made happy count of the game as needed.
+							 */
+							if (enemy.health <= 0) 
+							{
+								enemy.enemyDeath();
+							}
+							
+							//If shotgun spread bullet
+							if(ID == 1)
+							{
+								enemyHit = true;
+							}
+							
+							//Add HitSprite to the game
+							HitSprite hS = new HitSprite(this.x, this.z, this.y, 3);
+							
+							Game.sprites.add(hS);
+							
+							//Bullet texture does not stay in mid-air
+							disappear = true;
+							
+							projectileHit(false);
+							
+							return false;
 						}
-						
-						/*
-						 * If an enemy is made happy, then remove that enemy from
-						 * the game, and call the death function to drop any items
-						 * or add to the made happy count of the game as needed.
-						 */
-						if (enemy.health <= 0) 
-						{
-							enemy.enemyDeath();
-						}
-						
-						//If shotgun spread bullet
-						if(ID == 1)
-						{
-							enemyHit = true;
-						}
-						
-						projectileHit();
-						normalHit();
-						
-						return false;	
 					}
 				}	
 			}	
@@ -439,12 +752,11 @@ public abstract class Projectile
 				//invincible.
 				if(distance <= 0.3 && Math.abs
 						((Player.y / tempNum) + (this.y)) <= 2.5
-						&& !Controller.godModeOn &&
+						&& !Player.godModeOn &&
 						Player.immortality == 0 && Player.alive)
 				{
 					Player.hurtPlayer(this.damage);
-					projectileHit();
-					normalHit();
+					projectileHit(true);
 					
 					return false;
 				}
@@ -458,7 +770,7 @@ public abstract class Projectile
 	   /*
 	    * Check to see if bullet hit a block, and return whether it did
 	    * or not.
-	    */	    
+	    */	
 	    if(block.isSolid || block2.isSolid)
 	    {
 	    	return collisionChecks(block) && collisionChecks(block2);
@@ -478,7 +790,7 @@ public abstract class Projectile
     * @return
     */
 	public boolean collisionChecks(Block block)
-	{	
+	{
 		double yCorrect = y - 0.5;
 		
 	   /*
@@ -500,10 +812,18 @@ public abstract class Projectile
 	    */
 		if((((block.height)
 				+ block.y) > 
-		(-yCorrect * 12.2) && (-yCorrect * 12.2) >= block.y - 1 
+		(-yCorrect * (10)) && (-yCorrect * (10)) >= block.y - 1 
 		&& block.y == 0) || yCorrect > 0 && block.y == 0
 		&& !hit && block.height != 0)
 		{	
+			//If the player is on the block and its hit, then 
+			//ignore being hit if its the shotgun because
+			//shotgun does weird crap.
+			if(block.equals(Player.blockOn) && ID == 1)
+			{
+				return true;
+			}
+			
 		   /*
 		    * If a glass wall that is also labeled as a breakable wall, it
 		    * is breakable by bullets or rockets. Then it turns into
@@ -519,7 +839,7 @@ public abstract class Projectile
 					block.health -= damage;
 					
 					//Blass glass hit/break sound
-					SoundController.glassBreak.playAudioFile();
+					SoundController.glassBreak.playAudioFile(distanceFromPlayer);
 					
 					if(block.health <= 0)
 					{
@@ -532,6 +852,14 @@ public abstract class Projectile
 						//Re-add to level
 						Level.blocks[block.x + block.z * Level.width] = block;
 					}
+					
+					//Add HitSprite to the game
+					HitSprite hS = new HitSprite(this.x, this.z, this.y, 5);
+					
+					Game.sprites.add(hS);
+					
+					//Makes sure alternate bullet hit sprites aren't rendered
+					disappear = true;
 				}
 				//If electric wall
 				else if(block.wallID == 15 && !hit)
@@ -540,7 +868,7 @@ public abstract class Projectile
 					block.health -= damage;
 					
 					//Blass glass hit/break sound
-					SoundController.explosion.playAudioFile();
+					SoundController.explosion.playAudioFile(distanceFromPlayer);
 					
 					//If block is broken
 					if(block.health <= 0)
@@ -550,7 +878,7 @@ public abstract class Projectile
 								19, block.y, block.x, block.z);
 						
 						//Computer Shutting down sound effect
-						SoundController.computerShutdown.playAudioFile();
+						SoundController.computerShutdown.playAudioFile(distanceFromPlayer);
 						
 						//Re-add to level
 						Level.blocks[block.x + block.z * Level.width] = block;
@@ -562,53 +890,40 @@ public abstract class Projectile
 				
 			}
 			
-			//Normal bullet, not rocket
-			if(ID <= 2)
+			//Only for rockets
+			if(ID == 3)
 			{
-				SoundController.wallHit.playAudioFile();
-				
-				//Remove from bullets list
-				Game.bullets.remove(this);
-			}
-			//If an enemy projectile
-			else
-			{
-				SoundController.enemyFireHit.playAudioFile();
-				
-				//Remove from its list
-				Game.enemyProjectiles.remove(this);
-			}
-			
-			//Loop through this bringing the projectile closer and closer to
-			//the wall until it hits the wall. This makes it so that rockets
-			//will explode right next to the wall instead of farther out like
-			//they used to.
-			while((int)this.x != block.x || (int)this.z != block.z)
-			{		
-				//Move at tenth the speed it was originally for
-				//smaller more precise increments
-				this.x += xa / 10;
-				this.z += za / 10;
-				
-				//Makes it so an infinite loop does not occur if the
-				//projectile goes through the corner of a wall and misses
-				//its chance to check collision or not.
-				if((xa > 0 && this.x + xa > block.x)
-						|| (xa < 0 && this.x + xa < block.x))
-				{
-					break;
-				}
-				
-				//Same as above but for the z
-				if((za > 0 && this.z + za > block.z)
-						|| (za < 0 && this.z + za < block.z))
-				{
-					break;
+				//Loop through this bringing the projectile closer and closer to
+				//the wall until it hits the wall. This makes it so that rockets
+				//will explode right next to the wall instead of farther out like
+				//they used to.
+				while((int)this.x != block.x || (int)this.z != block.z)
+				{		
+					//Move at tenth the speed it was originally for
+					//smaller more precise increments
+					this.x += xa / 10;
+					this.z += za / 10;
+					
+					//Makes it so an infinite loop does not occur if the
+					//projectile goes through the corner of a wall and misses
+					//its chance to check collision or not.
+					if((xa > 0 && this.x + xa > block.x)
+							|| (xa < 0 && this.x + xa < block.x))
+					{
+						break;
+					}
+					
+					//Same as above but for the z
+					if((za > 0 && this.z + za > block.z)
+							|| (za < 0 && this.z + za < block.z))
+					{
+						break;
+					}
 				}
 			}
 			
 			//Projectile hit something.
-			projectileHit();
+			projectileHit(true);
 			
 			//Can't move anymore
 			return false;
@@ -628,7 +943,7 @@ public abstract class Projectile
    /**
     * Takes care of rockets, and sets hit to being true for projectiles
     */
-	public void projectileHit()
+	public void projectileHit(boolean playSound)
 	{
 		//If already hit, don't replay sound like it does for some
 		//weird reason. Just return.
@@ -638,15 +953,44 @@ public abstract class Projectile
 		}
 		
 		hit = true;
-	
+		
+		//Normal bullet, not rocket
+		if(ID <= 1 && !disappear)
+		{
+			if(playSound)
+			{
+				SoundController.wallHit.
+				playAudioFile(distanceFromPlayer);
+			}
+			
+			HitSprite hS = new HitSprite(this.x, this.z, this.y, this.ID);
+			
+			Game.sprites.add(hS);
+			
+			//Remove from bullets list
+			Game.bullets.remove(this);
+		}
+		//Phase cannon hit
+		else if(ID == 2)
+		{		
+			SoundController.phaseCannonHit.
+			playAudioFile(distanceFromPlayer);
+			
+			HitSprite hS = new HitSprite(this.x, this.z, this.y, this.ID);
+			
+			Game.sprites.add(hS);
+			
+			//Remove from bullets list
+			Game.bullets.remove(this);
+		}
 		//Rockets
-		if(ID == 3)
+		else if(ID == 3)
 		{
 			//Stop playing the rocket flying clip
 			SoundController.rocketFly.stopClip();
 			
 			//Play hit sound effect
-			SoundController.explosion.playAudioFile();
+			SoundController.explosion.playAudioFile(distanceFromPlayer);
 			
 			double yCorrect = this.y;
 			
@@ -674,25 +1018,18 @@ public abstract class Projectile
 			//Remove from bullets list
 			Game.bullets.remove(this);
 		}
-	}
-	
-   /**
-    * Gets rid of bullet or enemy projectile when it hits something.
-    */
-	public void normalHit()
-	{
-		//Normal bullet
-		if(ID <= 2)
-		{
-			//Remove from bullets list
-			Game.bullets.remove(this);
-		}
 		//If an enemy projectile
-		else
+		else if(ID >= 4)
 		{
+			SoundController.enemyFireHit.playAudioFile(distanceFromPlayer);
+			
+			//Add HitSprite to the game
+			HitSprite hS = new HitSprite(this.x, this.z, this.y, 4);
+			
+			Game.sprites.add(hS);
+			
 			//Remove from its list
 			Game.enemyProjectiles.remove(this);
 		}
 	}
-
 }
