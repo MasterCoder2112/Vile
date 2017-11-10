@@ -49,6 +49,11 @@ public class Player
 	public static double x        = 0;
 	public static double y        = 0;
 	public static double z        = 0;
+	
+	//yCorrect is used for when the player is crouching
+	public static double yCorrect = 0;
+	
+	//Direction player is facing.
 	public static double rotation = 0;
 	
 	//If an explosion effects movement of player, this is the effect on
@@ -60,8 +65,11 @@ public class Player
 	//Max Height a player can stand on at moment.
 	public static double maxHeight = 0;
 	
-	//The height the player can jump
+	//The height the player can jump at this moment
 	public static double jumpHeight = 8;
+	
+	//How high in the air player can jump no matter where he/she is
+	public static double totalJump = 8;
 	
 	//Used for rendering
 	public static double upRotate = 1.105;

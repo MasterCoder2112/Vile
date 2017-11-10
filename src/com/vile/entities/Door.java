@@ -27,6 +27,9 @@ public class Door extends Entity
 	//Keeps track of time door stays in up position
 	public int time = 0;
 	
+	//The max height the door can raise to
+	public double maxHeight = 3;
+	
 	//Type of door. Normal or a door that requires a certain key
 	public  int doorType = 0;
 	
@@ -39,6 +42,9 @@ public class Door extends Entity
 	//Makes sure stopping sound doesn't repeat
 	private boolean soundPlayed = false;
 	
+	//Block that door item corresponds to.
+	Block doorBlock = null;
+	
    /**
     * A constructor of a door entity, which also holds the coordinates of
     * the block the door will raise.
@@ -49,13 +55,23 @@ public class Door extends Entity
     * @param wallZ
     */
 	public Door(double x, double y, double z, int wallX, int wallZ,
-			int type, int itemActID) 
+			int type, int itemActID, double maxHeight) 
 	{
 		super(0, 0, 0, 0, 0, x, y, z, 8, 0, itemActID);
 		
 		doorX = wallX;
 		doorZ = wallZ;
 		doorType = type;
+		this.maxHeight = (maxHeight / 4.0);
+		doorBlock = Level.getBlock(doorX, doorZ);
+		doorBlock.isADoor = true;
+		
+		//Set doors default height to being 3 if 
+		//no maxHeight is set.
+		if(this.maxHeight == 0)
+		{
+			this.maxHeight = 3;
+		}
 		
 		if(itemActID > 0)
 		{
@@ -70,39 +86,34 @@ public class Door extends Entity
     */
 	@SuppressWarnings("unused")
 	public void move()
-	{
-		Block temp = Level.getBlock(doorX, doorZ);
-		
+	{	
 		//Set the doorY position
-		doorY = temp.y;
+		doorY = doorBlock.y;
 		
 		distanceFromPlayer = Math.sqrt(((Math.abs(xPos - Player.x))
 				* (Math.abs(xPos - Player.x)))
 				+ ((Math.abs(zPos - Player.z))
 						* (Math.abs(zPos - Player.z))));
 		
-		//When a door is moving, it is see through. Otherwise normally not
-		temp.seeThrough = true;
-		
 	   /*
 	    * When the door is moving, this will tell the program to adjust
 	    * the Players wall detection settings so that when walking inside
 	    * doorway, the player still detects walls correctly.
 	    */
-		temp.isaDoor = true;
+		doorBlock.isMoving = true;
 	
 		//If the wall was just activated, restart the sound time
-		if(temp.y <= 0 && time == 0)
+		if(doorBlock.y <= 0 && time == 0)
 		{
 			soundTime = 0;
 			SoundController.doorStart.playAudioFile(distanceFromPlayer);
 		}
 		
 		//If door has reached maximum height
-		if(temp.y >= 3)
+		if(doorBlock.y >= maxHeight)
 		{
 			time++;
-			temp.y = 3;
+			doorBlock.y = maxHeight;
 			
 			//Reset time between sounds
 			soundTime = 0;
@@ -116,10 +127,10 @@ public class Door extends Entity
 		}
 	
 		//If Door has closed completely
-		if(temp.y <= 0 && time > 0)
+		if(doorBlock.y <= 0 && time > 0)
 		{
 			time = 0;
-			temp.y = 0;
+			doorBlock.y = 0;
 			
 			//Block is no longer in an active state
 			activated = false;
@@ -128,10 +139,9 @@ public class Door extends Entity
 		    * Unless the block was already seeThrough, set it back to not
 		    * being see through.
 		    */
-			if(temp.wallID != 4)
+			if(doorBlock.wallID != 4)
 			{
-				temp.seeThrough = false;
-				temp.isaDoor = false;
+				doorBlock.isMoving = false;
 			}
 			
 			//Reset time between sounds
@@ -142,13 +152,19 @@ public class Door extends Entity
 			//Reset
 			soundPlayed = false;
 			
+			//If special ID, keep opening and closing
+			if(itemActivationID == 2112)
+			{
+				activated = true;
+			}
+			
 			return;
 		}
 	
 		//If door is moving up
-		if(temp.y < 3 && time == 0)
+		if(doorBlock.y < maxHeight && time == 0)
 		{
-			temp.y += 0.05;
+			doorBlock.y += 0.05;
 			
 			//Only play sound every 10 ticks
 			if(soundTime == 0)
@@ -159,7 +175,7 @@ public class Door extends Entity
 			}
 		}
 		//If door is moving down
-		else if(temp.y <= 3 && time > 250 && !stayOpen)
+		else if(doorBlock.y <= maxHeight && time > 250 && !stayOpen)
 		{
 			Block thisBlock = Level.getBlock(doorX, doorZ);
 			
@@ -190,7 +206,7 @@ public class Door extends Entity
 			}
 			else
 			{
-				for(int i = 0; i < thisBlock.enemiesOnBlock.size(); i++)
+				for(int i = 0; i < thisBlock.entitiesOnBlock.size(); i++)
 				{
 					time = 0;
 					return;
@@ -198,7 +214,7 @@ public class Door extends Entity
 			}
 			
 			//Move down
-			temp.y -= 0.05;
+			doorBlock.y -= 0.05;
 			
 			//Only play sound every 10 ticks
 			if(soundTime == 0)

@@ -17,11 +17,13 @@ public class ValueHolder
 	public int entityID  = 0;
 	public double rotation = 0;
 	public int itemActID = 0;
+	public int wallY = 0;
+	public int doorRaiseHeight = 0;
+	
+	public String audioQueue = "";
 	
 	//Future Values
-	public int brightness = 0;
-	public int wallY = 0;
-	
+	public int brightness = 0;	
 	
    /**
     * Sets and stores the values in each value holder.
@@ -30,13 +32,17 @@ public class ValueHolder
     * @param ID
     */
 	public ValueHolder(double height, int wallID, int ID,
-			double rotation, int itemActID) 
+			double rotation, int itemActID, String audioQueue,
+			int wallY, int doorRaiseHeight) 
 	{
 		this.height = height;
 		this.wallID = wallID;
 		entityID = ID;
 		this.rotation = rotation;
 		this.itemActID = itemActID;
+		this.wallY = wallY;
+		this.doorRaiseHeight = doorRaiseHeight;
+		this.audioQueue = audioQueue;
 	}
 
 }

@@ -4,6 +4,7 @@ import com.vile.Display;
 import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.input.Controller;
+import com.vile.launcher.FPSLauncher;
 
 /**
  * Title: PhaseCannon
@@ -79,7 +80,7 @@ public class PhaseCannon extends Weapon implements WeaponInterface
 				int crossWidth = Display.WIDTH;
 				int crossHeight = Display.HEIGHT;
 				
-				if(Display.graphicsSelection < 2)
+				if(FPSLauncher.resolutionChoice < 2)
 				{
 					crossHeight -= 100;
 				}

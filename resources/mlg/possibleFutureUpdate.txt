@@ -1,0 +1,77 @@
+I added this to the resource packs for your opinon on what I should do 
+about this in the future. I want to make it easier for people to manipulate
+the enemies and their behavior without having to know coding at all. 
+Obviously they can change the enemy textures but not their attributes at
+the moment. My plan is to eventually have each entity in the game (including
+corpses for smile) to have an attributes text file that will load in at the
+start of the game so that the entities in game will have customized AI.
+This will allow for people to cater the engine to whatever game they would
+like to design. Here's an example of what attributes the files will have. If
+an attribute is deleted from the file (when i add these) it will just add it back
+after closing with the default setting returned to it so that the user cannot
+completely destroy the enemy code. Also for projectile files, it will allow for
+you to change their damage attributes and such as well.
+
+CanFly: true or false. Can entity fly?
+CanFire: true or false. Can entity fire projectiles?
+CanResurrect: true or false. Can entity resurrect other entities?
+Transparent: true or false. Is the enemy see through?
+GhostLevel: 0, 1, or 2. 0 means it can't pass through anything. 1 is objects only. 2 is walls and objects.
+Freindly: true or false. Is the enemy freindly to the player or not?
+TargetItem: null or give the id of an item the entity will try to target
+TargetEntity: null or true or false. Will target friendly entities or non-friendly depending on above setting
+TargetPosition: null or give x and z coordinates of a position the entity will run to after being activated
+PrimaryTarget: item, entity, or position. If this target is in sight, it will forget about any other targets and track this one
+ProjectileType: 1-5. Type of projectile (if any) the enemy fires
+Damage: 10. Damage entity does melee wise
+Speed: 1. Speed of entity. 1 is normal, and reapers are 4. Any higher and you may get wierd results. 
+Health: 100. Hit points of entity (health of entity)
+Effects: Eventually entities might have special attack effects such as bleeding, burning, poisoning, etc...
+SmartEnemy: true or false. Will entity track the target or just dumbly follow the targets position
+
+Also items will have changable qualities too such as...
+
+PickUpMessage: "You picked up the ----"
+Solid: true or false. Is the object solid
+CanBePickedUp: true or false. Some items can't be picked up
+HealPoints: int value
+ArmorPoints: int value
+SpeedPoints: int value. Item that increases players overall speed
+UpgradePoints: int value. Does item give any upgrade points to the player
+AmmoType: int value. What weapon will this ammo (if any) will go to
+AmmoAmount: int value
+IfMutated: int value. If the item turns into a different item when picked up (like holy water turns into table) then put that value here. -1 if none
+
+Also Weapons will have changable qualities in the future too such as...
+
+WeaponRechargeTime: int value
+Damage: int value
+AmmoType: int value. What type of projectile does this shoot? Give its ID
+MaxAmmo: int value. How much ammo weapon can hold
+CartridgeSize: int value. How much ammo can cartridge hold
+NumCartridges: How many cartridges can this weapon have
+Spread: true or false. Spread shot like a shotgun or not?
+Immediate: true or false. Will shot reach entity instantly, or need time to fly (like a rocket)
+SmartAim: true or false. Will it be shot straight out of the cross hair (only do if its immediate, and not a spread) or not
+
+And lastly, the HUD text should be changed to allow for a customized feel for the game. This will be especially useful as I
+will no longer need to mess with SMILE. SMILE will just be a resource pack, not an actual game. This will be done sort of 
+like the following, but I would like some feedback and maybe help from others on getting this stuff to work because all of this
+listed on here will take a lot of time to get working and help would be nice.
+
+WeaponOneCartridgesMessage: "Bullet cartridges: NUM WILL BE PUT HERE IN PROGRAM"
+WeaponOneAmmoInCartridgeMessage: "Bullets in cartridge: NUM"
+WeaponOneAmmo: "Bullets: NUM"
+etc...
+Health: "Health: NUM" or "Happiness: NUM" etc...
+Armor: "Armor: NUM"
+Keys: "Keys:"
+Secrets: "Secrets Found: NUM"
+Kills: "Kills: NUM"
+Enemies: "Enemies: NUM" This is for survival mode mainly
+
+Again any help or advice you can give would be greatly appreciated
+
+
+
+

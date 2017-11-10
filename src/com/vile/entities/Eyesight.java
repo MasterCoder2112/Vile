@@ -199,12 +199,8 @@ public class Eyesight
 			targetY = 0;
 		}
 		
-		//Difference between the the two entities y values
-		double yDifference = targetY - Math.abs(this.y);
-		
 		//Hit Target, meaning the target is in sight
-		if(distance <= 0.3 && yDifference <= 2
-				&& yDifference >= -8)
+		if(distance <= 0.3)
 		{
 			hitWall = false;
 			hitTarget = true;
@@ -231,19 +227,23 @@ public class Eyesight
     * @return
     */
 	public boolean collisionChecks(Block block)
-	{		
+	{	
+		//Corrects eyesight so that it can see from the entities 
+		//eye level, not their feet.
+		double yCorrect = (-this.y);
+		
+		//System.out.println(yCorrect+" : "+block.y+" : "+(block.height + (block.y * 4) - 4));
+		
 	   /*
 	    * If the block in front of the entity is greater than two units
 	    * higher than the entity, or if it is more than two lower than
 	    * the entity, or the entity is still not far enough under a block
 	    * to go through it (mainly used with doors) then don't allow
 	    * the entity to move.
-	    */
-		if(((block.height + block.y - 2) > 
-			-this.y && -this.y + 2 > block.y && !block.isaDoor))
+	    */			
+		if(((block.height + (block.y * 4) - 4)) > 
+			yCorrect && (yCorrect + (2.0)) > ((block.y * 4)))
 		{
-			//System.out.println("This y: "+this.y);
-			//System.out.println("Block Height: "+block.height);
 			hitTarget = false;
 			hitWall = true;
 			return false;

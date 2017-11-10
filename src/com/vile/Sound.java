@@ -1,9 +1,12 @@
 package com.vile;
 
+import java.io.File;
+
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
+
 import com.vile.launcher.FPSLauncher;
 
 /**
@@ -26,39 +29,31 @@ public class Sound
 	private AudioInputStream input;
 	private int clipSize = 0;
 	
-	public Sound(int clipSize, String file) 
+	public String audioName = "";
+	
+	public Sound(int clipSize, String file) throws Exception
 	{
 		this.clipSize = clipSize;
 		soundClip = new Clip[clipSize];
 		soundControl = new FloatControl[soundClip.length];
-		
-		try
-		{		
-			for(int i = 0; i < clipSize; i++)
-			{
-				input = AudioSystem
-						.getAudioInputStream(this
-								.getClass()
-								.getResource(
-										file));
-				
-				soundClip[i] = AudioSystem.getClip();
-	
-				soundClip[i].open(input);
-				
-				soundControl[i] = (FloatControl) 
-						soundClip[i].getControl
-						(FloatControl.Type.MASTER_GAIN);
-				
-				soundClip[i].setMicrosecondPosition(0);
-			}
-			
-			resetVolume(FPSLauncher.soundVolumeLevel);
-		}
-		catch (Exception e)
+
+		for(int i = 0; i < clipSize; i++)
 		{
+			input = AudioSystem
+					.getAudioInputStream(new File(file));
 			
+			soundClip[i] = AudioSystem.getClip();
+
+			soundClip[i].open(input);
+			
+			soundControl[i] = (FloatControl) 
+					soundClip[i].getControl
+					(FloatControl.Type.MASTER_GAIN);
+			
+			soundClip[i].setMicrosecondPosition(0);
 		}
+		
+		resetVolume(FPSLauncher.soundVolumeLevel);
 	}
 	
    /**
@@ -242,7 +237,13 @@ public class Sound
 			temp2 = -80;
 		}
 		
-		FPSLauncher.musicVolumeControl.setValue
-		(temp2);
+		try
+		{
+			FPSLauncher.musicVolumeControl.setValue(temp2);
+		}
+		catch(Exception ex)
+		{
+			System.out.println(ex);
+		}
 	}
 }

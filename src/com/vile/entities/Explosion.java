@@ -287,9 +287,9 @@ public class Explosion
 		    * Any enemies within range of the explosion will be harmed depending
 		    * on their distance from the explosion. 
 		    */
-			for(int j = 0; j < block.enemiesOnBlock.size(); j++)
+			for(int j = 0; j < block.entitiesOnBlock.size(); j++)
 			{
-				Enemy enemy = block.enemiesOnBlock.get(j);
+				Entity enemy = block.entitiesOnBlock.get(j);
 				
 				//Self explainatory by now I hope
 				distance = Math.sqrt(((Math.abs(this.x - enemy.xPos))
@@ -395,11 +395,11 @@ public class Explosion
 					if(enemy.health <= 0 && enemy.isAlive)
 					{
 						enemy.enemyDeath();
-						block.enemiesOnBlock.remove(enemy);
+						block.entitiesOnBlock.remove(enemy);
 					}
 					else if(enemy.health <= 0 && !enemy.isAlive)
 					{
-						block.enemiesOnBlock.remove(enemy);
+						block.entitiesOnBlock.remove(enemy);
 					}
 				}
 			}
@@ -423,7 +423,7 @@ public class Explosion
 						
 						//Keep track of the enemies on the block before 
 						//the block changes
-						ArrayList<Enemy> temp = block.enemiesOnBlock;
+						ArrayList<Entity> temp = block.entitiesOnBlock;
 						
 						//New air block
 						block = new Block(0,0,0,block.x, block.z);
@@ -431,7 +431,7 @@ public class Explosion
 						
 						//Same enemies are on this block as the one that 
 						//it changed from
-						block.enemiesOnBlock = temp;
+						block.entitiesOnBlock = temp;
 						
 						//Re-add to level
 						Level.blocks[block.x + block.z * Level.width] = block;
@@ -449,7 +449,7 @@ public class Explosion
 					{		
 						//Keep track of enemies on block before the 
 						//block changes
-						ArrayList<Enemy> temp = block.enemiesOnBlock;
+						ArrayList<Entity> temp = block.entitiesOnBlock;
 						
 						//New non electrified block
 						block = new Block(block.height,
@@ -457,7 +457,7 @@ public class Explosion
 						
 						//Same enemies are on this block as the one that 
 						//it changed from
-						block.enemiesOnBlock = temp;
+						block.entitiesOnBlock = temp;
 						
 						//Explosion sound
 						SoundController.explosion.playAudioFile(distanceFromPlayer);
@@ -556,7 +556,7 @@ public class Explosion
 					Block block = Level.getBlock
 							((int)boss.xPos, (int)boss.zPos);
 					boss.enemyDeath();
-					block.enemiesOnBlock.remove(boss);
+					block.entitiesOnBlock.remove(boss);
 				}
 			}
 		}

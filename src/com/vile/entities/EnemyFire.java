@@ -1,6 +1,7 @@
 package com.vile.entities;
 
 import com.vile.Display;
+import com.vile.launcher.FPSLauncher;
 
 /**
  * @Title  EnemyFire
@@ -45,25 +46,25 @@ public class EnemyFire extends Projectile
 				z, ID);
 		
 		//If easy mode
-		if(Display.skillMode == 1)
+		if(FPSLauncher.modeChoice == 1)
 		{
 			speed  *= 0.5;
 			damage *= 0.5;
 		}
 		//If Bring it on mode
-		else if(Display.skillMode == 3)
+		else if(FPSLauncher.modeChoice == 3)
 		{
 			speed  *= 2;
 			damage *= 2;
 		}
 		//Death cannot hurt me mode.
-		else if(Display.skillMode == 4)
+		else if(FPSLauncher.modeChoice == 4)
 		{
 			speed *= 3;
 			damage *= 3;
 		}
 		//If peaceful mode
-		else if(Display.skillMode == 0)
+		else if(FPSLauncher.modeChoice == 0)
 		{
 			speed = 0;
 			damage = 0;

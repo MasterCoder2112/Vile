@@ -2,6 +2,7 @@ package com.vile.entities;
 
 import com.vile.Display;
 import com.vile.SoundController;
+import com.vile.launcher.FPSLauncher;
 
 /**
  * @Title  Bullet
@@ -68,7 +69,7 @@ public class Bullet extends Projectile
 	    * haven't yet figured this out, but this corrects bullets for
 	    * a full screen. 
 	    */
-		if(Display.graphicsSelection >= 4)
+		if(FPSLauncher.resolutionChoice >= 4)
 		{
 			//System.out.println(Player.upRotate);
 			angleChanger = 0.5;

@@ -249,8 +249,7 @@ public abstract class Projectile
 							}
 						}
 					}
-					else if(((Math.abs((this.y) - ((temp.y)
-								/ 12)) <= 0.8)))
+					else if(((Math.abs((this.y) - ((temp.y))) <= 0.6)))
 					{
 
 						//Cast the item type as being an ExplosiveCanister
@@ -483,9 +482,9 @@ public abstract class Projectile
 		try
 		{
 			//Go through all the enemies on the block
-			for(int i = 0; i < block.enemiesOnBlock.size(); i++)
+			for(int i = 0; i < block.entitiesOnBlock.size(); i++)
 			{
-				Enemy enemy = block.enemiesOnBlock.get(i);
+				Entity enemy = block.entitiesOnBlock.get(i);
 				
 				//Distance between projectile and other enemy
 				double distance = Math.sqrt(((Math.abs(enemy.xPos - nextX))
@@ -512,7 +511,6 @@ public abstract class Projectile
 						distanceCheck = 0.7;
 					}
 					
-					//TODO check
 					//If close enough, hit enemy. If faster enemy then
 					//have a greater hit distance as the enemy may be
 					//speeding toward you or away from you.
@@ -617,8 +615,7 @@ public abstract class Projectile
 							}
 						}
 						//The old method of checking collision
-						else if(((Math.abs((this.y) - ((enemy.getY())
-								/ enemy.heightCorrect)) <= 0.8)))
+						else if(((Math.abs((this.y) - ((enemy.getY()))) <= 0.6)))
 						{
 							enemy.searchMode = false;
 							
@@ -715,45 +712,11 @@ public abstract class Projectile
 						+ ((Math.abs(this.z - Player.z))
 								* (Math.abs(this.z - Player.z))));
 				
-			   /*
-			    * Basically, as you go higher in y values the bullet is
-			    * graphically seen as being in one place, when it is
-			    * really actually lower or higher than where it seems to
-			    * be. Can't really be fixed right now, just a weird 
-			    * raycasting thing. Anyway this corrects it to a
-			    * negligible degree so that it seems to hit the player
-			    * where it looks like it should hit the player.
-			    */
-				double tempNum = 6;
-				
-				//Depending on Player y, change correction
-				if(Player.y < 20)
-				{
-					tempNum = 6;
-				}
-				else if(Player.y < 30)
-				{
-					tempNum = 7;
-				}
-				else if(Player.y < 40)
-				{
-					tempNum = 8;
-				}
-				else if(Player.y < 50)
-				{
-					tempNum = 10;
-				}
-				else
-				{
-					tempNum = 12;
-				}
-				
 				//If it hits the player, and player is alive and not
 				//invincible.
 				if(distance <= 0.3 && Math.abs
-						((Player.y / tempNum) + (this.y)) <= 2.5
-						&& !Player.godModeOn &&
-						Player.immortality == 0 && Player.alive)
+						((Player.y) + ((this.y * 10) / 1.2)) <= 8
+						&& Player.alive)
 				{
 					Player.hurtPlayer(this.damage);
 					projectileHit(true);
@@ -791,7 +754,7 @@ public abstract class Projectile
     */
 	public boolean collisionChecks(Block block)
 	{
-		double yCorrect = y - 0.5;
+		double yCorrect = -(y - 0.5) * 10;
 		
 	   /*
 	    * The players horizontal line of sight is "technically" at y = 0
@@ -810,20 +773,9 @@ public abstract class Projectile
 	    * of a block and the y value happens to be greater than 0
 	    * because apparently projectiles can do that.
 	    */
-		if((((block.height)
-				+ block.y) > 
-		(-yCorrect * (10)) && (-yCorrect * (10)) >= block.y - 1 
-		&& block.y == 0) || yCorrect > 0 && block.y == 0
-		&& !hit && block.height != 0)
-		{	
-			//If the player is on the block and its hit, then 
-			//ignore being hit if its the shotgun because
-			//shotgun does weird crap.
-			if(block.equals(Player.blockOn) && ID == 1)
-			{
-				return true;
-			}
-			
+		if(!hit && (yCorrect > (block.y * 4) 
+				&& yCorrect < ((block.y * 4) + block.height)))
+		{			
 		   /*
 		    * If a glass wall that is also labeled as a breakable wall, it
 		    * is breakable by bullets or rockets. Then it turns into
@@ -922,6 +874,21 @@ public abstract class Projectile
 				}
 			}
 			
+		   /*
+		    * For doors, bullet holes disappear quicker as well so that
+		    * if the door moves there won't be "floating" bullet holes.
+		    */
+			if(block.isADoor)
+			{
+				//Add HitSprite to the game
+				HitSprite hS = new HitSprite(this.x, this.z, this.y, 5);
+				
+				Game.sprites.add(hS);
+				
+				//Makes sure alternate bullet hit sprites aren't rendered
+				disappear = true;
+			}
+			
 			//Projectile hit something.
 			projectileHit(true);
 			
@@ -959,8 +926,7 @@ public abstract class Projectile
 		{
 			if(playSound)
 			{
-				SoundController.wallHit.
-				playAudioFile(distanceFromPlayer);
+				SoundController.wallHit.playAudioFile(distanceFromPlayer);
 			}
 			
 			HitSprite hS = new HitSprite(this.x, this.z, this.y, this.ID);

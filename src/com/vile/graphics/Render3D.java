@@ -7,6 +7,7 @@ import javax.swing.JFrame;
 import com.vile.Display;
 import com.vile.Game;
 import com.vile.PopUp;
+import com.vile.Sound;
 import com.vile.SoundController;
 import com.vile.entities.Bullet;
 import com.vile.entities.Corpse;
@@ -77,6 +78,16 @@ public class Render3D extends Render
 	//Is low res graphic settings on?
 	public static boolean lowRes = false;
 	
+	//The pixel chosen to be the transparent one on walls
+	public static long seeThroughWallPixel = 0xffffffff;
+	
+	//Is there an initial sound to be played?
+	public static boolean isInitialSound = false;
+	
+	//Name of first audio file (if there is one) to be played
+	public static String firstAudio = "";
+	
+	//All blocks to render in game
 	ArrayList<Block> allBlocks;
 	
    /**
@@ -103,25 +114,31 @@ public class Render3D extends Render
     */
 	public void floor(Game game)
 	{
-		//Play announcement that correlates to the map loaded in
-		if((Game.mapNum == 1 || Game.mapNum == 9) && !game.firstSound
-				&& FPSLauncher.gameMode != 1)
+	   /*
+	    * If the game has yet to play an initial audio clip
+	    * and there is an audio clip to be played, then play
+	    * it here.
+	    */
+		if(firstAudio != "" && isInitialSound)
 		{
-			SoundController.level1Anouncement.playAudioFile(0);
-			game.firstSound = true;
-		}
-		else if((Game.mapNum == 2 || Game.mapNum == 6 ||
-				Game.mapNum == 8 || Game.mapNum == 10)
-				&& !game.firstSound && FPSLauncher.gameMode != 1)
-		{
-			SoundController.creepySound.playAudioFile(0);
-			game.firstSound = true;
+			//Search all sounds for the sound needed
+			for(Sound s : SoundController.allSounds)
+			{
+				//If the audio names are equal, then play that sound
+				if(firstAudio.equals(s.audioName))
+				{
+					s.playAudioFile(0);
+					break;
+				}
+			}
+			
+			isInitialSound = false;
 		}
 				
 		//If low res graphics settings, set low res to true
-		if(Display.graphicsSelection == 2
-				|| Display.graphicsSelection == 0
-				|| Display.graphicsSelection == 4)
+		if(FPSLauncher.resolutionChoice == 2
+				|| FPSLauncher.resolutionChoice == 0
+				|| FPSLauncher.resolutionChoice == 4)
 		{
 			lowRes = true;
 		}
@@ -142,20 +159,13 @@ public class Render3D extends Render
 		//Ceiling Height and floor depth in accordance to where the
 		//Player is in the y direction
 		double ceilingHeight = ceilingDefaultHeight -
-				Player.y;
-		double floorDepth    = 8 +
-				Player.y;
+				Player.yCorrect;
+		double floorDepth    = 8 + Player.yCorrect;
 		
-		//Survival mode night time mode is the darkest. Else the
-		//default is 100,000
+		//Default is 100,000 for brightness is survival
 		if(FPSLauncher.gameMode == 1)
 		{
 			renderDistanceDefault = 100000;
-			
-			if(Display.themeNum == 1)
-			{
-				renderDistanceDefault = 50000;
-			}
 		}
 		
 		//If weapon isn't being fired, keep the brightness as it normally
@@ -271,12 +281,6 @@ public class Render3D extends Render
 			    */
 				double textureCorrect = 16;
 				
-				//If moon theme, textures are bigger
-				if(Display.themeNum == 4)
-				{
-					textureCorrect = 2;
-				}
-				
 			   /*
 			    * I still don't understand this part. It multiplies
 			    * the integer bits by 255 so that it can get the 
@@ -288,23 +292,6 @@ public class Render3D extends Render
 			    */
 				int xPix = (int) ((xx) * textureCorrect) & 255;
 				int yPix = (int) ((yy) * textureCorrect) & 255;
-				
-			   /*
-			    * Ceiling Height changes depending on theme of the 
-			    * game.			
-			    */
-				if(Display.themeNum == 0)
-				{	
-					ceilingDefaultHeight  = 1000.0;
-				}
-				else if(Display.themeNum == 1)
-				{
-					ceilingDefaultHeight  = 100.0;
-				}
-				else if(Display.themeNum == 4)
-				{
-					ceilingDefaultHeight  = 100.0;
-				}
 
 				zBuffer[(x) + (y) * WIDTH] = z;
 				
@@ -316,100 +303,51 @@ public class Render3D extends Render
 					zBuffer[(x) + (y+1) * WIDTH] = z;
 				}
 				
-				//If not outdoors mode
-				if(Display.themeNum != 0)
+				//For the sky
+				if(ceiling < 0)
 				{
-					//For the sky
-					if(ceiling < 0)
+				   /*
+				    * Depending on the ID of the ceiling texture, then
+				    * render that texture that is chosen by picking it
+				    * out from the floors array from the textures 
+				    * class
+				    */ 
+					PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+							Textures.floors[Game.mapCeiling].PIXELS
+							[(xPix & 255) + (yPix & 255) * 256];
+					
+					//Here I show that it can be shown in
+					//hexidecimals as well as normal decimals
+					if(lowRes)
 					{
-					   /*
-					    * Depending on the ID of the ceiling texture, then
-					    * render that texture that is chosen by picking it
-					    * out from the floors array from the textures 
-					    * class
-					    */ 
-						PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+						PIXELS[(x+1) + (y) * WIDTH] =
 								Textures.floors[Game.mapCeiling].PIXELS
-								[(xPix & 255) + (yPix & 255) * 256];
-						
-						//Here I show that it can be shown in
-						//hexidecimals as well as normal decimals
-						if(lowRes)
-						{
-							PIXELS[(x+1) + (y) * WIDTH] =
-									Textures.floors[Game.mapCeiling].PIXELS
-									[(xPix & 255) + (yPix & 255) * 256];;
-							PIXELS[(x+1) + (y+1) * WIDTH] =
-									Textures.floors[Game.mapCeiling].PIXELS
-									[(xPix & 255) + (yPix & 255) * 256];;
-							PIXELS[(x) + (y+1) * WIDTH] =
-									Textures.floors[Game.mapCeiling].PIXELS
-									[(xPix & 255) + (yPix & 255) * 256];;
-						}
-					}
-					else
-					{
-						PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-								Textures.floors[Game.mapFloor].PIXELS
-								[(xPix & 255) + (yPix & 255) * 256];
-						
-						if(lowRes)
-						{
-							PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floors[Game.mapFloor].PIXELS
-									[(xPix & 255) + (yPix & 255) * 256];
-							PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floors[Game.mapFloor].PIXELS
-									[(xPix & 255) + (yPix & 255) * 256];
-							PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floors[Game.mapFloor].PIXELS
-									[(xPix & 255) + (yPix & 255) * 256];
-						}
+								[(xPix & 255) + (yPix & 255) * 256];;
+						PIXELS[(x+1) + (y+1) * WIDTH] =
+								Textures.floors[Game.mapCeiling].PIXELS
+								[(xPix & 255) + (yPix & 255) * 256];;
+						PIXELS[(x) + (y+1) * WIDTH] =
+								Textures.floors[Game.mapCeiling].PIXELS
+								[(xPix & 255) + (yPix & 255) * 256];;
 					}
 				}
-				//If Outdoors theme mode
 				else
-				{				
-					if(ceiling < 0)
+				{
+					PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+							Textures.floors[Game.mapFloor].PIXELS
+							[(xPix & 255) + (yPix & 255) * 256];
+					
+					if(lowRes)
 					{
-					   /*
-					    * Makes the blue sky color using bit shifting for each
-					    * pixel. These are split up as RGB values. The | 
-					    * basically merges these values together in binary so
-					    * that the colors blend in a way.
-					    */ 
-						PIXELS[x + y * WIDTH] = 0 | 255 << 8 | 255;
-						
-						//Here I show that it can be shown in
-						//hexidecimals as well as normal decimals
-						if(lowRes)
-						{
-							PIXELS[(x+1) + (y) * WIDTH] =
-									0 | 0x00FF00 | 0x0000FF;
-							PIXELS[(x+1) + (y+1) * WIDTH] =
-									0 | 65280 | 255;
-							PIXELS[(x) + (y+1) * WIDTH] =
-									0x00FFFF;
-						}
-					}
-					else
-					{
-						PIXELS[x + y * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-								Textures.floors[9].PIXELS
+						PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+								Textures.floors[Game.mapFloor].PIXELS
 								[(xPix & 255) + (yPix & 255) * 256];
-						
-						if(lowRes)
-						{
-							PIXELS[(x+1) + (y) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floors[9].PIXELS
-									[(xPix & 255) + (yPix & 255) * 256];
-							PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floors[9].PIXELS
-									[(xPix & 255) + (yPix & 255) * 256];
-							PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
-									Textures.floors[9].PIXELS
-									[(xPix & 255) + (yPix & 255) * 256];
-						}
+						PIXELS[(x+1) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+								Textures.floors[Game.mapFloor].PIXELS
+								[(xPix & 255) + (yPix & 255) * 256];
+						PIXELS[(x) + (y+1) * WIDTH] = //((xPix) << 8 | (yPix) << 16);
+								Textures.floors[Game.mapFloor].PIXELS
+								[(xPix & 255) + (yPix & 255) * 256];
 					}
 				}
 			}
@@ -418,18 +356,6 @@ public class Render3D extends Render
 		allBlocks = new ArrayList<Block>();
 		
 		renderBlocks();		
-		
-	   /*
-	    * Used to correct the players y in case the player is 
-	    * crouching and the y goes below the maxHeight the player
-	    * can stand on.
-	    */
-		double playerYCorrect = Player.y;
-		
-		if(playerYCorrect < Player.maxHeight)
-		{
-			playerYCorrect = Player.maxHeight;
-		}
 		
 	   /*
 	    * For every enemy on the map, render each, and also update all
@@ -493,7 +419,7 @@ public class Render3D extends Render
 	        * alive. The method itself will determine what attack if
 	        * any the enemy will use though.
 	        */
-	        enemy.attack(playerYCorrect);
+	        enemy.attack(Player.y);
 			
 			//Correct the enemies y so it appears correct graphically
 			double yCorrect = enemy.getY();
@@ -505,28 +431,8 @@ public class Render3D extends Render
 		    */
 			if(enemy.isABoss)
 			{
-				yCorrect -= 35;
+				yCorrect -= 4;
 			}
-			
-			//How high the enemy should be raised as it goes into the
-			//distance so it doesn't go below the ground graphically
-			double yCorrection = 0.04;
-			double change = 2;
-			
-			//Changes depending on the graphics settings
-			if(Display.graphicsSelection >= 2
-					&& Display.graphicsSelection < 4)
-			{
-				yCorrection = 0.02;
-			}
-			else if(Display.graphicsSelection >= 4)
-			{
-				yCorrection = 0;
-			}
-			
-			//Enemy is raised farther up the farther it is away from
-			//the player
-			yCorrect -= (enemy.distanceFromPlayer / change) * yCorrection;
 			
 			//Call method to render Enemy
 			renderEnemy(enemy.getX(), yCorrect, enemy.getZ(), 0.2,
@@ -551,22 +457,29 @@ public class Render3D extends Render
 			//Block item is over or on
 			Block temp = Level.getBlock((int)item.x, (int)item.z);
 			
+			//Difference between the item and the top of the block
+			double difference = item.y - 
+					(temp.height + (temp.y * 4) + temp.baseCorrect);
+			
 		   /*
 		    * If the items y is greater than the blocks height plus
 		    * its y value, then decrease the items y until it reaches
 		    * the ground.
 		    */
-			if(item.y > temp.height + temp.y && !temp.isaDoor)
+			if(difference > 1)
 			{
 				item.y -= 1;
 			}
 			else
 			{
-				//Have item stay on top of the block if pretty much
-				//fallen as far as it can.
-				if(!temp.isaDoor && item.y >= temp.height + temp.y)
+			   /*
+			    * If the item is within the block, and not on top of the
+			    * block, and the item is not a door, then set the height
+			    * to being the top of the block.
+			    */
+				if(item.y >= (temp.y * 4) && difference > (-1 - temp.baseCorrect))
 				{
-					item.y = temp.height + temp.y;
+					item.y = temp.height + (temp.y * 4) + temp.baseCorrect;
 				}
 				else
 				{
@@ -581,109 +494,12 @@ public class Render3D extends Render
 					+ ((Math.abs(Player.z - item.z))
 							* (Math.abs(Player.z - item.z))));
 			
-			//If it is a line def
-			if(item.itemID == ItemNames.LINEDEF.itemID &&
-					distance <= 0.5)
-			{
-				//If End Level Line Def
-				if(item.itemActivationID == 0)
-				{
-					Game.mapNum++;
-					game.loadNextMap(false, "");
-				}
-				else
-				{
-					//Search through all the doors
-					for(int k = 0; k < Game.doors.size(); k++)
-					{
-						Door door = Game.doors.get(k);
-						
-						//If door has the same activation ID as the 
-						//button then activate it.
-						if(door.itemActivationID 
-								== item.itemActivationID)
-						{
-							door.activated = true;
-						}
-					}
-					
-					//Stores Items to be deleted
-					ArrayList<Item> tempItems2 = new ArrayList<Item>();
-					
-					//Scan all activatable items
-					for(int j = 0; j < Game.activatable.size(); j++)
-					{
-						Item itemAct = Game.activatable.get(j);
-						
-						//If Item is a Happiness Tower, activate it and
-						//state that it is activated
-						if(itemAct.itemID == ItemNames.RADAR.getID()
-								&& !itemAct.activated &&
-								item.itemActivationID ==
-								itemAct.itemActivationID)
-						{
-							itemAct.activated = true;
-							Display.messages.add(new PopUp("COM SYSTEM ACTIVATED"));
-							SoundController.uplink.playAudioFile(0);
-						}
-						else
-						{				
-							//If item is enemy spawnpoint, then spawn the
-							//enemy, and add the item to the arraylist of
-							//items to be deleted
-							if(itemAct.itemID == ItemNames.ENEMYSPAWN.getID()
-									&& itemAct.itemActivationID 
-									== item.itemActivationID)
-							{
-								Game.enemiesInMap++;
-								game.addEnemy(itemAct.x, itemAct.z,
-										itemAct.rotation);
-								tempItems2.add(itemAct);
-							}	
-							//If Explosion has same activation ID of the button
-							//then activate it
-							else if(itemAct.itemID ==
-									ItemNames.ACTIVATEEXP.getID()
-									&& itemAct.itemActivationID 
-									== item.itemActivationID)
-							{
-								new Explosion(itemAct.x, itemAct.y,
-										itemAct.z, 0, 0);
-								tempItems2.add(itemAct);
-							}
-							//If it gets rid of a wall, delete the wall and create an
-							//air wall in its place.
-							else if(itemAct.itemID 
-									== ItemNames.WALLBEGONE.getID()
-									&& itemAct.itemActivationID ==
-									item.itemActivationID)
-							{
-								Block block2 = Level.getBlock
-										((int)itemAct.x, (int)itemAct.z);
-								
-								//Block is effectively no longer there
-								block2.height = 0;
-								
-								tempItems2.add(itemAct);
-							}
-						}
-					}
-					
-					//Remove all the items that need to be deleted now
-					for(int j = 0; j < tempItems2.size(); j++)
-					{
-						Item temp2 =  tempItems2.get(j);
-								
-						temp2.removeItem();
-					}
-				}
-			}
-			
 			//If the item is at least 0.7 units away, and its not
-			//a secret, and the player is not in noClip mode
+			//a secret or linedef, and the player is not in noClip mode
 			if (distance <= 0.7
-					&& Math.abs(item.y - playerYCorrect) <= 3
+					&& Math.abs(item.y - Player.y) <= 3
 					&& item.itemID != ItemNames.SECRET.itemID
+					&& item.itemID != ItemNames.LINEDEF.itemID
 					&& !Player.noClipOn) 
 			{
 				//Was the object activated?
@@ -696,25 +512,41 @@ public class Render3D extends Render
 				if(activated)
 				{
 					tempItems.add(item);
+					
+					//Activate the audio queue if there is one
+					item.activateAudioQueue();
 				}
 			}
 			
 		   /*
-		    * Again because the units visually are different from the
-		    * actual units, this corrects the height so that it matches
-		    * the height that the players can visually pick it up.
-		    * 
-		    * For instance if an item is at height 12. It is going to
-		    * look like it is at like a height of 36. The player can
-		    * still pick it up, but it will look like its not 
-		    * supposed to be picked up. This corrects that.
+		    * To correct corpse heights because again, graphics in this
+		    * game make no gosh darn sense.
 		    */
-			double yCorrect = 0 - ((item.y/10)) -(item.y/12);
+			double divideVariable = 9;
 			
-			if(item.y >= 12)
+			if(item.y >= 60)
 			{
-				yCorrect = 0.2 - (item.y/11.7) - 0.6;
+				divideVariable = 12.1;
 			}
+			else if(item.y >= 48)
+			{
+				divideVariable = 11.5;
+			}
+			else if(item.y >= 36)
+			{
+				divideVariable = 11.7;
+			}
+			else if(item.y >= 24)
+			{
+				divideVariable = 11;
+			}
+			else if(item.y > 12)
+			{
+				divideVariable = 10;
+			}
+			//The correct y it will graphically be displayed as on
+			//the screen
+			double yCorrect = (-item.y / divideVariable);
 			
 		   /*
 		    * The bigger the sprite needs to be for the item being
@@ -753,28 +585,10 @@ public class Render3D extends Render
 				yCorrect -= 2.5;
 			}
 			
-			//Same as above loops. 
-			double yCorrection = 0.04;
-			double change = 2;
-			
-			if(Display.graphicsSelection >= 2
-					&& Display.graphicsSelection < 4)
-			{
-				yCorrection = 0.02;
-			}
-			else if(Display.graphicsSelection >= 4)
-			{
-				yCorrection = 0;
-			}
-			
-			//Corrects y graphics visually so item looks right to
-			//the player
-			yCorrect -= (distance / change) * yCorrection;
-			
 			//Only render item if it is seeable (can be seen by player).
 			if(item.isSeeable)
 			{
-				renderItems(item.x, yCorrect + 0.77, item.z,
+				renderItems(item.x, yCorrect + 0.9, item.z,
 					0, item.itemID, item);
 			}
 		}
@@ -797,38 +611,40 @@ public class Render3D extends Render
 		{
 			Corpse corpse = Game.corpses.get(i);
 			
-			//Distance from player corpse is
-			double distance = 
-					Math.sqrt(((Math.abs(Player.x - corpse.x))
-					* (Math.abs(Player.x - corpse.x)))
-					+ ((Math.abs(Player.z - corpse.z))
-							* (Math.abs(Player.z - corpse.z))));
-			
 			//Block corpse is on
 			Block temp = Level.getBlock((int)corpse.x, (int)corpse.z);
+			
+			//The top of the block
+			double topOfBlock = (temp.height + (temp.y * 4) + temp.baseCorrect);
+			
+			//Difference between the item and the top of the block
+			double difference = corpse.y - topOfBlock;
 			
 		   /*
 		    * If the items y is greater than the blocks height plus
 		    * its y value, then decrease the items y until it reaches
 		    * the ground.
 		    */
-			if(corpse.y > temp.height + temp.y + 3 && !temp.isaDoor)
+			if(corpse.y - 1 > topOfBlock)
 			{
 				corpse.y -= 1;
 			}
 			else
 			{
-				//If not a door, and negligable landed on the block
-				//set finalize the corpses height on the block now.
-				if(!temp.isaDoor && corpse.y >= temp.height + temp.y)
+			   /*
+			    * If not a door, and the y value of the corpse is inside the
+			    * block, but towards the top, then place it on top of the
+			    * block. Otherwise, it shall stay on ground level.
+			    */
+				if(corpse.y >= (temp.y * 4) && difference > (-1 - temp.baseCorrect))
 				{
-					corpse.y = temp.height + temp.y + 3;
+					corpse.y = topOfBlock;
 				}
 				else
 				{
 					//If on flat ground, the height is 3. This is
 					//so the textures don't go through the ground.
-					corpse.y = 3;	
+					corpse.y = 0;	
 				}
 			}
 			
@@ -838,7 +654,7 @@ public class Render3D extends Render
 		    * If in Death cannot hurt me mode, the corpses will resurrect
 		    * on their own after 10000 ticks.
 		    */
-			if(Display.skillMode == 4)
+			if(FPSLauncher.modeChoice == 4)
 			{		
 				//If 10000 ticks have passed with correction for the fps
 				//and the corpse is not just a default corpse
@@ -871,61 +687,34 @@ public class Render3D extends Render
 			}
 			
 		   /*
-		    * Determine correction it needs to look right at the
-		    * height level it is at.
+		    * To correct corpse heights because again, graphics in this
+		    * game make no gosh darn sense.
 		    */
-			double totalHeight = temp.height + temp.y;
-			double heightCorrect = 0;
-
-			if(totalHeight >= 0 && totalHeight < 18)
-			{
-				heightCorrect = 8;
-			}
-			else if(totalHeight >= 18 && totalHeight < 30)
-			{
-				heightCorrect = 9;
-			}
-			else if(totalHeight >= 30 && totalHeight <= 36)
-			{
-				heightCorrect = 9;
-			}
-			else if(totalHeight > 36 && totalHeight <= 48)
-			{
-				heightCorrect = 10;
-			}
-			else if(totalHeight <= 79)
-			{
-				heightCorrect = 10;
-			}
-			else
-			{
-				double addCorrect;
-				totalHeight -= 60;
-				
-				addCorrect = totalHeight / 20;
-				heightCorrect = 10 + (0.5 * addCorrect);
-				
-			}
+			double divideVariable = 9;
 			
+			if(corpse.y >= 60)
+			{
+				divideVariable = 12.1;
+			}
+			else if(corpse.y >= 48)
+			{
+				divideVariable = 11.5;
+			}
+			else if(corpse.y >= 36)
+			{
+				divideVariable = 11.7;
+			}
+			else if(corpse.y >= 24)
+			{
+				divideVariable = 11;
+			}
+			else if(corpse.y > 12)
+			{
+				divideVariable = 10;
+			}
 			//The correct y it will graphically be displayed as on
 			//the screen
-			double yCorrect = (-corpse.y / heightCorrect) + 0.5;
-			
-			//Same as loops above
-			double yCorrection = 0.04;
-			double change = 2;
-			
-			if(Display.graphicsSelection >= 2
-					&& Display.graphicsSelection < 4)
-			{
-				yCorrection = 0.02;
-			}
-			else if(Display.graphicsSelection >= 4)
-			{
-				yCorrection = 0;
-			}
-			
-			yCorrect -= (distance / change) * yCorrection;
+			double yCorrect = (-corpse.y / divideVariable);
 				
 			//Render corpse
 			renderCorpse(corpse.x, yCorrect, corpse.z,
@@ -986,7 +775,7 @@ public class Render3D extends Render
 			
 			temp.move();
 			
-			renderProjectiles(temp.x, temp.y, temp.z,
+			renderProjectiles(temp.x, (temp.y) / 1.5, temp.z,
 					0.2, temp.ID, temp);
 		}
 		
@@ -1003,12 +792,13 @@ public class Render3D extends Render
 			hS.tick();
 		}
 		
+		//Everything below draws up the crosshair
 		int crossWidth = WIDTH;
 		int crossHeight = HEIGHT;
 		
-		if(Display.graphicsSelection < 2)
+		if(FPSLauncher.resolutionChoice < 4)
 		{
-			crossHeight -= 100;
+			crossHeight -= 128;
 		}
 		
 		PIXELS[(crossWidth / 2) + (crossHeight / 2) * crossWidth] = 0x00FF00;
@@ -1041,7 +831,7 @@ public class Render3D extends Render
 	    * figure out the difference in distance.
 	    */
 		double xC 		        = (x - Player.x) * 1.9;
-		double yC 			    = (y / enemy.heightCorrect) + (Player.y * 0.1);
+		double yC 			    = (y) + (Player.yCorrect / 11);
 		double zC 			    = (z - Player.z) * 1.9;
 		
 		//Size of sprite in terms of pixels. 512 x 512 is typical 
@@ -1471,22 +1261,9 @@ public class Render3D extends Render
     */
 	public void renderItems(double x, double y, double z, double hOffSet,
 			int ID, Item item)
-	{
-		double yCorrect = Player.y;
-		
-	   /*
-	    * If the player is crouching, this corrects the item graphics so
-	    * that you can still see them as if you were actually crawling
-	    * and not below the map as it would be if it used the negative
-	    * Player.y as the actually y.
-	    */
-		if(Player.y < Player.maxHeight - 2)
-		{
-			yCorrect = Player.y - 1.77;
-		}
-		
+	{		
 		double xC 		        = ((x) - Player.x) * 1.9;
-		double yC 			    = y + (yCorrect / 10);
+		double yC 			    = y + (Player.yCorrect / 11);
 		double zC 			    = ((z) - Player.z) * 1.9;
 		
 		double rotX      =  
@@ -1557,7 +1334,7 @@ public class Render3D extends Render
 	    */
 		switch (ID)
 		{
-			//If Megahappiness. Continue to switch phases
+			//If Megahealth. Continue to switch phases
 			//For some reason enums don't work in case statements which
 			//is stupid.
 			case 1:
@@ -1585,7 +1362,7 @@ public class Render3D extends Render
 				
 				break;
 		
-			//If happiness pack
+			//Health pack
 			case 2:
 				item.phaseTime = 0;
 				
@@ -1593,7 +1370,7 @@ public class Render3D extends Render
 				
 				break;
 				
-			//Joy ammo
+			//Shotgun shell
 			case 3:
 				item.phaseTime = 0;
 				
@@ -1629,13 +1406,13 @@ public class Render3D extends Render
 				item.itemImage = Textures.yellowKey;
 				break;
 		
-			//Joy Spreader
+			//Shotgun
 			case 21:
 				item.phaseTime = 0;
 				item.itemImage = Textures.shotgun;
 				break;
 		
-			//Happiness Restock
+			//Skull of resurrection
 			case 24:
 				brightness = 255;
 				
@@ -1671,7 +1448,7 @@ public class Render3D extends Render
 				item.itemImage = Textures.environSuit;
 				break;
 		
-			//Goblet of Joy
+			//Goblet of Immortality
 			case 26:						
 				if(item.phaseTime <= 20 * fpsCheck)
 				{
@@ -1698,7 +1475,7 @@ public class Render3D extends Render
 				
 				break;
 		
-			//Donut
+			//Adrenaline
 			case 27:
 				item.phaseTime = 0;
 				item.itemImage = Textures.adrenaline;
@@ -1728,7 +1505,7 @@ public class Render3D extends Render
 				
 				break;
 	
-		    //Love Torch
+		    //Torch
 			case 29:
 				brightness = 255;
 				
@@ -1806,31 +1583,31 @@ public class Render3D extends Render
 				item.phaseTime = 0;
 				break;
 		
-		    //50 Positivity
+		    //Chainmeal armor
 			case 33:
 				item.itemImage = Textures.chainmeal;
 				item.phaseTime = 0;
 				break;
 		
-		    //100 Positivity
+		    //Combat armor
 			case 34:
 				item.itemImage = Textures.combat;
 				item.phaseTime = 0;
 				break;
 		
-		    //200 Positivity
+		    //Argent armor
 			case 35:
 				item.itemImage = Textures.argent;
 				item.phaseTime = 0;
 				break;
 		
-		    //1 Positivity
+		    //Armor shard
 			case 36:
 				item.itemImage = Textures.shard;
 				item.phaseTime = 0;
 				break;
 		
-		    //Happiness vial
+		    //Health Vial
 			case 37:
 				item.itemImage = Textures.vial;
 				item.phaseTime = 0;
@@ -1864,7 +1641,7 @@ public class Render3D extends Render
 				
 				break;
 		
-		    //Water of no use
+		    //Holy Water
 			case 39:
 				brightness = 255;
 				
@@ -1888,7 +1665,7 @@ public class Render3D extends Render
 				
 				break;
 		
-		    //Scepter of Love
+		    //Scepter of Deciet
 			case 40:
 				item.itemImage = Textures.scepter;
 				item.phaseTime = 0;
@@ -1927,37 +1704,37 @@ public class Render3D extends Render
 				item.phaseTime = 0;
 				break;
 		
-		    //Lamp table
+		    //Candleabra table
 			case 43:
 				item.itemImage = Textures.lampTable;
 				item.phaseTime = 0;
 				break;
 		
-		    //Joy Box
+		    //Shotgun box
 			case 47:
 				item.itemImage = Textures.shellBox;
 				item.phaseTime = 0;
 				break;
 		
-		    //Peace Cannon
+		    //Phase cannon
 			case 49:
 				item.itemImage = Textures.phaseCannon;
 				item.phaseTime = 0;
 				break;
 		
-		    //Peace Pack
+		    //Charge pack
 			case 50:
 				item.itemImage = Textures.chargePack;
 				item.phaseTime = 0;
 				break;
 		
-		    //Large Peace Pack
+		    //Large Charge pack
 			case 51:
 				item.itemImage = Textures.largeChargePack;
 				item.phaseTime = 0;
 				break;
 		
-			//Love System
+			//Satillite Link
 			case 52:
 				brightness = 100;
 				
@@ -1992,37 +1769,37 @@ public class Render3D extends Render
 					
 				break;
 		
-		    //Cupids bow
+		    //Pistol
 			case 55:
 				item.itemImage = Textures.pistol;
 				item.phaseTime = 0;
 				break;
 		
-		    //Love Arrows
+		    //Bullet clip
 			case 56:
 				item.itemImage = Textures.clip;
 				item.phaseTime = 0;
 				break;
 		
-		    //Quiver of love arrows
+		    //Box of bullets
 			case 57:
 				item.itemImage = Textures.bullets;
 				item.phaseTime = 0;
 				break;
 				
-			//Teddy Bear Launcher
+			//Rocket Launcher
 			case 60:
 				item.phaseTime = 0;
 				item.itemImage = Textures.rocketLaucher;
 				break;
 				
-			//Teddy bears
+			//Rockets
 			case 61:
 				item.phaseTime = 0;
 				item.itemImage = Textures.rockets;
 				break;
 				
-			//Toy box
+			//Box of Rockets
 			case 62:
 				item.phaseTime = 0;
 				item.itemImage = Textures.rocketCrate;
@@ -2319,22 +2096,9 @@ public class Render3D extends Render
     */
 	public void renderExplosion(double x, double y, double z,
 			double hOffSet, Explosion explosion)
-	{	
-		double yCorrect = Player.y;
-		
-	   /*
-	    * If the player is crouching, this corrects the item graphics so
-	    * that you can still see them as if you were actually crawling
-	    * and not below the map as it would be if it used the negative
-	    * Player.y as the actually y.
-	    */
-		if(Player.y < Player.maxHeight - 2)
-		{
-			yCorrect = Player.y - 1.77;
-		}
-		
+	{		
 		double xC 		        = ((x) - Player.x) * 1.9;
-		double yC 			    = y + (yCorrect / 10);
+		double yC 			    = y + (Player.yCorrect / 11);
 		double zC 			    = ((z) - Player.z) * 1.9;
 		
 		int spriteSize          = 600;
@@ -2657,21 +2421,8 @@ public class Render3D extends Render
 	public void renderHitSprite(double x, double y, double z,
 			double hOffSet, HitSprite hitSprite)
 	{	
-		double yCorrect = Player.y;
-		
-	   /*
-	    * If the player is crouching, this corrects the item graphics so
-	    * that you can still see them as if you were actually crawling
-	    * and not below the map as it would be if it used the negative
-	    * Player.y as the actually y.
-	    */
-		if(Player.y < Player.maxHeight - 2)
-		{
-			yCorrect = Player.y - 1.77;
-		}
-		
 		double xC = ((x) - Player.x) * 1.9;
-		double yC = y + (yCorrect / 10);
+		double yC = y + (Player.yCorrect / 11);
 		double zC = ((z) - Player.z) * 1.9;
 		
 		int spriteSize          = 150;
@@ -2834,15 +2585,15 @@ public class Render3D extends Render
 		//glass or any block that can disappear.
 		else if(hitSprite.ID == 5)
 		{						
-			if(hitSprite.phaseTime <= 6)
+			if(hitSprite.phaseTime <= 4)
 			{
 				image = Textures.bulletHit1;
 			}
-			else if(hitSprite.phaseTime <= 13)
+			else if(hitSprite.phaseTime <= 8)
 			{
 				image = Textures.bulletHit2;
 			}
-			else if(hitSprite.phaseTime <= 20)
+			else if(hitSprite.phaseTime <= 10)
 			{
 				image = Textures.bulletHit3;
 			}
@@ -3055,8 +2806,6 @@ public class Render3D extends Render
 	public void renderCorpse(double x, double y, double z,
 			double hOffSet, Corpse corpse)
 	{
-		double yCorrect = Player.y;
-		
 		//Default corpse size
 		int spriteSize          = 600;
 		
@@ -3067,19 +2816,8 @@ public class Render3D extends Render
 			y -= 3;
 		}
 		
-	   /*
-	    * If the player is crouching, this corrects the item graphics so
-	    * that you can still see them as if you were actually crawling
-	    * and not below the map as it would be if it used the negative
-	    * Player.y as the actually y.
-	    */
-		if(Player.y < Player.maxHeight - 2)
-		{
-			yCorrect = Player.y - 1.77;
-		}
-		
 		double xC 		        = ((x) - Player.x) * 1.9;
-		double yC 			    = y + (yCorrect / 10);
+		double yC 			    = y + (Player.yCorrect / 11);
 		double zC 			    = ((z) - Player.z) * 1.9;
 		
 		double rotX      =  
@@ -3596,7 +3334,7 @@ public class Render3D extends Render
 			,int ID, Projectile proj)
 	{
 		double xC 		        = (x - Player.x) * 1.9;
-		double yC 			    = y + (Player.y * 0.085);
+		double yC 			    = y + (Player.yCorrect / 11);
 		double zC 			    = (z - Player.z) * 1.9;
 		
 		int spriteSize          = 16;
@@ -3923,9 +3661,9 @@ public class Render3D extends Render
 		    */
 			double yCornerTopLeft    = 
 					((-yHeight - ((0.5 / 12) * wallHeight))
-							+ (Player.y * 0.06)) * 100;
+							+ (Player.yCorrect * 0.06)) * 100;
 			double yCornerBottomLeft = 
-					((0.5 - yHeight) + (Player.y * 0.06)) * 100;
+					((0.5 - yHeight) + (Player.yCorrect * 0.06)) * 100;
 			
 		   /*
 		    * Corrects it so that the right side of the wall does not look like
@@ -3963,9 +3701,9 @@ public class Render3D extends Render
 			* So that they seemingly stay in the same positions as well.
 			*/
 			double yCornerTopRight    = 
-					((-yHeight - ((0.5 / 12) * wallHeight)) + (Player.y * 0.06)) * 100;
+					((-yHeight - ((0.5 / 12) * wallHeight)) + (Player.yCorrect * 0.06)) * 100;
 			double yCornerBottomRight = 
-					((0.5 - yHeight) + (Player.y * 0.06)) * 100;
+					((0.5 - yHeight) + (Player.yCorrect * 0.06)) * 100;
 			
 			//All i know is it helps with making the pixels seem like they 
 			//rotate when the wall rotates. They rotate along with the wall
@@ -4476,6 +4214,7 @@ public class Render3D extends Render
 				case 19:
 					brightness = 25;			
 					block.wallImage = Textures.wall15Phase1;
+					block.wallPhase = 0;
 					
 					break;
 			
@@ -4574,6 +4313,95 @@ public class Render3D extends Render
 				//Tutorial Wall 5
 				case 34:
 					block.wallImage = Textures.tutorialWall5;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Wall 35
+				case 35:
+					block.wallImage = Textures.wall35;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Wall 36
+				case 36:
+					block.wallImage = Textures.wall36;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Wall 37
+				case 37:
+					block.wallImage = Textures.wall37;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Wall 38
+				case 38:
+					block.wallImage = Textures.wall38;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Wall 39
+				case 39:
+					block.wallImage = Textures.wall39;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Wall 40
+				case 40:
+					block.wallImage = Textures.wall40;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Wall 41
+				case 41:
+					block.wallImage = Textures.wall41;
+					
+					block.wallPhase = 0;
+					
+					break;
+					
+				//Wall 42
+				case 42:
+					if(block.wallPhase < 25 * fpsCheck)
+					{
+						block.wallImage = Textures.wall42a;
+					}
+					else if(block.wallPhase < 50 * fpsCheck)
+					{
+						block.wallImage = Textures.wall42b;
+					}
+					else if(block.wallPhase < 75 * fpsCheck)
+					{
+						block.wallImage = Textures.wall42c;
+					}
+					else if(block.wallPhase < 100 * fpsCheck)
+					{
+						block.wallImage = Textures.wall42d;
+					}
+					else
+					{
+						block.wallPhase = 0;
+					}
+					
+					break;
+					
+				//Wall 43
+				case 43:
+					block.wallImage = Textures.normButtonOn;
 					
 					block.wallPhase = 0;
 					
@@ -4748,8 +4576,7 @@ public class Render3D extends Render
 					    * are the images alpha, 2nd two are red, 3rd two are
 					    * green, 4th two are blue. ff is 255.
 					    */
-						if(color != 0xffffffff || Display.themeNum == 3
-								|| Display.themeNum == 5)
+						if(color != seeThroughWallPixel)
 						{		
 							//Change brightness of pixel if needed
 							if(changesBrightness)
@@ -4918,8 +4745,7 @@ public class Render3D extends Render
 					    * are the images alpha, 2nd two are red, 3rd two are
 					    * green, 4th two are blue. ff is 255.
 					    */
-						if(color != 0xffffffff || Display.themeNum == 3
-								|| Display.themeNum == 5)
+						if(color != seeThroughWallPixel)
 						{		
 							//Change brightness of pixel if needed
 							if(changesBrightness)
@@ -4976,6 +4802,7 @@ public class Render3D extends Render
 		
 		
 		double renderHeight = block.height;
+		double baseOf = block.height + (block.y * 4);
 		
 	   /*
 	    * Corrects the height of the wall that is rendered if the blocks
@@ -4989,20 +4816,113 @@ public class Render3D extends Render
 		{
 			renderHeight = 12 - ((12 - block.height) * 2);
 		}
-		else if(block.height >= 48)
+		else
 		{
-			renderHeight += 18;
-		}
-		else if(block.height >= 24)
-		{
-			renderHeight += 6;
-		}
-		else if(block.height > 12)
-		{
-			renderHeight += 0;
+			renderHeight += ((int)(block.height / 12) - 1) * 6;
 		}
 		
+	   /*
+	    * Based on where the graphics end, the baseOf the block
+	    * (basically where entities and the player can stand on
+	    * the top of the block) is set to see realistic with the
+	    * graphics.
+	    */
+		baseOf += (int)(((block.height) + (block.y * 4)) / 12) * 6;
+		
 		block.hCorrect = renderHeight;
+		block.baseCorrect = baseOf / 4;
+		
+		double yCorrect = 3;
+		
+		//If the blocks y is greater than 0 it takes more correction
+		if(block.y > 0)
+		{		
+			//All blocks 12 and above height for some reason actually
+			//all work with the same yCorrect value... it's weird
+			if(block.height >= 12)
+			{
+				yCorrect = 4;
+			}
+			else
+			{
+			   /*
+			    * Correction based off of how far the wall graphics are off
+			    * of the ground.
+			    */
+				double baseLevel = (block.y * 4) - ((block.hCorrect - block.height));
+				
+				if(baseLevel >= 60)
+				{
+					yCorrect = 3.768;
+				}
+				else if(baseLevel >= 48)
+				{
+					yCorrect = 3.73;
+				}
+				else if(baseLevel >= 36)
+				{
+					yCorrect = 3.643;
+				}
+				else if(baseLevel >= 24)
+				{
+					yCorrect = 3.4745;
+				}
+				else if(baseLevel > 12)
+				{
+					yCorrect = 3;
+				}
+
+			   /*
+			    * Corrects the yCorrect further based on the blocks
+			    * height. These graphical things take a lot of correction
+			    * don't they?
+			    */
+				switch((int)block.height)
+				{
+					case 1:
+						yCorrect += -0.02;
+						break;
+						
+					case 3:
+						yCorrect += 0.02;
+						break;
+						
+					case 4:
+						yCorrect += 0.04;
+						break;
+						
+					case 5:
+						yCorrect += 0.063;
+						break;
+						
+					case 6:
+						yCorrect += 0.089;
+						break;
+						
+					case 7:
+						yCorrect += 0.201;
+						break;	
+						
+					case 8:
+						yCorrect += 0.228;
+						break;	
+						
+					case 9:
+						yCorrect += 0.257;
+						break;
+						
+					case 10:
+						yCorrect += 0.288;
+						break;
+						
+					case 11:
+						yCorrect += 0.32;
+						break;
+				}
+			}
+		}
+		
+		//TODO heresa
 		
 		//IF the block being checked is solid
 		if(block.isSolid)
@@ -5022,14 +4942,14 @@ public class Render3D extends Render
 				if(Math.sin(Player.rotation) > 0)
 				{
 					render3DWalls((block.x + 1) * test, 
-							(block.x + 1) * test, block.y / 3, 
+							(block.x + 1) * test, block.y / yCorrect, 
 							block.z * test, (block.z + 0.99999) 
 							* test, renderHeight, block.wallID, block);
 				}
 				else
 				{
 					render3DWalls((block.x + 1.00001) * test, 
-						(block.x + 1.00001) * test, block.y / 3, 
+						(block.x + 1.00001) * test, block.y / yCorrect, 
 						block.z * test, (block.z + 0.99999) 
 						* test, renderHeight, block.wallID, block);
 				}
@@ -5045,14 +4965,14 @@ public class Render3D extends Render
 				if(Math.cos(Player.rotation) < 0)
 				{
 					render3DWalls((block.x + 1) * test,
-						(block.x + 0.00002) * test, block.y / 3, (block.z + 1)
+						(block.x + 0.00002) * test, block.y / yCorrect, (block.z + 1)
 						* test, (block.z + 1) 
 						* test, renderHeight, block.wallID, block);
 				}
 				else
 				{
 					render3DWalls((block.x + 1) * test,
-							(block.x + 0.00002) * test, block.y / 3, (block.z + 1)
+							(block.x + 0.00002) * test, block.y / yCorrect, (block.z + 1)
 							* test, (block.z + 1) 
 							* test, renderHeight, block.wallID, block);
 				}
@@ -5072,7 +4992,7 @@ public class Render3D extends Render
 				if(Math.sin(Player.rotation) > 0)
 				{
 					render3DWalls(block.x * test,
-							(block.x + 0.99999) * test, block.y / 3,
+							(block.x + 0.99999) * test, block.y / yCorrect,
 							(block.z) * test,
 							(block.z) * test,
 							renderHeight, block.wallID, block);
@@ -5080,7 +5000,7 @@ public class Render3D extends Render
 				else
 				{
 					render3DWalls(block.x * test,
-						(block.x + 1) * test, block.y / 3,
+						(block.x + 1) * test, block.y / yCorrect,
 						(block.z) * test,
 						(block.z) * test,
 						renderHeight, block.wallID, block);
@@ -5095,7 +5015,7 @@ public class Render3D extends Render
 					|| westBlock.seeThrough && !block.seeThrough)
 			{
 				render3DWalls((block.x) * test,
-						(block.x) * test, block.y / 3,
+						(block.x) * test, block.y / yCorrect,
 						(block.z + 1) * test, (block.z + 0.00001) * test,
 						renderHeight, block.wallID, block);
 				

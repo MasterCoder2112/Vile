@@ -1,5 +1,7 @@
 package com.vile.input;
 
+import java.util.ArrayList;
+
 import com.vile.Display;
 import com.vile.Game;
 import com.vile.PopUp;
@@ -7,7 +9,8 @@ import com.vile.SoundController;
 import com.vile.entities.Button;
 import com.vile.entities.Door;
 import com.vile.entities.Elevator;
-import com.vile.entities.Enemy;
+import com.vile.entities.Entity;
+import com.vile.entities.Explosion;
 import com.vile.entities.HurtingBlock;
 import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
@@ -59,8 +62,11 @@ public class Controller
     * Variables used in falling acceleration (gravity)
     */
 	private double  fallSpeed         = 0.4;
-	private double  acceleration      = 0.03;
 	private double  fallAmount        = 0;
+	
+	//Public and static because it can be changed when accessing a 
+	//new custom resource pack. (In case on the moon or other planet)
+	public static  double  acceleration      = 0.03;
 
    /*
     * Other variables
@@ -105,17 +111,6 @@ public class Controller
 		//Amount your moving in x or z direction each time it loops
 		double moveX         = 0;
 		double moveZ         = 0;
-		
-	   /*
-	    * If on the moon, change the jumpHeight to 20, and reduce the
-	    * acceleration due to gravity.
-	    */
-		if(Display.themeNum == 4)
-		{
-			acceleration = 0.005;
-		}
-		
-		boolean test = true;
 		
 	   /*
 	    * Only allow these actions if the player is alive
@@ -238,17 +233,18 @@ public class Controller
 			
 		   /*
 		    * If you are pressing crouch, and not going up because of
-		    * jumping. Half the moveSpeed, set crouching = true, and keep
+		    * jumping. Halve the moveSpeed, set crouching = true, and keep
 		    * performing a given operation while you are crouching.
 		    */
 			if(Game.crouch && !inJump)
 			{	
 				//If still not as low as you can go
-				if(Player.y > -6.0 + Player.maxHeight + Player.extraHeight) 
+				if(Player.yCorrect > -6.0 + Player.y) 
 				{
-					test = false;
-					//If flying, just fly down
-					if(Player.flyOn)
+					//If flying, just fly down until the player reaches the ground
+					if(Player.flyOn && 
+							Player.y >= Player.maxHeight 
+							+ Player.extraHeight)
 					{
 						Player.y  -= 0.8;
 					}
@@ -281,31 +277,37 @@ public class Controller
 						moveSpeed = 0.5;
 						crouching = true;
 						
-						Player.y  -= 0.5;
+						Player.yCorrect  -= 0.5;
 						Player.height -= 0.17;
 					}
 				}
 				
 			
 				//If there is some decimal error, round to -6.0
-				if(Player.y <= -6.0 + Player.maxHeight + Player.extraHeight)
+				if(Player.yCorrect <= -6.0 + Player.y)
 				{
-					Player.y = -6.0 + Player.maxHeight + Player.extraHeight;
+					Player.yCorrect = -6.0 + Player.y;
 					Player.height = 0;
-					test = true;
 				}
 			}
-			//If not crouching but still on the ground
-			else if(!inJump && Player.y < Player.maxHeight
-					+ Player.extraHeight &&
-					Player.height < 2)
+		   /*
+		    * If coming up from a crouch and you have not reached
+		    * your normal height yet and there is not a block right
+		    * above you that you can't raise through.
+		    */
+			else if(Player.yCorrect < Player.y &&
+					Player.height < 2
+					&& (Player.yCorrect + 4 < Player.blockOn.y
+							&& Player.blockOn.y > Player.y
+							|| Player.blockOn.y <= Player.y
+							|| Player.y + 2 < Player.blockOn.y))
 			{
 				crouching = false;
 				
 				//Slowly raise up
-				if(Player.y < Player.maxHeight + Player.extraHeight)
+				if(Player.yCorrect < Player.y)
 				{
-					Player.y += 0.5;
+					Player.yCorrect += 0.5;
 				}
 				
 				//Also raises player up
@@ -314,73 +316,64 @@ public class Controller
 					Player.height += 0.17;
 				}
 				
-				if(Player.height > 2)
+				if(Player.height >= 2)
 				{
 					Player.height = 2;
 				}
 				
-				if(Player.y > Player.maxHeight + Player.extraHeight)
+				if(Player.yCorrect > Player.y)
 				{
-					Player.y = Player.maxHeight + Player.extraHeight;
+					Player.yCorrect = Player.y;
 				}
-				
-				test = false;
 			}
+			//If no longer crouching
 			else
 			{
 				crouching = false;
-				test = true;
 			}
+			
+			//TODO here2
 		
 		   /*
 		    * If fly mode is not on, jump like normal
 		    */
 			if(!Player.flyOn)
 			{		
+				//System.out.println(Player.y+" : "+Player.maxHeight+" : "+Player.extraHeight);
 			   /*
 			    * If the Player is trying to jump, and the player is on
-			    * the ground, then jump. If the Player is on an elevator
-			    * then add some error to being on "the ground" because
-			    * the elevator is moving making it so that technically
-			    * the player is never "on the ground" because what was
-			    * ground zero is now higher because the elevator is
-			    * constantly moving.
+			    * the ground, then jump. 
 			    */
 				if(Game.jump && Player.y == Player.maxHeight + Player.extraHeight)
 				{
 					inJump = true;
-					Player.jumpHeight = 8 + Player.maxHeight + Player.extraHeight;
-					
-					//If on the moon, add to maximum jumpHeight
-					if(Display.themeNum == 4)
-					{
-						Player.jumpHeight = 12 + 
-								Player.maxHeight + Player.extraHeight;
-					}
+					Player.jumpHeight = Player.totalJump + Player.maxHeight + Player.extraHeight;
 				}
-			
+				
 			   /*
 			    * If you haven't reached your max jumpHeight yet then keep
 			    * going up, but if you have, then stop going up.
 			    */
-				if(inJump && Player.y < Player.jumpHeight)
+				if(inJump && Player.y < Player.jumpHeight
+						&& (Player.y + 0.4 < (Player.blockOn.y) 
+								&& Player.blockOn.y > 0 
+								|| Player.y >= Player.blockOn.y))
 				{
 					Player.y += 0.4;
 				}
-				else if(inJump && Player.y >= Player.jumpHeight)
+				else
 				{
 					inJump = false;
 				}
 				
-				//If you are above the ceiling, get back to the ceiling
+				//If you are above the ceiling, get back to the ceiling - 0.1
 				if(Player.y >= Render3D.ceilingDefaultHeight)
 				{
-					Player.y = Render3D.ceilingDefaultHeight;
+					Player.y = Render3D.ceilingDefaultHeight - 0.1;
 				}
 				
 				//If you're falling, accelerate down
-				if(Player.y > 0 + Player.maxHeight + Player.extraHeight 
-						&& !crouching && !inJump)
+				if(Player.y > 0 + Player.maxHeight + Player.extraHeight && !inJump)
 				{
 					Player.y -= fallSpeed;
 					fallAmount -= fallSpeed;
@@ -491,7 +484,25 @@ public class Controller
 			//If weapon has not be picked up yet
 			else if(Game.weaponSlot1)
 			{
-				Display.messages.add(new PopUp("You don't have this weapon yet"));
+				PopUp temp = new PopUp("You don't have this weapon yet!");
+				
+				//Only display the message if its not on screen yet
+				boolean exists = false;
+				
+				for(PopUp p: Display.messages)
+				{
+					if(temp.text == p.text)
+					{
+						exists = true;
+						break;
+					}
+				}
+				
+				//If Message does not exist yet
+				if(!exists)
+				{
+					Display.messages.add(temp);
+				}
 			}
 			
 			//If Player chooses the second weapon slot
@@ -503,7 +514,25 @@ public class Controller
 			//If weapon has not be picked up yet
 			else if(Game.weaponSlot2)
 			{
-				Display.messages.add(new PopUp("You don't have this weapon yet"));
+				PopUp temp = new PopUp("You don't have this weapon yet!");
+				
+				//Only display the message if its not on screen yet
+				boolean exists = false;
+				
+				for(PopUp p: Display.messages)
+				{
+					if(temp.text == p.text)
+					{
+						exists = true;
+						break;
+					}
+				}
+				
+				//If Message does not exist yet
+				if(!exists)
+				{
+					Display.messages.add(temp);
+				}
 			}
 			
 			//If Player chooses the third weapon slot
@@ -515,7 +544,25 @@ public class Controller
 			//If weapon has not be picked up yet
 			else if(Game.weaponSlot3)
 			{
-				Display.messages.add(new PopUp("You don't have this weapon yet"));
+				PopUp temp = new PopUp("You don't have this weapon yet!");
+				
+				//Only display the message if its not on screen yet
+				boolean exists = false;
+				
+				for(PopUp p: Display.messages)
+				{
+					if(temp.text == p.text)
+					{
+						exists = true;
+						break;
+					}
+				}
+				
+				//If Message does not exist yet
+				if(!exists)
+				{
+					Display.messages.add(temp);
+				}
 			}
 			
 		   /*
@@ -673,7 +720,25 @@ public class Controller
 								SoundController.keyTry.playAudioFile(door.distanceFromPlayer + 10);
 							}
 							
-							Display.messages.add(new PopUp("This door is opened elsewhere!"));
+							PopUp temp = new PopUp("This door is opened elsewhere!");
+							
+							//Only display the message if its not on screen yet
+							boolean exists = false;
+							
+							for(PopUp p: Display.messages)
+							{
+								if(temp.text == p.text)
+								{
+									exists = true;
+									break;
+								}
+							}
+							
+							//If Message does not exist yet
+							if(!exists)
+							{
+								Display.messages.add(temp);
+							}
 						}
 					}
 					else
@@ -684,7 +749,25 @@ public class Controller
 						    * Displays that the player cannot open the
 						    * door without the red key.
 						    */
-							Display.messages.add(new PopUp("You require the red keycard!"));
+							PopUp temp = new PopUp("You need the Red Keycard!");
+							
+							//Only display the message if its not on screen yet
+							boolean exists = false;
+							
+							for(PopUp p: Display.messages)
+							{
+								if(temp.text == p.text)
+								{
+									exists = true;
+									break;
+								}
+							}
+							
+							//If Message does not exist yet
+							if(!exists)
+							{
+								Display.messages.add(temp);
+							}
 							
 							if(!SoundController.keyTry.isStillActive())
 							{
@@ -697,7 +780,24 @@ public class Controller
 						    * Displays that the player cannot open the
 						    * door without the blue key.
 						    */
-							Display.messages.add(new PopUp("You require the blue keycard!"));
+							PopUp temp = new PopUp("You need the Blue Keycard!");
+							
+							boolean exists = false;
+							
+							for(PopUp p: Display.messages)
+							{
+								if(temp.text == p.text)
+								{
+									exists = true;
+									break;
+								}
+							}
+							
+							//If Message does not exist yet
+							if(!exists)
+							{
+								Display.messages.add(temp);
+							}
 							
 							if(!SoundController.keyTry.isStillActive())
 							{
@@ -710,7 +810,24 @@ public class Controller
 						    * Displays that the player cannot open the
 						    * door without the green key.
 						    */
-							Display.messages.add(new PopUp("You require the green keycard!"));
+							PopUp temp = new PopUp("You need the Green Keycard!");
+							
+							boolean exists = false;
+							
+							for(PopUp p: Display.messages)
+							{
+								if(temp.text == p.text)
+								{
+									exists = true;
+									break;
+								}
+							}
+							
+							//If Message does not exist yet
+							if(!exists)
+							{
+								Display.messages.add(temp);
+							}
 							
 							if(!SoundController.keyTry.isStillActive())
 							{
@@ -723,7 +840,24 @@ public class Controller
 						    * Displays that the player cannot open the
 						    * door without the yellow key.
 						    */
-							Display.messages.add(new PopUp("You require the yellow keycard!"));
+							PopUp temp = new PopUp("You need the Yellow Keycard!");
+							
+							boolean exists = false;
+							
+							for(PopUp p: Display.messages)
+							{
+								if(temp.text == p.text)
+								{
+									exists = true;
+									break;
+								}
+							}
+							
+							//If Message does not exist yet
+							if(!exists)
+							{
+								Display.messages.add(temp);
+							}
 							
 							if(!SoundController.keyTry.isStillActive())
 							{
@@ -757,7 +891,24 @@ public class Controller
 					}
 					else
 					{
-						Display.messages.add(new PopUp("This elevator is activated elsewhere!"));
+						PopUp temp = new PopUp("This elevator is activated elsewhere!");
+						
+						boolean exists = false;
+						
+						for(PopUp p: Display.messages)
+						{
+							if(temp.text == p.text)
+							{
+								exists = true;
+								break;
+							}
+						}
+						
+						//If Message does not exist yet
+						if(!exists)
+						{
+							Display.messages.add(temp);
+						}
 					}
 				}
 			}
@@ -796,10 +947,12 @@ public class Controller
 			//If not survival, reload map
 			if(FPSLauncher.gameMode == 0)
 			{
+				Display.messages = new ArrayList<PopUp>();
 				game.loadNextMap(false, "");
 			}
 			else
 			{
+				Display.messages = new ArrayList<PopUp>();
 				//If survival mode then restart survival
 				game.display.restartSurvival();
 			}
@@ -872,12 +1025,6 @@ public class Controller
 			{
 				Player.flyOn      = false;
 				fallAmount = Player.y - Player.maxHeight;
-				
-				//If on the moon, falling has less of a health impact
-				if(Display.themeNum == 4)
-				{
-					fallAmount /= 6;
-				}
 			}
 			
 			time++;
@@ -920,7 +1067,24 @@ public class Controller
 			Player.weapons[3].canBeEquipped = true;
 			
 			//Display that weapons were given
-			Display.messages.add(new PopUp("All weapons given!"));
+			PopUp temp = new PopUp("All weapons given!");
+			
+			boolean exists = false;
+			
+			for(PopUp p: Display.messages)
+			{
+				if(temp.text == p.text)
+				{
+					exists = true;
+					break;
+				}
+			}
+			
+			//If Message does not exist yet
+			if(!exists)
+			{
+				Display.messages.add(temp);
+			}
 		}
 			
 	   /*
@@ -976,8 +1140,7 @@ public class Controller
 	    * If noclip is on, you can clip through walls, so you can
 	    * do this anyway.
 	    */
-		if(isFree(Player.x + xa + (xEffects), Player.z) 
-				&& test || Player.noClipOn)
+		if(isFree(Player.x + xa + (xEffects), Player.z) || Player.noClipOn)
 		{
 			Player.x += xa + (xEffects);
 		}
@@ -990,15 +1153,14 @@ public class Controller
 		* If noclip is on, you can clip through walls, so you can
 		* do this anyway.
 		*/
-		if(isFree(Player.x, Player.z + za + (zEffects)) 
-				&& test || Player.noClipOn)
+		if(isFree(Player.x, Player.z + za + (zEffects)) || Player.noClipOn)
 		{
 			Player.z += za + (zEffects);
 		}
 		
 		//Update player buffs (invincibility, etc...)
 		Player.updateBuffs();
-		
+
 		try
 		{
 			//If it contains a Toxic Waste Block or Lava Block
@@ -1018,6 +1180,118 @@ public class Controller
 				{
 					HurtingBlock.time = 0;
 				}
+			}
+		}
+		catch(Exception e)
+		{
+			
+		}
+		
+		try
+		{
+			//If it is a line def
+			if(Player.blockOn.wallItem.itemID == ItemNames.LINEDEF.itemID)
+			{
+				Item item = Player.blockOn.wallItem;
+				
+				//If End Level Line Def
+				if(item.itemActivationID == 0)
+				{
+					Game.mapNum++;
+					game.loadNextMap(false, "");
+				}
+				else
+				{
+					//Search through all the doors
+					for(int k = 0; k < Game.doors.size(); k++)
+					{
+						Door door = Game.doors.get(k);
+						
+						//If door has the same activation ID as the 
+						//button then activate it.
+						if(door.itemActivationID 
+								== item.itemActivationID)
+						{
+							door.activated = true;
+						}
+					}
+					
+					//Stores Items to be deleted
+					ArrayList<Item> tempItems2 = new ArrayList<Item>();
+					
+					//Scan all activatable items
+					for(int j = 0; j < Game.activatable.size(); j++)
+					{
+						Item itemAct = Game.activatable.get(j);
+						
+						//If Item is a Happiness Tower, activate it and
+						//state that it is activated
+						if(itemAct.itemID == ItemNames.RADAR.getID()
+								&& !itemAct.activated &&
+								item.itemActivationID ==
+								itemAct.itemActivationID)
+						{
+							itemAct.activated = true;
+							Display.messages.add(new PopUp("COM SYSTEM ACTIVATED"));
+							SoundController.uplink.playAudioFile(0);
+						}
+						else
+						{				
+							//If item is enemy spawnpoint, then spawn the
+							//enemy, and add the item to the arraylist of
+							//items to be deleted
+							if(itemAct.itemID == ItemNames.ENEMYSPAWN.getID()
+									&& itemAct.itemActivationID 
+									== item.itemActivationID)
+							{
+								Game.enemiesInMap++;
+								game.addEnemy(itemAct.x, itemAct.z,
+										itemAct.rotation);
+								tempItems2.add(itemAct);
+							}	
+							//If Explosion has same activation ID of the button
+							//then activate it
+							else if(itemAct.itemID ==
+									ItemNames.ACTIVATEEXP.getID()
+									&& itemAct.itemActivationID 
+									== item.itemActivationID)
+							{
+								new Explosion(itemAct.x, itemAct.y,
+										itemAct.z, 0, 0);
+								tempItems2.add(itemAct);
+							}
+							//If it gets rid of a wall, delete the wall and create an
+							//air wall in its place.
+							else if(itemAct.itemID 
+									== ItemNames.WALLBEGONE.getID()
+									&& itemAct.itemActivationID ==
+									item.itemActivationID)
+							{
+								Block block2 = Level.getBlock
+										((int)itemAct.x, (int)itemAct.z);
+								
+								//Block is effectively no longer there
+								block2.height = 0;
+								
+								tempItems2.add(itemAct);
+							}
+						}
+					}
+					
+					//Remove all the items that need to be deleted now
+					for(int j = 0; j < tempItems2.size(); j++)
+					{
+						Item temp2 =  tempItems2.get(j);
+								
+						temp2.removeItem();
+					}
+				}
+				
+				//Play audio queue if there is one
+				item.activateAudioQueue();
+				
+				//Remove linedef from game
+				item.removeItem();
 			}
 		}
 		catch(Exception e)
@@ -1091,35 +1365,62 @@ public class Controller
 		{
 			
 		}
-		
-		//Reset players height to the blocks current height so the player
-		//never falls through a block
-		if(!Player.blockOn.isaDoor)
-		{
-			//TODO Update in the air collision detection on block...
-			//will take time
-			
-			Player.maxHeight = Player.blockOn.height + Player.blockOn.y;
-			
-		   /*
-		    * If player is on an item, add that items height to the
-		    * current maxHeight
-		    */
-			if(Player.extraHeight > 0)
-			{
-				Player.maxHeight += Player.extraHeight;
-				Player.extraHeight = 0;
-			}
-			
-			//If not crouching or jumping or flying, and the player is
-			//not dead then reset the players y value.
-			if(!crouching && !inJump && Player.y < Player.maxHeight 
-					&& test
-					&& Player.alive)
-			{
-				Player.y = Player.maxHeight;
-			}
+
+	   /*
+	    * If the players y value + 4 is greater than the y of the
+	    * block * 4(since the y of the block is corrected for
+	    * rendering), then the player is either inside or on
+	    * top of the block. The + 4 is there for stairs
+	    */
+		if(Player.y + 4 > (Player.blockOn.y * 4))
+		{	
+			Player.maxHeight = Player.blockOn.height + (Player.blockOn.y * 4)
+					+ Player.blockOn.baseCorrect;
 		}
+		else
+		{
+			Player.maxHeight = 0;
+		}
+		
+	   /*
+	    * If player is on an item, add that items height to the
+	    * current maxHeight
+	    */
+		if(Player.extraHeight > 0)
+		{
+			Player.maxHeight += Player.extraHeight;
+			Player.extraHeight = 0;
+		}
+
+		//If not crouching or jumping or flying, and the player is
+		//not dead then reset the players y value. Also the player
+		//must not be partially crouched under a block (height has to
+		//be two if fully standing up).
+		if(!inJump && Player.y < Player.maxHeight
+				&& Player.alive)
+		{
+			Player.y = Player.maxHeight;
+		}
+		
+	   /*
+	    * Only reset the players yCorrect if the player is effectively
+	    * not crouching
+	    */
+		if(Player.height >= 2
+				|| Player.yCorrect >= Player.y)
+		{
+			Player.yCorrect = Player.y;
+		}
+	   /*
+	    * In case player is crouched and moving up stairs, this
+	    * will make sure the crouched y value also changes.
+	    */
+		else if(Player.yCorrect + 6.0 < Player.y)
+		{
+			Player.yCorrect = Player.y - 6.0;
+		}
+
+		//TODO here
 
 	   /*
 	    * Causes the players movement to quickly (but not 
@@ -1237,15 +1538,8 @@ public class Controller
 						+ ((Math.abs(temp.z - nextZ))
 								* (Math.abs(temp.z - nextZ))));
 				
-				double playerY = Player.y;
-				
-				if(playerY < Player.maxHeight + Player.extraHeight)
-				{
-					playerY = Player.maxHeight + Player.extraHeight;
-				}
-				
 				//Difference in y
-				double yDifference = playerY - Math.abs(temp.y);
+				double yDifference = Player.y - Math.abs(temp.y);
 				
 				//If close enough, don't allow the player to move into it.
 				if(distance <= 0.3 && (yDifference <= temp.height
@@ -1268,9 +1562,9 @@ public class Controller
 		
 		//Go through all the enemies in the game to make sure they are not
 		//too close to you
-		for(int i = 0; i < block.enemiesOnBlock.size(); i++)
+		for(int i = 0; i < block.entitiesOnBlock.size(); i++)
 		{
-			Enemy temp = block.enemiesOnBlock.get(i);
+			Entity temp = block.entitiesOnBlock.get(i);
 			
 			//Distance between enemy and player
 			double distance = Math.sqrt(((Math.abs(temp.xPos - nextX))
@@ -1278,21 +1572,14 @@ public class Controller
 					+ ((Math.abs(temp.zPos - nextZ))
 							* (Math.abs(temp.zPos - nextZ))));
 			
-			double playerY = Player.y;
-			
-			if(playerY < Player.maxHeight + Player.extraHeight)
-			{
-				playerY = Player.maxHeight + Player.extraHeight;
-			}
-			
 			//Difference between enemy and player
-			double yDifference = playerY - Math.abs(temp.yPos);
+			double yDifference = Player.y - Math.abs(temp.yPos);
 			
 			//If this enemy was removed from the game but not the block for
 			//some reason, remove it now and allow the player to move.
 			if(!Game.enemies.contains(temp))
 			{
-				block.enemiesOnBlock.remove(i);
+				block.entitiesOnBlock.remove(i);
 				return true;
 			}
 			
@@ -1320,8 +1607,8 @@ public class Controller
 		
 		Player.extraHeight = 0;
 		
-		//Adds the plus 2 to go up steps
-		double yCorrect = Player.y + 2;
+		//Adds the plus 4 to go up steps
+		double yCorrect = Player.y + 4;
 		
 	   /*
 	    * After first check, no longer set the players height as being
@@ -1330,20 +1617,9 @@ public class Controller
 	    */
 		if(!firstCheck)
 		{
-			Player.y = block5.height + block5.y;
+			Player.y = block5.height + (block5.y * 4) + block5.baseCorrect;
 			Player.maxHeight = Player.y;
 			firstCheck = true;
-		}
-		
-	   /*
-	    * If y value is less than 0 due to crouching, just
-	    * keep it at 0 so that you cannot go under walls,
-	    * and set it to what the player y would be if
-	    * it was not negative.s
-	    */
-		if(Player.y < Player.maxHeight && crouching)
-		{
-			yCorrect = Player.maxHeight + 2;
 		}
 		
 	   /*
@@ -1386,8 +1662,8 @@ public class Controller
 	    * If player is between blocks bottom and top, don't let the player
 	    * get on to, or go through the block
 	    */
-		if(block.height + (blockY / 2) > yCorrect
-				&& yCorrect + Player.height >= blockY / 2)
+		if(block.height + (block.baseCorrect) + blockY > yCorrect
+				&& yCorrect + Player.height >= blockY)
 		{
 			return false;
 		}

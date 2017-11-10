@@ -147,9 +147,6 @@ public class Game implements Runnable
 	public static boolean unlimAmmo;
 	/* End Game Actions ***********************************************/
 	
-	//Did the first announcement or sound to start the level play
-	public boolean firstSound = false;
-	
    /**
     * Sets up the level and the Controller object. The level size is
     * determined by the Display.levelSize variable which is determined
@@ -274,20 +271,8 @@ public class Game implements Runnable
 			{
 				//Player is no longer alive
 				Player.alive = false;
-				
-				//Depends on game theme
-				if(Display.themeNum == 3)
-				{
-					SoundController.nickDeath.playAudioFile(0);
-				}
-				else if(Display.themeNum == 5)
-				{
-					SoundController.mlgDeath.playAudioFile(0);
-				}
-				else
-				{
-					SoundController.playerDeath.playAudioFile(0);
-				}
+
+				SoundController.playerDeath.playAudioFile(0);
 				
 				//If survival mode, see if its a new max number of kills
 				//or not and if it is then save the new max.
@@ -345,6 +330,11 @@ public class Game implements Runnable
 			{
 				//De-activate the button
 				temp.activated = false;
+				
+				Block button = Level.getBlock((int)temp.xPos, (int)temp.zPos);
+				
+				//Change the wall texture to show the button has been activated
+				button.wallID = 43;
 				
 				//Search through all the doors
 				for(int k = 0; k < Game.doors.size(); k++)
@@ -489,6 +479,13 @@ public class Game implements Runnable
 		controls.performActions(this);
 	}
 	
+	//TODO Maybe when multithreading is figured out
+	@Override
+	public void run()
+	{
+		tick(Display.input.key);
+	}
+	
    /**
     * Adds a projectile to the game starting at the players x, y 
     * and z position. This entity is used to hit enemies and 
@@ -605,7 +602,7 @@ public class Game implements Runnable
 		
 		//Add new enemy to game with correct values
 		enemies.add(enemy);
-		block.enemiesOnBlock.add(enemy);
+		block.entitiesOnBlock.add(enemy);
 		
 		SoundController.teleportation.playAudioFile
 				(enemy.distanceFromPlayer);
@@ -652,7 +649,7 @@ public class Game implements Runnable
 			secretsFound = Integer.parseInt(elements[2]);
 			enemiesInMap = Integer.parseInt(elements[3]);
 			Display.kills = Integer.parseInt(elements[4]);
-			Display.themeNum = Integer.parseInt(elements[5]);
+			FPSLauncher.themeName = (elements[5]);
 			
 			//////////////////////////Player stuff now
 			currentLine = sc.nextLine();
@@ -665,9 +662,6 @@ public class Game implements Runnable
 			
 			weaponStuff = elements[1];
 			otherStuff = elements[0];
-			
-			//Don't replay first sound effect
-			firstSound = true;
 			
 			elements = otherStuff.split(":");
 			
@@ -848,7 +842,7 @@ public class Game implements Runnable
     			//Only if in campaign mode, survival mode acts weird here
     			if(gM == 0)
     			{
-    				blockOn.enemiesOnBlock.add(en);
+    				blockOn.entitiesOnBlock.add(en);
     			}
     		}
     		
@@ -960,7 +954,8 @@ public class Game implements Runnable
 							Double.parseDouble(itemAtt[3]), 
 							Double.parseDouble(itemAtt[4]),
 							itemID, Integer.parseInt(itemAtt[5]),
-							Integer.parseInt(itemAtt[0]));
+							Integer.parseInt(itemAtt[0]),
+							itemAtt[6]);
 				}
 				else
 				{
@@ -1241,7 +1236,8 @@ public class Game implements Runnable
 						Integer.parseInt(dAtt[5]),
 						Integer.parseInt(dAtt[6]),
 						Integer.parseInt(dAtt[9]),
-						Integer.parseInt(dAtt[1]));
+						Integer.parseInt(dAtt[1]),
+						Integer.parseInt(dAtt[11]));
 				
 				d.time = Integer.parseInt(dAtt[7]);
 				d.soundTime = Integer.parseInt(dAtt[8]);
@@ -1255,7 +1251,7 @@ public class Game implements Runnable
 				
 				if(thisBlock.y > 0)
 				{
-					thisBlock.isaDoor = true;
+					thisBlock.isMoving = true;
 				}
 				
 				Game.doors.add(d);
@@ -1301,7 +1297,8 @@ public class Game implements Runnable
 						Double.parseDouble(eAtt[4]),
 						Integer.parseInt(eAtt[5]),
 						Integer.parseInt(eAtt[6]),
-						Integer.parseInt(eAtt[1]));
+						Integer.parseInt(eAtt[1]),
+						Integer.parseInt(eAtt[14]));
 				
 				e.height = Integer.parseInt(eAtt[7]);
 				e.soundTime = Integer.parseInt(eAtt[8]);
@@ -1388,23 +1385,23 @@ public class Game implements Runnable
 	{
 		calculatedSize = 100;
 		
-		if(Display.levelSize == 0)
+		if(FPSLauncher.levelSizeChoice == 0)
 		{
 			calculatedSize = 10;
 		}
-		else if(Display.levelSize == 1)
+		else if(FPSLauncher.levelSizeChoice == 1)
 		{
 			calculatedSize = 25;
 		}
-		else if(Display.levelSize == 2)
+		else if(FPSLauncher.levelSizeChoice == 2)
 		{
 			calculatedSize = 50;
 		}
-		else if(Display.levelSize == 3)
+		else if(FPSLauncher.levelSizeChoice == 3)
 		{
 			calculatedSize = 100;
 		}
-		else if(Display.levelSize == 4)
+		else if(FPSLauncher.levelSizeChoice == 4)
 		{
 			calculatedSize   = 250;
 		}
@@ -1455,7 +1452,7 @@ public class Game implements Runnable
 			
 			//Item adds itself when instantiated
 			new Item(2, rand.nextInt(calculatedSize), 
-					0, rand.nextInt(calculatedSize), ammoType, 0, 0);
+					0, rand.nextInt(calculatedSize), ammoType, 0, 0, "");
 		}
 		
 	   /*
@@ -1487,7 +1484,7 @@ public class Game implements Runnable
 			
 			//Item adds itself when instantiated
 			new Item(2, rand.nextInt(calculatedSize), 
-					0, rand.nextInt(calculatedSize), ammoType, 0, 0);
+					0, rand.nextInt(calculatedSize), ammoType, 0, 0, "");
 		}
 		
 		//Player has all weapons for survival mode
@@ -1495,40 +1492,6 @@ public class Game implements Runnable
 		Player.weapons[1].canBeEquipped = true;
 		Player.weapons[2].canBeEquipped = true;
 		Player.weapons[3].canBeEquipped = true;
-		
-		//Depending on the theme set the ceiling and floor textures
-		switch(Display.themeNum)
-		{
-			case 1:
-				mapFloor = 9;
-				mapCeiling = 10;
-				break;
-				
-			case 2:
-				mapFloor = 1;
-				mapCeiling = 3;
-				break;
-				
-			case 3:
-				mapFloor = 12;
-				mapCeiling = 12;
-				break;
-				
-			case 4:
-				mapFloor = 11;
-				mapCeiling = 10;
-				break;
-				
-			case 5:
-				mapFloor = 13;
-				mapCeiling = 13;
-				break;
-				
-			default:
-				mapFloor = 9;
-				mapCeiling = 10;
-				break;
-		}
 	}
 	
    /**
@@ -1576,15 +1539,53 @@ public class Game implements Runnable
 			//Resets all the lists
 			resetLists();
 			
-			//First sets up default map name to be read
-			Scanner sc = new Scanner(new BufferedReader
-				(new FileReader("map"+mapNum+".txt")));
+			//It requires me to put something here.... sigh...
+			Scanner sc = new Scanner(new BufferedReader(new FileReader("resources/default/maps/map"+mapNum+".txt")));
 			
-			//If a custom map name, load scan that instead
-			if(newMap)
+			//First sets up default map name to be read
+			try
 			{
 				sc = new Scanner(new BufferedReader
-						(new FileReader(mapNameNew+".txt")));		
+					(new FileReader("resources"+FPSLauncher.themeName+"/maps/map"+mapNum+".txt")));
+				
+				//If a custom map name, load scan that instead
+				if(newMap)
+				{
+					sc = new Scanner(new BufferedReader
+							(new FileReader("resources"+FPSLauncher.themeName+"/maps/"+mapNameNew+".txt")));		
+				}
+			}
+			catch(Exception e)
+			{
+				try
+				{
+					//If that map does not exist in the resource pack
+					sc = new Scanner(new BufferedReader
+							(new FileReader("resources/default/maps/map"+mapNum+".txt")));
+						
+					//If a custom map name, load scan that instead
+					if(newMap)
+					{
+						sc = new Scanner(new BufferedReader
+								(new FileReader("resources/default/maps/"+mapNameNew+".txt")));		
+					}
+				}
+				catch(Exception ex)
+				{
+					//If that map number is not found in either, just
+					//quit to main menu again.
+					e.printStackTrace();
+					
+					//If map doesn't load, exit to pause menu so game
+					//Doesn't crash and you can retry
+					Display.pauseGame =  true;
+					
+					//Quit game is true
+					Controller.quitGame = true;
+					
+					//Restart the game to quit
+					new Game(display, false, "");
+				}
 			}
 			
 			//The very first part of any map file now is the name
@@ -1678,6 +1679,9 @@ public class Game implements Runnable
 				int entityID = Integer.parseInt(blockValues[2]);
 				double rotation = 0;
 				int itemActID = 0;
+				int wallY = 0;
+				int doorRaiseHeight = 0;
+				String audioQueue = "";
 				
 				//Try to see if block has an entity with a given rotation
 				try
@@ -1706,6 +1710,45 @@ public class Game implements Runnable
 					itemActID = 0;
 				}
 				
+				//Try to see if block has an entity with a given
+				//Audio Queue
+				try
+				{
+					audioQueue = (blockValues[5]);
+				}
+				catch (Exception e)
+				{
+					//If entity does not have a audio queue
+					//, the default is 0
+					audioQueue = "";
+				}
+				
+				//Try to see if block has an entity with a given
+				//Wall y value
+				try
+				{
+					wallY = Integer.parseInt(blockValues[6]);
+				}
+				catch (Exception e)
+				{
+					//If entity does not have a wallY
+					//, the default is 0
+					wallY = 0;
+				}
+				
+				//Try to see if block has an entity with a given
+				//Door Height value
+				try
+				{
+					doorRaiseHeight = Integer.parseInt(blockValues[7]);
+				}
+				catch (Exception e)
+				{
+					//If entity does not have a doorHeightValue
+					//, the default is 0
+					doorRaiseHeight = 0;
+				}
+				
 			   /*
 			    * 100 is a special wall ID which tells this to move onto 
 			    * the next row of the map and begin again.
@@ -1721,7 +1764,7 @@ public class Game implements Runnable
 					//Set the next spot in the map to this new ValueHolder
 					tempMap[row][col] = 
 							new ValueHolder(height, wallID, entityID,
-									rotation, itemActID);
+									rotation, itemActID, audioQueue, wallY, doorRaiseHeight);
 					
 					//Go to next column
 					col++;
@@ -1789,11 +1832,11 @@ public class Game implements Runnable
 			//Quit game is true
 			Controller.quitGame = true;
 			
+			return;
+			
 			//Restart the game to quit
-			new Game(display, false, "");
+			//new Game(display, false, "");
 		}
-		
-		firstSound = false;
 	}
 	
    /**
@@ -1820,9 +1863,4 @@ public class Game implements Runnable
 		sprites 	  = new ArrayList<HitSprite>();
 	}
 
-@Override
-public void run() {
-	// TODO Auto-generated method stub
-	tick(Display.input.key);
-}
 }

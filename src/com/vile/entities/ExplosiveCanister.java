@@ -35,7 +35,7 @@ public class ExplosiveCanister extends Item
 	public ExplosiveCanister(int value, double x, double y, double z,
 			int ID, int rotation, int itemActID) 
 	{
-		super(value, x, y, z, ID, rotation, itemActID);
+		super(value, x, y, z, ID, rotation, itemActID, "");
 		
 		//Add the canister to the game
 		Game.canisters.add(this);

@@ -4,11 +4,13 @@ import java.util.ArrayList;
 
 import com.vile.Display;
 import com.vile.PopUp;
+import com.vile.Sound;
 import com.vile.SoundController;
 import com.vile.entities.ItemNames;
 import com.vile.Game;
 import com.vile.graphics.Render;
 import com.vile.graphics.Render3D;
+import com.vile.launcher.FPSLauncher;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -54,6 +56,14 @@ public class Item
 	public boolean activated = false;
 	public boolean isSolid = false;
 	
+   /*
+    * The Audio clip after activating this object will be this.
+    * Notice this is completely different than the default
+    * sound this item will play when picked up. This is for
+    * announcments, or special story line queues and such.
+    */
+	public String audioQueue = "";
+	
 	//Items image to render
 	public Render itemImage = null;
 	
@@ -70,7 +80,7 @@ public class Item
     * @param ID
     */
 	public Item(int value, double x, double y, double z,
-			int ID, int rotation, int itemActID) 
+			int ID, int rotation, int itemActID, String audioQueue) 
 	{
 		itemValue = value;
 		itemID = ID;
@@ -79,6 +89,7 @@ public class Item
 		this.z = z;
 		this.rotation = rotation;
 		this.itemActivationID = itemActID;
+		this.audioQueue = audioQueue;
 		
 		//If it is a shell item, it has a default amount of 4
 		if(itemID == ItemNames.SHELLS.getID())
@@ -185,11 +196,11 @@ public class Item
 	    * Depending on skillmode, change the value of the objects you
 	    * pick up to make it easier and or harder to obtain said item.
 	    */
-		if(Display.skillMode <= 1)
+		if(FPSLauncher.modeChoice <= 1)
 		{
 			itemValue *= 1.5;
 		}
-		else if(Display.skillMode >= 3)
+		else if(FPSLauncher.modeChoice >= 3)
 		{
 			itemValue *= 0.75;
 		}
@@ -785,6 +796,36 @@ public class Item
 		catch(Exception e)
 		{
 			
+		}
+	}
+	
+   /**
+    * Play a given audio clip for this item based on what audioQueue this 
+    * item has for when it is activated.
+    */
+	public void activateAudioQueue()
+	{
+		//If there is an audioQueue to be played
+		if(audioQueue != "")
+		{
+			//Search all the available audio files
+			for(Sound s : SoundController.allSounds)
+			{
+				//If the audio clip is found with the same name
+				//then play it.
+				if(audioQueue.equals(s.audioName))
+				{
+					//Stop all other sounds so this queue can be heard.
+					//This is the most important
+					for(Sound s2 : SoundController.allSounds)
+					{
+						s2.stopAll();
+					}
+					
+					s.playAudioFile(0);
+					break;
+				}
+			}
 		}
 	}
 }

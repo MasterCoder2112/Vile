@@ -36,6 +36,10 @@ public class HitSprite
 		{
 			spriteTime = 400;
 		}
+		else if(ID == 5)
+		{
+			spriteTime = 10;
+		}
 		
 		Game.sprites.add(this);
 	}

@@ -1,6 +1,8 @@
 package com.vile;
 
+import java.util.ArrayList;
 import com.vile.Sound;
+import com.vile.launcher.FPSLauncher;
 
 /**
  * @title SoundController
@@ -35,8 +37,6 @@ public class SoundController
 	public static Sound tryToUse;
 	public static Sound buttonPress;
 	public static Sound teleportation;
-	public static Sound mlgDeath;
-	public static Sound nickDeath;
 	public static Sound glassBreak;
 	public static Sound belegothDeath;
 	public static Sound belegothActivate;
@@ -77,7 +77,14 @@ public class SoundController
 	public static Sound enemy4Death;
 	public static Sound enemy7Death;
 	
+	public static Sound tutorial1;
+	public static Sound tutorial2;
+	public static Sound tutorial3;
+	public static Sound tutorial4;
+	public static Sound tutorial5;
+	public static Sound majik;
 	public static Sound level1Anouncement;
+	public static Sound level2Anouncement;
 	public static Sound armorPickup;
 	public static Sound computerShutdown;
 	public static Sound specialPickup;
@@ -92,6 +99,10 @@ public class SoundController
 	public static Sound keyTry;
 	public static Sound uplink;
 	
+	//Stores all the sounds so that all the sounds can be
+	//set to certain settings at once
+	public static ArrayList<Sound> allSounds;
+	
 	private int defaultSize = 4;
 	
    /**
@@ -99,66 +110,73 @@ public class SoundController
     */
 	public SoundController() 
 	{
-		enemyHit 	      =  new Sound(defaultSize, "/test/enemyHit.wav");
-		defaultKill       =  new Sound(defaultSize, "/test/enemyDeath.wav");
-		health 		      =  new Sound(defaultSize, "/test/health.wav");
-		clip		      =  new Sound(defaultSize, "/test/shell.wav");
-		playerHurt        =  new Sound(defaultSize, "/test/playerHit.wav");
-		shoot		      =  new Sound(defaultSize, "/test/shot.wav");
-		ammoOut           =  new Sound(defaultSize, "/test/ammoOut.wav");
-		reload            =  new Sound(defaultSize, "/test/reload.wav");
-		tryToUse          =  new Sound(defaultSize, "/test/oomf.wav");
-		buttonPress       =  new Sound(defaultSize, "/test/endSwitch.wav");
-		lifting           =  new Sound(defaultSize, "/test/wallMove.wav");
-		secret            =  new Sound(defaultSize, "/test/secretFound.wav");
-		megaPickUp        =  new Sound(defaultSize, "/test/megaPickUp.wav");
-		wallHit           =  new Sound(defaultSize, "/test/wallHit.wav");
-		keyPickUp         =  new Sound(defaultSize, "/test/keyPickUp.wav");
-		weaponPickUp      =  new Sound(defaultSize, "/test/weaponPickUp.wav");
-		playerDeath       =  new Sound(defaultSize, "/test/playerDeath.wav");
-		bossHit           =  new Sound(defaultSize, "/test/bossHit.wav");
-		bossActivate      =  new Sound(defaultSize, "/test/bossActivate.wav");
-		enemyActivate     =  new Sound(defaultSize, "/test/enemyActivate.wav");
-		bossDeath         =  new Sound(defaultSize, "/test/bossDeath.wav");
-		phaseShot         =  new Sound(defaultSize, "/test/phaseShot.wav");
-		explosion         =  new Sound(defaultSize, "/test/barrelexplosion.wav");
-		pistol            =  new Sound(defaultSize, "/test/pistol.wav");
-		enemy2Activate    =  new Sound(defaultSize, "/test/enemy2Activate.wav");
-		enemy3Activate    =  new Sound(defaultSize, "/test/enemy3Activate.wav");
-		enemy4Activate    =  new Sound(defaultSize, "/test/enemy4Activate.wav");
-		enemy5Activate    =  new Sound(defaultSize, "/test/enemy5Activate.wav");
-		enemy7Activate    =  new Sound(defaultSize, "/test/enemy7Activate.wav");
-		enemyFire         =  new Sound(defaultSize, "/test/enemyFire.wav");
-		enemyFireHit      =  new Sound(defaultSize, "/test/fireballHit.wav");
-		reaperHurt        =  new Sound(defaultSize, "/test/reaperHarm.wav");
-		vileCivHurt		  =  new Sound(defaultSize, "/test/defaultHurt.wav");
-		tankHurt		  =  new Sound(defaultSize, "/test/tankHurt.wav");
-		enemy1Death       =  new Sound(defaultSize, "/test/enemy1Death.wav");
-		enemy2Death       =  new Sound(defaultSize, "/test/enemy2Death.wav");
-		enemy3Death       =  new Sound(defaultSize, "/test/enemy3Death.wav");
-		enemy4Death       =  new Sound(defaultSize, "/test/enemy4Death.wav");
-		enemy7Death       =  new Sound(defaultSize, "/test/enemy7Death.wav");
-		teleportation     =  new Sound(defaultSize, "/test/teleportation.wav");
-		mlgDeath          =  new Sound(defaultSize, "/test/mlgDeath.wav");
-		nickDeath         =  new Sound(defaultSize, "/test/nickDeath.wav");
-		rocketFire        =  new Sound(defaultSize, "/test/rocketFire.wav");
-		rocketFly         =  new Sound(defaultSize, "/test/rocketFly.wav");
-		glassBreak        =  new Sound(defaultSize, "/test/glassBreak.wav");
-		belegothActivate  =  new Sound(defaultSize, "/test/belegothActivate.wav");
-		belegothDeath     =  new Sound(defaultSize, "/test/belegothDeath.wav");
-		level1Anouncement =  new Sound(defaultSize, "/test/level1Anouncement.wav");
-		armorPickup       =  new Sound(defaultSize, "/test/armorPickup.wav");
-		computerShutdown  =  new Sound(defaultSize, "/test/computerShutdown.wav");
-		specialPickup     =  new Sound(defaultSize, "/test/specialItems.wav");
-		creepySound       =  new Sound(defaultSize, "/test/creepySound.wav");
-		phaseCannonHit    =  new Sound(defaultSize, "/test/phaseCannonHit.wav");
-		activated         =  new Sound(defaultSize, "/test/activated.wav");
-		doorStart         =  new Sound(defaultSize, "/test/doorStart.wav");
-		doorEnd			  =  new Sound(defaultSize, "/test/doorEnd.wav");
-		healthBig		  =  new Sound(defaultSize, "/test/healthBig.wav");
-		keyUse			  =  new Sound(1, "/test/keyuse.wav");
-		keyTry			  =  new Sound(1, "/test/keytry.wav");
-		uplink			  =  new Sound(defaultSize, "/test/uplink.wav");
+		//reset the arraylist
+		allSounds = new ArrayList<Sound>();
+		
+		enemyHit = addSound(enemyHit, "enemyHit");
+		defaultKill = addSound(defaultKill, "enemyDeath");
+		health = addSound(health, "health");
+		clip = addSound(clip, "shell");
+		playerHurt = addSound(playerHurt, "playerHit");
+		shoot = addSound(shoot, "shot");
+		ammoOut = addSound(ammoOut, "ammoOut");
+		reload = addSound(reload, "reload");
+		tryToUse = addSound(tryToUse, "oomf");
+		buttonPress = addSound(buttonPress, "endSwitch");
+		lifting = addSound(lifting, "wallMove");
+		secret = addSound(secret, "secretFound");
+		megaPickUp = addSound(megaPickUp, "megaPickUp");
+		wallHit = addSound(wallHit, "wallHit");
+		keyPickUp = addSound(keyPickUp, "keyPickUp");
+		weaponPickUp = addSound(weaponPickUp, "weaponPickUp");
+		playerDeath = addSound(playerDeath, "playerDeath");
+		bossHit = addSound(bossHit, "bossHit");
+		bossActivate = addSound(bossActivate, "bossActivate");
+		enemyActivate = addSound(enemyActivate, "enemyActivate");
+		bossDeath = addSound(bossDeath, "bossDeath");
+		phaseShot = addSound(phaseShot, "phaseShot");
+		explosion = addSound(explosion, "barrelexplosion");
+		pistol = addSound(pistol, "pistol");
+		enemy2Activate = addSound(enemy2Activate, "enemy2Activate");
+		enemy3Activate = addSound(enemy3Activate, "enemy3Activate");
+		enemy4Activate = addSound(enemy4Activate, "enemy4Activate");
+		enemy5Activate = addSound(enemy5Activate, "enemy5Activate");
+		enemy7Activate = addSound(enemy7Activate, "enemy7Activate");
+		enemyFire = addSound(enemyFire, "enemyFire");
+		enemyFireHit = addSound(enemyFireHit, "fireballHit");
+		reaperHurt = addSound(reaperHurt, "reaperHarm");
+		vileCivHurt = addSound(vileCivHurt, "defaultHurt");
+		tankHurt = addSound(tankHurt, "tankHurt");
+		enemy1Death = addSound(enemy1Death, "enemy1Death");
+		enemy2Death = addSound(enemy2Death, "enemy2Death");
+		enemy3Death = addSound(enemy3Death, "enemy3Death");
+		enemy4Death = addSound(enemy4Death, "enemy4Death");
+		enemy7Death = addSound(enemy7Death, "enemy7Death");
+		teleportation = addSound(teleportation, "teleportation");
+		rocketFire = addSound(rocketFire, "rocketFire");
+		rocketFly = addSound(rocketFly, "rocketFly");
+		glassBreak = addSound(glassBreak, "glassBreak");
+		belegothActivate = addSound(belegothActivate, "belegothActivate");
+		belegothDeath = addSound(belegothDeath, "belegothDeath");
+		tutorial1 = addSound(tutorial1, "tutorial1");
+		tutorial2 = addSound(tutorial2, "tutorial2");
+		tutorial3 = addSound(tutorial3, "tutorial3");
+		tutorial4 = addSound(tutorial4, "tutorial4");
+		majik = addSound(majik, "majik");
+		level1Anouncement = addSound(level1Anouncement, "level1Anouncement");
+		level2Anouncement = addSound(level2Anouncement, "level2Anouncement");
+		armorPickup = addSound(armorPickup, "armorPickup");
+		computerShutdown = addSound(computerShutdown, "computerShutdown");
+		specialPickup = addSound(specialPickup, "specialItems");
+		creepySound = addSound(creepySound, "creepySound");
+		phaseCannonHit = addSound(phaseCannonHit, "phaseCannonHit");
+		activated = addSound(activated, "activated");
+		doorStart = addSound(doorStart, "doorStart");
+		doorEnd = addSound(doorEnd, "doorEnd");
+		healthBig = addSound(healthBig, "healthBig");
+		keyUse = addSound(keyUse, "keyuse");
+		keyTry = addSound(keyTry, "keytry");
+		uplink = addSound(uplink, "uplink");
 	}
 	
    /**
@@ -168,66 +186,47 @@ public class SoundController
     */
 	public void resetAllVolumes(float newVolume)
 	{
-		enemyHit.resetVolume(newVolume);
-		defaultKill.resetVolume(newVolume);
-		health.resetVolume(newVolume);
-		clip.resetVolume(newVolume);
-		playerHurt.resetVolume(newVolume);
-		shoot.resetVolume(newVolume);
-		ammoOut.resetVolume(newVolume);
-		reload.resetVolume(newVolume);
-		tryToUse.resetVolume(newVolume);
-		buttonPress.resetVolume(newVolume);
-		lifting.resetVolume(newVolume);
-		secret.resetVolume(newVolume);
-		megaPickUp.resetVolume(newVolume);
-		wallHit.resetVolume(newVolume);
-		keyPickUp.resetVolume(newVolume);
-		weaponPickUp.resetVolume(newVolume);
-		playerDeath.resetVolume(newVolume);
-		bossHit.resetVolume(newVolume);
-		bossActivate.resetVolume(newVolume);
-		enemyActivate.resetVolume(newVolume);
-		bossDeath.resetVolume(newVolume);
-		phaseShot.resetVolume(newVolume);
-		explosion.resetVolume(newVolume);
-		pistol.resetVolume(newVolume);
-		enemy2Activate.resetVolume(newVolume);
-		enemy3Activate.resetVolume(newVolume);
-		enemy4Activate.resetVolume(newVolume);
-		enemy5Activate.resetVolume(newVolume);
-		enemy7Activate.resetVolume(newVolume);
-		enemyFire.resetVolume(newVolume);
-		enemyFireHit.resetVolume(newVolume);
-		reaperHurt.resetVolume(newVolume);
-		vileCivHurt.resetVolume(newVolume);
-		tankHurt.resetVolume(newVolume);
-		enemy1Death.resetVolume(newVolume);
-		enemy2Death.resetVolume(newVolume);
-		enemy3Death.resetVolume(newVolume);
-		enemy4Death.resetVolume(newVolume);
-		enemy7Death.resetVolume(newVolume);
-		teleportation.resetVolume(newVolume);
-		mlgDeath.resetVolume(newVolume);
-		nickDeath.resetVolume(newVolume);
-		rocketFire.resetVolume(newVolume);
-		rocketFly.resetVolume(newVolume);
-		glassBreak.resetVolume(newVolume);
-		belegothActivate.resetVolume(newVolume);
-		belegothDeath.resetVolume(newVolume);
-		level1Anouncement.resetVolume(newVolume);
-		armorPickup.resetVolume(newVolume);
-		computerShutdown.resetVolume(newVolume);
-		specialPickup.resetVolume(newVolume);
-		creepySound.resetVolume(newVolume);
-		phaseCannonHit.resetVolume(newVolume);
-		activated.resetVolume(newVolume);
-		doorStart.resetVolume(newVolume);
-		doorEnd.resetVolume(newVolume);
-		uplink.resetVolume(newVolume);
-		keyUse.resetVolume(newVolume);
-		healthBig.resetVolume(newVolume);
-		keyTry.resetVolume(newVolume);
+		for(Sound temp: allSounds)
+		{
+			temp.resetVolume(newVolume);
+		}
 	}
-
+	
+   /**
+    * Instantiates a single sound at a time, checking to see if first it
+    * is in the current resource pack, and then if not there it will use
+    * the default sound found in the default resource pack. If not in
+    * either the sound will just be null, but it will not cause the
+    * program to crash.
+    * @param temp
+    * @param fileName
+    */
+	private Sound addSound(Sound temp, String fileName)
+	{
+		try
+		{
+			//Try to find sound in current resource pack
+			temp =  new Sound(defaultSize, "resources"+FPSLauncher.themeName+"/audio/test/"+fileName+".wav");
+			allSounds.add(temp);
+			temp.audioName = fileName;
+		}
+		catch(Exception e)
+		{
+			try
+			{
+				//If sound is not found in the resource pack
+				temp =  new Sound(defaultSize, "resources/default/audio/test/"+fileName+".wav");
+				allSounds.add(temp);
+				temp.audioName = fileName;
+			}
+			catch(Exception ex)
+			{
+				//Sound is just null if not found in either
+				//Print exception though for debugging
+				//Sound will not be added to allSounds if this is the case
+			}
+		}
+		
+		return temp;
+	}
 }

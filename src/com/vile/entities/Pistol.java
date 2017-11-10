@@ -3,6 +3,7 @@ package com.vile.entities;
 import com.vile.Display;
 import com.vile.SoundController;
 import com.vile.input.Controller;
+import com.vile.launcher.FPSLauncher;
 
 /**
  * Title: Pistol
@@ -56,7 +57,7 @@ public class Pistol extends Weapon implements WeaponInterface
 				int crossWidth = Display.WIDTH;
 				int crossHeight = Display.HEIGHT;
 				
-				if(Display.graphicsSelection < 2)
+				if(FPSLauncher.resolutionChoice < 2)
 				{
 					crossHeight -= 100;
 				}
@@ -133,7 +134,7 @@ public class Pistol extends Weapon implements WeaponInterface
 				int crossWidth = Display.WIDTH;
 				int crossHeight = Display.HEIGHT;
 				
-				if(Display.graphicsSelection < 2)
+				if(FPSLauncher.resolutionChoice < 2)
 				{
 					crossHeight -= 100;
 				}

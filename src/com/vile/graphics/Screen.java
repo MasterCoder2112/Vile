@@ -81,7 +81,8 @@ public class Screen implements Runnable
 		//Draw the floor, ceiling, and all other textures
 		render3D.floor(game);
 		
-		Display.thread2.run();
+		//Display.thread2.run();
+		run();
 	}
 	
    /**
@@ -95,27 +96,13 @@ public class Screen implements Runnable
 			//Does the render distance need to be limited
 			boolean limitDistance = true;
 			
-			//If its one of the themes that doesn't need a render
-			//distance, only render the extra pixels if the player
-			//is dead or hurt
-			if(Display.themeNum == 0 || Display.themeNum == 4)
-			{
-				if(!Player.alive || Player.playerHurt > 0)
-				{
-					limitDistance = true;
-				}
-				else
-				{
-					limitDistance = false;
-				}
-			}
-			
 			//Only create a render distance if needed. Otherwise don't because
 			//it makes the game slower. Outdoors and moon themes don't need
 			//it, nor does maps with a renderDistance greater than 100000 
 			//because at that point it might as well not have a render
 			//distance.
-			if(limitDistance && Render3D.renderDistanceDefault <= 100000)
+			if(limitDistance && (Render3D.renderDistanceDefault <= 100000 ||
+					Player.playerHurt > 0 || !Player.alive))
 			{
 				render3D.renderDistanceLimiter();
 			}

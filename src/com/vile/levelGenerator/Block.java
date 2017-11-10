@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.vile.entities.Enemy;
+import com.vile.entities.Entity;
 import com.vile.entities.Item;
 import com.vile.graphics.Render;
 import com.vile.graphics.Sprite;
@@ -41,24 +42,23 @@ import com.vile.graphics.Sprite;
  */
 public class Block implements Comparable
 {
-	public boolean isSolid = false;
-	public boolean seeThrough = false;
-	
-   /*
-    * Only is used for when a player walks through a doorway and his/her
-    * collision detection must be altered correctly to work within a
-    * doorway or elevator. 
-    */
-	public boolean isaDoor = false;
-	
+	//The walls ID (Texture)
 	public int wallID = 0;
+	
+	//What phase of the texture is it in (if texture moves)
 	public int wallPhase = 0;
 	
+	//Height of block/wall
 	public double height = 12;
 	
 	//Used so bullets hit the walls graphics correctly
 	public double hCorrect = 0;
 	
+	//Used so entities can stand on the wall correctly,
+	//and so collision detection works as intended
+	public double baseCorrect = 0;
+	
+	//Position values.
 	public double y = 0;
 	public int x = 0;
 	public int z = 0;
@@ -70,7 +70,7 @@ public class Block implements Comparable
 	public Item wallItem = null;
 	
 	//Stores all the enemies on the block at the time
-	public ArrayList<Enemy> enemiesOnBlock = new ArrayList<Enemy>();
+	public ArrayList<Entity> entitiesOnBlock = new ArrayList<Entity>();
 	
    /*
     * Not technically a "Entity" but an item that has an effect on the
@@ -82,6 +82,29 @@ public class Block implements Comparable
 	//Image for the game to render
 	public Render wallImage = null;
 	
+	/*********************** BLOCK FLAGS *******************/
+    //Is block solid or not (can entities walk through it?)
+	public boolean isSolid = false;
+	public boolean seeThrough = false;
+	
+   /*
+    * Used to tell game that this block is "moving". If it is "moving" then
+    * the game just keeps track of that. This is only so the game knows to
+    * load in the block as moving if loading a saved file, and to know when
+    * to tick that blocks values. 
+    */
+	public boolean isMoving = false;
+	
+   /*
+    * Blocks that doors must act
+    * differently than other blocks. For example bullet holes must disappear 
+    * faster in case the door is moving up. We don't want floating bullet
+    * holes do we? Also corpses and items will not move to the top of door blocks
+    * as that would render it unrealistic. If the enemy dies on the ground it is 
+    * not going to all of a sudden clip to the top of a door.
+    */
+	public boolean isADoor = false;
+	
    /**
     * Constructs block
     * @param h
@@ -90,13 +113,11 @@ public class Block implements Comparable
 	{
 		height = h;
 		this.wallID = wallID;
-		this.y = y;
+		this.y = y / 4;
 		this.x = x;
 		this.z = z;
 		
-	   /*
-	    * If block is glass, it is labeled as a see through block
-	    */
+		//If glass, the wall is see through
 		if(wallID == 4)
 		{
 			seeThrough = true;

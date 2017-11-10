@@ -30,14 +30,20 @@ public class Elevator extends Entity
     * @param wallZ
     */
 	public Elevator(double x, double y, double z, int wallX, int wallZ,
-			int itemActID) 
+			int itemActID, int maxHeight) 
 	{
 		super(0, 0, 0, 0, 0, x, y, z, 8, 0, itemActID);
 		
 		elevatorX = wallX;
 		elevatorZ = wallZ;
-		upHeight = Level.getBlock(elevatorX, elevatorZ).height;
-		height = (int)upHeight;
+		upHeight = maxHeight;
+		
+		height = (int)Level.getBlock(elevatorX, elevatorZ).height;
+		
+		if(maxHeight == 0)
+		{
+			upHeight = height;
+		}
 	}
 	
    /**
@@ -53,9 +59,6 @@ public class Elevator extends Entity
 				* (Math.abs(xPos - Player.x)))
 				+ ((Math.abs(zPos - Player.z))
 						* (Math.abs(zPos - Player.z))));
-		
-		//Is see through while it is moving.
-		temp.seeThrough = true;
 		
 		//If just activated, begin moving down
 		if(!movingDown && !movingUp && waitTime == 0)
@@ -84,6 +87,7 @@ public class Elevator extends Entity
 		{
 			waitTime++;
 			temp.height = 0;
+			temp.baseCorrect = 0;
 			this.height = 0;
 			movingDown = false;
 			
@@ -125,18 +129,16 @@ public class Elevator extends Entity
 			SoundController.lifting.stopAll();
 			SoundController.doorEnd.playAudioFile(distanceFromPlayer);
 			
-		   /*
-		    * Unless the block was already seeThrough, set it back to not
-		    * being see through.
-		    */
-			if(temp.wallID != 4)
+			//If special ID, keep moving up and down
+			if(itemActivationID == 2112)
 			{
-				temp.seeThrough = false;
+				activated = true;
 			}
 		}
 		
 		//Add to wait time each loop
-		if(waitTime <= 250 && waitTime > 0)
+		if(waitTime <= 250 && waitTime > 0
+				|| itemActivationID > 0)
 		{
 			waitTime++;
 		}
@@ -144,7 +146,7 @@ public class Elevator extends Entity
 		//If elevator is supposed to stay down, keep it down
 		if(itemActivationID > 0)
 		{
-			waitTime = 0;
+			waitTime = 1;
 		}
 		
 		//Reset soundTime every 10 ticks.

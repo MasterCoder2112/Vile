@@ -14,8 +14,11 @@ import java.awt.Toolkit;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
@@ -105,16 +108,6 @@ public class Display extends Canvas implements Runnable
 
 	// How many kills the player has
 	public static int kills = 0;
-
-   /*
-	* Gotten from the options menu to make changes in the game.
-	* Mainly used for survival mode
-	*/
-	public static int graphicsSelection = 4; //Graphics option you chose
-	public static int themeNum          = 0; //Theme you chose
-	public static int levelSize         = 3; //Level size
-	public static boolean mouseOn       = true; //Is the mouse on?
-	public static int skillMode         = 2; //Skill Level
 	
 	//Current music theme number
 	public static int musicTheme = 2;
@@ -127,6 +120,8 @@ public class Display extends Canvas implements Runnable
 	
 	//Whether it is a new game (needing complete reset) or not
 	public static boolean resetGame = false;
+	
+	public static boolean mouseOn       = true; //Is the mouse on?
 	
 	//Continues to change the face direction and look.
 	private int facePhase = 0;
@@ -183,16 +178,6 @@ public class Display extends Canvas implements Runnable
 	private static BufferedImage pistolRight3;
 	private static BufferedImage pistolRight4;
 	private static BufferedImage pistolRight5;
-	private static BufferedImage nickCage;
-	private static BufferedImage deadNick;
-	private static BufferedImage otherNick;
-	private static BufferedImage otherNick2;
-	private static BufferedImage mlgFace1;
-	private static BufferedImage mlgFace2;
-	private static BufferedImage mlgFace3;
-	private static BufferedImage mlgDead;
-	private static BufferedImage mlgGod;
-	private static BufferedImage nickGod;
 	
    /*
     * Sets up a string that can change and disappears after 100 ticks
@@ -243,8 +228,8 @@ public class Display extends Canvas implements Runnable
 		loading.setResizable(false);
 		loading.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		//Gets rid of java icon and replaces it with the SMILE icon
-		ImageIcon titleIcon = new ImageIcon("Images/titleIcon.png");
+		//Set app icon
+		ImageIcon titleIcon = new ImageIcon("resources"+FPSLauncher.themeName+"/textures/hud/titleIcon.png");
 		loading.setIconImage(titleIcon.getImage());
 		
 		//Make frame visible
@@ -259,7 +244,7 @@ public class Display extends Canvas implements Runnable
 		//Just displays point in loading.
 		loading.setTitle("Loading sounds... 5% Loaded");
 		
-		//Set up textures
+		//Set up wall textures
 		Textures.Textures();
 		
 	   /*
@@ -288,23 +273,11 @@ public class Display extends Canvas implements Runnable
 
 		//Only resets game values if the game needs to be restarted
 		if(!Display.resetGame)
-		{
-			loading.setTitle("Loading graphics... 25% Loaded");
-			
-			//Try to load all the HUD images. If not catch the exception
-			try
-			{
-				loadHUD();
-			}
-			catch(Exception e)
-			{
-				
-			}
-			
+		{			
 			loading.setTitle("Setting up game entities... 35% Loaded");
 			
 			//If new game, reset the gameMode
-			Game.skillMode = Display.skillMode;
+			Game.skillMode = FPSLauncher.modeChoice;
 			
 			// Resets player values (health, ammo, etc...)
 			new Player();
@@ -337,6 +310,7 @@ public class Display extends Canvas implements Runnable
 			}
 			
 			loading.setTitle("Setting up music... 50% Loaded");
+			
 	       /*
 	        * If audio is already on from a previous game, close it
 	        * so that the new audio can run.
@@ -348,13 +322,6 @@ public class Display extends Canvas implements Runnable
 			
 			//Music is not on yet
 			audioOn = false;
-			
-			//If mlg mode, change theme music to mlg theme
-			//It is special 
-			if(themeNum == 5)
-			{
-				musicTheme = 3;
-			}
 			
 		   /*
 		    * When there is a new game, there is no previous music theme
@@ -374,51 +341,7 @@ public class Display extends Canvas implements Runnable
 			//Do not reset the game completely
 			Display.resetGame = false;
 			
-			if(FPSLauncher.gameMode == 1)
-			{
-				//Depending on the theme set the ceiling and floor textures
-				switch(themeNum)
-				{
-					case 1:
-						Game.mapFloor = 9;
-						Game.mapCeiling = 10;
-						break;
-						
-					case 2:
-						Game.mapFloor = 1;
-						Game.mapCeiling = 3;
-						break;
-						
-					case 3:
-						Game.mapFloor = 12;
-						Game.mapCeiling = 12;
-						break;
-						
-					case 4:
-						Game.mapFloor = 11;
-						Game.mapCeiling = 10;
-						break;
-						
-					case 5:
-						Game.mapFloor = 13;
-						Game.mapCeiling = 13;
-						break;
-						
-					default:
-						Game.mapFloor = 9;
-						Game.mapCeiling = 10;
-						break;
-				}
-			}
-			
 			loading.setTitle("Setting up music... 50% Loaded");
-			
-			//If mlg theme, make musicTheme the mlg theme
-			//It is special.
-			if(themeNum == 5)
-			{
-				musicTheme = 3;
-			}
 			
 		   /*
 		    * If you changed the music theme while the game was paused,
@@ -442,12 +365,86 @@ public class Display extends Canvas implements Runnable
 
 		loading.setTitle("Resetting textures and GUI... 65% Loaded");
 		
+		//A new scanner object that is defaultly set to null
+		Scanner sc = null;  
+				
+	   /*
+	    * Try to read the file and if not,
+	    * state the error
+	    */
+		try 
+		{
+			//Creates a Scanner that can read the file
+			sc = new Scanner(new BufferedReader
+					(new FileReader("resources"
+							+FPSLauncher.themeName+"/settings.txt")));
+		   /*
+		    * Read through lines in the resource pack settings file to
+		    * determine what game settings to change depending on special
+		    * attributes set within this resource pack.
+		    */
+			String currentLine = "";
+			
+			currentLine = sc.nextLine();
+			String[] elements = currentLine.split(":");
+			String[] colorAttributes = elements[1].split(",");
+			
+			//Grab all the different color attributes
+			int transparency = Integer.parseInt(colorAttributes[0]);
+			int red = Integer.parseInt(colorAttributes[1]);
+			int green = Integer.parseInt(colorAttributes[2]);
+			int blue = Integer.parseInt(colorAttributes[3]);
+			
+			//Shift red bits 16, green 8, and blue none and add the bits together
+			//to get the color that will be transparent.
+			Render3D.seeThroughWallPixel = transparency << 24 | red << 16 | green << 8 | blue;
+			
+			currentLine = sc.nextLine();
+			elements = currentLine.split(":");
+			
+			Controller.acceleration = Double.parseDouble(elements[1]);
+			
+			
+			currentLine = sc.nextLine();
+			elements = currentLine.split(":");
+			
+			Player.totalJump = Integer.parseInt(elements[1]);
+			
+			currentLine = sc.nextLine();
+			elements = currentLine.split(":");
+			
+			//Only if in survival
+			if(FPSLauncher.gameMode == 1)
+			{
+				Render3D.renderDistanceDefault = Double.parseDouble(elements[1]);
+			}
+		}
+		catch(Exception e)
+		{
+			System.out.println(e);
+			//Set to defaults if failed
+			Render3D.seeThroughWallPixel = 0xffffffff;
+			Controller.acceleration = 0.03;
+			Player.totalJump = 8;
+			Render3D.renderDistanceDefault = 100000.0;
+		}
+		
+		//Try to load all the HUD images. If not catch the exception
+		try
+		{
+			loadHUD();
+		}
+		catch(Exception e)
+		{
+			
+		}
+		
+		// Resets games textures depending on theme
+		Textures.resetTextures();
+		
 		// Resets the frames width and height
 		setGameWidth();
 		setGameHeight();
-
-		// Resets games textures depending on theme
-		Textures.resetTextures();
 
 		/*
 		 * Creates different dimensions of the screen that can be used
@@ -513,11 +510,11 @@ public class Display extends Canvas implements Runnable
 		screenWidth = (int)width;
 		
 		//Change frame width based on graphics selection
-		if (graphicsSelection <= 1)
+		if (FPSLauncher.resolutionChoice <= 1)
 		{
 			WIDTH = 800;
 		} 
-		else if (graphicsSelection <= 3) 
+		else if (FPSLauncher.resolutionChoice <= 3) 
 		{
 			WIDTH = 1020;
 		} 
@@ -541,11 +538,11 @@ public class Display extends Canvas implements Runnable
 		//Total height of computer screen
 		screenHeight = (int)height;
 		
-		if (graphicsSelection <= 1)
+		if (FPSLauncher.resolutionChoice <= 1)
 		{
 			HEIGHT = 600;
 		} 
-		else if (graphicsSelection <= 3) 
+		else if (FPSLauncher.resolutionChoice <= 3) 
 		{
 			HEIGHT = 700;
 		} 
@@ -575,10 +572,11 @@ public class Display extends Canvas implements Runnable
 
 			// Starts a new thread to handle all the events
 			thread = new Thread(this);
-			//thread2 = new Thread(screen);
-			//thread3 = new Thread(game);
+			thread2 = new Thread(this);
+			//thread3 = new Thread(this);
 			thread.start();
-			//thread2.start();
+			thread2.start();
+			//thread3.start();
 		}
 	}
 
@@ -586,7 +584,7 @@ public class Display extends Canvas implements Runnable
 	 * What is called if the program is running. It renders the screen, performs
 	 * all the actions in the thread of events, tracks fps, etc.
 	 */
-	public void run() 
+	public synchronized void run() 
 	{
 		//Frames that have elapsed within the last second
 		int frames = 0;
@@ -614,9 +612,7 @@ public class Display extends Canvas implements Runnable
 
 		// While the game is running, keep ticking and rendering
 		while (isRunning == true) 
-		{			
-			thread3 = new Thread(game);
-			thread2 = new Thread(screen);
+		{		
 			//Current time
 			long currentTime = System.nanoTime();
 			
@@ -649,15 +645,13 @@ public class Display extends Canvas implements Runnable
 				//See how many ticks occured within one second
 				unprocessedSeconds -= secondsPerTick;
 				
-				//Explained below
-				if(!smoothFPS)
-				{
-					//Tick through the game and run all events
-					tick();
-				}
-				
 				//Add to tick count
 				tickCount++;
+				
+				if(!smoothFPS)
+				{
+					tick();
+				}
 
 				//Every sixty ticks
 				if (tickCount % 60 == 0) 
@@ -676,25 +670,12 @@ public class Display extends Canvas implements Runnable
 			
 			Entity.checkSight = true;
 			
-		   /*
-		    * EXPERIMENTAL!!! ALLOWS ALL GAME EVENTS TO CATER TO ONE FPS 
-		    * RATE. THIS FIXES SOME BUGS BUT CAUSES OTHERS. YOU CAN NO
-		    * LONGER CLIP THROUGH THE MAP AT VERY LOW FRAMERATES BUT
-		    * YOU THINGS WILL BE SLOWER AND UNSYNCED WHEN FIRING WEAPONS
-		    * AND MOVING AND SUCH. 
-		    * 
-		    * IT ALSO MAKES THE GAME FASTER THOUGH...
-		    */
 			if(smoothFPS)
 			{
-				//Tick through the game and run all events
 				tick();
 			}
 			
-			// Render the pixels, and add to number of frames rendered
 			render();
-			
-			//thread3.start();
 			
 			frames++;
 			
@@ -815,16 +796,6 @@ public class Display extends Canvas implements Runnable
 			{
 				stop();
 			}
-			
-			/*try
-			{
-				thread2.join();
-				thread3.join();
-			}
-			catch(Exception ex)
-			{
-				
-			}*/
 		}
 	}
 
@@ -871,8 +842,8 @@ public class Display extends Canvas implements Runnable
 	 * Tick through all the game events. Update all game values and
 	 * movements and such.
 	 */
-	private void tick() 
-	{
+	public void tick() 
+	{				
 		game.tick(input.key);
 	}
 
@@ -880,7 +851,7 @@ public class Display extends Canvas implements Runnable
 	 * Renders the screen after each new event resetting the graphics. Thats the
 	 * simplest way to put it.
 	 */
-	private void render() 
+	public void render() 
 	{
 	   /*
 		* Strategy of how the image and pixels are buffered. How it organizes
@@ -942,22 +913,22 @@ public class Display extends Canvas implements Runnable
 		} 
 		else if (Player.health > 20) 
 		{
-			Controller.moveSpeed = 1.0;
+			Controller.moveSpeed = 0.75;
 		} 
 		else 
 		{
-			Controller.moveSpeed = 1.0;
+			Controller.moveSpeed = 0.5;
 		}
 		
 		g.setColor(Color.RED);
 		
 		//How much GUI is off from bottom of screen
-		int gC = 128;
+		int gC = 100;
 		
-		//If full screen it is less
-		if(graphicsSelection == 3 || graphicsSelection == 2)
+		//If Not full screen, its raised up more for the frame border
+		if(FPSLauncher.resolutionChoice != 4 && FPSLauncher.resolutionChoice != 5)
 		{
-			gC = 100;
+			gC = 128;
 		}
 		
 	   /*
@@ -1070,16 +1041,6 @@ public class Display extends Canvas implements Runnable
 			else
 			{
 				face = dead;
-				
-				//Changes upon theme
-				if(themeNum == 3)
-				{
-					face = deadNick;
-				}
-				else if(themeNum == 5)
-				{
-					face = mlgDead;
-				}
 			}
 			
 			//As long as Player is alive check for these
@@ -1099,67 +1060,12 @@ public class Display extends Canvas implements Runnable
 					face = invisible;
 				}
 			   /*
-			    * If in god mode, override all the faces and make this the
+			    * If only in god mode, override all the faces and make this the
 			    * face displayed.
-			    * 
-			    * Otherwise, if it is Nick Cage mode or MLG mode, then 
-			    * change the faces to match those themes.
 			    */
 				else if((Player.godModeOn || Player.immortality > 0))
 				{
 					face = godMode;
-					
-					if(themeNum == 3)
-					{
-						face = nickGod;
-					}
-					else if(themeNum == 5)
-					{
-						face = mlgGod;
-					}
-				}
-			   /*
-			    * For nick cage and mlg theme modes, change the face to
-			    * be a different picture. 
-			    */
-				else
-				{
-					if((themeNum == 3 || themeNum == 5))
-					{
-						if(phase == 0 || phase == 2)
-						{
-							if(themeNum == 3)
-							{
-								face = nickCage;
-							}
-							else if(themeNum == 5)
-							{
-								face = mlgFace1;
-							}
-						}
-						else if(phase == 1)
-						{
-							if(themeNum == 3)
-							{
-								face = otherNick;
-							}
-							else if(themeNum == 5)
-							{
-								face = mlgFace2;
-							}
-						}
-						else
-						{
-							if(themeNum == 3)
-							{
-								face = otherNick2;
-							}
-							else if(themeNum == 5)
-							{
-								face = mlgFace3;
-							}
-						}
-					}
 				}
 			}
 			
@@ -1182,7 +1088,7 @@ public class Display extends Canvas implements Runnable
 	   /*
 	    * Display the weapon in front of the player and how it looks
 	    * depending on what phase of firing the weapon is, and
-	    * whether the player is sad or not
+	    * whether the player is dead or not
 	    */
 		try
 		{
@@ -1193,7 +1099,7 @@ public class Display extends Canvas implements Runnable
 			int x = (WIDTH / 2) - 150;
 			int y = HEIGHT - gC - 250;
 			
-			//Love bow
+			//Pistol
 			if(playerWeapon.weaponID == 0)
 			{
 				x = (WIDTH / 2);
@@ -1219,7 +1125,7 @@ public class Display extends Canvas implements Runnable
 					gun = pistolRight1;
 				}
 				
-				//If dual wielding show second love bow
+				//If dual wielding show second pistol
 				if(playerWeapon.dualWield == true)
 				{
 					BufferedImage gun2 = pistolLeft1;
@@ -1253,9 +1159,12 @@ public class Display extends Canvas implements Runnable
 					}
 				}
 			}
-			//Joy Spreader
+			//Shotgun
 			else if(playerWeapon.weaponID == 1)
 			{
+				//Image is a little off, so this helps
+				x -= 5; 
+				
 				if(playerWeapon.weaponPhase == 1)
 				{
 					gun = gunShot;
@@ -1277,7 +1186,7 @@ public class Display extends Canvas implements Runnable
 					gun = gunNormal;
 				}
 			}
-			//Peace Cannon
+			//Phase Cannon
 			else if(playerWeapon.weaponID == 2)
 			{
 				if(playerWeapon.weaponPhase == 1)
@@ -1297,7 +1206,7 @@ public class Display extends Canvas implements Runnable
 					gun = phaseCannon1;
 				}
 			}
-			//Teddy Bear launcher
+			//Rocket Launcher
 			else if(playerWeapon.weaponID == 3)
 			{
 				if(playerWeapon.weaponPhase == 1)
@@ -1330,6 +1239,7 @@ public class Display extends Canvas implements Runnable
 		}
 		catch(Exception e)
 		{
+			System.out.println(e);
 		}
 		
 	   /*
@@ -1502,9 +1412,29 @@ public class Display extends Canvas implements Runnable
 			Controller.moveSpeed = 0.0;
 			Player.y = -6;
 			
-			//popupMessage = "Press E to restart level";
-			//popupTime = 1;
-			messages.add(new PopUp("Press E to restart level", -1, 0));
+			//Creates new popup displaying how to restart the level
+			PopUp restartLevel = new PopUp("Press E to restart level", -1, 0);
+			
+			//If this stays true, it will add this popup to the screen.
+			//This keeps the popup from begin repeated
+			boolean addThis = true;
+			
+			//Check to see if any popups already contain this message
+			//If so then set addThis to false.
+			for(PopUp p: messages)
+			{
+				if(p.getText() == restartLevel.getText())
+				{
+					addThis = false;
+					break;
+				}
+			}
+			
+			//Add to popups if not yet added. 
+			if(addThis)
+			{
+				messages.add(restartLevel);
+			}
 		}
 
 	   /*
@@ -1538,28 +1468,7 @@ public class Display extends Canvas implements Runnable
 					(WIDTH / 2) + 200, HEIGHT - gC + 43);
 		}
 		
-		
-		
-	   /*
-	    * If an item has been picked up within the last 200 ticks, show 
-	    * the item name that was picked up. Or show that a player can't
-	    * open a door without the given key if the player tries to 
-	    * open a door he can't open.
-	    * 
-	    * Also adds to itemPickupTime each time this is rendered.
-	    */
-		/*if(popupTime != 0)
-		{
-			g.drawString(popupMessage,(WIDTH / 2) + 75, 50);
-			popupTime++;
-		}
-		
-		if(popupTime > 200)
-		{
-			popupTime = 0;
-		}*/
-		
-		//The last popups y value so it can be checked to make
+		//The last popup's y value so it can be checked to make
 		//sure popups don't bunch up too much
 		int lastY = 0;
 		
@@ -1633,7 +1542,7 @@ public class Display extends Canvas implements Runnable
 				String file = "";
 
 				// I instantiate it up here so the code below doesn't sqauwk
-				file = ("/test/gameAudio.wav");
+				file = ("resources"+FPSLauncher.themeName+"/audio/test/gameAudio.wav");
 				
 			   /*
 			    * If the actual maps are being played instead of the
@@ -1643,33 +1552,32 @@ public class Display extends Canvas implements Runnable
 				{
 					if (musicTheme == 1) 
 					{
-						file = ("/test/gameAudio2.wav");
+						file = ("resources"+FPSLauncher.themeName+"/audio/test/gameAudio2.wav");
 					}
 					else if (musicTheme == 2) 
 					{
-						file = ("/test/e1m3.wav");
+						file = ("resources"+FPSLauncher.themeName+"/audio/test/e1m3.wav");
 					}
 					//MLG theme
 					else if (musicTheme == 3)
 					{
-						file = ("/test/gameAudio3.wav");
+						file = ("resources"+FPSLauncher.themeName+"/audio/test/gameAudio3.wav");
 					} 
 					else
 					{
-						file = ("/test/gameAudio.wav");
+						file = ("resources"+FPSLauncher.themeName+"/audio/test/gameAudio.wav");
 					}
 				}
 				//Custom music themes
 				else
 				{
-					file = ("/test/"+custom+".wav");
+					file = ("resources"+FPSLauncher.themeName+"/audio/test/"+custom+".wav");
 				}
 				
 				music = AudioSystem.getClip();
 				AudioInputStream input =
 						AudioSystem.getAudioInputStream
-						(this.getClass().getResource
-								(file));
+						(new File(file));
 				music.open(input);
 				music.loop(Clip.LOOP_CONTINUOUSLY);
 				music.start();
@@ -1689,7 +1597,70 @@ public class Display extends Canvas implements Runnable
 		} 
 		catch (Exception e) 
 		{
-			System.out.println(e);
+			try
+			{
+				if (!audioOn) 
+				{
+					String file = "";
+	
+					// I instantiate it up here so the code below doesn't sqauwk
+					file = ("resources/default/audio/test/gameAudio.wav");
+					
+				   /*
+				    * If the actual maps are being played instead of the
+				    * randomly generated survival maps.
+				    */
+					if(FPSLauncher.gameMode == 1)
+					{
+						if (musicTheme == 1) 
+						{
+							file = ("resources/default/audio/test/gameAudio2.wav");
+						}
+						else if (musicTheme == 2) 
+						{
+							file = ("resources/default/audio/test/e1m3.wav");
+						}
+						//MLG theme
+						else if (musicTheme == 3)
+						{
+							file = ("resources/default/audio/test/gameAudio3.wav");
+						} 
+						else
+						{
+							file = ("resources/default/audio/test/gameAudio.wav");
+						}
+					}
+					//Custom music themes
+					else
+					{
+						file = ("resources/default/audio/test/"+custom+".wav");
+					}
+					
+					music = AudioSystem.getClip();
+					AudioInputStream input =
+							AudioSystem.getAudioInputStream
+							(new File(file));
+					music.open(input);
+					music.loop(Clip.LOOP_CONTINUOUSLY);
+					music.start();
+					
+					audioOn = true;
+					
+					//Audio is on
+					audioOn = true;
+					
+					FPSLauncher.musicVolumeControl = (FloatControl) 
+							Display.music.getControl
+							(FloatControl.Type.MASTER_GAIN);
+					
+					//Reset clip volume
+					Sound.setMusicVolume(music);
+				}
+			}
+			catch(Exception ex)
+			{
+				//Music could not be loaded
+			}
 		}
 	}
 	
@@ -1723,113 +1694,412 @@ public class Display extends Canvas implements Runnable
 	public void loadHUD() throws Exception
 	{
 		//Just reads the image from a file as a BufferedImage
-		yellowKey = ImageIO.read
-				(new File("Images/yellowKey.png"));
+		try
+		{
+			yellowKey = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+"/textures/hud/yellowKey.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			try
+			{
+				yellowKey = ImageIO.read
+					(new File("resources/default/textures/hud/yellowKey.png"));
+			}
+			catch(Exception ex)
+			{
+				
+			}
+		}
 		
-		greenKey = ImageIO.read
-				(new File("Images/greenKey.png"));
+		try
+		{
+			greenKey = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+"/textures/hud/greenKey.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			try
+			{
+				greenKey = ImageIO.read
+					(new File("resources/default/textures/hud/greenKey.png"));
+			}
+			catch(Exception ex)
+			{
+				
+			}
+		}
 		
-		redKey = ImageIO.read
-				(new File("Images/redKey.png"));
+		try
+		{
+			redKey = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+"/textures/hud/redKey.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			try
+			{
+				redKey = ImageIO.read
+					(new File("resources/default/textures/hud/redKey.png"));
+			}
+			catch(Exception ex)
+			{
+
+			}
+		}
 		
-		blueKey = ImageIO.read
-				(new File("Images/blueKey.png"));
+		try
+		{
+			blueKey = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+"/textures/hud/blueKey.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			blueKey = ImageIO.read
+					(new File("resources/default/textures/hud/blueKey.png"));
+		}
 		
-		HUD = ImageIO.read
-				(new File("Images/userGUI.png"));
+		try
+		{
+			HUD = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName
+							+"/textures/hud/userGUI.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			HUD = ImageIO.read
+					(new File("resources/default/textures/hud/userGUI.png"));
+		}
 		
-		healthyFace1 = ImageIO.read
-				(new File("Images/healthyface1.png"));
+		try
+		{
+			healthyFace1 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/healthyface1.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			healthyFace1 = ImageIO.read
+					(new File("resources/default/textures/hud/healthyface1.png"));
+		}
 		
-		healthyFace2 = ImageIO.read
-				(new File("Images/healthyface2.png"));
+		try
+		{
+			healthyFace2 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/healthyface2.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			healthyFace2 = ImageIO.read
+					(new File("resources/default/textures/hud/healthyface2.png"));
+		}
 		
-		healthyFace3 = ImageIO.read
-				(new File("Images/healthyface3.png"));
+		try
+		{
+			healthyFace3 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/healthyface3.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			healthyFace3 = ImageIO.read
+					(new File("resources/default/textures/hud/healthyface3.png"));
+		}
 		
-		hurtFace1 = ImageIO.read
-				(new File("Images/hurtFace1.png"));
+		try
+		{
+			hurtFace1 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/hurtFace1.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			hurtFace1 = ImageIO.read
+					(new File("resources/default/textures/hud/hurtFace1.png"));
+		}
 		
-		hurtFace2 = ImageIO.read
-				(new File("Images/hurtFace2.png"));
+		try
+		{
+			hurtFace2 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/hurtFace2.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			hurtFace2 = ImageIO.read
+					(new File("resources/default/textures/hud/hurtFace2.png"));
+		}
 		
-		hurtFace3 = ImageIO.read
-				(new File("Images/hurtFace3.png"));
+		try
+		{
+			hurtFace3 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/hurtFace3.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			hurtFace3 = ImageIO.read
+					(new File("resources/default/textures/hud/hurtFace3.png"));
+		}
 		
-		veryHurtFace1 = ImageIO.read
-				(new File("Images/veryHurtFace1.png"));
+		try
+		{
+			veryHurtFace1 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/veryHurtFace1.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			veryHurtFace1 = ImageIO.read
+					(new File("resources/default/textures/hud/veryHurtFace1.png"));
+		}
 		
-		veryHurtFace2 = ImageIO.read
-				(new File("Images/veryHurtFace2.png"));
+		try
+		{
+			veryHurtFace2 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/veryHurtFace2.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			veryHurtFace2 = ImageIO.read
+					(new File("resources/default/textures/hud/veryHurtFace2.png"));
+		}
 		
-		veryHurtFace3 = ImageIO.read
-				(new File("Images/veryHurtFace3.png"));
+		try
+		{
+			veryHurtFace3 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/veryHurtFace3.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			veryHurtFace3 = ImageIO.read
+					(new File("resources/default/textures/hud/veryHurtFace3.png"));
+		}
 		
-		almostDead1 = ImageIO.read
-				(new File("Images/almostDeadFace1.png"));
+		try
+		{
+			almostDead1 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/almostDeadFace1.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			almostDead1 = ImageIO.read
+					(new File("resources/default/textures/hud/almostDeadFace1.png"));
+		}
 		
-		almostDead2 = ImageIO.read
-				(new File("Images/almostDeadFace2.png"));
 		
-		almostDead3 = ImageIO.read
-				(new File("Images/almostDeadFace3.png"));
+		try
+		{
+			almostDead2 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/almostDeadFace2.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			almostDead2 = ImageIO.read
+					(new File("resources/default/textures/hud/almostDeadFace2.png"));
+		}
 		
-		dead = ImageIO.read
-				(new File("Images/deadFace.png"));
+		try
+		{
+			almostDead3 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/almostDeadFace3.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			almostDead3 = ImageIO.read
+					(new File("resources/default/textures/hud/almostDeadFace3.png"));
+		}
 		
-		godMode = ImageIO.read
-				(new File("Images/godModeFace.png"));
+		try
+		{
+			dead = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/deadFace.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			dead = ImageIO.read
+					(new File("resources/default/textures/hud/deadFace.png"));
+		}
 		
-		invisible = ImageIO.read
-				(new File("Images/invisibilityMode.png"));
+		try
+		{
+			godMode = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/godModeFace.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			godMode = ImageIO.read
+					(new File("resources/default/textures/hud/godModeFace.png"));
+		}
 		
-		playerHarmedHealthy = ImageIO.read
-				(new File("Images/healthyHarmed.png"));
+		try
+		{
+			invisible = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/invisibilityMode.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			invisible = ImageIO.read
+					(new File("resources/default/textures/hud/invisibilityMode.png"));
+		}
 		
-		playerHarmedHurt = ImageIO.read
-				(new File("Images/hurtHarmed.png"));
+		try
+		{
+			playerHarmedHealthy = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/healthyHarmed.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			playerHarmedHealthy = ImageIO.read
+					(new File("resources/default/textures/hud/healthyHarmed.png"));
+		}
 		
-		playerHarmedVeryHurt = ImageIO.read
-				(new File("Images/veryHurtHarmed.png"));
+		try
+		{
+			playerHarmedHurt = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/hurtHarmed.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			playerHarmedHurt = ImageIO.read
+					(new File("resources/default/textures/hud/hurtHarmed.png"));
+		}
 		
-		playerHarmedAlmostDead = ImageIO.read
-				(new File("Images/almostDeadHarmed.png"));
+		try
+		{
+			playerHarmedVeryHurt = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/veryHurtHarmed.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			playerHarmedVeryHurt = ImageIO.read
+					(new File("resources/default/textures/hud/veryHurtHarmed.png"));
+		}
 		
-		invisGodmode = ImageIO.read
-				(new File("Images/invisibleGodmode.png"));
+		try
+		{
+			playerHarmedAlmostDead = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/almostDeadHarmed.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			playerHarmedAlmostDead = ImageIO.read
+					(new File("resources/default/textures/hud/almostDeadHarmed.png"));
+		}
+		try
+		{
+			invisGodmode = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/invisibleGodmode.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			invisGodmode = ImageIO.read
+					(new File("resources/default/textures/hud/invisibleGodmode.png"));
+		}
 		
-		nickCage = ImageIO.read
-				(new File("Images/nickCage.png"));
-		
-		otherNick = ImageIO.read
-				(new File("Images/otherNick.png"));
-		
-		otherNick2 = ImageIO.read
-				(new File("Images/otherNick2.png"));
-		
-		deadNick = ImageIO.read
-				(new File("Images/deadNick.png"));
-		
-		nickGod = ImageIO.read
-				(new File("Images/nickGod.png"));
-		
-		mlgGod = ImageIO.read
-				(new File("Images/mlgGod.png"));
-		
-		mlgFace1 = ImageIO.read
-				(new File("Images/mlg1.png"));
-		
-		mlgFace2 = ImageIO.read
-				(new File("Images/mlg2.png"));
-		
-		mlgFace3 = ImageIO.read
-				(new File("Images/mlg3.png"));
-		
-		mlgDead = ImageIO.read
-				(new File("Images/mlgDead.png"));
-		
-		gunNormal = ImageIO.read
-				(new File("Images/gunNormal.png"));
+		try
+		{
+			gunNormal = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/gunNormal.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			gunNormal = ImageIO.read
+					(new File("resources/default/textures/hud/gunNormal.png"));
+		}
 		
 	   /*
 	    * Goes through an entire image, and for any white pixels found on
@@ -1847,8 +2117,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		gunShot = ImageIO.read
-				(new File("Images/gunShot.png"));
+		try
+		{
+			gunShot = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/gunShot.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			gunShot = ImageIO.read
+					(new File("resources/default/textures/hud/gunShot.png"));
+		}
 		
 		//Same as the loop above
 		for (int x = 0; x < gunShot.getWidth(); ++x)
@@ -1862,8 +2144,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		gunShot2 = ImageIO.read
-				(new File("Images/gunShot2.png"));
+		try
+		{
+			gunShot2 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/gunShot2.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			gunShot2 = ImageIO.read
+					(new File("resources/default/textures/hud/gunShot2.png"));
+		}
 		
 		for (int x = 0; x < gunShot2.getWidth(); ++x)
 		{
@@ -1876,8 +2170,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		gunShot3 = ImageIO.read
-				(new File("Images/gunShot3.png"));
+		try
+		{
+			gunShot3 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/gunShot3.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			gunShot3 = ImageIO.read
+					(new File("resources/default/textures/hud/gunShot3.png"));
+		}
 		
 		for (int x = 0; x < gunShot3.getWidth(); ++x)
 		{
@@ -1890,8 +2196,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		gunShot4 = ImageIO.read
-				(new File("Images/gunShot4.png"));
+		try
+		{
+			gunShot4 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/gunShot4.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			gunShot4 = ImageIO.read
+					(new File("resources/default/textures/hud/gunShot4.png"));
+		}
 		
 		for (int x = 0; x < gunShot4.getWidth(); ++x)
 		{
@@ -1904,8 +2222,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		phaseCannon1 = ImageIO.read
-				(new File("Images/phaseCannon1.png"));
+		try
+		{
+			phaseCannon1 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/phaseCannon1.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			phaseCannon1 = ImageIO.read
+					(new File("resources/default/textures/hud/phaseCannon1.png"));
+		}
 		
 	   /*
 	    * For the Peace cannon, due to there being too much
@@ -1923,8 +2253,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		phaseCannon2 = ImageIO.read
-				(new File("Images/phaseCannon2.png"));
+		try
+		{
+			phaseCannon2 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/phaseCannon2.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			phaseCannon2 = ImageIO.read
+					(new File("resources/default/textures/hud/phaseCannon2.png"));
+		}
 		
 		for (int x = 0; x < phaseCannon2.getWidth(); ++x)
 		{
@@ -1937,8 +2279,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		phaseCannon3 = ImageIO.read
-				(new File("Images/phaseCannon3.png"));
+		try
+		{
+			phaseCannon3 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/phaseCannon3.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			phaseCannon3 = ImageIO.read
+					(new File("resources/default/textures/hud/phaseCannon3.png"));
+		}
 		
 		for (int x = 0; x < phaseCannon3.getWidth(); ++x)
 		{
@@ -1951,8 +2305,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		phaseCannon4 = ImageIO.read
-				(new File("Images/phaseCannon4.png"));
+		try
+		{
+			phaseCannon4 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/phaseCannon4.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			phaseCannon4 = ImageIO.read
+					(new File("resources/default/textures/hud/phaseCannon4.png"));
+		}
 		
 		for (int x = 0; x < phaseCannon4.getWidth(); ++x)
 		{
@@ -1965,8 +2331,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		rocketLauncher = ImageIO.read
-				(new File("Images/rocketLauncher.png"));
+		try
+		{
+			rocketLauncher = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/rocketLauncher.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			rocketLauncher = ImageIO.read
+					(new File("resources/default/textures/hud/rocketLauncher.png"));
+		}
 		
 		for (int x = 0; x < rocketLauncher.getWidth(); ++x)
 		{
@@ -1979,8 +2357,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		rocketLauncher1 = ImageIO.read
-				(new File("Images/rocketLauncher1.png"));
+		try
+		{
+			rocketLauncher1 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/rocketLauncher1.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			rocketLauncher1 = ImageIO.read
+					(new File("resources/default/textures/hud/rocketLauncher1.png"));
+		}
 		
 		for (int x = 0; x < rocketLauncher1.getWidth(); ++x)
 		{
@@ -1993,8 +2383,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		rocketLauncher2 = ImageIO.read
-				(new File("Images/rocketLauncher2.png"));
+		try
+		{
+			rocketLauncher2 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/rocketLauncher2.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			rocketLauncher2 = ImageIO.read
+					(new File("resources/default/textures/hud/rocketLauncher2.png"));
+		}
 		
 		for (int x = 0; x < rocketLauncher2.getWidth(); ++x)
 		{
@@ -2007,8 +2409,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		rocketLauncher3 = ImageIO.read
-				(new File("Images/rocketLauncher3.png"));
+		try
+		{
+			rocketLauncher3 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/rocketLauncher3.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			rocketLauncher3 = ImageIO.read
+					(new File("resources/default/textures/hud/rocketLauncher3.png"));
+		}
 		
 		for (int x = 0; x < rocketLauncher3.getWidth(); ++x)
 		{
@@ -2021,8 +2435,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		rocketLauncher4 = ImageIO.read
-				(new File("Images/rocketLauncher4.png"));
+		try
+		{
+			rocketLauncher4 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/rocketLauncher4.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			rocketLauncher4 = ImageIO.read
+					(new File("resources/default/textures/hud/rocketLauncher4.png"));
+		}
 		
 		for (int x = 0; x < rocketLauncher4.getWidth(); ++x)
 		{
@@ -2035,8 +2461,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolLeft1 = ImageIO.read
-				(new File("Images/pistolLeft1.png"));
+		try
+		{
+			pistolLeft1 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolLeft1.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolLeft1 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolLeft1.png"));
+		}
 		
 		for (int x = 0; x < pistolLeft1.getWidth(); ++x)
 		{
@@ -2049,8 +2487,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolLeft2 = ImageIO.read
-				(new File("Images/pistolLeft2.png"));
+		try
+		{
+			pistolLeft2 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolLeft2.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolLeft2 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolLeft2.png"));
+		}
 		
 		for (int x = 0; x < pistolLeft2.getWidth(); ++x)
 		{
@@ -2063,8 +2513,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolLeft3 = ImageIO.read
-				(new File("Images/pistolLeft3.png"));
+		try
+		{
+			pistolLeft3 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolLeft3.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolLeft3 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolLeft3.png"));
+		}
 		
 		for (int x = 0; x < pistolLeft3.getWidth(); ++x)
 		{
@@ -2077,8 +2539,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolLeft4 = ImageIO.read
-				(new File("Images/pistolLeft4.png"));
+		try
+		{
+			pistolLeft4 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolLeft4.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolLeft4 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolLeft4.png"));
+		}
 		
 		for (int x = 0; x < pistolLeft4.getWidth(); ++x)
 		{
@@ -2091,8 +2565,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolLeft5 = ImageIO.read
-				(new File("Images/pistolLeft5.png"));
+		try
+		{
+			pistolLeft5 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolLeft5.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolLeft5 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolLeft5.png"));
+		}
 		
 		for (int x = 0; x < pistolLeft5.getWidth(); ++x)
 		{
@@ -2105,8 +2591,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolRight1 = ImageIO.read
-				(new File("Images/pistolRight1.png"));
+		try
+		{
+			pistolRight1 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolRight1.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolRight1 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolRight1.png"));
+		}
 		
 		for (int x = 0; x < pistolRight1.getWidth(); ++x)
 		{
@@ -2119,8 +2617,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolRight2 = ImageIO.read
-				(new File("Images/pistolRight2.png"));
+		try
+		{
+			pistolRight2 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolRight2.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolRight2 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolRight2.png"));
+		}
 		
 		for (int x = 0; x < pistolRight2.getWidth(); ++x)
 		{
@@ -2133,8 +2643,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolRight3 = ImageIO.read
-				(new File("Images/pistolRight3.png"));
+		try
+		{
+			pistolRight3 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolRight3.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolRight3 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolRight3.png"));
+		}
 		
 		for (int x = 0; x < pistolRight3.getWidth(); ++x)
 		{
@@ -2147,8 +2669,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolRight4 = ImageIO.read
-				(new File("Images/pistolRight4.png"));
+		try
+		{
+			pistolRight4 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolRight4.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolRight4 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolRight4.png"));
+		}
 		
 		for (int x = 0; x < pistolRight4.getWidth(); ++x)
 		{
@@ -2161,8 +2695,20 @@ public class Display extends Canvas implements Runnable
 			}
 		}
 		
-		pistolRight5 = ImageIO.read
-				(new File("Images/pistolRight1.png"));
+		try
+		{
+			pistolRight5 = ImageIO.read
+					(new File("resources"+FPSLauncher.themeName+
+							"/textures/hud/pistolRight5.png"));
+		}
+		catch(Exception e)
+		{
+			//If no file is found, use the default. If the default cannot be loaded
+			//correctly, then the exception is thrown and the game doesn't display
+			//any texture letting you know something is wrong.
+			pistolRight5 = ImageIO.read
+					(new File("resources/default/textures/hud/pistolRight5.png"));
+		}
 		
 		for (int x = 0; x < pistolRight5.getWidth(); ++x)
 		{

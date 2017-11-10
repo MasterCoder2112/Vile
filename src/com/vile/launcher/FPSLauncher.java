@@ -56,6 +56,7 @@ import com.vile.entities.Item;
 import com.vile.entities.Player;
 import com.vile.entities.Weapon;
 import com.vile.graphics.Render3D;
+import com.vile.graphics.Textures;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -141,14 +142,15 @@ public class FPSLauncher extends JFrame
 	private Choice users	  = new Choice();
 	private Choice savedGames = new Choice();
 	
-	private static int resolutionChoice = 4;
-	private static int themeChoice = 0;
-	private static int levelSizeChoice = 3;
-	private static int modeChoice = 2;
-	private static int musicChoice = 2;
-	private static int usersChoice = 0;
-	private static int saveChoice = 0;
+	public static int resolutionChoice = 4;
+	public static int levelSizeChoice = 3;
+	public static int modeChoice = 2;
+	public static int musicChoice = 2;
+	public static int usersChoice = 0;
+	public static int saveChoice = 0;
 	
+	//Name of resource pack being used
+	public static String themeName = "/default";
 	
 	//Volume Knobs
 	public static JSlider musicVolume;
@@ -183,7 +185,7 @@ public class FPSLauncher extends JFrame
 	public static File userFile;
 	
 	//Is smooth FPS on?
-	public static boolean smoothFPS = false;
+	public static boolean smoothFPS = true;
 	
 	//Is the user trying to load a game?
 	public static boolean loadingGame = false;
@@ -240,12 +242,8 @@ public class FPSLauncher extends JFrame
 				audioOn = false;
 				dispose();
 				gameMode = 1;
-				
-				Display.graphicsSelection = resolutionChoice;
-				Display.themeNum          = themeChoice;
-				Display.levelSize         = levelSizeChoice;
+
 				Display.mouseOn           = mouseStatus;
-				Display.skillMode         = modeChoice;
 				Display.musicTheme        = musicChoice;
 				Display.smoothFPS         = smoothFPS;
 				
@@ -262,12 +260,8 @@ public class FPSLauncher extends JFrame
 				audioOn = false;
 				dispose();
 				gameMode = 0;
-				
-				Display.graphicsSelection = resolutionChoice;
-				Display.themeNum          = 2;
-				Display.levelSize         = levelSizeChoice;
+
 				Display.mouseOn           = mouseStatus;
-				Display.skillMode         = modeChoice;
 				Display.musicTheme        = musicChoice;
 				Display.smoothFPS         = smoothFPS;
 				
@@ -277,8 +271,6 @@ public class FPSLauncher extends JFrame
 				Display.newMapName = startMap;
 				
 				loadingGame = false;
-				
-				Display.themeNum = 2;
 
 				new RunGame();
 			}
@@ -311,7 +303,7 @@ public class FPSLauncher extends JFrame
 				if(idNum == 1)
 				{
 					resolutionChoice		  = resolution.getSelectedIndex();
-					themeChoice				  = theme.getSelectedIndex();
+					themeName				  = "/"+theme.getItem(theme.getSelectedIndex());
 					levelSizeChoice			  = levelSize.getSelectedIndex();
 					modeChoice				  = mode.getSelectedIndex();
 					musicChoice				  = music.getSelectedIndex();
@@ -336,12 +328,8 @@ public class FPSLauncher extends JFrame
 			{
 				Display.resetGame = true;
 				audioOn = false;
-				
-				Display.graphicsSelection = resolutionChoice;
-				Display.themeNum          = 2;
-				Display.levelSize         = levelSizeChoice;
+
 				Display.mouseOn           = mouseStatus;
-				Display.skillMode         = modeChoice;
 				Display.musicTheme        = musicChoice;
 				Display.smoothFPS         = smoothFPS;
 				
@@ -418,7 +406,7 @@ public class FPSLauncher extends JFrame
 				Display.pauseGame = false;
 				
 				resolutionChoice = 4;
-	        	themeChoice = 0;
+				themeName = "/default";
 	        	levelSizeChoice = 3;
 	        	modeChoice = 2;
 	        	musicChoice = 2;
@@ -501,7 +489,7 @@ public class FPSLauncher extends JFrame
 	        				("Users/"+currentUserName+"/"+fileName+".txt"));
 	        		
 	        		rewrite.write(Game.mapNum+":"+gameMode+":"+Game.secretsFound+":"
-	        				+Game.enemiesInMap+":"+Display.kills+":"+Display.themeNum);
+	        				+Game.enemiesInMap+":"+Display.kills+":"+themeName);
 	        		
 	        		rewrite.newLine();
 	        		
@@ -599,7 +587,7 @@ public class FPSLauncher extends JFrame
 	        			Item item = Game.items.get(i);
 	        			rewrite.write(item.itemActivationID+":"+item.itemID+
 	        					":"+item.x+":"+item.y+":"+item.z+":"
-	        					+item.rotation+";");
+	        					+item.rotation+":"+item.audioQueue+";");
 	        		}
 	        		
 	        		rewrite.newLine();		
@@ -659,7 +647,7 @@ public class FPSLauncher extends JFrame
 	        			rewrite.write(d.ID+":"+d.itemActivationID+":"+
 	        			d.xPos+":"+d.yPos+":"+d.zPos+":"+d.doorX+":"+
 	        					d.doorZ+":"+d.time+":"+d.soundTime+":"
-	        					+d.doorType+":"+d.doorY+";");
+	        					+d.doorType+":"+d.doorY+":"+d.maxHeight+";");
 	        		}
 	        		
 	        		rewrite.newLine();		
@@ -673,7 +661,7 @@ public class FPSLauncher extends JFrame
 	        			ele.xPos+":"+ele.yPos+":"+ele.zPos+":"+ele.elevatorX+":"+
 	        					ele.elevatorZ+":"+ele.height+":"+ele.soundTime+":"
 	        					+ele.movingUp+":"+ele.movingDown+":"+ele.waitTime+
-	        					":"+ele.upHeight+":"+ele.activated+";");
+	        					":"+ele.upHeight+":"+ele.activated+":"+ele.maxHeight+";");
 	        		}
 	        		
 	        		rewrite.newLine();		
@@ -743,7 +731,6 @@ public class FPSLauncher extends JFrame
 				audioOn = false;
 				dispose();
 				gameMode = 0;
-				Display.themeNum = 2;
 
 				new RunGame();
 			}
@@ -881,7 +868,7 @@ public class FPSLauncher extends JFrame
 							Player.maxKills = Integer.parseInt(elements[1]);
 							levelSizeChoice = (Integer.parseInt(elements[2]));
 							startMap = elements[3];
-							themeChoice = (Integer.parseInt(elements[4]));
+							themeName = ((elements[4]));					    
 							modeChoice = (Integer.parseInt(elements[5]));
 							musicChoice = (Integer.parseInt(elements[6]));
 							soundVolumeLevel = Float.parseFloat(elements[7]);
@@ -907,11 +894,6 @@ public class FPSLauncher extends JFrame
 							if(levelSizeChoice < 0)
 							{
 								levelSizeChoice = 0;
-							}
-							
-							if(themeChoice < 0)
-							{
-								themeChoice = 0;
 							}
 							
 							if(modeChoice < 0)
@@ -989,7 +971,7 @@ public class FPSLauncher extends JFrame
 				        	}
 				        	
 				        	resolutionChoice = 4;
-				        	themeChoice = 0;
+				        	themeName = "/default";
 				        	levelSizeChoice = 3;
 				        	modeChoice = 2;
 				        	musicChoice = 2;
@@ -1129,8 +1111,9 @@ public class FPSLauncher extends JFrame
 				Display.music = AudioSystem.getClip();
 				AudioInputStream input =
 						AudioSystem.getAudioInputStream
-						(this.getClass().getResource
-								("/test/title.wav"));
+						(new File("resources"+themeName+"/audio/test/title.wav"));
+						//(this.getClass().getResource
+								//("resources"+Textures.extraFolder+"/audio/test/title.wav"));
 				Display.music.open(input);
 				Display.music.loop(Clip.LOOP_CONTINUOUSLY);
 				Display.music.start();
@@ -1139,7 +1122,7 @@ public class FPSLauncher extends JFrame
 		}
 		catch (Exception e)
 		{
-			
+			System.out.println(e);
 		}
 		
 		try
@@ -1159,13 +1142,27 @@ public class FPSLauncher extends JFrame
 
 		if (!opened) 
 		{
-			click = new Sound(4, "/test/titleClick.wav");
+			try
+			{
+				click = new Sound(4, "resources"+themeName+"/audio/test/titleClick.wav");
+			}
+			catch(Exception e)
+			{
+				try
+				{
+					click = new Sound(4, "resources/default/audio/test/titleClick.wav");
+				}
+				catch(Exception ex)
+				{
+					//Sound couldn't be found
+				}
+			}
 
 			opened = true;
 		}
 		
 		//Changes Java Icon to the new Vile Icon
-		ImageIcon titleIcon = new ImageIcon("Images/titleIcon.png");
+		ImageIcon titleIcon = new ImageIcon("resources"+themeName+"/textures/hud/titleIcon.png");
 		setIconImage(titleIcon.getImage());
 		
 		setVisible(true);
@@ -1657,19 +1654,41 @@ public class FPSLauncher extends JFrame
 		resolution.select(resolutionChoice);
 		panel.add(resolution);	
 		
+		
+		
 		themeTitle = new JLabel("Themes:");
 		themeTitle.setBounds(250, 100, 200, 10);
 		themeTitle.setForeground(Color.GREEN);
 		panel.add(themeTitle);
 		
 		theme.setBounds(175, 125, 200, 40);
-		theme.add("Outdoors");
-		theme.add("Night Time");
-		theme.add("Level Default");
-		theme.add("Nick Cage");
-		theme.add("Moon");
-		theme.add("MLG");
-		theme.select(themeChoice);
+		
+		//Get the list of files within the directory with the given file path
+		File folder = new File("resources/");
+		File[] listOfFiles = folder.listFiles();
+
+		//Run through all the names and add them
+	    for (int i = 0; i < listOfFiles.length; i++) 
+	    {
+		    if (listOfFiles[i].isFile())
+		    {
+		      //At the moment do nothing here
+		    } 
+		    else if (listOfFiles[i].isDirectory()) 
+		    {
+		    	theme.add(listOfFiles[i].getName());
+		    }
+	    }
+	    
+	    try
+	    {
+	    	theme.select(themeName.substring(1, themeName.length()));
+	    }
+	    catch(Exception e)
+	    {
+	    	theme.select(0);
+	    }
+	    
 		panel.add(theme);
 		
 		levelSizeTitle = new JLabel("Level Size (Survival only):");
@@ -1851,8 +1870,38 @@ public class FPSLauncher extends JFrame
 	{
 		title = new JLabel();
 		title.setBounds(0, 0, WIDTH, HEIGHT);
-		titleImage = new ImageIcon("Images/title.png");
+		
+		try
+		{
+			File file = new File("resources"+themeName+"/textures/hud/title.png");
+			
+			//If file exists
+			if(file.exists())
+			{
+				titleImage = new ImageIcon
+						("resources"+themeName+"/textures/hud/title.png");
+			}
+			else
+			{
+				//If file does not exist throw exception
+				throw new Exception();
+			}
+		}
+		catch(Exception e)
+		{
+			try
+			{
+				titleImage = new ImageIcon("resources/default/textures/hud/title.png");
+			}
+			catch(Exception ex)
+			{
+				
+			}
+		}
+		
 		title.setIcon(titleImage);
+		
+		//System.out.println(title.getIcon());
 		panel.add(title, new Integer(0));
 		
 		//Reset panel after drawing the background
@@ -2344,7 +2393,7 @@ public class FPSLauncher extends JFrame
     		//Player and level stuff
     		writeSettings.write(resolutionChoice+":"
     				+Player.maxKills+":"+levelSizeChoice+
-    				":"+startMap+":"+themeChoice+
+    				":"+startMap+":"+themeName+
     				":"+modeChoice+":"+musicChoice+":"
     				+soundVolumeLevel+":"+musicVolumeLevel+":"
     				+smoothFPS+":"+mouseStatus+

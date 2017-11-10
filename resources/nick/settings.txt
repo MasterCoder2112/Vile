@@ -1,0 +1,4 @@
+SeeThroughColorWalls:-255,-255,-255,-255
+GravityAcceleration:0.01
+PlayerJumpHeight:24
+SurvivalRenderDistance:50000.0

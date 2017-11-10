@@ -4,8 +4,12 @@ import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+
+import com.vile.graphics.Textures;
+import com.vile.launcher.FPSLauncher;
 
 /**
  * Title: RunGame
@@ -49,14 +53,13 @@ public class RunGame
 			frame.setLocationRelativeTo(null);
 			
 			//If full screen
-			if(Display.graphicsSelection >= 4)
+			if(FPSLauncher.resolutionChoice >= 4)
 			{
 				frame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
 				frame.setUndecorated(true);
 			}
 			
-			//Gets rid of java icon and replaces it with the Vile icon
-			ImageIcon titleIcon = new ImageIcon("Images/titleIcon.png");
+			ImageIcon titleIcon = new ImageIcon("resources"+FPSLauncher.themeName+"/textures/hud/titleIcon.png");
 			frame.setIconImage(titleIcon.getImage());
 			
 			frame.setVisible(true);

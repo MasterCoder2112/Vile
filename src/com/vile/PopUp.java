@@ -18,7 +18,7 @@ public class PopUp
 	private int yOnScreen = 50;
 	private int timeToStay = 250;
 	private int yChange = 1;
-	private String text = "";
+	public String text = "";
 	
 	//Constructs the popup with a set time to stay up
 	//and whether it moves or not

@@ -15,6 +15,7 @@ import com.vile.entities.HurtingBlock;
 import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
 import com.vile.entities.Player;
+import com.vile.graphics.Render3D;
 import com.vile.launcher.FPSLauncher;
 
 /**
@@ -53,7 +54,7 @@ public class Level
 				Block block = null;
 				
 				//Random wall type is chosen
-				int randomWall = random.nextInt(19);
+				int randomWall = random.nextInt(43);
 				
 				if(randomWall == 0)
 				{
@@ -114,9 +115,15 @@ public class Level
 				//Item activation ID
 				int itemActID = map[i][j].itemActID;
 				
+				//Audio Queue
+				String audioQueue = map[i][j].audioQueue;
+				
+				//Door raise Height
+				int doorRaiseHeight = map[i][j].doorRaiseHeight;
+				
 				//Gets each blocks height
 				block = new Block(map[i][j].height,
-						map[i][j].wallID, 0, i, j);
+						map[i][j].wallID, map[i][j].wallY, i, j);
 				
 				//Sets the block at that location in the level.
 				blocks[i + j * width] = block;
@@ -127,7 +134,7 @@ public class Level
 				{
 					Item temp = new HurtingBlock( 
 							i + 0.5, 
-							0.77, j + 0.5, i, j, 0);
+							(block.y * 4) + block.height, j + 0.5, i, j, 0);
 					
 					Game.hurtingBlocks.add((HurtingBlock)temp);
 					
@@ -139,7 +146,7 @@ public class Level
 				{
 					Item temp = new HurtingBlock( 
 							i + 0.5, 
-							0.77, j + 0.5, i, j, 1);
+							(block.y * 4) + block.height, j + 0.5, i, j, 1);
 					
 					Game.hurtingBlocks.add((HurtingBlock)temp);
 					
@@ -172,21 +179,23 @@ public class Level
 						{
 							temp = new Item(10, 
 									i + 0.5, 
-									block.height - block.y, 
-									j + 0.5, itemID, (int)rotation, itemActID);
+									(block.y * 4) + block.height, 
+									j + 0.5, itemID, (int)rotation, itemActID,
+									audioQueue);
 						}
 						else
 						{
 							temp = new ExplosiveCanister(10, 
 									i + 0.5, 
-									block.height - block.y, 
+									(block.y * 4) + block.height, 
 									j + 0.5, itemID, (int)rotation, itemActID);
 						}
 						
 						//If the item is solid or another interactable block
 						if(temp.isSolid ||
 								itemID == ItemNames.BREAKABLEWALL.getID()
-								|| itemID == ItemNames.SECRET.getID())
+								|| itemID == ItemNames.SECRET.getID()
+								|| itemID == ItemNames.LINEDEF.getID())
 						{
 							//Set item to being the item that is within this
 							//block only if it is solid
@@ -226,115 +235,117 @@ public class Level
 						Player.z = j + 0.5;
 						Player.y = block.y + block.height;
 						Player.rotation = rotation;
+						Render3D.isInitialSound = true;
+						Render3D.firstAudio = map[i][j].audioQueue;
 					}
 					//End button or normal button
 					else if(itemID == ItemNames.BUTTON.getID())
 					{
 						Game.buttons.add(new Button( 
 								i + 0.5, 
-								0.77, j + 0.5, itemID, itemActID));
+								(block.y * 4) + block.height, j + 0.5, itemID, itemActID));
 					}
 					//Lift/elevator
 					else if(itemID == ItemNames.ELEVATOR.getID())
 					{
 						Game.elevators.add(new Elevator( 
 								i + 0.5, 
-								0.77, j + 0.5, i, j, itemActID));
+								(block.y * 4) + block.height, j + 0.5, i, j, itemActID, doorRaiseHeight));
 					}
 					//Normal door
 					else if(itemID == ItemNames.DOOR.getID())
 					{
 						Game.doors.add(new Door( 
 								i + 0.5, 
-								0.77, j + 0.5, i, j, 0, itemActID));
+								(block.y * 4) + block.height, j + 0.5, i, j, 0, itemActID, doorRaiseHeight));
 					}
 					//Red door
 					else if(itemID == ItemNames.REDDOOR.getID())
 					{
 						Game.doors.add(new Door( 
 								i + 0.5, 
-								0.77, j + 0.5, i, j, 1, itemActID));
+								(block.y * 4) + block.height, j + 0.5, i, j, 1, itemActID, doorRaiseHeight));
 					}
 					//Blue door
 					else if(itemID == ItemNames.BLUEDOOR.getID())
 					{
 						Game.doors.add(new Door( 
 								i + 0.5, 
-								0.77, j + 0.5, i, j, 2, itemActID));
+								(block.y * 4) + block.height, j + 0.5, i, j, 2, itemActID, doorRaiseHeight));
 					}
 					//Green Door
 					else if(itemID == ItemNames.GREENDOOR.getID())
 					{
 						Game.doors.add(new Door( 
 								i + 0.5, 
-								0.77, j + 0.5, i, j, 3, itemActID));
+								(block.y * 4) + block.height, j + 0.5, i, j, 3, itemActID, doorRaiseHeight));
 					}
 					//Yellow door
 					else if(itemID == ItemNames.YELLOWDOOR.getID())
 					{
 						Game.doors.add(new Door( 
 								i + 0.5, 
-								0.77, j + 0.5, i, j, 4, itemActID));
+								(block.y * 4) + block.height, j + 0.5, i, j, 4, itemActID, doorRaiseHeight));
 					}
 					//Adds Brainomorpth
 					else if(itemID == 16)
 					{
 						Enemy temp = new Enemy(
-								i + 0.5, 0, 
+								i + 0.5, -((block.y * 4) + block.height) / 10, 
 								j + 0.5, 1, rotation, itemActID);
 						
 						Game.enemies.add(temp);
-						block.enemiesOnBlock.add(temp);
+						block.entitiesOnBlock.add(temp);
 					}
 					//Adds Sentinel enemy
 					else if(itemID == 17)
 					{
 						Enemy temp = new Enemy(
-								i + 0.5, 0.77, 
+								i + 0.5, -((block.y * 4) + block.height) / 10, 
 								j + 0.5, 2, rotation, itemActID);
 						
 						Game.enemies.add(temp);
-						block.enemiesOnBlock.add(temp);
+						block.entitiesOnBlock.add(temp);
 					}
 					//Adds Mutated Commando
 					else if(itemID == 18)
 					{
 						Enemy temp = new Enemy(
-								i + 0.5, 0.77, 
+								i + 0.5, -((block.y * 4) + block.height) / 10, 
 								j + 0.5, 3, rotation, itemActID);
 						
 						Game.enemies.add(temp);
-						block.enemiesOnBlock.add(temp);
+						block.entitiesOnBlock.add(temp);
 					}
 					//Adds a Reaper
 					else if(itemID == 19)
 					{
 						Enemy temp = new Enemy(
-								i + 0.5, 0.77, 
+								i + 0.5, -((block.y * 4) + block.height) / 10, 
 								j + 0.5, 4, rotation, itemActID);
 						
 						Game.enemies.add(temp);
-						block.enemiesOnBlock.add(temp);
+						block.entitiesOnBlock.add(temp);
 					}
 					//Adds Vile Warrior at this location
 					else if(itemID == 58)
 					{
 						Enemy temp = new Enemy(
-								i + 0.5, 0.77, 
+								i + 0.5, -((block.y * 4) + block.height) / 10, 
 								j + 0.5, 7, rotation, itemActID);
 						
 						Game.enemies.add(temp);
-						block.enemiesOnBlock.add(temp);
+						block.entitiesOnBlock.add(temp);
 					}
 					//Belegoth is added
 					else if(itemID == 59)
 					{
 						Enemy temp = new Enemy(
-								i + 0.5, 0.77, 
+								i + 0.5, -((block.y * 4) + block.height) / 10, 
 								j + 0.5, 8, rotation, itemActID);
 						
 						Game.enemies.add(temp);
-						block.enemiesOnBlock.add(temp);
+						block.entitiesOnBlock.add(temp);
 					}
 					//Default Corpse
 					else if(itemID == ItemNames.CORPSE.getID())
@@ -342,24 +353,25 @@ public class Level
 						Game.corpses.add(new Corpse( 
 								i + 0.5,  
 								j + 0.5,
-								block.height - block.y, 0,0,0,0));
+								block.height + (block.y * 4) + block.baseCorrect,
+								0,0,0,0));
 					}
 					//Adds Magistrate at this location
 					else if(itemID == 45)
 					{
 						Game.enemies.add(new Enemy(
-								i + 0.5, 0.77, 
+								i + 0.5, -((block.y * 4) + block.height) / 10, 
 								j + 0.5, 5, rotation, itemActID));
 					}
 					//The boss MORGOTH
 					else if(itemID == 46)
 					{
 						Enemy temp = new Enemy(
-								i + 0.5, 0.77, 
+								i + 0.5, -((block.y * 4) + block.height) / 10, 
 								j + 0.5, 6, rotation, itemActID);
 						
 						Game.enemies.add(temp);
-						block.enemiesOnBlock.add(temp);
+						block.entitiesOnBlock.add(temp);
 					}
 					//Explosion. Just create an instant explosion. For effects
 					else if(itemID == ItemNames.EXPLOSION.getID())

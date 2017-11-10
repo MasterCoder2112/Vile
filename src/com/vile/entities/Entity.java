@@ -1,6 +1,7 @@
 package com.vile.entities;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import com.vile.Display;
 import com.vile.Game;
@@ -9,6 +10,7 @@ import com.vile.graphics.Render;
 import com.vile.graphics.Render3D;
 import com.vile.graphics.Textures;
 import com.vile.input.InputHandler;
+import com.vile.launcher.FPSLauncher;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -23,6 +25,7 @@ import com.vile.levelGenerator.Level;
  */
 public abstract class Entity 
 {
+	//Defaults
 	public int health     = 0;
 	public int armor      = 0;
 	public int ammo       = 0;
@@ -32,6 +35,7 @@ public abstract class Entity
 	public int tickRound  = 0;
 	public int tickAmount = 11;
 	public int itemActivationID = 0;
+	public int enemyPhase = 0; //Phase enemies textures are in
 	public double speed   = 0;
 	public double xPos    = 0;
 	public double yPos    = 0;
@@ -43,16 +47,38 @@ public abstract class Entity
 	public double rotationFromTarget = 0;
 	public double rotationFromPlayer = 0;
 	public double rotDifference = 0;
-	public double xEffects = 0;
+	public double xEffects = 0; //These are explosion effects on entity
 	public double yEffects = 0;
 	public double zEffects = 0;
 	public Render currentPhase = Textures.enemy1;
-	public int enemyPhase = 0;
 	
+	//Initial y value of enemy
+	public double startY = 2;
+	
+	//Initial speed
+	public double initialSpeed = 0;
+	
+	//Corrects height that the enemy should actually be at
+	//public double heightCorrect = 0;
+	
+	//What walking phase is the enemy in, and which direction in
+	//degrees is the enemy moving
+	public double direction = 0;
+	
+	//What is the acceleration down
+	public double acceleration = 0.03;
+	
+	//What is the speed that the enemy is currently falling
+	public double fallSpeed = 1;
+	
+	//How heavy is the enemy
+	public int weightLevel = 1;
+	
+	//Pixels enemy takes up on screen
 	public ArrayList<Integer> pixelsOnScreen 
 			= new ArrayList<Integer>();
 	
-	//Rotation in the map in correspondence with the enemy
+	//Rotation in the map in correspondence with the entity
 	public double rotation = 0;
 	
 	//Distance From player
@@ -65,58 +91,45 @@ public abstract class Entity
 	//Max height the entity can stand on
 	public double maxHeight = 0;
 	
-	public Enemy targetEnemy = null;
-	public Eyesight eyeSight = null;
+   /*
+    * Basically if this is an enemy, it is itself. This is only here so that
+    * this can call the enemy methods for itself in order to make it 
+    * easier to call enemy actions only for this particular enemy. Otherwise
+    * I'd have to do a bunch of case statements and casting which I'd rather
+    * not do.
+    */
+	public Enemy itself = null;
+	//public Marine itself2 = null //Marine type. Next version
+	
+	public Enemy targetEnemy = null; //Enemy target for friendlies or enemies angry at another
+	public Corpse targetCorpse = null; //Corpse target for resurrectors
+	public Eyesight eyeSight = null; //An entities eyesight
 	
 	//Entity Flags (Many will be used in later updates)
-	public boolean killable         = false;
-	public boolean hasItemDrops     = false;
-	public boolean hasMovement      = false;
-	public boolean canActivate      = false;
-	public boolean canTeleport      = false;
+	public boolean killable         = false; //Is entity killable by the player?
+	public boolean hasItemDrops     = false; //Does this entity drop items
+	public boolean hasMovement      = false; //Can entity move, or is it stationary
+	public boolean canActivate      = false; //Are conditions met for entity to activate
+	public boolean canTeleport      = false; //Can enemy teleport?
+	public boolean canFly           = false; //Can enemy fly?
+	public boolean activated        = false; //Tracking target yet?
+	public boolean hasSpecial       = false; //Has special attack
+	public boolean isFiring 	    = false; //Is entity in the process of firing
+	public boolean isAttacking 		= false; //Is entity melee attacking
+	public boolean canResurrect 	= false; //Can entity resurrect other entities
+	public boolean withinSight		= false; //Is entity within the players sight
+	public static boolean checkSight = false; //Does entity have permission to check its sight yet?
+	public boolean isStuck 			= false; //Is entity stuck?
+	public boolean isABoss 			= false; //Is entity a boss?
+	public boolean inSight 			= false; //Is target in sight?
+	public boolean searchMode 		= false; //Is the entity pathfinding the target?
+	public boolean isAlive 			= true; //Is entity alive?
+	public boolean isFriendly		= false; //Is entity freindly to the player or not?
+	public boolean tracking 		= false; //Is flying enemy tracking the target vertically
+	public boolean newTarget 		= false; //Is target not player?
+	private boolean doorway 		= false; //Is the entity going through a doorway?
+	private boolean firstTime 		= true; //Sets up primary settings the first tick through
 	
-	//Can the enemy fly?
-	public boolean canFly           = false;
-	
-	//Is the entity activated, meaning it can move and use its AI or not
-	public boolean activated        = false;
-	
-	//Has a special attack such as firing a projectile or not
-	public boolean hasSpecial       = false;
-	
-	//If entity is firing a projectile or not
-	public boolean isFiring = false;
-	
-	//If entity is melee attacking
-	public boolean isAttacking = false;
-	
-	//If a resurrector, this tells it when it can finally resurrect the
-	//corpse at the end of its firing ceremony
-	public boolean canResurrect = false;
-	
-	//If Target is within sight of enemy
-	public boolean withinSight = false;
-	
-	//Whether to check path of sight of entities or not yet
-	public static boolean checkSight = false;
-	
-	//Is the entity stuck in a wall?
-	public boolean isStuck = false;
-	
-	//Is the entity a boss?
-	public boolean isABoss = false;
-	
-	//Is Target in sight?
-	public boolean inSight = false;
-	
-	//Searching for a way out of a room
-	public boolean searchMode = false;
-	
-	//Is the entity still alive?
-	public boolean isAlive = true;
-	
-	//Has this been called yet
-	private boolean firstTime = true;
 	
    /**
     * Instantiates the type of entity
@@ -175,6 +188,7 @@ public abstract class Entity
 		//method.
 		if(firstTime)
 		{
+			setHeight();
 			firstTime = false;
 			return;
 		}
@@ -348,7 +362,7 @@ public abstract class Entity
 							+ ((zPos - targetZ) * (zPos - targetZ)));
 			
 			//Difference between entity and target y values
-			double yDifference = Math.abs(yPos - 8) - Math.abs(targetY);
+			double yDifference = Math.abs(yPos) - Math.abs(targetY);
 			
 			//Number of moves the eyesight will check for if it reaches
 			//the target successfully
@@ -356,9 +370,20 @@ public abstract class Entity
 			
 			//How much y will have to change each time
 			double sightY = yDifference / iterations;
+			//TODO heres
+			
+			//Y position of entity. May need to be corrected for eyesight to
+			//work right
+			double yCorrect = this.yPos * 6;
+			
+			//If a boss, they can see from higher up since they are taller
+			if(isABoss)
+			{
+				yCorrect -= 8;
+			}
 			
 			//Resets the eyesight object with its new values
-			eyeSight = new Eyesight(this.xPos, this.zPos, this.yPos - 8,
+			eyeSight = new Eyesight(this.xPos, this.zPos, yCorrect,
 						targetX, targetZ, targetY,
 						sightX, sightZ, sightY);
 			
@@ -368,7 +393,7 @@ public abstract class Entity
 		
 		//Only if the enemy has you directly in its line of sight
 		//or if the enemy is not behind a wall and you fire.
-		if(!activated && Display.skillMode > 0
+		if(!activated && FPSLauncher.modeChoice > 0
 				&& Player.alive)
 		{
 		   /*
@@ -504,15 +529,15 @@ public abstract class Entity
 				if(ID == 3)
 				{
 					//Create new Projectile object with given parameters
-					EnemyFire temp = new EnemyFire(10, 0.1, xPos, yPos,
+					EnemyFire temp = new EnemyFire(10, 0.1, xPos, (yPos - 0.5) * 10,
 							zPos, 6, targetX, targetZ, 
 							targetY, 0, currentEnemy);
 					
-					EnemyFire temp2 = new EnemyFire(10, 0.1, xPos, yPos,
+					EnemyFire temp2 = new EnemyFire(10, 0.1, xPos, (yPos - 0.5)  * 10,
 							zPos, 6, targetX, targetZ, 
 							targetY, Math.PI / 8, currentEnemy);
 					
-					EnemyFire temp3 = new EnemyFire(10, 0.1, xPos, yPos,
+					EnemyFire temp3 = new EnemyFire(10, 0.1, xPos, (yPos - 0.5)  * 10,
 							zPos, 6, targetX, targetZ, 
 							targetY, -Math.PI / 8, currentEnemy);
 					
@@ -528,31 +553,31 @@ public abstract class Entity
 				//Bosses shoot in 5 directions
 				else if(ID == 6 || ID == 8)
 				{
-					EnemyFire temp = new EnemyFire(10, 0.2, xPos, yPos,
+					EnemyFire temp = new EnemyFire(10, 0.2, xPos, (yPos - 0.5)  * 10,
 							zPos, 7, targetX, targetZ, 
 							targetY, 0, currentEnemy);
 					
-					EnemyFire temp2 = new EnemyFire(10, 0.2, xPos, yPos,
+					EnemyFire temp2 = new EnemyFire(10, 0.2, xPos, (yPos - 0.5)  * 10,
 							zPos, 7, targetX, targetZ, 
 							targetY, Math.PI / 16, currentEnemy);
 					
-					EnemyFire temp3 = new EnemyFire(10, 0.2, xPos, yPos,
+					EnemyFire temp3 = new EnemyFire(10, 0.2, xPos, (yPos - 0.5)  * 10,
 							zPos, 7, targetX, targetZ, 
 							targetY, -Math.PI / 16, currentEnemy);
 					
-					EnemyFire temp4 = new EnemyFire(10, 0.2, xPos, yPos,
+					EnemyFire temp4 = new EnemyFire(10, 0.2, xPos, (yPos - 0.5)  * 10,
 							zPos, 7, targetX, targetZ, 
 							targetY, Math.PI / 8, currentEnemy);
 					
-					EnemyFire temp5 = new EnemyFire(10, 0.2, xPos, yPos,
+					EnemyFire temp5 = new EnemyFire(10, 0.2, xPos, (yPos - 0.5)  * 10,
 							zPos, 7, targetX, targetZ, 
 							targetY, -Math.PI / 8, currentEnemy);
 					
-					EnemyFire temp6 = new EnemyFire(10, 0.2, xPos, yPos,
+					EnemyFire temp6 = new EnemyFire(10, 0.2, xPos, (yPos - 0.5)  * 10,
 							zPos, 7, targetX, targetZ, 
 							targetY, Math.PI / 4, currentEnemy);
 					
-					EnemyFire temp7 = new EnemyFire(10, 0.2, xPos, yPos,
+					EnemyFire temp7 = new EnemyFire(10, 0.2, xPos, (yPos - 0.5)  * 10,
 							zPos, 7, targetX, targetZ, 
 							targetY, -Math.PI / 4, currentEnemy);
 					
@@ -574,7 +599,7 @@ public abstract class Entity
 						tempDamage = 8;
 					}
 					//Create new Projectile object with given parameters
-					EnemyFire temp = new EnemyFire(tempDamage, 0.1, xPos, yPos,
+					EnemyFire temp = new EnemyFire(tempDamage, 0.1, xPos, (yPos - 0.5)  * 10,
 							zPos, tempID, targetX, targetZ, 
 							targetY, 0, currentEnemy);
 					
@@ -656,15 +681,15 @@ public abstract class Entity
 			if(ID != 4)
 			{
 				//Go through all the enemies on the block
-				for(int i = 0; i < block.enemiesOnBlock.size(); i++)
+				for(int i = 0; i < block.entitiesOnBlock.size(); i++)
 				{
-					Enemy temp = block.enemiesOnBlock.get(i);
+					Entity temp = block.entitiesOnBlock.get(i);
 					
 					//If enemy is not in the game, remove it from the block
 					//This is due to a rocket bug.
 					if(!Game.enemies.contains(temp))
 					{
-						block.enemiesOnBlock.remove(temp);
+						block.entitiesOnBlock.remove(temp);
 					}
 					
 					//Distance between enemy and other enemy
@@ -677,7 +702,7 @@ public abstract class Entity
 					//the other enemies. Enemy can still move if 8 units above
 					//The other enemy
 					if(distance <= 0.5 && !this.equals(temp)
-							&& Math.abs(this.yPos - temp.yPos) <= 8)
+							&& Math.abs(this.yPos - temp.yPos) <= 0.8)
 					{
 						return false;
 					}	
@@ -735,6 +760,7 @@ public abstract class Entity
 	    {
 	    	try
 	    	{
+	    		//If not reaper
 	    		if(ID != 4)
 	    		{
 		    		Item temp = block.wallItem;
@@ -747,6 +773,7 @@ public abstract class Entity
 		    				&& temp.itemID != 31 
 		    				&& Math.abs(temp.y + yPos) <= temp.height)
 		    		{
+		    			isStuck = true;
 		    			return false;
 		    		}
 	    		}
@@ -756,9 +783,11 @@ public abstract class Entity
 	    		
 	    	}
 	    	
-	    	//Cannot drop off of a block thats higher than 2 units up
-	    	if(-yPos > (2) && !canFly)
+	    	//Cannot fall off a block more than approx. 2 units high
+	    	//Unless the enemy can fly
+	    	if(-yPos > 0.4 && !canFly)
 	    	{
+	    		isStuck = true;
 	    		return false;
 	    	}
 	    }
@@ -806,34 +835,31 @@ public abstract class Entity
     		
     	}
 		
+	    //The top of the block the entity is moving onto
+		double topOfBlock = (block.height + (block.y * 4) + block.baseCorrect) / 10;
+		
+		//System.out.println(topOfBlock+" : "+(-yPos));
+		
 	   /*
-	    * If the block in front of the entity is greater than two units
-	    * higher than the entity, or if it is more than two lower than
-	    * the entity, or the entity is still not far enough under a block
-	    * to go through it (mainly used with doors) then don't allow
-	    * the entity to move.
-	    * 
-	    * If the entity is the flyer demon entity, then only stop its
-	    * passage if the block is 48 units or higher tall. Or if a
-	    * fying entity is tracking the player, it acts like a normal entity.
+	    * If the top of the block (minus 4 units in case it's stairs. By the
+	    * way 4 units is a height of 2 plus correct for the baseCorrect added)
+	    * is higher than the entities y, and the bottom of the block(the blocks y)
+	    * is lower than the entities y plus the entities height, then
+	    * the entity is trying to move into the block and can't. Also, it cannot
+	    * move forward if the top of the block is more than 4 units below the
+	    * entity. That is too big of a fall for the entities. Doesn't worry about
+	    * that second part though if the entity can fly. 
 	    */
-		if(!block.isaDoor)
+		if(((topOfBlock) - (4.0/10.0) > 
+			-yPos && (-yPos + height) >= (block.y * 4))
+				|| ((topOfBlock) + (4.0/10.0) < -yPos
+						&& !canFly))
 		{
-			if(((block.height + block.y - 2) > 
-				-yPos && -yPos + 2 > block.y)
-					|| ((block.height + block.y + 2) < -yPos
-							&& !canFly))
-			{
-				isStuck = true;
-				return false;
-			}
-			
-			//Set Height if enemy cannot fly
-			if(!canFly)
-			{			
-				maxHeight = -(block.height + block.y);
-			}
+			isStuck = true;
+			return false;
 		}
+		
+		//TODO check
 		
 		//Default is that the entity can move
 		isStuck = false;
@@ -2665,5 +2691,1178 @@ public abstract class Entity
 				
 				break;
 		}
+	}
+	
+   /**
+    * Keeps track of the enemies movement each turn
+    */
+	public void move()
+	{			
+		//Set enemies height based on block or object its on
+		setHeight();
+		
+	   /*
+	    * With faster ticks, the enemies move faster, and therefore to
+	    * correct the faster movements, this slows them down so that
+	    * the game is still winnable.
+	    */
+		if(Display.fps >= 60)
+		{
+			speed = initialSpeed / ((Display.fps / 60) + 1);
+		}
+		else
+		{
+			speed = initialSpeed / 1.5;
+		}
+		
+		//If there is a target other than the player causing infighting
+		if(targetEnemy != null)
+		{
+			targetX = targetEnemy.xPos;
+			targetY = targetEnemy.yPos;
+			targetZ = targetEnemy.zPos;
+		}
+		//If target is the player
+		else
+		{
+			targetX = Player.x;
+			targetY = Player.y;
+			targetZ = Player.z;
+		}
+		
+		//Angle that the target is in accordance to the enemy so
+		//that enemy moves right towards the target
+		rotationFromTarget = Math.atan
+		(((targetX - xPos)) / ((targetZ - zPos)));
+		
+		//Angle that the player is in accordance to the enemy so
+		//that the enemy is facing correctly to the player
+		rotationFromPlayer = Math.atan
+		(((Player.x - xPos) * 1) / ((Player.z - zPos) * 1));
+		
+	   /*
+	    * If the target is in the 3rd or 4th quadrant of the map then
+	    * add PI to rotation so that the enemy will move into
+	    * the correct quadrant of the map and at the target.
+	    */
+		if(targetZ < zPos)
+		{
+			rotationFromTarget += Math.PI;
+		}
+		
+		//No negative angles
+		if(rotationFromTarget < 0)
+		{
+			rotationFromTarget = (2 * Math.PI) 
+					+ rotationFromTarget;
+		}	
+		
+	   /*
+	    * If the target is in the 3rd or 4th quadrant of the map then
+	    * add PI to rotation so that the enemy will face into
+	    * the correct quadrant of the map and at the target.
+	    */
+		if(Player.z < zPos)
+		{
+			rotationFromPlayer += Math.PI;
+		}
+		
+		//No negative angles
+		if(rotationFromPlayer < 0)
+		{
+			rotationFromPlayer = (2 * Math.PI) 
+					+ rotationFromPlayer;
+		}
+		
+		//Block enemy is now on
+		Block blockOn = Level.getBlock((int)xPos, (int)zPos);
+		
+	   /*
+	    * All for dealing with the force of explosions propelling
+	    * enemies in some direction
+	    */
+		double xEff = 0;
+		double zEff = 0;
+		double yEff = 0;
+		
+		if(xEffects > 0)
+		{
+			xEff = 0.2;
+		}
+		else if(xEffects < 0)
+		{
+			xEff = -0.2;
+		}
+		
+		if(zEffects > 0)
+		{
+			zEff = 0.2;
+		}
+		else if(zEffects < 0)
+		{
+			zEff = -0.2;
+		}
+		
+		if(yEffects > 0)
+		{
+			yEff = 2;
+		}
+		else if(yEffects < 0)
+		{
+			yEff = -2;
+		}
+		
+		this.yPos -= (yEff);
+		
+		//If the enemy is in the air (Usually from a explosion)
+		//Make it fall.
+		if(-yPos > -maxHeight && !canFly)
+		{
+			yPos += 0.2 * weightLevel * fallSpeed;
+			fallSpeed += acceleration;
+		}
+		else
+		{
+			fallSpeed = 1;
+		}
+		
+		//Don't let enemy go through floor or block if pushed that way.
+		if(yPos > maxHeight)
+		{
+			yPos = maxHeight;
+		}
+		
+	   /*
+		* Can the force of the explosion push the enemy any more into
+	    * the z direction and if so add that effect to the zPos of the
+	    * enemy. Only if there is an effect.
+		*/
+		if(zEff != 0)
+		{
+			if(isFree(xPos, zPos + (zEff)))
+			{
+				zPos += (zEff);
+			}
+		}
+		
+	   /*
+	    * Can the force of the explosion push the enemy any more into
+	    * the x direction and if so add that effect to the xPos of the
+	    * enemy. Only if there is an effect.
+	    */
+		if(xEff != 0)
+		{
+			if(isFree(xPos + (xEff), zPos))
+			{
+				xPos += (xEff);
+			}
+		}
+		
+		//If peaceful mode, the enemy only moves if hit by and explosion
+		//so this updates what block its on still.
+		if(Game.skillMode == 0)
+		{
+			//Block enemy is now on
+			Block blockOnNew = Level.getBlock((int)xPos, (int)zPos);
+			
+		   /*
+		    * If the enemy is on a new block, then remove the enemy
+		    * from the last block it was on and add it to the new
+		    * block its on.
+		    */
+			if(!blockOnNew.equals(blockOn))
+			{
+				blockOn.entitiesOnBlock.remove(this);
+				blockOnNew.entitiesOnBlock.add(this);
+				
+				setHeight();
+			}	
+			
+			//Allows enemies to ride lifts/elevators
+			//Basically set enemies position to the position of the current
+			//block.
+			if(blockOnNew.wallID == 8 && !canFly
+					&& Math.abs(blockOnNew.height + yPos) <= 2)
+			{
+				yPos = -(blockOnNew.height + blockOnNew.y);
+			}
+			
+			return;
+		}
+		
+		//If the entity is activated, and isn't attacking then move
+		//normally
+		if(activated && !isFiring && !isAttacking
+				&& harmed == 0)
+		{
+			//Current block enemy is on. Re-update from above
+			blockOn = Level.getBlock((int)xPos, (int)zPos);
+			
+			//If enemy can fly
+			if(canFly)
+			{
+			   /*
+			    * Used to correct the players y in case the player is 
+			    * crouching and the y goes below the maxHeight the player
+			    * can stand on.
+			    */
+				double yCorrect = targetY;
+				
+				//If target is player
+				if(targetEnemy == null)
+				{
+					if(yCorrect < Player.maxHeight)
+					{
+						yCorrect = Player.maxHeight;
+					}
+				}
+
+			    //If distance is less than or equal to 5 units from
+				//the player, and its not stuck
+				if(distance <= 5 && !isStuck)
+				{
+					//If above player
+					if(Math.abs(yPos) > (yCorrect + 1) + 0.25)
+					{
+						//If negligibly close to top of the block
+						//set the y to slightly above the block
+						if(Math.abs(yPos + blockOn.height) <= 0.25)
+						{
+							yPos = -(blockOn.height + 0.25);
+						}
+						//If not then float down
+						else if((Math.abs(yPos)) > blockOn.height)
+						{
+							yPos += 0.05;
+							tracking = true;
+						}
+					}
+					//If target is above enemy, fly up
+					else if(Math.abs(yPos) < (yCorrect + 1))
+					{
+						yPos -= 0.05;
+						tracking = true;
+					}
+				   /*
+				    * If enemy is negligible close to the ground, and is not
+				    * stuck, then stay floating 1/10 units above the ground.
+				    */
+					else if(Math.abs(yPos) < (1 / 10))
+					{
+						yPos = -(1/10);
+						tracking = true;
+					}
+				   /*
+				    * If the enemy is negligibly close to the player, just
+				    * match up the height with the players.This small
+				    * correction is so small it will never be noticed if
+				    * playing the game.
+				    */
+					else
+					{
+						yPos = -(yCorrect + 1);
+						tracking = true;
+					}
+				}		
+				//If farther than a distance of 5 from the player
+				//Or the enemy is stuck
+				else if(distance > 5 || isStuck)
+				{
+				   /*
+				    * If stuck behind a wall, or below its default height
+				    * when not in range of player, then fly up
+				    */
+					if(yPos > -startY + 0.25 || isStuck)
+					{
+						yPos -= 0.05;
+						tracking = false;
+					}
+				   /*
+				    * If not stuck, and not in range of player, yet still 
+				    * above the default flying height, then fly down.
+				    */
+					else if(yPos < -startY - 0.25 && !isStuck)
+					{
+						yPos += 0.05;
+						tracking = false;
+					}
+					//If near enough to start Y, then set that to the new
+					//height
+					else
+					{
+						yPos = -startY;
+						tracking = false;
+					}
+				}
+				
+				//Set the lowest the enemy can fly as being 1/10 units
+				//above the ground
+				if(yPos > -1/10)
+				{
+					yPos = -1/10; 
+				}
+				
+				//Enemy cannot fly higher than ceiling
+				if(yPos <= -Render3D.ceilingDefaultHeight/10.0)
+				{
+					yPos = -Render3D.ceilingDefaultHeight/10.0;
+				}
+			}
+			
+		   /*
+		    * For the magistrate enemy, check to see if a corpse is
+		    * in range of being resurrected, and resurrect the corpse
+		    * if so.
+		    */
+			if(ID == 5)
+			{
+				//TODO here
+				//Check all corpses in the game
+				for(int i = 0; i < Game.corpses.size(); i++)
+				{
+					Corpse corpse = Game.corpses.get(i);
+					
+					Block corpseBlock = Level.getBlock
+							((int)corpse.x, (int)corpse.z);
+					
+					//Find the distance between a corpse and the enemy
+					double distance = 
+							Math.sqrt(((Math.abs(getX() - corpse.x))
+							* (Math.abs(getX() - corpse.x)))
+							+ ((Math.abs(getZ() - corpse.z))
+									* (Math.abs(getZ() - corpse.z))));
+					
+				   /*
+				    * If enemy is within a 1 unit range of corpse. Also
+				    * corpse cannot be another mage enemy or boss
+				    * otherwise they'd just keep resurrecting each other.
+				    * It'd be impossible. Also they have to be within a
+				    * height of 4 units from each other, and the corpse 
+				    * cannot be a default corpse with no ID.
+				    */
+					if(distance <= 1 && corpse.enemyID != 6 && corpse.enemyID != 0
+							&& corpse.enemyID != 8
+							&& Math.abs(getY() - corpse.y) <= 4
+							&& !corpseBlock.isMoving)
+					{	
+						//Can the mage resurrect the corpse yet
+						if(canResurrect)
+						{
+							//Reset the ability to resurrect again.
+							canResurrect = false;
+							
+						   /*
+						    * Reconstruct enemy depending on the ID the
+						    * corpse was before it became sad. 
+						    * Also activate the new enemy.
+						    */
+							Enemy newEnemy = new Enemy(corpse.x, corpse.y, corpse.z,
+									corpse.enemyID, 0, 0);
+							
+							newEnemy.activated = true;
+							
+							//Add new enemy to game
+							Game.enemies.add(newEnemy);
+							
+							//Remove the corpse from the map
+							Game.corpses.remove(i);
+							
+							//Add to enemies in the map
+							Game.enemiesInMap++;
+						}
+						else
+						{
+						   /*
+						    * If mage should be able to resurrect but
+						    * isn't in the process of doing so then
+						    * start the process
+						    */
+							if(ID == 5)
+							{
+								this.isFiring = true;
+								tick = 0;
+							}
+						}
+					}
+				}			
+			}
+			
+			//Angle that the player is in accordance to the enemy so
+			//that enemy moves right towards its target
+			rotation = Math.atan
+			(((targetX - xPos)) / ((targetZ - zPos)));
+			
+		   /*
+		    * If the target is in the 3rd or 4th quadrant of the map then
+		    * add PI to rotation so that the enemy will move into
+		    * the correct quadrant of the map and at the target.
+		    */
+			if(targetZ < zPos)
+			{
+				rotation += Math.PI;
+			}
+			
+		   /*
+		    * Corrects rotation so that the enemy is centered
+		    * correctly in the map graph
+		    */
+			double correction = 44.765;
+			
+		   /*
+		    * Depending on the targets angle in the x z plane from the
+		    * enemy, the enemy will move in the x and z directions in
+		    * a certain way in order to move towards its target.
+		    */
+			double newX = 
+					((Math.cos(rotation - correction)) 
+							+ (Math.sin(rotation - correction))) 
+							* speed;
+			double newZ = 
+					((Math.cos(rotation - correction)) 
+							- (Math.sin(rotation - correction))) 
+							* speed;
+			
+			//Which directions the enemy cannot move in due to a blockage
+			boolean xStopped = false;
+			boolean zStopped = false;
+			
+			//If enemy is not on the list of enemies on the block then
+			//add it to it.
+			if(!blockOn.entitiesOnBlock.contains(this))
+			{
+				blockOn.entitiesOnBlock.add(this);
+			}
+			
+			//If not in search mode, move towards target
+			if(!searchMode)
+			{		
+			   /*
+			    * If moving in the direction determined above ends up hitting
+			    * a wall, do not move in that direction. Otherwise do so.
+			    */
+				if(isFree(xPos + newX, zPos))
+				{
+					xPos += newX;
+				}
+				else
+				{
+					//If stopped in the x direction it tried to move
+					xStopped = true;
+				}
+			
+				//Same as above but in the y
+				if(isFree(xPos, zPos + newZ))
+				{
+					zPos += newZ;
+				}
+				else
+				{
+					//If stopped in the z direction it tried to move
+					zStopped = true;
+				}
+				
+				double newSpeed = speed;
+				
+				if(Math.abs(newX) <= 0.001)
+				{
+					xStopped = true;
+				}
+				
+				if(Math.abs(newZ) <= 0.001)
+				{
+					zStopped = true;
+				}
+				
+			   /*
+			    * If stopped in both directions, then as long as the
+			    * enemy is not a flying enemy, turn on search mode
+			    * so that the enemy tries to find the path to get
+			    * to the player. If it is a flying enemy, it is stuck
+			    * and needs to go above the wall.
+			    */
+				if(xStopped && zStopped)
+				{
+					//If not sentinel enemy
+					if(!canFly)
+					{
+						searchMode = true;
+					}
+					//If a flying enemy
+					else
+					{
+						isStuck = true;
+					}
+					
+					Random random = new Random();
+					int temp = random.nextInt(2);
+					
+				   /*
+				    * Using the random statement above, it will
+				    * try to determine which direction it will
+				    * try first based upon which direction (either
+				    * z or x) is farthest from the player.
+				    */
+					if(Math.abs(newZ) <= 0.001)
+					{
+						if(temp == 0)
+						{
+							direction = 2;
+						}
+						else
+						{
+							direction = 3;
+						}
+					}
+					else
+					{
+						if(temp == 0)
+						{
+							direction = 0;
+						}
+						else
+						{
+							direction = 1;
+						}
+					}
+				}
+			   /*
+			    * If only the x direction is stopped
+			    * then move with the distance unable to be used in the
+			    * x direction for moving in the z direction faster.
+			    */
+				else if(xStopped && !zStopped)
+				{
+					if(newZ < 0)
+					{
+						newSpeed = -(newSpeed - newZ);
+					}
+					else
+					{
+						newSpeed = (newSpeed - newZ);
+					}
+					
+					if(isFree(xPos, zPos + newSpeed))
+					{
+						zPos += newSpeed;
+					}
+				}
+			   /*
+			    * Same but if you are stopped in the z direction then
+			    * move with extra speed into the x direction to reach
+			    * the player faster.
+			    */
+				else if(!xStopped && zStopped)
+				{
+					if(newX < 0)
+					{
+						newSpeed = -(newSpeed - newX);
+					}
+					else
+					{
+						newSpeed = (newSpeed - newX);
+					}
+					
+					if(isFree(xPos + newSpeed, zPos))
+					{
+						xPos += newSpeed;
+					}
+				}
+			}
+			//If in searchmode
+			else
+			{
+				double newSpeed = speed;
+				
+			   /*
+			    * For each direction, itll move in that direction until it
+			    * hits a wall and/or it opens a door. If it hits a wall
+			    * then it'll change direction into either one of the two
+			    * opposite directions (such as if going left, it'll now
+			    * choose to go forward or back, but not right which is
+			    * where it came from). If it opens a door, then it will go
+			    * through the doorway to see where it leads.
+			    * 
+			    * The enemy will only leave searchmode if the player is
+			    * in sight of the enemy and the direction to get to the
+			    * completely open with no obstacle.
+			    * 
+			    * 0 is the Lesser x direction
+			    * 1 is the Greater x direction
+			    * 2 is the Lesser z direction
+			    * 3 is the Greater z direction
+			    */
+				if(direction == 0)
+				{
+					//Is this direction free? If so...
+					if(isFree(xPos - speed, zPos))
+					{
+						//Move in this direction
+						xPos -= speed;
+						
+						//Rotate enemies body torwards the direction its
+						//moving
+						rotation = (3 * Math.PI) / 2;
+						
+						//Get all blocks surrounding enemy
+						Block right = Level.getBlock((int)xPos + 1,
+								(int)zPos);
+						
+						Block left = Level.getBlock((int)xPos - 1,
+								(int)zPos);
+						
+						Block front = Level.getBlock((int)xPos,
+								(int)zPos + 1);
+						
+						Block back = Level.getBlock((int)xPos,
+								(int)zPos + 1);
+						
+					   /*
+					    * Check to see if each block is a doorway and if
+					    * it is, then move through the doorway by changing
+					    * the direction as being towards the doorway.
+					    */
+						if(!doorway)
+						{
+							if(back.isMoving && 
+									isFree(xPos, zPos - newZ))
+							{
+								direction = 2;
+								doorway = true;
+							}
+							else if(front.isMoving
+									&& isFree(xPos, zPos + newZ))
+							{
+								direction = 3;
+								doorway = true;
+							}
+							else if(left.isMoving
+									&& isFree(xPos - newX, zPos))
+							{
+								direction = 0;
+								doorway = true;
+							}
+							else if(right.isMoving
+									&& isFree(xPos + newX, zPos))
+							{
+								direction = 1;
+								doorway = true;
+							}
+						}
+						
+						//If player is in sight
+						if(inSight)
+						{
+							//If player can be reached
+							if(isFree(xPos + newX, zPos)
+								&& isFree(xPos, zPos + newZ))
+							{
+								//Move more to get around a corner if 
+								//it can
+								if(isFree(xPos - speed, zPos))
+								{
+									xPos -= speed;
+								}
+								
+								//Turn off search mode and move torwards player
+								searchMode = false;
+								return;
+							}
+						}
+						
+					   /*
+					    * If the enemy is on the same height level as the
+					    * player, or can at least reach the players height
+					    * level such as a step or something.
+					    * 
+					    * Then see if the enemy can move towards the
+					    * players z direction or not, and if it can, move
+					    * towards it.
+					    */
+						if(Math.abs(Player.y - yPos) <= 2 && !doorway)
+						{
+							if(newZ < 0)
+							{
+								if(isFree(xPos, zPos - newSpeed))
+								{								
+									zPos -= newSpeed;
+								}
+							}
+							else
+							{
+								if(isFree(xPos, zPos + newSpeed))
+								{								
+									zPos += newSpeed;
+								}
+							}
+						}
+					}
+					//If direction is not free
+					else
+					{
+						//If Just went through a doorway, re-
+						//search out the player if possible.
+						if(doorway)
+						{
+							searchMode = false;
+							return;
+						}
+						
+						//No longer going through doorway
+						doorway = false;
+						
+						//Reset direction to one of two opposite directions
+						Random random = new Random();
+						int rand = random.nextInt(2);
+						
+						if(rand == 0)
+						{
+							direction = 2;
+						}
+						else
+						{
+							direction = 3;
+						}
+					}
+				}
+				//Same as above but for different directions
+				else if(direction == 1)
+				{
+					if(isFree(xPos + speed, zPos))
+					{
+						xPos += speed;
+						
+						rotation = (Math.PI) / 2;
+						
+						Block right = Level.getBlock((int)xPos + 1,
+								(int)zPos);
+						
+						Block left = Level.getBlock((int)xPos - 1,
+								(int)zPos);
+						
+						Block front = Level.getBlock((int)xPos,
+								(int)zPos + 1);
+						
+						Block back = Level.getBlock((int)xPos,
+								(int)zPos + 1);
+						
+					   /*
+					    * Check to see if each block is a doorway and if
+					    * it is, then move through the doorway by changing
+					    * the direction as being towards the doorway.
+					    */
+						if(!doorway)
+						{
+							if(back.isMoving && 
+									isFree(xPos, zPos - newZ))
+							{
+								direction = 2;
+								doorway = true;
+							}
+							else if(front.isMoving
+									&& isFree(xPos, zPos + newZ))
+							{
+								direction = 3;
+								doorway = true;
+							}
+							else if(left.isMoving
+									&& isFree(xPos - newX, zPos))
+							{
+								direction = 0;
+								doorway = true;
+							}
+							else if(right.isMoving
+									&& isFree(xPos + newX, zPos))
+							{
+								direction = 1;
+								doorway = true;
+							}
+						}
+						
+						if(inSight)
+						{
+							if(isFree(xPos + newX, zPos)
+								&& isFree(xPos, zPos + newZ))
+							{
+								//Move more to get around the corner if 
+								//it can
+								if(isFree(xPos + speed, zPos))
+								{
+									xPos += speed;
+								}
+								
+								searchMode = false;
+								return;
+							}
+						}
+						
+					   /*
+					    * If the enemy is on the same height level as the
+					    * player, or can at least reach the players height
+					    * level such as a step or something.
+					    * 
+					    * Then see if the enemy can move towards the
+					    * players z direction or not, and if it can, move
+					    * towards it.
+					    */
+						if(Math.abs(Player.y - yPos) <= 2 && !doorway)
+						{
+							if(newZ < 0)
+							{
+								if(isFree(xPos, zPos - newSpeed))
+								{								
+									zPos -= newSpeed;
+								}
+							}
+							else
+							{
+								if(isFree(xPos, zPos + newSpeed))
+								{								
+									zPos += newSpeed;
+								}
+							}
+						}
+					}
+					else
+					{
+						//If Just went through a doorway, re-
+						//search out the player if possible.
+						if(doorway)
+						{
+							searchMode = false;
+							return;
+						}
+						
+						doorway = false;
+						
+						Random random = new Random();
+						int rand = random.nextInt(2);
+						
+						if(rand == 0)
+						{
+							direction = 2;
+						}
+						else
+						{
+							direction = 3;
+						}
+					}
+				}	
+				else if(direction == 2)
+				{
+					if(isFree(xPos, zPos - speed))
+					{
+						zPos -= speed;
+						
+						rotation = Math.PI;
+						
+						Block right = Level.getBlock((int)xPos + 1,
+								(int)zPos);
+						
+						Block left = Level.getBlock((int)xPos - 1,
+								(int)zPos);
+						
+						Block front = Level.getBlock((int)xPos,
+								(int)zPos + 1);
+						
+						Block back = Level.getBlock((int)xPos,
+								(int)zPos + 1);
+						
+					   /*
+					    * Check to see if each block is a doorway and if
+					    * it is, then move through the doorway by changing
+					    * the direction as being towards the doorway.
+					    */
+						if(!doorway)
+						{
+							if(back.isMoving && 
+									isFree(xPos, zPos - newZ))
+							{
+								direction = 2;
+								doorway = true;
+							}
+							else if(front.isMoving
+									&& isFree(xPos, zPos + newZ))
+							{
+								direction = 3;
+								doorway = true;
+							}
+							else if(left.isMoving
+									&& isFree(xPos - newX, zPos))
+							{
+								direction = 0;
+								doorway = true;
+							}
+							else if(right.isMoving
+									&& isFree(xPos + newX, zPos))
+							{
+								direction = 1;
+								doorway = true;
+							}
+						}
+						
+						//If player is in sight
+						if(inSight)
+						{
+							//If it can move towards the player
+							if(isFree(xPos + newX, zPos)
+								&& isFree(xPos, zPos + newZ))
+							{
+								//Move more to get around the corner if 
+								//it can
+								if(isFree(xPos, zPos - speed))
+								{
+									zPos -= speed;
+								}
+								
+								searchMode = false;
+								return;
+							}
+						}
+						
+					   /*
+					    * If the enemy is on the same height level as the
+					    * player, or can at least reach the players height
+					    * level such as a step or something.
+					    * 
+					    * Then see if the enemy can move towards the
+					    * players x direction or not, and if it can, move
+					    * towards it.
+					    */
+						if(Math.abs(Player.y - yPos) <= 2 && !doorway)
+						{
+							if(newX < 0)
+							{
+								if(isFree(xPos - newSpeed, zPos))
+								{								
+									xPos -= newSpeed;
+								}
+							}
+							else
+							{
+								if(isFree(xPos + newSpeed, zPos))
+								{								
+									xPos += newSpeed;
+								}
+							}
+						}
+					}
+					else
+					{
+						//If Just went through a doorway, re-
+						//search out the player if possible.
+						if(doorway)
+						{
+							searchMode = false;
+							return;
+						}
+						
+						doorway = false;
+						
+						Random random = new Random();
+						int rand = random.nextInt(2);
+						
+						if(rand == 0)
+						{
+							direction = 0;
+						}
+						else
+						{
+							direction = 1;
+						}
+					}
+				}
+				else
+				{
+					if(isFree(xPos, zPos + speed))
+					{
+						zPos += speed;
+						
+						rotation = 0;
+
+						Block right = Level.getBlock((int)xPos + 1,
+								(int)zPos);
+						
+						Block left = Level.getBlock((int)xPos - 1,
+								(int)zPos);
+						
+						Block front = Level.getBlock((int)xPos,
+								(int)zPos + 1);
+						
+						Block back = Level.getBlock((int)xPos,
+								(int)zPos + 1);
+						
+					   /*
+					    * Check to see if each block is a doorway and if
+					    * it is, then move through the doorway by changing
+					    * the direction as being towards the doorway.
+					    */
+						if(!doorway)
+						{
+							if(back.isMoving && 
+									isFree(xPos, zPos - newZ))
+							{
+								direction = 2;
+								doorway = true;
+							}
+							else if(front.isMoving
+									&& isFree(xPos, zPos + newZ))
+							{
+								direction = 3;
+								doorway = true;
+							}
+							else if(left.isMoving
+									&& isFree(xPos - newX, zPos))
+							{
+								direction = 0;
+								doorway = true;
+							}
+							else if(right.isMoving
+									&& isFree(xPos + newX, zPos))
+							{
+								direction = 1;
+								doorway = true;
+							}
+						}
+						
+						//If player is in sight
+						if(inSight)
+						{
+							//If it can move towards the player
+							if(isFree(xPos + newX, zPos)
+								&& isFree(xPos, zPos + newZ))
+							{
+								//Move more to get around the corner if 
+								//it can
+								if(isFree(xPos, zPos + speed))
+								{
+									zPos += speed;
+								}
+								
+								searchMode = false;
+								return;
+							}
+						}
+						
+					   /*
+					    * If the enemy is on the same height level as the
+					    * player, or can at least reach the players height
+					    * level such as a step or something.
+					    * 
+					    * Then see if the enemy can move towards the
+					    * players x direction or not, and if it can, move
+					    * towards it.
+					    */
+						if(Math.abs(Player.y - yPos) <= 2 && !doorway)
+						{
+							if(newX < 0)
+							{
+								if(isFree(xPos - newSpeed, zPos))
+								{								
+									xPos -= newSpeed;
+								}
+							}
+							else
+							{
+								if(isFree(xPos + newSpeed, zPos))
+								{								
+									xPos += newSpeed;
+								}
+							}
+						}
+					}
+					else
+					{
+						//If Just went through a doorway, re-
+						//search out the player if possible.
+						if(doorway)
+						{
+							searchMode = false;
+							return;
+						}
+						
+						doorway = false;
+						
+						Random random = new Random();
+						int rand = random.nextInt(2);
+						
+						if(rand == 0)
+						{
+							direction = 1;
+						}
+						else
+						{
+							direction = 0;
+						}
+					}
+				}  
+			}
+			
+			//Block enemy is now on
+			Block blockOnNew = Level.getBlock((int)xPos, (int)zPos);
+			
+		   /*
+		    * If the enemy is on a new block, then remove the enemy
+		    * from the last block it was on and add it to the new
+		    * block its on.
+		    */
+			if(!blockOnNew.equals(blockOn))
+			{
+				blockOn.entitiesOnBlock.remove(this);
+				blockOnNew.entitiesOnBlock.add(this);
+				
+				setHeight();
+			}	
+			
+			//Allows enemies to ride lifts/elevators
+			//Basically set enemies position to the position of the current
+			//block.
+			if(blockOnNew.wallID == 8 && !canFly
+					&& Math.abs(blockOnNew.height + yPos) <= 2)
+			{
+				yPos = -(blockOnNew.height + blockOnNew.y);
+			}
+		}
+	}
+	
+   /**
+    * Sets entities new height, and corrects the entities graphics for this
+    * new height.
+    */
+	public void setHeight()
+	{
+		//Block enemy is now on
+		Block blockOnNew = Level.getBlock((int)xPos, (int)zPos);
+		
+		//Calculates the new height the entity will be at when it moves
+		double newHeight = (blockOnNew.height + (blockOnNew.y * 4) 
+				+ blockOnNew.baseCorrect) / 10;
+		
+		//TODO wtf
+		//If not flying entity
+		if(!canFly)
+		{		
+			//Set height based on the height of the block the entity is on/in
+			if(-yPos >= (blockOnNew.y * 4))
+			{
+				maxHeight = -newHeight;
+				yPos = maxHeight;
+			}
+		}
+	}
+	
+   /**
+    * Calls the enemies hurt method
+    */
+	public void hurt(int damage, boolean soundPlayed)
+	{
+		itself.hurt(damage, soundPlayed);
+	}
+	
+   /**
+    * Calls the enemy death method
+    */
+	public void enemyDeath()
+	{
+		itself.enemyDeath();
 	}
 }
