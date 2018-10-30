@@ -17,8 +17,6 @@ import com.vile.launcher.FPSLauncher;
  */
 public class Bullet extends Projectile
 {
-	private double upRotation;
-	
    /**
     * Creates the bullet Projectile object.
     * @param damage
@@ -30,10 +28,10 @@ public class Bullet extends Projectile
     * @param rotation
     */
 	public Bullet(int damage, double speed, double x, double y,
-			double z, int ID, double rotation) 
+			double z, int ID, double rotation, boolean criticalHit) 
 	{
 		super(damage, speed, x, y,
-				z, ID);
+				z, ID, criticalHit);
 		
 	   /*
 	    * Corrects Player.rotation so that the bullet is centered on the

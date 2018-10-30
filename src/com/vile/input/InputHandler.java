@@ -9,11 +9,17 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+
 import com.vile.Display;
 import com.vile.RunGame;
+import com.vile.entities.Player;
+import com.vile.entities.Weapon;
 
 /**
  * Title: InputHandler
@@ -31,7 +37,7 @@ import com.vile.RunGame;
  * still even now a little twitchy, but it at least stays in the center
  * of the screen.
  */
-public class InputHandler implements KeyListener, MouseListener, MouseMotionListener, FocusListener 
+public class InputHandler implements KeyListener, MouseListener, MouseMotionListener, FocusListener, MouseWheelListener 
 {
 	//All the possible combinations on the keyboard
 	public boolean[] key = new boolean[68836];
@@ -97,6 +103,82 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	public void keyTyped(KeyEvent arg0) 
 	{	
 	}
+	
+	@Override
+	//If mouse wheel moved, then switch weapons
+	public void mouseWheelMoved(MouseWheelEvent e) 
+	{
+		Weapon[] weapons = Player.weapons;
+		int weaponPick = Player.weaponEquipped;
+		
+		if(e.getWheelRotation() == -1)
+		{		
+			do {
+				if(weaponPick - 1 < 0)
+				{
+					weaponPick = weapons.length - 1;
+				}
+				else
+				{
+					weaponPick -= 1;
+				}
+			}while(!weapons[weaponPick].canBeEquipped);
+		}
+		else
+		{
+			do {
+				if(weaponPick + 1 > weapons.length - 1)
+				{
+					weaponPick = 0;
+				}
+				else
+				{
+					weaponPick++;
+				}
+			}while(!weapons[weaponPick].canBeEquipped);
+		}
+		
+	   /*
+	    * To switch, current weapon must be done firing, and if not have
+	    * it switch whenever it is done firing.
+	    */
+		if(Player.weapons[Player.weaponEquipped].weaponShootTime == 0
+				&& Player.weapons[Player.weaponEquipped].weaponShootTime2 == 0)
+		{
+			Player.weaponEquipped = weaponPick;
+		}
+		else
+		{
+			if(weaponPick == 0)
+			{
+				Controller.switch0 = true;
+				Controller.switch1 = false;
+				Controller.switch2 = false;
+				Controller.switch3 = false;
+			}
+			else if(weaponPick == 1)
+			{
+				Controller.switch1 = true;
+				Controller.switch0 = false;
+				Controller.switch2 = false;
+				Controller.switch3 = false;
+			}
+			else if(weaponPick == 2)
+			{
+				Controller.switch2 = true;
+				Controller.switch1 = false;
+				Controller.switch0 = false;
+				Controller.switch3 = false;
+			}
+			else if(weaponPick == 3)
+			{
+				Controller.switch3 = true;
+				Controller.switch1 = false;
+				Controller.switch2 = false;
+				Controller.switch0 = false;
+			}
+		}
+	}
 
 	@Override
 	public void focusGained(FocusEvent arg0) 
@@ -104,13 +186,16 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	}
 
 	@Override
-	public void focusLost(FocusEvent arg0)
+	public void focusLost(FocusEvent e)
 	{
 		for(int i = 0; i < key.length; i++)
 		{
 			key[i] = false;
 		}
 		
+		//TODO Change for debug mode
+		RunGame.frame.toFront();
+		RunGame.frame.requestFocus();
 	}
 
 	@Override
@@ -135,7 +220,12 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	 * back to a certain position on the screen.
 	 */
 	public void mouseExited(MouseEvent e) 
-	{			
+	{		
+		if (true)
+		{
+			return;
+		}
+		
 		MouseX = e.getX();
         MouseY = e.getY();
 		
@@ -374,5 +464,4 @@ public class InputHandler implements KeyListener, MouseListener, MouseMotionList
 	    //Return whether mouse is within frame
 	    return bounds.contains(mousePos);
 	}
-
 }

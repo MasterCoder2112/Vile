@@ -39,11 +39,11 @@ public class EnemyFire extends Projectile
     */
 	public EnemyFire(int damage, double speed, double x, double y,
 			double z, int ID, double targetX, double targetZ, 
-			double targetY, double rotChange, Enemy source) 
+			double targetY, double rotChange, Enemy source, boolean criticalHit) 
 	{
 		//Creates the projectile object
 		super(damage, speed, x, (y / 10),
-				z, ID);
+				z, ID, criticalHit);
 		
 		//If easy mode
 		if(FPSLauncher.modeChoice == 1)

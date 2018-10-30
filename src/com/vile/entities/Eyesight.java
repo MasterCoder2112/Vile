@@ -1,5 +1,6 @@
 package com.vile.entities;
 
+import com.vile.graphics.Render3D;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -127,6 +128,14 @@ public class Eyesight
 			return false;
 		}
 		
+		//Don't allow eyesight to go through ceiling
+		if(-y >= Render3D.ceilingDefaultHeight - 10)
+		{
+			hitWall = true;
+			hitTarget = false;
+			return false;
+		}
+		
 	   /*
 	    * Eyesight cannot go through a block. It means the entity cannot
 	    * see its target
@@ -232,17 +241,15 @@ public class Eyesight
 		//eye level, not their feet.
 		double yCorrect = (-this.y);
 		
-		//System.out.println(yCorrect+" : "+block.y+" : "+(block.height + (block.y * 4) - 4));
-		
 	   /*
 	    * If the block in front of the entity is greater than two units
 	    * higher than the entity, or if it is more than two lower than
 	    * the entity, or the entity is still not far enough under a block
 	    * to go through it (mainly used with doors) then don't allow
 	    * the entity to move.
-	    */			
-		if(((block.height + (block.y * 4) - 4)) > 
-			yCorrect && (yCorrect + (2.0)) > ((block.y * 4)))
+	    */
+		if((((block.height - 6) + (block.y * 4))) > 
+		yCorrect && (yCorrect) >= ((block.y * 4)))
 		{
 			hitTarget = false;
 			hitWall = true;

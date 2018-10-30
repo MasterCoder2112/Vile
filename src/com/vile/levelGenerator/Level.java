@@ -33,6 +33,7 @@ public class Level
 	public static Block[] blocks;
 	public static int width = 0;
 	public static int height = 0;
+	public static double renderDistance = 10000;
 	
    /**
     * First type of level constructor used to construct a random level.
@@ -106,15 +107,6 @@ public class Level
 				//Each block is null until instantiated
 				Block block = null;
 				
-				//Gets the itemID at each location
-				int itemID = map[i][j].entityID;
-				
-				//Rotation of entity if there is one
-				double rotation = map[i][j].rotation;
-				
-				//Item activation ID
-				int itemActID = map[i][j].itemActID;
-				
 				//Audio Queue
 				String audioQueue = map[i][j].audioQueue;
 				
@@ -128,33 +120,58 @@ public class Level
 				//Sets the block at that location in the level.
 				blocks[i + j * width] = block;
 				
-				//If a toxic waste block, add that item to the block as well
-				if(map[i][j].wallID == 16
-						|| itemID == ItemNames.TOXICWASTE.getID())
+				for(int k = 0; k < map[i][j].entities.length; k++)
 				{
-					Item temp = new HurtingBlock( 
-							i + 0.5, 
-							(block.y * 4) + block.height, j + 0.5, i, j, 0);
+					//Item activation ID
+					int itemActID = map[i][j].itemActIDs[k];
 					
-					Game.hurtingBlocks.add((HurtingBlock)temp);
+					//Gets the itemID at each location
+					int itemID = map[i][j].entities[k];
 					
-					block.wallEntity = temp;
-				}
-				//If lava block, add lava entity to block as well
-				else if(map[i][j].wallID == 17 
-						|| itemID == ItemNames.LAVA.getID())
-				{
-					Item temp = new HurtingBlock( 
-							i + 0.5, 
-							(block.y * 4) + block.height, j + 0.5, i, j, 1);
+					//Rotation of entity if there is one
+					double rotation = map[i][j].rotations[k];
 					
-					Game.hurtingBlocks.add((HurtingBlock)temp);
+					//Is this entity above or below the block
+					boolean aboveBlock = map[i][j].aboveBlocks[k];
 					
-					block.wallEntity = temp;
-				}
-				
-				if(!FPSLauncher.loadingGame)
-				{
+					//If a toxic waste block, add that item to the block as well
+					if(map[i][j].wallID == 16
+							|| itemID == ItemNames.TOXICWASTE.getID())
+					{
+						Item temp = new HurtingBlock( 
+								i + 0.5, 
+								(block.y * 4) + block.height, j + 0.5, i, j, 0);
+						
+						Game.hurtingBlocks.add((HurtingBlock)temp);
+						
+						block.wallEntities.add(temp);
+					}
+					//If lava block, add lava entity to block as well
+					else if(map[i][j].wallID == 17 
+							|| itemID == ItemNames.LAVA.getID())
+					{
+						Item temp = new HurtingBlock( 
+								i + 0.5, 
+								(block.y * 4) + block.height, j + 0.5, i, j, 1);
+						
+						Game.hurtingBlocks.add((HurtingBlock)temp);
+						
+						block.wallEntities.add(temp);
+					}
+					
+					//If water block, add water entity to block as well
+					else if(map[i][j].wallID == 25 
+							|| itemID == ItemNames.WATER.getID())
+					{
+						Item temp = new Item(10, 
+								i + 0.5, 
+								(block.y * 4) + block.height, 
+								j + 0.5, 70, 0, 0,
+								audioQueue);
+						
+						block.wallEntities.add(temp);
+					}
+	
 					//All Items that are not entities
 					if(itemID > ItemNames.AIR.getID() 
 							&& itemID <= ItemNames.YELLOWKEY.getID()
@@ -170,6 +187,17 @@ public class Level
 					{
 						//Item to be added to the map and block
 						Item temp = null;
+						
+						//Default y Value of an item
+						double yValue = (block.y * 4) + block.height;
+						
+						//If below a block it will always be at a value of
+						//0. Whether it gets stuck in the block or not is
+						//up to the creator of the map
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
 	
 					   /*
 					    * If its not an explosive canister, add it as a normal
@@ -179,7 +207,7 @@ public class Level
 						{
 							temp = new Item(10, 
 									i + 0.5, 
-									(block.y * 4) + block.height, 
+									yValue, 
 									j + 0.5, itemID, (int)rotation, itemActID,
 									audioQueue);
 						}
@@ -187,7 +215,7 @@ public class Level
 						{
 							temp = new ExplosiveCanister(10, 
 									i + 0.5, 
-									(block.y * 4) + block.height, 
+									yValue, 
 									j + 0.5, itemID, (int)rotation, itemActID);
 						}
 						
@@ -199,7 +227,7 @@ public class Level
 						{
 							//Set item to being the item that is within this
 							//block only if it is solid
-							block.wallItem = temp;
+							block.wallItems.add(temp);;
 						}
 						
 						//If satellite dish, add to activatable list as well
@@ -220,7 +248,7 @@ public class Level
 						{
 							Game.teleporters.add(temp);
 							
-							block.wallEntity = temp;
+							block.wallEntities.add(temp);
 						}
 					}	
 					//Players spawn
@@ -233,7 +261,27 @@ public class Level
 					    */
 						Player.x = i + 0.5;
 						Player.z = j + 0.5;
-						Player.y = block.y + block.height;
+						
+						//Whether player spawns below or above the block
+						if(aboveBlock)
+						{
+							if(block.y > 0)
+							{
+								Player.y = block.y + block.height + block.baseCorrect + 50;
+							}
+							else
+							{
+								Player.y = block.height + block.baseCorrect;
+							}
+						}
+						else
+						{
+							Player.y = 0;
+						}
+						
+						Player.blockOn = block;
+						
+						Player.invisibility = 100;
 						Player.rotation = rotation;
 						Render3D.isInitialSound = true;
 						Render3D.firstAudio = map[i][j].audioQueue;
@@ -243,7 +291,7 @@ public class Level
 					{
 						Game.buttons.add(new Button( 
 								i + 0.5, 
-								(block.y * 4) + block.height, j + 0.5, itemID, itemActID));
+								(block.y * 4) + block.height, j + 0.5, itemID, itemActID, map[i][j].audioQueue));
 					}
 					//Lift/elevator
 					else if(itemID == ItemNames.ELEVATOR.getID())
@@ -290,8 +338,16 @@ public class Level
 					//Adds Brainomorpth
 					else if(itemID == 16)
 					{
+						//Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + block.height);
+						
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
+						
 						Enemy temp = new Enemy(
-								i + 0.5, -((block.y * 4) + block.height) / 10, 
+								i + 0.5, yValue, 
 								j + 0.5, 1, rotation, itemActID);
 						
 						Game.enemies.add(temp);
@@ -300,8 +356,16 @@ public class Level
 					//Adds Sentinel enemy
 					else if(itemID == 17)
 					{
+						//Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+						
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
+						
 						Enemy temp = new Enemy(
-								i + 0.5, -((block.y * 4) + block.height) / 10, 
+								i + 0.5, yValue,
 								j + 0.5, 2, rotation, itemActID);
 						
 						Game.enemies.add(temp);
@@ -310,8 +374,16 @@ public class Level
 					//Adds Mutated Commando
 					else if(itemID == 18)
 					{
+						//Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + block.height);
+						
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
+						
 						Enemy temp = new Enemy(
-								i + 0.5, -((block.y * 4) + block.height) / 10, 
+								i + 0.5, yValue, 
 								j + 0.5, 3, rotation, itemActID);
 						
 						Game.enemies.add(temp);
@@ -320,8 +392,16 @@ public class Level
 					//Adds a Reaper
 					else if(itemID == 19)
 					{
+						//Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + block.height);
+						
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
+						
 						Enemy temp = new Enemy(
-								i + 0.5, -((block.y * 4) + block.height) / 10, 
+								i + 0.5, yValue, 
 								j + 0.5, 4, rotation, itemActID);
 						
 						Game.enemies.add(temp);
@@ -330,8 +410,16 @@ public class Level
 					//Adds Vile Warrior at this location
 					else if(itemID == 58)
 					{
+						//Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + block.height);
+						
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
+						
 						Enemy temp = new Enemy(
-								i + 0.5, -((block.y * 4) + block.height) / 10, 
+								i + 0.5, yValue, 
 								j + 0.5, 7, rotation, itemActID);
 						
 						Game.enemies.add(temp);
@@ -340,9 +428,53 @@ public class Level
 					//Belegoth is added
 					else if(itemID == 59)
 					{
+						//Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + block.height);
+						
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
+						
 						Enemy temp = new Enemy(
-								i + 0.5, -((block.y * 4) + block.height) / 10, 
+								i + 0.5, yValue, 
 								j + 0.5, 8, rotation, itemActID);
+						
+						Game.enemies.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					//Adds Magistrate at this location
+					else if(itemID == 45)
+					{
+						//Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + block.height);
+						
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
+						
+						Enemy temp = new Enemy(
+								i + 0.5, yValue, 
+								j + 0.5, 5, rotation, itemActID);
+						
+						Game.enemies.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					//The boss MORGOTH
+					else if(itemID == 46)
+					{
+						//Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + block.height);
+						
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
+						
+						Enemy temp = new Enemy(
+								i + 0.5, yValue, 
+								j + 0.5, 6, rotation, itemActID);
 						
 						Game.enemies.add(temp);
 						block.entitiesOnBlock.add(temp);
@@ -350,28 +482,19 @@ public class Level
 					//Default Corpse
 					else if(itemID == ItemNames.CORPSE.getID())
 					{
+						//Sets the y value based on the aboveBlock boolean
+						double yValue = block.height + (block.y * 4) + block.baseCorrect;
+						
+						if(!aboveBlock)
+						{
+							yValue = 0;
+						}
+						
 						Game.corpses.add(new Corpse( 
 								i + 0.5,  
 								j + 0.5,
-								block.height + (block.y * 4) + block.baseCorrect,
+								yValue,
 								0,0,0,0));
-					}
-					//Adds Magistrate at this location
-					else if(itemID == 45)
-					{
-						Game.enemies.add(new Enemy(
-								i + 0.5, -((block.y * 4) + block.height) / 10, 
-								j + 0.5, 5, rotation, itemActID));
-					}
-					//The boss MORGOTH
-					else if(itemID == 46)
-					{
-						Enemy temp = new Enemy(
-								i + 0.5, -((block.y * 4) + block.height) / 10, 
-								j + 0.5, 6, rotation, itemActID);
-						
-						Game.enemies.add(temp);
-						block.entitiesOnBlock.add(temp);
 					}
 					//Explosion. Just create an instant explosion. For effects
 					else if(itemID == ItemNames.EXPLOSION.getID())
@@ -382,6 +505,7 @@ public class Level
 				}
 			}
 		}
+		
 		
 		//Sets the amount of enemies in the map
 		Game.enemiesInMap = Game.enemies.size();

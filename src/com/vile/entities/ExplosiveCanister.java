@@ -47,9 +47,7 @@ public class ExplosiveCanister extends Item
     */
 	public void removeCanister()
 	{	
-		Game.items.remove(this);
-		
-		Game.solidItems.remove(this);	
+		removeItem();	
 		
 		Game.canisters.remove(this);
 	}

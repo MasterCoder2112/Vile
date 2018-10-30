@@ -26,7 +26,7 @@ public class Sound
 	private Clip[] soundClip;
 	private FloatControl[] soundControl;
 	private int clipNum = 0;
-	private AudioInputStream input;
+	private AudioInputStream[] input;
 	private int clipSize = 0;
 	
 	public String audioName = "";
@@ -35,16 +35,17 @@ public class Sound
 	{
 		this.clipSize = clipSize;
 		soundClip = new Clip[clipSize];
+		input = new AudioInputStream[clipSize];
 		soundControl = new FloatControl[soundClip.length];
 
 		for(int i = 0; i < clipSize; i++)
 		{
-			input = AudioSystem
+			input[i] = AudioSystem
 					.getAudioInputStream(new File(file));
 			
 			soundClip[i] = AudioSystem.getClip();
 
-			soundClip[i].open(input);
+			soundClip[i].open(input[i]);
 			
 			soundControl[i] = (FloatControl) 
 					soundClip[i].getControl
@@ -128,7 +129,7 @@ public class Sound
 			changeClipVolume((float)volume);
 			
 			//Close sound input thread
-			input.close();
+			input[clipNum].close();
 			
 			//Start sound
 			soundClip[clipNum].start();
@@ -245,5 +246,43 @@ public class Sound
 		{
 			System.out.println(ex);
 		}
+	}
+	
+   /**
+    * Nullifies all components and threads run by a Sound object.
+    * Clears Heap
+    */
+	public void nullify()
+	{
+		soundControl = null;
+
+		for(int i = 0; i < soundClip.length; i++)
+		{	
+			try
+			{
+				input[i].close();
+			}
+			catch(Exception e)
+			{
+	
+			}
+			
+			input[i] = null;
+			
+			try
+			{
+				soundClip[i].close();
+			}
+			catch(Exception e)
+			{
+
+			}
+			
+			soundClip[i] = null;
+		}
+		
+		input = null;
+		
+		soundClip = null;
 	}
 }

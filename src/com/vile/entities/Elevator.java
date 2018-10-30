@@ -7,8 +7,8 @@ import com.vile.levelGenerator.Level;
 
 public class Elevator extends Entity 
 {
-	//Defaultly goes up 3 block heights
-	public double upHeight = 60;
+	//Defaultly goes up 4 block heights
+	public double upHeight = 48;
 	
 	public int elevatorX;
 	public int elevatorZ;
@@ -30,7 +30,7 @@ public class Elevator extends Entity
     * @param wallZ
     */
 	public Elevator(double x, double y, double z, int wallX, int wallZ,
-			int itemActID, int maxHeight) 
+			int itemActID, double maxHeight) 
 	{
 		super(0, 0, 0, 0, 0, x, y, z, 8, 0, itemActID);
 		
@@ -38,12 +38,9 @@ public class Elevator extends Entity
 		elevatorZ = wallZ;
 		upHeight = maxHeight;
 		
-		height = (int)Level.getBlock(elevatorX, elevatorZ).height;
-		
-		if(maxHeight == 0)
-		{
-			upHeight = height;
-		}
+		Block temp = Level.getBlock(elevatorX, elevatorZ);
+		height = (int)temp.height;
+		temp.isADoor = true;
 	}
 	
    /**
@@ -63,9 +60,17 @@ public class Elevator extends Entity
 		//If just activated, begin moving down
 		if(!movingDown && !movingUp && waitTime == 0)
 		{
-			movingDown = true;
+			if(height == 0)
+			{
+				movingUp = true;
+			}
+			else
+			{
+				movingDown = true;
+			}
+			
 			soundTime = 0;
-			SoundController.doorStart.playAudioFile(distanceFromPlayer);
+			SoundController.doorStart.playAudioFile(distanceFromPlayer * 2);
 		}
 		
 		//As long as it hasn't reached ground, keep moving the height down
@@ -77,7 +82,7 @@ public class Elevator extends Entity
 			//Only play sound every 10 ticks
 			if(soundTime == 0)
 			{
-				SoundController.lifting.playAudioFile(distanceFromPlayer);	
+				SoundController.lifting.playAudioFile(distanceFromPlayer * 2);	
 				
 				soundTime++;
 			}
@@ -92,7 +97,7 @@ public class Elevator extends Entity
 			movingDown = false;
 			
 			SoundController.lifting.stopAll();
-			SoundController.doorEnd.playAudioFile(distanceFromPlayer);
+			SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 			
 			soundTime = 0;
 		}
@@ -101,7 +106,7 @@ public class Elevator extends Entity
 		{
 			movingUp = true;
 			waitTime = 0;
-			SoundController.doorStart.playAudioFile(distanceFromPlayer);
+			SoundController.doorStart.playAudioFile(distanceFromPlayer * 2);
 		}
 		
 		//While not at top, keep moving up
@@ -112,7 +117,7 @@ public class Elevator extends Entity
 			
 			if(soundTime == 0)
 			{
-				SoundController.lifting.playAudioFile(distanceFromPlayer);
+				SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
 				
 				soundTime++;
 			}
@@ -127,26 +132,32 @@ public class Elevator extends Entity
 			activated = false;
 			
 			SoundController.lifting.stopAll();
-			SoundController.doorEnd.playAudioFile(distanceFromPlayer);
+			SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 			
 			//If special ID, keep moving up and down
 			if(itemActivationID == 2112)
 			{
 				activated = true;
+				waitTime = 0;
 			}
 		}
 		
 		//Add to wait time each loop
 		if(waitTime <= 250 && waitTime > 0
-				|| itemActivationID > 0)
+				|| itemActivationID > 0 && itemActivationID != 2112 && waitTime > 0)
 		{
 			waitTime++;
 		}
 		
 		//If elevator is supposed to stay down, keep it down
-		if(itemActivationID > 0)
+		//and its not the special ID. Otherwise make it go up
+		//immediately
+		if(itemActivationID > 0 && itemActivationID != 2112)
 		{
-			waitTime = 1;
+			if(upHeight == 0)
+			{
+				waitTime = 1;
+			}
 		}
 		
 		//Reset soundTime every 10 ticks.

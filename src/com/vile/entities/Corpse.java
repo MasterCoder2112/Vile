@@ -2,6 +2,7 @@ package com.vile.entities;
 
 import java.util.Random;
 
+import com.vile.Display;
 import com.vile.Game;
 import com.vile.graphics.Render;
 import com.vile.graphics.Textures;
@@ -24,18 +25,18 @@ import com.vile.levelGenerator.Level;
  * by a rocket blast, the force still acts on its corpse, so this
  * keeps track of that.
  */
-public class Corpse 
+public class Corpse extends Entity
 {
 	//The usual values
-	public double x = 0;
-	public double z = 0;
-	public double y = 0;
+	//public double x = 0;
+	//public double z = 0;
+	//public double y = 0;
 	
 	//How much additional movement effects the corpse has on it from
 	//an explosion source
-	public double xEffects = 0;
-	public double zEffects = 0;
-	public double yEffects = 0;
+	//public double xEffects = 0;
+	//public double zEffects = 0;
+	//public double yEffects = 0;
 	
 	//How far into death animation it is.
 	public int phaseTime = 0;
@@ -48,6 +49,9 @@ public class Corpse
 	
 	//Default image of the corpse
 	public Render corpseImage = null;
+	
+	//Type of default corpse it is if it is one
+	private int corpseType = 0;
 	
    /**
     * Constructs a new Corpse of a certain x, y, and z value, and
@@ -62,14 +66,18 @@ public class Corpse
 	public Corpse(double x, double z, double y, int enemyID,
 			double xEffects, double zEffects, double yEffects) 
 	{
+		super(100, 0, 0, 0, 1.0/21.0, x, y, z, 100, 0, 0);
 		//Set values
-		this.x = x;
-		this.z = z;
-		this.y = y;
+		this.xPos = x;
+		this.zPos = z;
+		this.yPos = y;
 		this.xEffects = xEffects;
 		this.zEffects = zEffects;
 		this.yEffects = yEffects;
 		this.enemyID = enemyID;
+		
+		activated = true;
+		searchMode = false;
 		
 		//Normal enemy death animation time
 		if(enemyID != 0 && enemyID != 8)
@@ -84,16 +92,7 @@ public class Corpse
 		}
 		
 		Random rand = new Random();
-		int newNum = rand.nextInt(2);
-		
-		if(newNum == 0)
-		{
-			corpseImage = Textures.defaultCorpse1;
-		}
-		else
-		{
-			corpseImage = Textures.defaultCorpse2;
-		}
+		corpseType = rand.nextInt(6);
 	}
 	
    /**
@@ -105,14 +104,41 @@ public class Corpse
 	{
 		time++;
 		
-		//Don't let the time ticker go too high
-		if(time > 10000)
+		//Keeps track of corpse image in case resource pack changes
+		if(corpseType == 0)
+		{
+			corpseImage = Textures.defaultCorpse1;
+		}
+		else if(corpseType == 1)
+		{
+			corpseImage = Textures.defaultCorpse2;
+		}
+		else if(corpseType == 2)
+		{
+			corpseImage = Textures.defaultCorpse3;
+		}
+		else if(corpseType == 3)
+		{
+			corpseImage = Textures.defaultCorpse4;
+		}
+		else if(corpseType == 4)
+		{
+			corpseImage = Textures.defaultCorpse5;
+		}
+		else
+		{
+			corpseImage = Textures.defaultCorpse6;
+		}
+		
+		//Don't let the time ticker go too high. Especially
+		//if in smileMode
+		if(time > 10000 || (time > 1000 && Display.smileMode))
 		{
 			time = 0;
 			
 			//If in survival, corpses disappear after a bit
 			//to make the game faster.
-			if(FPSLauncher.gameMode == 1)
+			if(FPSLauncher.gameMode == 1 || Display.smileMode)
 			{
 				Game.corpses.remove(this);
 				return;
@@ -155,24 +181,24 @@ public class Corpse
 			yEff = -2;
 		}
 		
-		this.y -= (yEff);
+		this.yPos -= (yEff);
 		
 	   /*
 	    * Can the force of the explosion push the enemy any more into
 	    * the x direction?
 	    */
-		if(isFree(x + (xEff), z))
+		if(isFree(xPos + (xEff), zPos))
 		{
-			x += (xEff);
+			xPos += (xEff);
 		}
 			
 	   /*
 		* Can the explosion push the enemy anymore into the z
 		* direction.
 		*/
-		if(isFree(x, z + (zEff)))
+		if(isFree(xPos, zPos + (zEff)))
 		{
-			z += (zEff);
+			zPos += (zEff);
 		}
 		
 		//Update effect values based on what was executed above
@@ -217,6 +243,122 @@ public class Corpse
 		{
 			xEffects = 0;
 		}
+		
+		//Only if Smile resource pack. NOT IN USE RIGHT NOW
+		if(false)
+		{
+			//See if any of the happy teleporters are in sight
+			//and if they are make that the new target
+			for(int i = 0; i < Game.happySavers.size(); i++)
+			{
+				Item temp = Game.happySavers.get(i);
+				
+				double targetX = temp.x;
+				double targetZ = temp.z;
+				double targetY = temp.y;
+				
+				//Angle that the target is in accordance to the entity so
+				//that entity looks right towards its target
+				//sin/cos in this case
+				double sightRotation = Math.atan
+				(((targetX - xPos)) / ((targetZ - zPos)));
+				
+			   /*
+			    * If the target is in the 3rd or 4th quadrant of the map then
+			    * add PI to rotation so that the entitywill move into
+			    * the correct quadrant of the map and at the target.
+			    */
+				if(targetZ < zPos)
+				{
+					sightRotation += Math.PI;
+				}
+				
+			   /*
+			    * Corrects rotation so that the entityis centered
+			    * correctly in the map graph
+			    */
+				double correction = 44.765;
+				
+				//Speed that the eyesight travels
+				double speed = 0.1;
+				
+			   /*
+			    * Eyesight trajectory of the entity so that it will be
+			    * checking a straight line of sight to the player.
+			    */
+				double sightX = 
+						((Math.cos(sightRotation - correction)) 
+								+ (Math.sin(sightRotation - correction))) * speed;
+				double sightZ = 
+						((Math.cos(sightRotation - correction)) 
+								- (Math.sin(sightRotation - correction))) * speed;
+				
+				//How much the eyesight moves total each check.
+				//The hypotenuse of the x and z movement
+				double moveDistance = Math.sqrt((sightX * sightX) 
+							+ (sightZ * sightZ));
+				
+				//Total hypotenuse between target and entity
+				double hypot = Math.sqrt(((xPos - targetX) * (xPos - targetX))
+								+ ((zPos - targetZ) * (zPos - targetZ)));
+				
+				//Difference between entity and target y values
+				double yDifference = Math.abs(yPos - 8) - Math.abs(targetY);
+				
+				//Number of moves the eyesight will check for if it reaches
+				//the target successfully
+				double iterations = hypot / moveDistance;
+				
+				//How much y will have to change each time
+				double sightY = yDifference / iterations;
+				
+				//Resets the eyesight object with its new values
+				eyeSight = new Eyesight(this.xPos, this.zPos, this.yPos - 8,
+							targetX, targetZ, targetY,
+							sightX, sightZ, sightY);
+				
+				boolean tempSight = false;
+				
+				//Checks to see if target is in its line of sight
+				tempSight = eyeSight.checkEyesight();
+				
+				//If happy teleporter is in sight
+				if(tempSight)
+				{
+					//Only set this to true if the secondary target is in sight
+					inSight = true;
+					
+					//New target is this item
+					targetItem = temp;	
+				}
+				else
+				{
+					//If the corpse can no longer see the target, then
+					//no longer have it.
+					if(temp.equals(targetItem))
+					{
+						targetItem = null;
+						super.targetX = Player.x;
+						super.targetZ = Player.z;
+						super.targetY = Player.y;
+					}
+				}
+			}
+			
+			time++;	
+			super.tick(this);
+			super.move();
+		}
+	}
+
+   /**
+    * Here so that the game doesn't crash since all entities, even this, can
+    * be "hurt"
+    * @param damage
+    */
+	public void hurt(double damage, boolean soundPlayed)
+	{
+		return;
 	}
 	
    /**
@@ -251,21 +393,21 @@ public class Corpse
 		Block block2 = Level.getBlock((int)(nextX - bufferZone),
 				(int)(nextZ + bufferZone));
 			
-		if(nextX < this.x && nextZ == this.z)
+		if(nextX < this.xPos && nextZ == this.zPos)
 		{
 			block = Level.getBlock((int)(nextX - bufferZone),
 					(int)(nextZ - bufferZone));
 			block2 = Level.getBlock((int)(nextX - bufferZone),
 					(int)(nextZ + bufferZone));
 		}
-		else if(nextX >= this.x && nextZ == this.z)
+		else if(nextX >= this.xPos && nextZ == this.zPos)
 		{
 			block = Level.getBlock((int)(nextX + bufferZone),
 					(int)(nextZ - bufferZone));
 			block2 = Level.getBlock((int)(nextX + bufferZone),
 					(int)(nextZ + bufferZone));
 		}
-		else if(nextX == this.x && nextZ >= this.z)
+		else if(nextX == this.xPos && nextZ >= this.zPos)
 		{
 			block = Level.getBlock((int)(nextX - bufferZone),
 					(int)(nextZ + bufferZone));
@@ -300,17 +442,18 @@ public class Corpse
 	    {
 	    	try
 	    	{
-	    		Item temp = block.wallItem;
-	    		
-	    		//If there is a solid item on the block, and its not a
-	    		//tree, and its within the y value of the entity, and
-	    		//the entity is not a reaper, you can't move into that
-	    		//block
-	    		if(Game.solidItems.contains(temp) 
-	    				&& Math.abs(temp.y + (y - 3))
-	    				<= temp.height)
-	    		{
-	    			return false;
+	    		for(Item temp: block.wallItems)
+	    		{		
+		    		//If there is a solid item on the block, and its not a
+		    		//tree, and its within the y value of the entity, and
+		    		//the entity is not a reaper, the corpse can't move into that
+		    		//block
+		    		if(Game.solidItems.contains(temp) 
+		    				&& Math.abs(temp.y + (yPos - 3))
+		    				<= temp.height)
+		    		{
+		    			return false;
+		    		}
 	    		}
 	    	}
 	    	catch(Exception E)
@@ -337,7 +480,7 @@ public class Corpse
 	    * to be to make it appear like it does, this corrects it back
 	    * for collision detection purposes.
 	    */
-		double yCorrect = y - 3;
+		double yCorrect = yPos - 3;
 		
 	   /*
 	    * The corpse can't move forward anyway if the block its moving
@@ -345,14 +488,19 @@ public class Corpse
 	    */
 		try
     	{
-    		Item temp = block.wallItem;
-    		
-    		//If there is a solid item on the block, the corpse
-    		//cannot move into it
-    		if(Game.solidItems.contains(temp)
-    				&& Math.abs(temp.y + yCorrect) <= temp.height)
-    		{
-    			return false;
+			//For all wall items on this block
+			for(Item temp: block.wallItems)
+    		{		
+	    		//If there is a solid item on the block, and its not a
+	    		//tree, and its within the y value of the entity, and
+	    		//the entity is not a reaper, the corpse can't move into that
+	    		//block
+	    		if(Game.solidItems.contains(temp) 
+	    				&& Math.abs(temp.y + (yPos - 3))
+	    				<= temp.height)
+	    		{
+	    			return false;
+	    		}
     		}
     	}
     	catch(Exception E)

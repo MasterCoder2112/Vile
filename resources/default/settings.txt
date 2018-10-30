@@ -2,3 +2,4 @@ SeeThroughColorWalls:255,255,255,255
 GravityAcceleration:0.03
 PlayerJumpHeight:8
 SurvivalRenderDistance:50000.0
+SmileMechanics(0 = false, 1 = true):0

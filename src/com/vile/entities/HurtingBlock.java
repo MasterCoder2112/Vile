@@ -68,7 +68,8 @@ public class HurtingBlock extends Item
 	    * not jumping over the block. Also has to be when the tick
 	    * counter is reset to 0.
 	    */
-		if(time == 0 && Player.y <= temp.height + 1
+		if(time == 0 && Player.y >= Math.abs(temp.y * 4)
+				&& Player.y <= Math.abs(temp.y * 4) + temp.height + temp.baseCorrect + 1
 				&& Player.environProtectionTime == 0)
 		{
 			//Toxic waste

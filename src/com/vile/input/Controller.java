@@ -52,6 +52,14 @@ public class Controller
 	//If crouching while falling, only increase damage once
 	private boolean once              = false;
 	
+	//Whether certain weapons are to be switched to or not
+	//They are static so that switching through the mouse
+	//wheel also works
+	public static boolean switch0 		  = false;
+	public static boolean switch1 		  = false;
+	public static boolean switch2 		  = false;
+	public static boolean switch3 		  = false;
+	
    /*
     * Handles time between when you can activate certain events
     */
@@ -236,7 +244,7 @@ public class Controller
 		    * jumping. Halve the moveSpeed, set crouching = true, and keep
 		    * performing a given operation while you are crouching.
 		    */
-			if(Game.crouch && !inJump)
+			if((Game.crouch || Player.forceCrouch) && !inJump)
 			{	
 				//If still not as low as you can go
 				if(Player.yCorrect > -6.0 + Player.y) 
@@ -303,6 +311,7 @@ public class Controller
 							|| Player.y + 2 < Player.blockOn.y))
 			{
 				crouching = false;
+				Player.forceCrouch = false;
 				
 				//Slowly raise up
 				if(Player.yCorrect < Player.y)
@@ -330,6 +339,7 @@ public class Controller
 			else
 			{
 				crouching = false;
+				Player.forceCrouch = false;
 			}
 			
 			//TODO here2
@@ -344,7 +354,7 @@ public class Controller
 			    * If the Player is trying to jump, and the player is on
 			    * the ground, then jump. 
 			    */
-				if(Game.jump && Player.y == Player.maxHeight + Player.extraHeight)
+				if(Game.jump && Player.y - (Player.maxHeight + Player.extraHeight) <= 0.2)
 				{
 					inJump = true;
 					Player.jumpHeight = Player.totalJump + Player.maxHeight + Player.extraHeight;
@@ -366,10 +376,11 @@ public class Controller
 					inJump = false;
 				}
 				
-				//If you are above the ceiling, get back to the ceiling - 0.1
-				if(Player.y >= Render3D.ceilingDefaultHeight)
+				//If you are above the ceiling, put Player back to the maxHeight
+				//he or she can be at.
+				if(Player.y + Player.height >= Render3D.ceilingDefaultHeight)
 				{
-					Player.y = Render3D.ceilingDefaultHeight - 0.1;
+					Player.y = Render3D.ceilingDefaultHeight - 0.1 - Player.height;
 				}
 				
 				//If you're falling, accelerate down
@@ -468,100 +479,308 @@ public class Controller
 				}
 			}
 			
-			//If the player chooses the first weapon slot
-			//Set that weapon as being equipped
-			if(Game.weaponSlot0)
+		   /*
+		    * If weapon can be equipped, and another weapon isn't being fired,
+		    * then switch to this weapon
+		    */
+			if(Game.weaponSlot0
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime == 0
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime2 == 0)
 			{
-				Player.weaponEquipped = 0;
+				if(Player.weapons[0].canBeEquipped)
+				{
+					Player.weaponEquipped = 0;
+				}
+				else
+				{
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+					
+					//Only display the message if its not on screen yet
+					boolean exists = false;
+					
+					for(PopUp p: Display.messages)
+					{
+						if(temp.text == p.text)
+						{
+							exists = true;
+							break;
+						}
+					}
+					
+					//If Message does not exist yet
+					if(!exists)
+					{
+						Display.messages.add(temp);
+					}
+				}
+			}
+			//Switch to this weapon once current weapon is done firing
+			else if(Game.weaponSlot0)
+			{
+				if(Player.weapons[0].canBeEquipped)
+				{
+					switch0 = true;
+					switch3 = false;
+					switch1 = false;
+					switch2 = false;
+				}
+				else
+				{
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+					
+					//Only display the message if its not on screen yet
+					boolean exists = false;
+					
+					for(PopUp p: Display.messages)
+					{
+						if(temp.text == p.text)
+						{
+							exists = true;
+							break;
+						}
+					}
+					
+					//If Message does not exist yet
+					if(!exists)
+					{
+						Display.messages.add(temp);
+					}
+				}
 			}
 			
-			//If Player chooses the second weapon slot
-			//Set that weapon as being equipped
-			if(Game.weaponSlot1 && Player.weapons[1].canBeEquipped)
+		   /*
+		    * If weapon can be equipped, and another weapon isn't being fired,
+		    * then switch to this weapon
+		    */
+			if(Game.weaponSlot1
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime == 0
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime2 == 0)
 			{
-				Player.weaponEquipped = 1;
+				if(Player.weapons[1].canBeEquipped)
+				{
+					Player.weaponEquipped = 1;
+				}
+				else
+				{
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+					
+					//Only display the message if its not on screen yet
+					boolean exists = false;
+					
+					for(PopUp p: Display.messages)
+					{
+						if(temp.text == p.text)
+						{
+							exists = true;
+							break;
+						}
+					}
+					
+					//If Message does not exist yet
+					if(!exists)
+					{
+						Display.messages.add(temp);
+					}
+				}
 			}
-			//If weapon has not be picked up yet
+			//Switch to this weapon once current weapon is done firing
 			else if(Game.weaponSlot1)
 			{
-				PopUp temp = new PopUp("You don't have this weapon yet!");
-				
-				//Only display the message if its not on screen yet
-				boolean exists = false;
-				
-				for(PopUp p: Display.messages)
+				if(Player.weapons[1].canBeEquipped)
 				{
-					if(temp.text == p.text)
+					switch1 = true;
+					switch0 = false;
+					switch3 = false;
+					switch2 = false;
+				}
+				else
+				{
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+					
+					//Only display the message if its not on screen yet
+					boolean exists = false;
+					
+					for(PopUp p: Display.messages)
 					{
-						exists = true;
-						break;
+						if(temp.text == p.text)
+						{
+							exists = true;
+							break;
+						}
+					}
+					
+					//If Message does not exist yet
+					if(!exists)
+					{
+						Display.messages.add(temp);
 					}
 				}
-				
-				//If Message does not exist yet
-				if(!exists)
+			}
+
+		   /*
+		    * If weapon can be equipped, and another weapon isn't being fired,
+		    * then switch to this weapon
+		    */
+			if(Game.weaponSlot2
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime == 0
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime2 == 0)
+			{
+				if(Player.weapons[2].canBeEquipped)
 				{
-					Display.messages.add(temp);
+					Player.weaponEquipped = 2;
+				}
+				else
+				{
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+					
+					//Only display the message if its not on screen yet
+					boolean exists = false;
+					
+					for(PopUp p: Display.messages)
+					{
+						if(temp.text == p.text)
+						{
+							exists = true;
+							break;
+						}
+					}
+					
+					//If Message does not exist yet
+					if(!exists)
+					{
+						Display.messages.add(temp);
+					}
 				}
 			}
-			
-			//If Player chooses the second weapon slot
-			//Set that weapon as being equipped
-			if(Game.weaponSlot2 && Player.weapons[2].canBeEquipped)
-			{
-				Player.weaponEquipped = 2;
-			}
-			//If weapon has not be picked up yet
+			//Switch to this weapon once current weapon is done firing
 			else if(Game.weaponSlot2)
-			{
-				PopUp temp = new PopUp("You don't have this weapon yet!");
-				
-				//Only display the message if its not on screen yet
-				boolean exists = false;
-				
-				for(PopUp p: Display.messages)
+			{			
+				if(Player.weapons[2].canBeEquipped)
 				{
-					if(temp.text == p.text)
-					{
-						exists = true;
-						break;
-					}
+					switch2 = true;
+					switch0 = false;
+					switch1 = false;
+					switch3 = false;
 				}
-				
-				//If Message does not exist yet
-				if(!exists)
+				else
 				{
-					Display.messages.add(temp);
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+					
+					//Only display the message if its not on screen yet
+					boolean exists = false;
+					
+					for(PopUp p: Display.messages)
+					{
+						if(temp.text == p.text)
+						{
+							exists = true;
+							break;
+						}
+					}
+					
+					//If Message does not exist yet
+					if(!exists)
+					{
+						Display.messages.add(temp);
+					}
 				}
 			}
 			
-			//If Player chooses the third weapon slot
-			//Set that weapon as being equipped
-			if(Game.weaponSlot3 && Player.weapons[3].canBeEquipped)
+		   /*
+		    * If weapon can be equipped, and another weapon isn't being fired,
+		    * then switch to this weapon
+		    */
+			if(Game.weaponSlot3
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime == 0
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime2 == 0)
 			{
-				Player.weaponEquipped = 3;
+				if(Player.weapons[3].canBeEquipped)
+				{
+					Player.weaponEquipped = 3;
+				}
+				else
+				{
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+					
+					//Only display the message if its not on screen yet
+					boolean exists = false;
+					
+					for(PopUp p: Display.messages)
+					{
+						if(temp.text == p.text)
+						{
+							exists = true;
+							break;
+						}
+					}
+					
+					//If Message does not exist yet
+					if(!exists)
+					{
+						Display.messages.add(temp);
+					}
+				}
 			}
-			//If weapon has not be picked up yet
+			//Switch to this weapon once current weapon is done firing
 			else if(Game.weaponSlot3)
 			{
-				PopUp temp = new PopUp("You don't have this weapon yet!");
-				
-				//Only display the message if its not on screen yet
-				boolean exists = false;
-				
-				for(PopUp p: Display.messages)
+				if(Player.weapons[3].canBeEquipped)
 				{
-					if(temp.text == p.text)
+					switch3 = true;
+					switch0 = false;
+					switch1 = false;
+					switch2 = false;
+				}
+				else
+				{
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+					
+					//Only display the message if its not on screen yet
+					boolean exists = false;
+					
+					for(PopUp p: Display.messages)
 					{
-						exists = true;
-						break;
+						if(temp.text == p.text)
+						{
+							exists = true;
+							break;
+						}
+					}
+					
+					//If Message does not exist yet
+					if(!exists)
+					{
+						Display.messages.add(temp);
 					}
 				}
-				
-				//If Message does not exist yet
-				if(!exists)
+			}
+			
+		   /*
+		    * If current weapon is finally able to be switched
+		    * out, then switch to weapon you wanted to switch to
+		    */
+			if(Player.weapons[Player.weaponEquipped].weaponShootTime == 0
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime2 == 0)
+			{
+				if(switch0)
 				{
-					Display.messages.add(temp);
+					Player.weaponEquipped = 0;
+					switch0 = false;
+				}
+				else if(switch1)
+				{
+					Player.weaponEquipped = 1;
+					switch1 = false;
+				}
+				else if(switch2)
+				{
+					Player.weaponEquipped = 2;
+					switch2 = false;
+				}
+				else if(switch3)
+				{
+					Player.weaponEquipped = 3;
+					switch3 = false;
 				}
 			}
 			
@@ -664,8 +883,8 @@ public class Controller
 					Button button = Game.buttons.get(i);
 					
 					//Has to be in range of button
-					if(Math.abs(button.getZ() - Player.z) <= 0.95
-							&& Math.abs(button.getX() - Player.x) <= 0.95
+					if(Math.abs(button.z - Player.z) <= 0.95
+							&& Math.abs(button.x - Player.x) <= 0.95
 							&& !button.pressed)
 					{
 						button.pressed = true;
@@ -1053,6 +1272,21 @@ public class Controller
 			moveSpeed *= 4;
 		}
 		
+		//Clears the render distance, or resets it back to normal
+		if(Game.clearDistance && time == 0)
+		{
+			if(Render3D.renderDistanceDefault > Level.renderDistance)
+			{
+				Render3D.renderDistanceDefault = Level.renderDistance;
+			}
+			else
+			{
+				Render3D.renderDistanceDefault = 10000000;
+			}
+			
+			time++;
+		}
+		
 		//Give player all weapons and ammo limits
 		if(Game.restock)
 		{
@@ -1163,22 +1397,58 @@ public class Controller
 
 		try
 		{
-			//If it contains a Toxic Waste Block or Lava Block
-			if(Game.hurtingBlocks.contains(Player.blockOn.wallEntity))
-			{			
-			   /*
-			    * Hurt the player if the ticks have reset. Meaning player
-			    * can only be hurt every so many ticks while on the block.
-			    */
-				Player.blockOn.wallEntity.activate();
+			for(Item e: Player.blockOn.wallEntities)
+			{
+				//If it contains a Toxic Waste Block or Lava Block
+				if(Game.hurtingBlocks.contains(e))
+				{		
+				   /*
+				    * Hurt the player if the ticks have reset. Meaning player
+				    * can only be hurt every so many ticks while on the block.
+				    */
+					e.activate();
+					
+					//Update HurtingBlock time only when the player is on the
+					//block
+					HurtingBlock.time++;
+					
+					if(HurtingBlock.time > 21 * Render3D.fpsCheck)
+					{
+						HurtingBlock.time = 0;
+					}
+				}
 				
-				//Update HurtingBlock time only when the player is on the
-				//block
-				HurtingBlock.time++;
-				
-				if(HurtingBlock.time > 21 * Render3D.fpsCheck)
+				//If a Teleporter enterance
+				if(e.itemID
+						== ItemNames.TELEPORTERENTER.getID())
 				{
-					HurtingBlock.time = 0;
+					//Check all teleporters for a matching exit
+				   for(int i = 0; i < Game.teleporters.size(); i++)
+				   {
+					   //Teleporter Object
+					   Item tel = Game.teleporters.get(i);
+					   
+					   //If there is a teleporter exit with the same exact
+					   //activation ID, teleport the player to that location
+					   if(tel.itemActivationID ==
+							   e.itemActivationID
+							   && tel.itemID ==
+							   ItemNames.TELEPORTEREXIT.getID())
+					   {
+						   Player.x = tel.x;
+						   Player.z = tel.z;
+						   
+						   //Block teleporter exit is on
+						   Block teleporterExit =
+								   Level.getBlock((int)tel.x, (int)tel.z);
+						   
+						   //Set players y value to that new blocks height
+						   Player.y = teleporterExit.height + teleporterExit.y;
+						   
+						   //Play teleportation sound
+						   SoundController.teleportation.playAudioFile(0);
+					   }
+				   }
 				}
 			}
 		}
@@ -1189,176 +1459,207 @@ public class Controller
 		
 		try
 		{
-			//If it is a line def
-			if(Player.blockOn.wallItem.itemID == ItemNames.LINEDEF.itemID)
+			for(int i = 0; i < Player.blockOn.wallItems.size(); i++)
 			{
-				Item item = Player.blockOn.wallItem;
+				Item item = Player.blockOn.wallItems.get(i);
 				
-				//If End Level Line Def
-				if(item.itemActivationID == 0)
-				{
-					Game.mapNum++;
-					game.loadNextMap(false, "");
-				}
-				else
-				{
-					//Search through all the doors
-					for(int k = 0; k < Game.doors.size(); k++)
+				//If it is a line def
+				if(item.itemID == ItemNames.LINEDEF.itemID)
+				{		
+					//If End Level Line Def
+					if(item.itemActivationID == 0)
 					{
-						Door door = Game.doors.get(k);
-						
-						//If door has the same activation ID as the 
-						//button then activate it.
-						if(door.itemActivationID 
-								== item.itemActivationID)
-						{
-							door.activated = true;
-						}
+						Game.mapNum++;
+						game.loadNextMap(false, "");
 					}
-					
-					//Stores Items to be deleted
-					ArrayList<Item> tempItems2 = new ArrayList<Item>();
-					
-					//Scan all activatable items
-					for(int j = 0; j < Game.activatable.size(); j++)
+					else
 					{
-						Item itemAct = Game.activatable.get(j);
-						
-						//If Item is a Happiness Tower, activate it and
-						//state that it is activated
-						if(itemAct.itemID == ItemNames.RADAR.getID()
-								&& !itemAct.activated &&
-								item.itemActivationID ==
-								itemAct.itemActivationID)
+						//Remove other linedefs of the same activation ids
+						int size = Game.items.size();
+						for(int s = 0; s < size; s++)
 						{
-							itemAct.activated = true;
-							Display.messages.add(new PopUp("COM SYSTEM ACTIVATED"));
-							SoundController.uplink.playAudioFile(0);
-						}
-						else
-						{				
-							//If item is enemy spawnpoint, then spawn the
-							//enemy, and add the item to the arraylist of
-							//items to be deleted
-							if(itemAct.itemID == ItemNames.ENEMYSPAWN.getID()
-									&& itemAct.itemActivationID 
-									== item.itemActivationID)
+							Item it = Game.items.get(s);
+							if(it.itemID == ItemNames.LINEDEF.itemID
+									&& it.itemActivationID == item.itemActivationID)
 							{
-								Game.enemiesInMap++;
-								game.addEnemy(itemAct.x, itemAct.z,
-										itemAct.rotation);
-								tempItems2.add(itemAct);
-							}	
-							//If Explosion has same activation ID of the button
-							//then activate it
-							else if(itemAct.itemID ==
-									ItemNames.ACTIVATEEXP.getID()
-									&& itemAct.itemActivationID 
-									== item.itemActivationID)
-							{
-								new Explosion(itemAct.x, itemAct.y,
-										itemAct.z, 0, 0);
-								tempItems2.add(itemAct);
-							}
-							//If it gets rid of a wall, delete the wall and create an
-							//air wall in its place.
-							else if(itemAct.itemID 
-									== ItemNames.WALLBEGONE.getID()
-									&& itemAct.itemActivationID ==
-									item.itemActivationID)
-							{
-								Block block2 = Level.getBlock
-										((int)itemAct.x, (int)itemAct.z);
-								
-								//Block is effectively no longer there
-								block2.height = 0;
-								
-								tempItems2.add(itemAct);
+								size--;
+								s--;
+								it.removeItem();
 							}
 						}
+						
+						//Search through all the doors
+						for(int k = 0; k < Game.doors.size(); k++)
+						{
+							Door door = Game.doors.get(k);
+							
+							//If door has the same activation ID as the 
+							//button then activate it.
+							if(door.itemActivationID 
+									== item.itemActivationID)
+							{
+							   /*
+							    * If the itemActivationID is the
+							    * special ID, then just stop the door
+							    * from automatically opening and closing.
+							    * Otherwise activate the door as normal.
+							    */
+								if(door.itemActivationID == 2112)
+								{
+									//Hoping no one uses this id, but
+									//this stops the door from automatically
+									//opening and closing continuously.
+									door.itemActivationID = 1221;
+								}
+								//If this special ID, activate it to continue to
+								//move
+								else if(door.itemActivationID == 1221)
+								{
+									door.itemActivationID = 2112;
+									door.activated = true;
+									door.stayOpen = false;
+								}
+								else
+								{
+									door.activated = true;
+								}
+							}
+						}
+						
+						//Search through all the elevators
+						for(int k = 0; k < Game.elevators.size(); k++)
+						{
+							Elevator e = Game.elevators.get(k);
+							
+							//If elevator has the same activation ID as the 
+							//button then activate it.
+							if(e.itemActivationID 
+									== item.itemActivationID)
+							{
+							   /*
+							    * If the itemActivationID is the
+							    * special ID, then just stop the elevator
+							    * from automatically moving.
+							    * Otherwise activate the elevator as normal.
+							    */
+								if(e.itemActivationID == 2112)
+								{
+									//Hoping no one uses this id, but
+									//this stops the elevator from automatically
+									//moving continuously.
+									e.itemActivationID = 1221;
+								}
+								//If this special ID, activate it to continue to
+								//move
+								else if(e.itemActivationID == 1221)
+								{
+									e.itemActivationID = 2112;
+									e.activated = true;
+								}
+								else
+								{
+									e.activated = true;
+								}
+							}
+						}
+						
+						//Stores Items to be deleted
+						ArrayList<Item> tempItems2 = new ArrayList<Item>();
+						
+						//Scan all activatable items
+						for(int j = 0; j < Game.activatable.size(); j++)
+						{
+							Item itemAct = Game.activatable.get(j);
+							
+							//If Item is a Happiness Tower, activate it and
+							//state that it is activated
+							if(itemAct.itemID == ItemNames.RADAR.getID()
+									&& !itemAct.activated &&
+									item.itemActivationID ==
+									itemAct.itemActivationID)
+							{
+								itemAct.activated = true;
+								Display.messages.add(new PopUp("COM SYSTEM ACTIVATED"));
+								SoundController.uplink.playAudioFile(0);
+							}
+							else
+							{				
+								//If item is enemy spawnpoint, then spawn the
+								//enemy, and add the item to the arraylist of
+								//items to be deleted
+								if(itemAct.itemID == ItemNames.ENEMYSPAWN.getID()
+										&& itemAct.itemActivationID 
+										== item.itemActivationID)
+								{
+									Game.enemiesInMap++;
+									game.addEnemy(itemAct.x, itemAct.z,
+											itemAct.rotation);
+									tempItems2.add(itemAct);
+								}	
+								//If Explosion has same activation ID of the button
+								//then activate it
+								else if(itemAct.itemID ==
+										ItemNames.ACTIVATEEXP.getID()
+										&& itemAct.itemActivationID 
+										== item.itemActivationID)
+								{
+									new Explosion(itemAct.x, itemAct.y,
+											itemAct.z, 0, 0);
+									tempItems2.add(itemAct);
+								}
+								//If it gets rid of a wall, delete the wall and create an
+								//air wall in its place.
+								else if(itemAct.itemID 
+										== ItemNames.WALLBEGONE.getID()
+										&& itemAct.itemActivationID ==
+										item.itemActivationID)
+								{
+									Block block2 = Level.getBlock
+											((int)itemAct.x, (int)itemAct.z);
+									
+									//Block is effectively no longer there
+									block2.height = 0;
+									
+									tempItems2.add(itemAct);
+								}
+							}
+						}
+						
+						//Remove all the items that need to be deleted now
+						for(int j = 0; j < tempItems2.size(); j++)
+						{
+							Item temp2 =  tempItems2.get(j);
+									
+							temp2.removeItem();
+						}
 					}
 					
-					//Remove all the items that need to be deleted now
-					for(int j = 0; j < tempItems2.size(); j++)
+					//Play audio queue if there is one
+					item.activateAudioQueue();
+					
+					//Remove linedef from game
+					item.removeItem();
+				}
+				
+				//If a Secret block
+				if(item.itemID == ItemNames.SECRET.getID())
+				{
+				   /*
+				    * Activate secret
+				    */
+					boolean activated = item.activate();
+					
+				   /*
+				    * If the item was activated remove it from the
+				    * block, but not from the map so that it can
+				    * still keep track of how many secrets you have
+				    * found.
+				    */
+					if(activated)
 					{
-						Item temp2 =  tempItems2.get(j);
-								
-						temp2.removeItem();
+						Player.blockOn.wallItems.remove(item);
 					}
 				}
-				
-				//Play audio queue if there is one
-				item.activateAudioQueue();
-				
-				//Remove linedef from game
-				item.removeItem();
-			}
-		}
-		catch(Exception e)
-		{
-			
-		}
-			
-		try
-		{
-			//If a Secret block
-			if(Player.blockOn.wallItem.itemID == ItemNames.SECRET.getID())
-			{
-			   /*
-			    * Activate secret
-			    */
-				boolean activated = Player.blockOn.wallItem.activate();
-				
-			   /*
-			    * If the item was activated remove it from the
-			    * block, but not from the map so that it can
-			    * still keep track of how many secrets you have
-			    * found.
-			    */
-				if(activated)
-				{
-					Player.blockOn.wallItem = null;
-				}
-			}
-		}
-		catch(Exception e)
-		{
-			
-		}
-			
-		try
-		{
-			//If a Teleporter enterance
-			if(Player.blockOn.wallEntity.itemID 
-					== ItemNames.TELEPORTERENTER.getID())
-			{
-				//Check all teleporters for a matching exit
-			   for(int i = 0; i < Game.teleporters.size(); i++)
-			   {
-				   //Teleporter Object
-				   Item tel = Game.teleporters.get(i);
-				   
-				   //If there is a teleporter exit with the same exact
-				   //activation ID, teleport the player to that location
-				   if(tel.itemActivationID ==
-						   Player.blockOn.wallEntity.itemActivationID
-						   && tel.itemID ==
-						   ItemNames.TELEPORTEREXIT.getID())
-				   {
-					   Player.x = tel.x;
-					   Player.z = tel.z;
-					   
-					   //Block teleporter exit is on
-					   Block teleporterExit =
-							   Level.getBlock((int)tel.x, (int)tel.z);
-					   
-					   //Set players y value to that new blocks height
-					   Player.y = teleporterExit.height + teleporterExit.y;
-					   
-					   //Play teleportation sound
-					   SoundController.teleportation.playAudioFile(0);
-				   }
-			   }
 			}
 		}
 		catch(Exception e)
@@ -1372,7 +1673,8 @@ public class Controller
 	    * rendering), then the player is either inside or on
 	    * top of the block. The + 4 is there for stairs
 	    */
-		if(Player.y + 4 > (Player.blockOn.y * 4))
+		if(Player.y + 4 > (Player.blockOn.y * 4)
+				&& Player.y + 2 >= (Player.blockOn.y * 4) + Player.blockOn.height)
 		{	
 			Player.maxHeight = Player.blockOn.height + (Player.blockOn.y * 4)
 					+ Player.blockOn.baseCorrect;
@@ -1411,13 +1713,20 @@ public class Controller
 		{
 			Player.yCorrect = Player.y;
 		}
+		
 	   /*
 	    * In case player is crouched and moving up stairs, this
 	    * will make sure the crouched y value also changes.
 	    */
-		else if(Player.yCorrect + 6.0 < Player.y)
+		else if(Player.yCorrect + 6.0 <= Player.y)
 		{
 			Player.yCorrect = Player.y - 6.0;
+		}
+		
+		//Don't allow players y value to go below 0
+		if(Player.y < 0)
+		{
+			Player.y = 0;
 		}
 
 		//TODO here
@@ -1527,32 +1836,43 @@ public class Controller
 		
 		try
 		{
-			//If walking into block with a solid object on it
-			if(block.wallItem.isSolid)
+			for(int i = 0; i < block.wallItems.size(); i++)
 			{
-				Item temp = block.wallItem;
+				Item temp = block.wallItems.get(i);
 				
-				//Distance between item and player
-				double distance = Math.sqrt(((Math.abs(temp.x - nextX))
-						* (Math.abs(temp.x - nextX)))
-						+ ((Math.abs(temp.z - nextZ))
-								* (Math.abs(temp.z - nextZ))));
-				
-				//Difference in y
-				double yDifference = Player.y - Math.abs(temp.y);
-				
-				//If close enough, don't allow the player to move into it.
-				if(distance <= 0.3 && (yDifference <= temp.height
-						&& yDifference >= -temp.height))
+				//If walking into block with a solid object on it
+				if(temp.isSolid)
 				{
-					return false;
-				}	
-				//If on top of it, reset the players extra standing height
-				else if(distance <= 0.3 && yDifference >= temp.height)
-				{
-					Player.extraHeight = temp.height + 5;
-					return true;
-				}	
+					//Distance between item and player
+					double distance = Math.sqrt(((Math.abs(temp.x - nextX))
+							* (Math.abs(temp.x - nextX)))
+							+ ((Math.abs(temp.z - nextZ))
+									* (Math.abs(temp.z - nextZ))));
+					
+					//Difference in y
+					double yDifference = Math.abs(Player.y - Math.abs(temp.y));
+					
+					//If right next to item
+					if(distance <= 0.3)
+					{
+						//If not above or below it enough, don't let the player
+						//move into it
+						if((yDifference <= temp.height + Player.height))
+						{
+							return false;
+						}
+						//Otherwise reset the players height to being the items
+						//height
+						else
+						{
+							//Only if on or above the block the player is on.
+							if(temp.y >= Player.blockOn.y)
+							{
+								Player.extraHeight = temp.height + 5;
+							}
+						}
+					}	
+				}
 			}
 		}
 		catch(Exception e)
@@ -1567,13 +1887,10 @@ public class Controller
 			Entity temp = block.entitiesOnBlock.get(i);
 			
 			//Distance between enemy and player
-			double distance = Math.sqrt(((Math.abs(temp.xPos - nextX))
-					* (Math.abs(temp.xPos - nextX)))
-					+ ((Math.abs(temp.zPos - nextZ))
-							* (Math.abs(temp.zPos - nextZ))));
+			double distance = temp.distanceFromPlayer;
 			
 			//Difference between enemy and player
-			double yDifference = Player.y - Math.abs(temp.yPos);
+			double yDifference = Math.abs(Player.y - Math.abs(temp.yPos * 11));
 			
 			//If this enemy was removed from the game but not the block for
 			//some reason, remove it now and allow the player to move.
@@ -1584,18 +1901,22 @@ public class Controller
 			}
 			
 			//If close enough, don't allow the player to move into it.
-			if(distance <= 0.3 && yDifference <= 8
-					&& yDifference >= -8)
+			if(distance <= 0.3)
 			{
-				return false;
+				if(yDifference <= 8)
+				{
+					return false;
+				}
+				else if(Player.y > Math.abs(temp.yPos * 11))
+				{
+					//Only if on or above the block the player is on.
+					//Then reset the players additional height
+					if(temp.yPos >= Player.blockOn.y)
+					{
+						Player.extraHeight = temp.height + 5;
+					}
+				}
 			}	
-			//Player can jump on top of enemies if height enough
-			else if(distance <= 0.3 && yDifference >= 8)
-			{
-				//Reset players extra standing height
-				Player.extraHeight = temp.height + 5;
-				return true;
-			}
 			
 			//If a boss, have the distance be farther the hitbox expands
 			//out of
@@ -1604,8 +1925,6 @@ public class Controller
 				return false;
 			}
 		}
-		
-		Player.extraHeight = 0;
 		
 		//Adds the plus 4 to go up steps
 		double yCorrect = Player.y + 4;
@@ -1660,10 +1979,13 @@ public class Controller
 	{
 	   /*
 	    * If player is between blocks bottom and top, don't let the player
-	    * get on to, or go through the block
+	    * get on to, or go through the block. If crouched correct this
+	    * calculation a little bit so that you can go under blocks.
 	    */
 		if(block.height + (block.baseCorrect) + blockY > yCorrect
-				&& yCorrect + Player.height >= blockY)
+				&& ((Player.y == Player.yCorrect && yCorrect + 4 >= blockY) 
+						|| (Player.y != Player.yCorrect 
+				&& (yCorrect + 4) - Math.abs(Player.y - Player.yCorrect) >= blockY)))
 		{
 			return false;
 		}

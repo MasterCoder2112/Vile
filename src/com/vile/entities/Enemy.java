@@ -58,7 +58,7 @@ public class Enemy extends Entity implements Comparable
 			hasSpecial = true;
 			canFly = true;
 			weightLevel = 2;
-			yPos = -2;
+			yPos = yPos - 1;
 			height = 2;
 		}
 		//Mutated Commando
@@ -253,7 +253,7 @@ public class Enemy extends Entity implements Comparable
 		//be the target enemies y position
 		if(targetEnemy != null)
 		{
-			yCorrect = -targetEnemy.yPos;
+			yCorrect = -targetEnemy.yPos * 11;
 		}
 		
 		if(inSight)
@@ -265,8 +265,8 @@ public class Enemy extends Entity implements Comparable
 		    * within its sight.
 		    */
 			if(super.distance <= 1 && !isAttacking
-					&& Math.abs(Math.abs(this.getY()) - 
-					(Math.abs(yCorrect))) <= 4 + this.height)
+					&& Math.abs(Math.abs(yCorrect) - 
+					(Math.abs(this.yPos * 11))) <= 12)
 			{
 				tick = 0;
 				
@@ -351,7 +351,7 @@ public class Enemy extends Entity implements Comparable
     * actually take the enemies health away.
     * @param damage
     */
-	public void hurt(int damage, boolean soundPlayed)
+	public void hurt(double damage, boolean soundPlayed)
 	{
 		//Decrease enemies health
 		super.health -= damage;
@@ -481,14 +481,14 @@ public class Enemy extends Entity implements Comparable
 		{
 			new Item(2, xPos, 
 					-yPos * 10, 
-					zPos, ItemNames.REDKEY.getID(), 0, 0,"");
+					zPos, ItemNames.MEGAHEALTH.getID(), 0, 0,"");
 		}
 		//Vile Warrior
 		else if(ID == 7)
 		{
 			new Item(2, xPos, 
 					-yPos * 10, 
-					zPos, ItemNames.BULLETS.getID(), 0, 0,"");
+					zPos, ItemNames.VIAL.getID(), 0, 0,"");
 		}
 		//Belegoth
 		else if(ID == 8)
@@ -631,7 +631,68 @@ public class Enemy extends Entity implements Comparable
 				if(door.itemActivationID 
 						== this.itemActivationID)
 				{
-					door.activated = true;
+				   /*
+				    * If the itemActivationID is the
+				    * special ID, then just stop the door
+				    * from automatically opening and closing.
+				    * Otherwise activate the door as normal.
+				    */
+					if(door.itemActivationID == 2112)
+					{
+						//Hoping no one uses this id, but
+						//this stops the door from automatically
+						//opening and closing continuously.
+						door.itemActivationID = 1221;
+					}
+					//If this special ID, activate it to continue to
+					//move
+					else if(door.itemActivationID == 1221)
+					{
+						door.itemActivationID = 2112;
+						door.activated = true;
+						door.stayOpen = false;
+					}
+					else
+					{
+						door.activated = true;
+					}
+				}
+			}
+			
+			//Search through all the elevators
+			for(int k = 0; k < Game.elevators.size(); k++)
+			{
+				Elevator e = Game.elevators.get(k);
+				
+				//If elevator has the same activation ID as the 
+				//button then activate it.
+				if(e.itemActivationID 
+						== this.itemActivationID)
+				{
+				   /*
+				    * If the itemActivationID is the
+				    * special ID, then just stop the elevator
+				    * from automatically moving.
+				    * Otherwise activate the elevator as normal.
+				    */
+					if(e.itemActivationID == 2112)
+					{
+						//Hoping no one uses this id, but
+						//this stops the elevator from automatically
+						//moving continuously.
+						e.itemActivationID = 1221;
+					}
+					//If this special ID, activate it to continue to
+					//move
+					else if(e.itemActivationID == 1221)
+					{
+						e.itemActivationID = 2112;
+						e.activated = true;
+					}
+					else
+					{
+						e.activated = true;
+					}
 				}
 			}
 			
@@ -681,6 +742,8 @@ public class Enemy extends Entity implements Comparable
 							
 							//Block is effectively no longer there
 							block2.height = 0;
+							
+							block2.wallEntities = null;
 							
 							tempItems2.add(item);
 						}

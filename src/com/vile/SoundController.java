@@ -98,6 +98,7 @@ public class SoundController
 	public static Sound keyUse;
 	public static Sound keyTry;
 	public static Sound uplink;
+	public static Sound criticalHit;
 	
 	//Stores all the sounds so that all the sounds can be
 	//set to certain settings at once
@@ -111,6 +112,7 @@ public class SoundController
 	public SoundController() 
 	{
 		//reset the arraylist
+		allSounds = null;
 		allSounds = new ArrayList<Sound>();
 		
 		enemyHit = addSound(enemyHit, "enemyHit");
@@ -177,6 +179,7 @@ public class SoundController
 		keyUse = addSound(keyUse, "keyuse");
 		keyTry = addSound(keyTry, "keytry");
 		uplink = addSound(uplink, "uplink");
+		criticalHit = addSound(criticalHit, "criticalHit");
 	}
 	
    /**
@@ -193,6 +196,20 @@ public class SoundController
 	}
 	
    /**
+    * Basically nullifies all sounds to clear the heap
+    */
+	public void resetSounds()
+	{
+		for(Sound temp: allSounds)
+		{
+			temp.nullify();
+			temp = null;
+		}
+		
+		allSounds = null;
+	}
+	
+   /**
     * Instantiates a single sound at a time, checking to see if first it
     * is in the current resource pack, and then if not there it will use
     * the default sound found in the default resource pack. If not in
@@ -206,7 +223,7 @@ public class SoundController
 		try
 		{
 			//Try to find sound in current resource pack
-			temp =  new Sound(defaultSize, "resources"+FPSLauncher.themeName+"/audio/test/"+fileName+".wav");
+			temp =  new Sound(defaultSize, "resources"+FPSLauncher.themeName+"/audio/"+fileName+".wav");
 			allSounds.add(temp);
 			temp.audioName = fileName;
 		}
@@ -215,7 +232,7 @@ public class SoundController
 			try
 			{
 				//If sound is not found in the resource pack
-				temp =  new Sound(defaultSize, "resources/default/audio/test/"+fileName+".wav");
+				temp =  new Sound(defaultSize, "resources/default/audio/"+fileName+".wav");
 				allSounds.add(temp);
 				temp.audioName = fileName;
 			}

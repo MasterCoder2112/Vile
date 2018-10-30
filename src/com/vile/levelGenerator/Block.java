@@ -67,7 +67,7 @@ public class Block implements Comparable
 	public int health = 60;
 	
 	//The item that the wall has on it
-	public Item wallItem = null;
+	public ArrayList<Item> wallItems = new ArrayList<Item>();
 	
 	//Stores all the enemies on the block at the time
 	public ArrayList<Entity> entitiesOnBlock = new ArrayList<Entity>();
@@ -77,7 +77,7 @@ public class Block implements Comparable
     * block or the Player, such as a lava block or a door item or
     * something.
     */
-	public Item wallEntity = null;
+	public ArrayList<Item> wallEntities = new ArrayList<Item>();
 	
 	//Image for the game to render
 	public Render wallImage = null;
@@ -125,11 +125,14 @@ public class Block implements Comparable
 		
 	   /*
 	    * Sets whether the wall is solid or not directly related to the
-	    * ID of the wall.
+	    * ID of the wall. Air is the only non-solid right now
 	    */
 		if(wallID == 0)
 		{
 			isSolid = false;
+			this.y = 0;
+			height = 0;
+			
 		}
 		else
 		{

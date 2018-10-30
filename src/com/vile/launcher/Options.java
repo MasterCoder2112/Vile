@@ -23,5 +23,8 @@ public class Options extends FPSLauncher
 		setTitle("Options:");
 		super.drawOptionsMenu();
 		super.drawBackground();
+		
+		//Fixes bug where sometimes this loses focus
+		super.newMapName.setEditable(true);
 	}
 }

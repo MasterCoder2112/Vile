@@ -298,7 +298,7 @@ public class Explosion
 								* (Math.abs(this.z - enemy.zPos))));
 				
 				//If within range of normal enemy
-				if(distance <= 3 && Math.abs(this.y - (enemy.yPos / 12)) <= 2
+				if(distance <= 3 && Math.abs(this.y - (enemy.yPos)) <= 2
 						&& !enemy.isABoss)
 				{	
 					//Realistic damage
@@ -316,14 +316,14 @@ public class Explosion
 					//Heavier enemies don't move as far
 					force /= enemy.weightLevel;
 					
-					//Angle that the player is in accordance to the explosion for
+					//Angle that the enemy is in accordance to the explosion for
 					//throwing back calculations
 					rotFromTarget = Math.atan
 					(((enemy.xPos - x)) / ((enemy.zPos - z)));
 					
 				   /*
 				    * If the target is in the 3rd or 4th quadrant of the map then
-				    * add PI to rotation so that the player will be thrown back
+				    * add PI to rotation so that the enemy will be thrown back
 				    * into the correct quadrant of the map
 				    */
 					if(enemy.zPos < z)
@@ -340,7 +340,7 @@ public class Explosion
 						
 				   /*
 				    * Depending on the targets angle in the x z plane from the
-				    * explosion, the player will move back from that explosion a
+				    * explosion, the enemy will move back from that explosion a
 				    * certain amount.
 				    */
 					enemy.xEffects = 
@@ -354,11 +354,13 @@ public class Explosion
 					
 					double yCorrect = this.y;
 					
+					//Explosions y value doesn't go greater than 1 (Through the floor)
 					if(this.y > 1)
 					{
 						yCorrect = 1;
 					}
 					
+					//If explosion is above the enemy
 					if(-yCorrect > enemy.yPos) 
 					{
 						double yForce = Math.abs(yCorrect - (enemy.yPos));
@@ -369,6 +371,7 @@ public class Explosion
 						
 						enemy.yEffects = ((-1/yForce) * (force / 8));// / enemy.weightLevel;
 					}
+					//If explosion is below the enemy
 					else
 					{
 						double yForce = Math.abs((enemy.yPos) - yCorrect) / 500;
@@ -397,6 +400,7 @@ public class Explosion
 						enemy.enemyDeath();
 						block.entitiesOnBlock.remove(enemy);
 					}
+					//If bug where a copy of the enemy is made, remove it
 					else if(enemy.health <= 0 && !enemy.isAlive)
 					{
 						block.entitiesOnBlock.remove(enemy);
@@ -406,64 +410,74 @@ public class Explosion
 			
 			try
 			{
-				//Secret glass block
-				if(block.wallID == 4 &&
-						block.wallItem.itemID ==
-						ItemNames.BREAKABLEWALL.getID())
+				for(int j = 0; j < block.wallItems.size(); j++)
 				{
-					block.health -= 60;
+					Item item = block.wallItems.get(j);
 					
-					//Blass glass hit/break sound
-					SoundController.glassBreak.playAudioFile(distanceFromPlayer);
-					
-					if(block.health <= 0)
+					//If Breakable block
+					if(item != null && item.itemID ==
+							ItemNames.BREAKABLEWALL.getID())
 					{
-						//Remove breakable wall item
-						Game.items.remove(block.wallItem);
+						block.health -= 60;
 						
-						//Keep track of the enemies on the block before 
-						//the block changes
-						ArrayList<Entity> temp = block.entitiesOnBlock;
+						//Glass hit/break sound
+						if(block.wallID == 4)
+						{
+							SoundController.glassBreak.playAudioFile(distanceFromPlayer);
+						}
 						
-						//New air block
-						block = new Block(0,0,0,block.x, block.z);
-						block.wallItem = null;
-						
-						//Same enemies are on this block as the one that 
-						//it changed from
-						block.entitiesOnBlock = temp;
-						
-						//Re-add to level
-						Level.blocks[block.x + block.z * Level.width] = block;
+						//If wall breaks
+						if(block.health <= 0)
+						{
+							//Remove breakable wall item
+							Game.items.remove(item);
+							
+							//Keep track of the enemies on the block before 
+							//the block changes
+							ArrayList<Entity> temp = block.entitiesOnBlock;
+							block.wallItems.remove(item);
+							ArrayList<Item> temp2 = block.wallItems;
+							
+							//New air block
+							block = new Block(0,0,0,block.x, block.z);
+							
+							//Same enemies are on this block as the one that 
+							//it changed from
+							block.entitiesOnBlock = temp;
+							block.wallItems = temp2;
+							
+							//Re-add to level
+							Level.blocks[block.x + block.z * Level.width] = block;
+						}
 					}
-				}
-				//If electric wall, this wall can be broken too
-				else if(block.wallID == 15)
-				{
-					block.health -= 60;
-					
-					//Blass glass hit/break sound
-					SoundController.glassBreak.playAudioFile(distanceFromPlayer);
-					
-					if(block.health <= 0)
-					{		
-						//Keep track of enemies on block before the 
-						//block changes
-						ArrayList<Entity> temp = block.entitiesOnBlock;
+					//If electric wall, this wall can be broken too
+					else if(block.wallID == 15)
+					{
+						block.health -= 60;
 						
-						//New non electrified block
-						block = new Block(block.height,
-								19, block.y, block.x, block.z);
-						
-						//Same enemies are on this block as the one that 
-						//it changed from
-						block.entitiesOnBlock = temp;
-						
-						//Explosion sound
+						//Glass hit/break sound
 						SoundController.explosion.playAudioFile(distanceFromPlayer);
 						
-						//Re-add to level
-						Level.blocks[block.x + block.z * Level.width] = block;
+						if(block.health <= 0)
+						{		
+							//Keep track of enemies on block before the 
+							//block changes
+							ArrayList<Entity> temp = block.entitiesOnBlock;
+							
+							//New non electrified block
+							block = new Block(block.height,
+									19, block.y * 4, block.x, block.z);
+							
+							//Same enemies are on this block as the one that 
+							//it changed from
+							block.entitiesOnBlock = temp;
+							
+							//Explosion sound
+							SoundController.computerShutdown.playAudioFile(distanceFromPlayer);
+							
+							//Re-add to level
+							Level.blocks[block.x + block.z * Level.width] = block;
+						}
 					}
 				}
 			}
@@ -478,35 +492,40 @@ public class Explosion
 			    * If the block surrounding it has an explosive canister
 			    * on it
 			    */
-				if(block.wallItem.itemID == 32)
+				for(int j = 0; j < block.wallItems.size(); j++)
 				{
-					ExplosiveCanister temp 
-						= (ExplosiveCanister)block.wallItem;
+					Item item = block.wallItems.get(j);
 					
-					//Distance between explosion and canister
-					distance = Math.sqrt(((Math.abs(this.x - temp.x))
-							* (Math.abs(this.x - temp.x)))
-							+ ((Math.abs(this.z - temp.z))
-									* (Math.abs(this.z - temp.z))));
-					
-					double yCorrect = this.y * 4;
-					
-					//Corrects it because when the explosion hits below
-					//eye level it is technically positive, and when
-					//multiplied by thirteen it causes the statement
-					//below this one turn out to be false.
-					if(this.y > 0)
+					if(item.itemID == 32)
 					{
-						yCorrect = 0;
-					}
-					
-					//If within range, start a new explosion and remove the canister
-					if(Math.abs((temp.y) + (yCorrect)) <= 8)
-					{
-						Game.explosions.add(
-								new Explosion(temp.x, -temp.y/10, temp.z, 1, 0));
-						block.wallItem = null;
-						temp.removeCanister();
+						ExplosiveCanister temp 
+							= (ExplosiveCanister)item;
+						
+						//Distance between explosion and canister
+						distance = Math.sqrt(((Math.abs(this.x - temp.x))
+								* (Math.abs(this.x - temp.x)))
+								+ ((Math.abs(this.z - temp.z))
+										* (Math.abs(this.z - temp.z))));
+						
+						double yCorrect = this.y * 4;
+						
+						//Corrects it because when the explosion hits below
+						//eye level it is technically positive, and when
+						//multiplied by thirteen it causes the statement
+						//below this one turn out to be false.
+						if(this.y > 0)
+						{
+							yCorrect = 0;
+						}
+						
+						//If within range, start a new explosion and remove the canister
+						if(Math.abs((temp.y) + (yCorrect)) <= 8)
+						{
+							Game.explosions.add(
+									new Explosion(temp.x, -temp.y/10, temp.z, 1, 0));
+							block.wallItems.remove(item);
+							temp.removeCanister();
+						}
 					}
 				}
 			}

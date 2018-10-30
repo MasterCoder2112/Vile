@@ -90,6 +90,9 @@ public class Player
 	public static boolean godModeOn;
 	public static boolean unlimitedAmmoOn;
 	
+	//Is a wall crushing the player, forcing him/her to crouch
+	public static boolean forceCrouch;
+	
 	//Is player still alive?
 	public static boolean alive = true;
 	
@@ -137,6 +140,8 @@ public class Player
 		environProtectionTime = 0;
 		immortality = 0;
 		vision = 0;
+		
+		forceCrouch = false;
 		
 		weapons[0] = new Pistol();
 		weapons[1] = new Shotgun();

@@ -1,6 +1,7 @@
 package com.vile.entities;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import com.vile.Display;
 import com.vile.SoundController;
@@ -32,6 +33,19 @@ public class Shotgun extends Weapon implements WeaponInterface
     */
 	public void updateValues()
 	{
+		//Generates a random number to see if the projectile will be a
+		//critical hit or not
+		Random rand = new Random();
+		int randInt = rand.nextInt(criticalHitChances);
+		
+		boolean criticalHit = false;
+		
+		//If value of 0, be a critical hit
+		if(randInt == 0)
+		{
+			criticalHit = true;
+		}
+				
 		//IF being fired
 		if(weaponShootTime != 0)
 		{
@@ -54,7 +68,14 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				//Create the bullet
 				Bullet bullet = new Bullet(damage, 0.03, Player.x,
-						-(Player.y * 0.085), Player.z, weaponID, Player.rotation);
+						-(Player.y * 0.085), Player.z, weaponID, Player.rotation,
+						criticalHit);
+				
+				//Bullet will be lower if player is crouching
+				if(Player.yCorrect + 1 < Player.y)
+				{
+					bullet.y = 0.8;
+				}
 
 				
 				/*
@@ -70,7 +91,13 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation + 0.06);
+						Player.rotation + 0.06, criticalHit);
+				
+				//Bullet will be lower if player is crouching
+				if(Player.yCorrect + 1 < Player.y)
+				{
+					bullet.y = 0.8;
+				}
 
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -85,7 +112,13 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation - 0.06);
+						Player.rotation - 0.06, criticalHit);
+				
+				//Bullet will be lower if player is crouching
+				if(Player.yCorrect + 1 < Player.y)
+				{
+					bullet.y = 0.8;
+				}
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -100,7 +133,13 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation + 0.04);
+						Player.rotation + 0.04, criticalHit);
+				
+				//Bullet will be lower if player is crouching
+				if(Player.yCorrect + 1 < Player.y)
+				{
+					bullet.y = 0.8;
+				}
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -115,7 +154,13 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation - 0.04);
+						Player.rotation - 0.04, criticalHit);
+				
+				//Bullet will be lower if player is crouching
+				if(Player.yCorrect + 1 < Player.y)
+				{
+					bullet.y = 0.8;
+				}
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -130,7 +175,13 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation + 0.08);
+						Player.rotation + 0.08, criticalHit);
+				
+				//Bullet will be lower if player is crouching
+				if(Player.yCorrect + 1 < Player.y)
+				{
+					bullet.y = 0.8;
+				}
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -145,7 +196,13 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation - 0.08);
+						Player.rotation - 0.08, criticalHit);
+				
+				//Bullet will be lower if player is crouching
+				if(Player.yCorrect + 1 < Player.y)
+				{
+					bullet.y = 0.8;
+				}
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -160,7 +217,13 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation + 0.015);
+						Player.rotation + 0.015, criticalHit);
+				
+				//Bullet will be lower if player is crouching
+				if(Player.yCorrect + 1 < Player.y)
+				{
+					bullet.y = 0.8;
+				}
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check
@@ -175,7 +238,13 @@ public class Shotgun extends Weapon implements WeaponInterface
 				
 				bullet = new Bullet(damage, 0.03, Player.x,
 						-(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation - 0.015);
+						Player.rotation - 0.015, criticalHit);
+				
+				//Bullet will be lower if player is crouching
+				if(Player.yCorrect + 1 < Player.y)
+				{
+					bullet.y = 0.8;
+				}
 				
 			   /*
 			    * Instead of rendering the bullet and all that, just check

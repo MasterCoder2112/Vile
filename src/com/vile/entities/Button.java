@@ -11,13 +11,13 @@ package com.vile.entities;
  * of button, and that is a button that ends the level and moves on to 
  * the next one (if there is one). 
  */
-public class Button extends Entity 
+public class Button extends Item 
 {	
 	public boolean pressed = false;
 	
-	public Button(double x, double y, double z, int itemID, int itemActID) 
+	public Button(double x, double y, double z, int itemID, int itemActID, String audioQueue) 
 	{
-		super(0, 0, 0, 0, 0, x, y, z, 0, 0, itemActID);
+		super(0, x, y, z, 53, 0, itemActID, audioQueue);
 	}
 
 }

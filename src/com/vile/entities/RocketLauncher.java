@@ -1,5 +1,7 @@
 package com.vile.entities;
 
+import java.util.Random;
+
 import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.input.Controller;
@@ -30,6 +32,19 @@ public class RocketLauncher extends Weapon implements WeaponInterface
     */
 	public void updateValues()
 	{
+		//Generates a random number to see if the projectile will be a
+		//critical hit or not
+		Random rand = new Random();
+		int randInt = rand.nextInt(criticalHitChances);
+		
+		boolean criticalHit = false;
+		
+		//If value of 0, be a critical hit
+		if(randInt == 0)
+		{
+			criticalHit = true;
+		}
+		
 		//IF being fired
 		if(weaponShootTime != 0)
 		{
@@ -53,11 +68,18 @@ public class RocketLauncher extends Weapon implements WeaponInterface
 				
 				//Adds rocket to map
 				Game.addBullet(damage, weaponID, 0.2,
-						Player.rotation);
+						Player.rotation, criticalHit);
 				
-				//Begin rocket sound effect, and play firing sound effect
-				SoundController.rocketFire.playAudioFile(0);
-				SoundController.rocketFly.playAudioFile(0);
+				try
+				{
+					//Begin rocket sound effect, and play firing sound effect
+					SoundController.rocketFire.playAudioFile(0);
+					SoundController.rocketFly.playAudioFile(0);
+				}
+				catch(Exception e)
+				{
+					
+				}
 			}
 			//Weapon firing phase increases every so many ticks
 			else if(weaponShootTime == 6)

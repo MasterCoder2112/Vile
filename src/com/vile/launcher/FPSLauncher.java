@@ -126,7 +126,7 @@ public class FPSLauncher extends JFrame
 	private static JLabel  saveName;
 	
 	private static JTextArea readMeText;
-	private static JTextField newMapName;
+	public static JTextField newMapName;
 	private static JTextField newUserName;
 	private static JTextField saveTextfield;
 	/*********************************************End elements*/
@@ -151,6 +151,7 @@ public class FPSLauncher extends JFrame
 	
 	//Name of resource pack being used
 	public static String themeName = "/default";
+	public static String themeNameOld = "/default";
 	
 	//Volume Knobs
 	public static JSlider musicVolume;
@@ -165,9 +166,6 @@ public class FPSLauncher extends JFrame
 	
 	//In Story, or survival mode? Or no mode at all?
 	public static int gameMode = 2;
-	
-	//Whether sound files have been opened yet
-	private static boolean opened      = false;
 	
 	//Is mouse option on
 	private static boolean mouseStatus = true;
@@ -190,6 +188,9 @@ public class FPSLauncher extends JFrame
 	//Is the user trying to load a game?
 	public static boolean loadingGame = false;
 	
+	//If return to game is pressed
+	public static boolean returning = false;
+	
 	//Width and height of the Jframe here
 	public static final int WIDTH  = 800;
 	public static final int HEIGHT = 600;
@@ -207,6 +208,12 @@ public class FPSLauncher extends JFrame
 	//The ID of the launcher menu. Either main menu, options, controls,
 	//or Log in screen.
 	public int idNum = 3;
+	
+	//Input stream only for the launcher
+	private static AudioInputStream input;
+	
+	//Makes sure click audio clips aren't opened multiple times
+	private static boolean opened = false;
 	
    /*
     * Listens for if an item in a choice element was pressed. Right now I
@@ -230,7 +237,7 @@ public class FPSLauncher extends JFrame
 	ActionListener aL = new ActionListener()
 	{
 		public void actionPerformed(ActionEvent e)
-		{
+		{			
 			//Call the play audio method to play the sound
 			click.playAudioFile(0);	
 			
@@ -238,7 +245,29 @@ public class FPSLauncher extends JFrame
 			//music, dispose of the menu, and start new game
 			if(e.getSource() == play)
 			{
-				Display.music.stop();
+				try
+				{
+					Display.music.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				Display.music = null;
+				
+				//Close out of current music thread
+				try
+				{
+					input.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				input = null;
+				
 				audioOn = false;
 				dispose();
 				gameMode = 1;
@@ -248,6 +277,7 @@ public class FPSLauncher extends JFrame
 				Display.smoothFPS         = smoothFPS;
 				
 				loadingGame = false;
+				returning = false;
 
 				new RunGame();
 			}
@@ -256,7 +286,53 @@ public class FPSLauncher extends JFrame
 			//custom map or the default map
 			if(e.getSource() == playGame)
 			{
-				Display.music.stop();
+				//Close out of current music thread
+				try
+				{
+					Display.inputStream.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				Display.inputStream = null;
+				
+				//Close out of current music thread
+				try
+				{
+					input.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				input = null;
+				
+				try
+				{
+					Display.music.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				Display.music = null;
+				
+				try
+				{
+					RunGame.game = null;
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				//Garbage collect
+				System.gc();
+				
 				audioOn = false;
 				dispose();
 				gameMode = 0;
@@ -271,6 +347,7 @@ public class FPSLauncher extends JFrame
 				Display.newMapName = startMap;
 				
 				loadingGame = false;
+				returning = false;
 
 				new RunGame();
 			}
@@ -280,6 +357,23 @@ public class FPSLauncher extends JFrame
 			{
 				dispose();
 				new Options();
+				
+				//TODO change if need be
+				
+			   /*
+			    * Fixes an old bug where the textfield was unable to gain
+			    * focus sometimes, and therefore a mapname could not be 
+			    * entered if you wanted to do so. 
+			    */
+				if(newMapName != null)
+				{
+					newMapName.setEnabled(true);
+					newMapName.setEditable(true);
+					newMapName.setFocusable(true);
+					newMapName.requestFocus();
+					newMapName.requestFocusInWindow();
+					newMapName.grabFocus();
+				}
 			}
 			
 			//Start up controls menu
@@ -302,8 +396,48 @@ public class FPSLauncher extends JFrame
 				//menu
 				if(idNum == 1)
 				{
+					String temp 			  = "/"+theme.getItem(theme.getSelectedIndex());
 					resolutionChoice		  = resolution.getSelectedIndex();
-					themeName				  = "/"+theme.getItem(theme.getSelectedIndex());
+					
+					//If theme changed, stop current music and change themeName
+					//Close all open audio threads
+					if(!themeName.equals(temp))
+					{
+						try
+						{
+							Display.inputStream.close();
+						}
+						catch(Exception ex)
+						{
+	
+						}
+						
+						try
+						{
+							input.close();
+						}
+						catch(Exception ex)
+						{
+		
+						}
+						
+						input = null;
+						
+						Display.inputStream = null;
+						
+						try
+						{
+							Display.music.close();
+						}
+						catch(Exception ex)
+						{
+						}
+						
+						Display.music = null;
+						
+						themeName = temp;
+					}
+					
 					levelSizeChoice			  = levelSize.getSelectedIndex();
 					modeChoice				  = mode.getSelectedIndex();
 					musicChoice				  = music.getSelectedIndex();
@@ -326,12 +460,40 @@ public class FPSLauncher extends JFrame
 			//Return to current game
 			if(e.getSource() == returnToGame)
 			{
-				Display.resetGame = true;
+				//Close out of current music thread
+				try
+				{
+					input.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				input = null;
+				
+				//Shut off main menu music if the audio is on
+				if(audioOn)
+				{
+					try
+					{
+						Display.music.close();
+					}
+					catch(Exception ex)
+					{
+						
+					}
+					
+					Display.music = null;
+					Display.audioOn = false;
+				}
+				
 				audioOn = false;
 
 				Display.mouseOn           = mouseStatus;
 				Display.musicTheme        = musicChoice;
 				Display.smoothFPS         = smoothFPS;
+				returning = true;
 				
 				dispose();
 				new RunGame();
@@ -398,6 +560,18 @@ public class FPSLauncher extends JFrame
 				
 				Display.music.stop();
 				audioOn = false;
+				
+				//Close out of current music thread
+				try
+				{
+					input.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				input = null;
 				
 				saveStats();
 				
@@ -511,7 +685,7 @@ public class FPSLauncher extends JFrame
 	        				":"+Level.height+":"+Game.mapNum+":"+
 	        				Game.mapAudio+":"+Game.mapFloor+":"+
 	        				Game.mapCeiling+":"+Render3D.ceilingDefaultHeight+
-	        				":"+Render3D.renderDistanceDefault+":"+Game.mapName+",");
+	        				":"+Level.renderDistance+":"+Game.mapName+",");
 	        		
 	        		//Weapons
 	        		for(int i = 0; i < Player.weapons.length; i++)
@@ -585,9 +759,18 @@ public class FPSLauncher extends JFrame
 	        		for(int i = 0; i < Game.items.size(); i++)
 	        		{
 	        			Item item = Game.items.get(i);
+	        			String audioQueue = item.audioQueue;
+	        			
+	        			//So any null audio queues will be set as -1
+	        			//to be ignored
+	        			if(audioQueue.equals(""))
+	        			{
+	        				audioQueue = "-1";
+	        			}
+	        			
 	        			rewrite.write(item.itemActivationID+":"+item.itemID+
 	        					":"+item.x+":"+item.y+":"+item.z+":"
-	        					+item.rotation+":"+item.audioQueue+";");
+	        					+item.rotation+":"+audioQueue+";");
 	        		}
 	        		
 	        		rewrite.newLine();		
@@ -633,8 +816,8 @@ public class FPSLauncher extends JFrame
 	        		for(int i = 0; i < Game.buttons.size(); i++)
 	        		{
 	        			Button b = Game.buttons.get(i);
-	        			rewrite.write(b.ID+":"+b.itemActivationID+":"+
-	        			b.xPos+":"+b.yPos+":"+b.zPos+":"+b.pressed+";");
+	        			rewrite.write(b.itemID+":"+b.itemActivationID+":"+
+	        			b.x+":"+b.y+":"+b.z+":"+b.pressed+":"+b.audioQueue+";");
 	        		}
 	        		
 	        		rewrite.newLine();		
@@ -672,7 +855,7 @@ public class FPSLauncher extends JFrame
 	        		{
 	        			Corpse cor = Game.corpses.get(i);
 	        			rewrite.write(cor.enemyID+":"+cor.phaseTime+":"+
-	        			cor.x+":"+cor.y+":"+cor.z+":"+cor.time+
+	        			cor.xPos+":"+cor.yPos+":"+cor.zPos+":"+cor.time+
 	        			":"+cor.xEffects+":"+cor.yEffects+":"+cor.zEffects+";");
 	        		}
 	        		
@@ -705,6 +888,7 @@ public class FPSLauncher extends JFrame
 			{
 				try
 				{
+					//TODO fix up
 					fileToLoad = saveTextfield.getText();
 					
 					//If no file is entered, or the file doesn't exist
@@ -727,8 +911,22 @@ public class FPSLauncher extends JFrame
 				}
 				
 				loadingGame = true;
+				
 				Display.music.stop();
 				audioOn = false;
+				
+				//Close out of current music thread
+				try
+				{
+					input.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				input = null;
+				
 				dispose();
 				gameMode = 0;
 
@@ -813,6 +1011,31 @@ public class FPSLauncher extends JFrame
 			//If logging in
 			if(e.getSource() == logIn)
 			{
+				try
+				{
+					Display.music.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				Display.music = null;
+				
+				audioOn = false;
+				
+				//Close out of current music thread
+				try
+				{
+					input.close();
+				}
+				catch(Exception ex)
+				{
+					
+				}
+				
+				input = null;
+				
 				try
 				{
 					//If the user did not type in a new username
@@ -910,6 +1133,8 @@ public class FPSLauncher extends JFrame
 						{
 							System.out.println(ex);
 						}
+						
+						sc.close();
 						
 						dispose();
 						new FPSLauncher(0);
@@ -1106,12 +1331,53 @@ public class FPSLauncher extends JFrame
 	    */
 		try
 		{
-			if(!audioOn && !Display.pauseGame)
+			if((!audioOn && !Display.audioOn)
+					|| !themeName.equals(themeNameOld))
 			{
+				//If theme is changing
+				if(audioOn || Display.audioOn)
+				{
+					try
+					{
+						input.close();
+					}
+					catch(Exception e)
+					{
+						
+					}
+					
+					input = null;
+					
+					try
+					{
+						Display.inputStream.close();
+					}
+					catch(Exception e)
+					{
+						
+					}
+					
+					Display.inputStream = null;
+					
+					try
+					{
+						Display.music.close();
+					}
+					catch(Exception e)
+					{
+						
+					}
+					
+					Display.music = null;
+					
+					Display.audioOn = false;
+				}
+				
+				themeNameOld = themeName;
 				Display.music = AudioSystem.getClip();
-				AudioInputStream input =
+				input =
 						AudioSystem.getAudioInputStream
-						(new File("resources"+themeName+"/audio/test/title.wav"));
+						(new File("resources"+themeName+"/audio/title.wav"));
 						//(this.getClass().getResource
 								//("resources"+Textures.extraFolder+"/audio/test/title.wav"));
 				Display.music.open(input);
@@ -1122,7 +1388,26 @@ public class FPSLauncher extends JFrame
 		}
 		catch (Exception e)
 		{
-			System.out.println(e);
+			try
+			{
+				if(!audioOn && !Display.audioOn)
+				{
+					Display.music = AudioSystem.getClip();
+					AudioInputStream input =
+							AudioSystem.getAudioInputStream
+							(new File("resources/default/audio/title.wav"));
+							//(this.getClass().getResource
+									//("resources"+Textures.extraFolder+"/audio/test/title.wav"));
+					Display.music.open(input);
+					Display.music.loop(Clip.LOOP_CONTINUOUSLY);
+					Display.music.start();
+					audioOn = true;
+				}
+			}
+			catch(Exception ex)
+			{
+				System.out.println(ex);
+			}
 		}
 		
 		try
@@ -1139,27 +1424,28 @@ public class FPSLauncher extends JFrame
 		
 		//Reset music volume
 		Sound.setMusicVolume(Display.music);
-
-		if (!opened) 
+		
+		if(!opened)
 		{
 			try
 			{
-				click = new Sound(4, "resources"+themeName+"/audio/test/titleClick.wav");
+				click = new Sound(4, "resources"+themeName+"/audio/titleClick.wav");
 			}
 			catch(Exception e)
 			{
 				try
 				{
-					click = new Sound(4, "resources/default/audio/test/titleClick.wav");
+					click = new Sound(4, "resources/default/audio/titleClick.wav");
 				}
 				catch(Exception ex)
 				{
 					//Sound couldn't be found
 				}
 			}
-
+			
 			opened = true;
 		}
+		
 		
 		//Changes Java Icon to the new Vile Icon
 		ImageIcon titleIcon = new ImageIcon("resources"+themeName+"/textures/hud/titleIcon.png");

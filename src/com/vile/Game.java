@@ -47,10 +47,10 @@ public class Game implements Runnable
     * to read in such as the block type, block height, item on that block,
     * and eventually things like brightness of that block in the map.
     */
-	public static ValueHolder[][] map;
+	private static ValueHolder[][] map;
 	
 	//The level the game has loaded up
-	public static Level level;
+	private static Level level;
 	
 	//Size of level
 	public static int levelSize;
@@ -109,6 +109,10 @@ public class Game implements Runnable
 	public static ArrayList<HitSprite> sprites 
 				= new ArrayList<HitSprite>();
 	
+	//For Smile resource pack only
+	public static ArrayList<Item> happySavers
+	 			= new ArrayList<Item>();
+	
 	//Keeps track of all controls, and whether they are pressed or not
 	private static boolean key[];
 	
@@ -145,6 +149,7 @@ public class Game implements Runnable
 	public static boolean weaponSlot2;
 	public static boolean weaponSlot3;
 	public static boolean unlimAmmo;
+	public static boolean clearDistance;
 	/* End Game Actions ***********************************************/
 	
    /**
@@ -182,7 +187,10 @@ public class Game implements Runnable
 		}
 
 		//Set up the controller to control player movements and actions
+		controls = null;
 		controls = new Controller();
+		
+		key = null;
 	}
 	
    /**
@@ -232,6 +240,7 @@ public class Game implements Runnable
 		weaponSlot2 = key[KeyEvent.VK_3];
 		weaponSlot3 = key[KeyEvent.VK_4];
 		unlimAmmo   = key[KeyEvent.VK_K];
+		clearDistance = key[KeyEvent.VK_I];
 		
 		//Sort enemies according to their distance to you but only if
 		//not in survival
@@ -331,10 +340,20 @@ public class Game implements Runnable
 				//De-activate the button
 				temp.activated = false;
 				
-				Block button = Level.getBlock((int)temp.xPos, (int)temp.zPos);
+				Block button = Level.getBlock((int)temp.x, (int)temp.z);
 				
 				//Change the wall texture to show the button has been activated
-				button.wallID = 43;
+				//Only if the original wall it was on is a button
+				if(button.wallID == 26)
+				{
+					button.wallID = 43;
+				}
+				
+				//If special ID, turn on lights to make map brighter
+				if(temp.itemActivationID == 1221)
+				{
+					Render3D.renderDistanceDefault = 12000;
+				}
 				
 				//Search through all the doors
 				for(int k = 0; k < Game.doors.size(); k++)
@@ -346,7 +365,31 @@ public class Game implements Runnable
 					if(door.itemActivationID 
 							== temp.itemActivationID)
 					{
-						door.activated = true;
+					   /*
+					    * If the itemActivationID is the
+					    * special ID, then just stop the door
+					    * from automatically opening and closing.
+					    * Otherwise activate the door as normal.
+					    */
+						if(door.itemActivationID == 2112)
+						{
+							//Hoping no one uses this id, but
+							//this stops the door from automatically
+							//opening and closing continuously.
+							door.itemActivationID = 1221;
+						}
+						//If this special ID, activate it to continue to
+						//move
+						else if(door.itemActivationID == 1221)
+						{
+							door.itemActivationID = 2112;
+							door.activated = true;
+							door.stayOpen = false;
+						}
+						else
+						{
+							door.activated = true;
+						}
 					}
 				}
 				
@@ -360,7 +403,30 @@ public class Game implements Runnable
 					if(e.itemActivationID 
 							== temp.itemActivationID)
 					{
-						e.activated = true;
+					   /*
+					    * If the itemActivationID is the
+					    * special ID, then just stop the elevator
+					    * from automatically moving.
+					    * Otherwise activate the elevator as normal.
+					    */
+						if(e.itemActivationID == 2112)
+						{
+							//Hoping no one uses this id, but
+							//this stops the elevator from automatically
+							//moving continuously.
+							e.itemActivationID = 1221;
+						}
+						//If this special ID, activate it to continue to
+						//move
+						else if(e.itemActivationID == 1221)
+						{
+							e.itemActivationID = 2112;
+							e.activated = true;
+						}
+						else
+						{
+							e.activated = true;
+						}
 					}
 				}
 				
@@ -413,6 +479,7 @@ public class Game implements Runnable
 							
 							//Block is effectively no longer there
 							block2.height = 0;
+							block2.wallEntities = new ArrayList<Item>();
 							
 							tempItems2.add(item);
 						}
@@ -439,7 +506,7 @@ public class Game implements Runnable
 		{
 			Door door = Game.doors.get(i);
 			
-			if(door.activated)
+			if(door.activated || door.itemActivationID == 2112)
 			{
 				door.move();
 			}
@@ -451,7 +518,8 @@ public class Game implements Runnable
 		{
 			Elevator elevator = Game.elevators.get(i);
 			
-			if(elevator.activated)
+			if(elevator.activated ||
+					elevator.itemActivationID == 2112)
 			{
 				elevator.move();
 			}
@@ -492,10 +560,18 @@ public class Game implements Runnable
     * make them happy.
     */
 	public static void addBullet(int damage, int ID, double speed, 
-			double rotation)
+			double rotation, boolean criticalHit)
 	{
-		bullets.add(new Bullet(damage, speed, Player.x,
-				((-Player.y) * 0.085), Player.z, ID, rotation));
+		Bullet b = new Bullet(damage, speed, Player.x,
+				((-Player.y) * 0.085), Player.z, ID, rotation, criticalHit);
+		
+		//Bullet will be lower if player is crouching
+		if(Player.yCorrect + 1 < Player.y)
+		{
+			b.y = 0.8;
+		}
+		
+		bullets.add(b);
 	}
 	
    /**
@@ -523,7 +599,7 @@ public class Game implements Runnable
 		//Sentinel 
 		else if(randomNum <= 40)
 		{
-			yPos   = -5;
+			yPos   = -1;
 			ID     = 2;
 		}
 		//Mutated Commando
@@ -579,7 +655,7 @@ public class Game implements Runnable
 		//Sentinel
 		else if(randomNum <= 49)
 		{
-			yPos   = -5;
+			yPos   = -1;
 			ID     = 2;
 		}
 		//Mutated Commando
@@ -619,6 +695,9 @@ public class Game implements Runnable
 		//A new scanner object that is defaultly set to null
 		Scanner sc = null;  
 		
+		//Resets all the lists
+		resetLists();
+		
 	   /*
 	    * Try to read the file and if not,
 	    * state the error
@@ -631,11 +710,13 @@ public class Game implements Runnable
 							+FPSLauncher.currentUserName+"/"
 							+FPSLauncher.fileToLoad+".txt")));
 			
+			//Current line being read in
 			String currentLine = "";
 			
 			///////////////////// Map stuff
 			currentLine = sc.nextLine();
 		    
+			//Elements in the line
 			String[] elements = currentLine.split(":");
 			
 			//Was it survival or campaign mode
@@ -650,6 +731,9 @@ public class Game implements Runnable
 			enemiesInMap = Integer.parseInt(elements[3]);
 			Display.kills = Integer.parseInt(elements[4]);
 			FPSLauncher.themeName = (elements[5]);
+			
+			//Length of elements to read in
+			int length = 0;
 			
 			//////////////////////////Player stuff now
 			currentLine = sc.nextLine();
@@ -719,12 +803,26 @@ public class Game implements Runnable
 			
 			//Split up weapon Attributes
 			elements = weaponStuff.split(";");
+			
+			//Length is set to the amount of elements
+			length = elements.length;
+			
+		   /*
+    	    * If there is one element, and it is just blank space, then
+    	    * set the array to being null again.
+    	    */
+    		if(elements.length == 1
+    				&& elements[0].trim().equals(""))
+    		{
+    			elements = null;
+    			length = 0;
+    		}
     		
 		   /*
 		    * For each weapon, load in its attributes depending on what
 		    * they were when the game was saved.
 		    */
-    		for(int i = 0; i < elements.length; i++)
+    		for(int i = 0; i < length; i++)
     		{
     			Weapon w = Player.weapons[i];
     			
@@ -767,7 +865,21 @@ public class Game implements Runnable
 			
 			elements = currentLine.split(";");
 			
-			for(int i = 0; i < elements.length; i++)
+			//Length is set to the amount of elements
+			length = elements.length;
+			
+		   /*
+    	    * If there is one element, and it is just blank space, then
+    	    * set the array to being null again.
+    	    */
+    		if(elements.length == 1
+    				&& elements[0].trim().equals(""))
+    		{
+    			elements = null;
+    			length = 0;
+    		}
+			
+			for(int i = 0; i < length; i++)
 			{
 				otherStuff = elements[i];
 				String[] bAt = otherStuff.split(":");
@@ -775,7 +887,7 @@ public class Game implements Runnable
 				//Create enemy with its needed values
 				Block b = new Block(Double.parseDouble(bAt[6]),
 						Integer.parseInt(bAt[4]), 
-						Double.parseDouble(bAt[2]),
+						Double.parseDouble(bAt[2]) * 4,
 						Integer.parseInt(bAt[1]),
 						Integer.parseInt(bAt[3]));
 				
@@ -806,7 +918,21 @@ public class Game implements Runnable
     		
     		elements = currentLine.split(";");
     		
-    		for(int i = 0; i < elements.length; i++)
+    		//Length is set to the amount of elements
+			length = elements.length;
+    		
+    	   /*
+    	    * If there is one element, and it is just blank space, then
+    	    * set the array to being null again.
+    	    */
+    		if(elements.length == 1
+    				&& elements[0].trim().equals(""))
+    		{
+    			elements = null;
+    			length = 0;
+    		}
+    		
+    		for(int i = 0; i < length; i++)
     		{
     			otherStuff = elements[i];
     			String[] enAt = otherStuff.split(":");
@@ -862,17 +988,21 @@ public class Game implements Runnable
     			currentLine += thisLine;
     		}
     		
-    		int length = 0;
+    		elements = currentLine.split(";");
     		
-    		if(currentLine.equals(""))
-    		{
-    			elements = null;
-    		}
-    		else
-    		{
-    			elements = currentLine.split(";");
-    			length = elements.length;
-    		}
+    		//Length is set to the amount of elements
+			length = elements.length;
+    		
+    	   /*
+     	    * If there is one element, and it is just blank space, then
+     	    * set the array to being null again.
+     	    */
+     		if(elements.length == 1
+     				&& elements[0].trim().equals(""))
+     		{
+     			elements = null;
+     			length = 0;
+     		}
     		
     		for(int i = 0; i < length; i++)
     		{
@@ -886,7 +1016,7 @@ public class Game implements Runnable
     					Integer.parseInt(enAt[4]),
     					Double.parseDouble(enAt[12]),
     					Integer.parseInt(enAt[5]));
-    			
+
     			en.maxHeight = Double.parseDouble(enAt[6]);
     			en.newTarget = Boolean.parseBoolean(enAt[7]);
     			en.targetX = Double.parseDouble(enAt[8]);
@@ -922,17 +1052,21 @@ public class Game implements Runnable
     			currentLine += thisLine;
     		}
     		
-    		length = 0;
+    		elements = currentLine.split(";");
     		
-    		if(currentLine.equals(""))
-    		{
-    			elements = null;
-    		}
-    		else
-    		{
-    			elements = currentLine.split(";");
-    			length = elements.length;
-    		}
+    		//Length is set to the amount of elements
+			length = elements.length;
+    		
+     	   /*
+      	    * If there is one element, and it is just blank space, then
+      	    * set the array to being null again.
+      	    */
+      		if(elements.length == 1
+      				&& elements[0].trim().equals(""))
+      		{
+      			elements = null;
+      			length = 0;
+      		}
     		
     		for(int i = 0; i < length; i++)
     		{
@@ -942,6 +1076,8 @@ public class Game implements Runnable
     			int itemID = Integer.parseInt(itemAtt[1]);
     			
     			Item temp = null;
+    			
+    			//TODO update item loading stuff maybe
     			
     		   /*
 			    * If its not an explosive canister, add it as a normal
@@ -969,14 +1105,16 @@ public class Game implements Runnable
 				
 				Block itemBlock = Level.getBlock((int)temp.x, (int)temp.z);
 				
-				//If the item is solid
+				//If the item gives the block a specific quality, or if the
+				//item can not be removed from the block (if its solid)
 				if(temp.isSolid ||
 						itemID == ItemNames.BREAKABLEWALL.getID()
-						|| itemID == ItemNames.SECRET.getID())
+						|| itemID == ItemNames.SECRET.getID()
+						|| itemID == ItemNames.LINEDEF.getID())
 				{
 					//Set item to being the item that is within this
 					//block only if it is solid
-					itemBlock.wallItem = temp;
+					itemBlock.wallItems.add(temp);
 				}
 				
 				//If satellite dish, add to activatable list as well
@@ -996,7 +1134,7 @@ public class Game implements Runnable
 				{
 					Game.teleporters.add(temp);
 					
-					itemBlock.wallEntity = temp;
+					itemBlock.wallEntities.add(temp);
 				} 			
     		}
     		
@@ -1017,17 +1155,21 @@ public class Game implements Runnable
     			currentLine += thisLine;
     		}
     		
-    		length = 0;
+    		elements = currentLine.split(";");
     		
-    		if(currentLine.equals(""))
-    		{
-    			elements = null;
-    		}
-    		else
-    		{
-    			elements = currentLine.split(";");
-    			length = elements.length;
-    		}
+    		//Length is set to the amount of elements
+			length = elements.length;
+    		
+     	   /*
+      	    * If there is one element, and it is just blank space, then
+      	    * set the array to being null again.
+      	    */
+      		if(elements.length == 1
+      				&& elements[0].trim().equals(""))
+      		{
+      			elements = null;
+      			length = 0;
+      		}
     		
     		for(int i = 0; i < length; i++)
     		{
@@ -1041,7 +1183,7 @@ public class Game implements Runnable
     					Double.parseDouble(bAtt[4]),
     					Double.parseDouble(bAtt[5]),
     					Integer.parseInt(bAtt[0]),
-    					0);
+    					0, false);
     			
     			b.xa = Double.parseDouble(bAtt[6]);
     			b.za = Double.parseDouble(bAtt[7]);
@@ -1067,17 +1209,21 @@ public class Game implements Runnable
     			currentLine += thisLine;
     		}
     		
-    		length = 0;
+    		elements = currentLine.split(";");
     		
-    		if(currentLine.equals(""))
-    		{
-    			elements = null;
-    		}
-    		else
-    		{
-    			elements = currentLine.split(";");
-    			length = elements.length;
-    		}
+    		//Length is set to the amount of elements
+			length = elements.length;
+    		
+     	   /*
+      	    * If there is one element, and it is just blank space, then
+      	    * set the array to being null again.
+      	    */
+      		if(elements.length == 1
+      				&& elements[0].trim().equals(""))
+      		{
+      			elements = null;
+      			length = 0;
+      		}
     		
     		for(int i = 0; i < length; i++)
     		{
@@ -1093,7 +1239,7 @@ public class Game implements Runnable
     					Double.parseDouble(bAtt[4]),
     					Double.parseDouble(bAtt[5]),
     					Integer.parseInt(bAtt[0]),
-    					0,0,0,0,null);
+    					0,0,0,0, null, false);
     			
     			b.xa = Double.parseDouble(bAtt[6]);
     			b.za = Double.parseDouble(bAtt[7]);
@@ -1118,18 +1264,22 @@ public class Game implements Runnable
     			
     			currentLine += thisLine;
     		}
+
+    		elements = currentLine.split(";");
     		
-    		length = 0;
+    		//Length is set to the amount of elements
+			length = elements.length;
     		
-    		if(currentLine.equals(""))
-    		{
-    			elements = null;
-    		}
-    		else
-    		{
-    			elements = currentLine.split(";");
-    			length = elements.length;
-    		}
+     	   /*
+      	    * If there is one element, and it is just blank space, then
+      	    * set the array to being null again.
+      	    */
+      		if(elements.length == 1
+      				&& elements[0].trim().equals(""))
+      		{
+      			elements = null;
+      			length = 0;
+      		}
     		
     		for(int i = 0; i < length; i++)
     		{
@@ -1165,18 +1315,22 @@ public class Game implements Runnable
     			
     			currentLine += thisLine;
     		}
+
+    		elements = currentLine.split(";");
     		
-    		length = 0;
+    		//Length is set to the amount of elements
+			length = elements.length;
     		
-    		if(currentLine.equals(""))
-    		{
-    			elements = null;
-    		}
-    		else
-    		{
-    			elements = currentLine.split(";");
-    			length = elements.length;
-    		}
+     	   /*
+      	    * If there is one element, and it is just blank space, then
+      	    * set the array to being null again.
+      	    */
+      		if(elements.length == 1
+      				&& elements[0].trim().equals(""))
+      		{
+      			elements = null;
+      			length = 0;
+      		}
     		
     		for(int i = 0; i < length; i++)
     		{
@@ -1188,7 +1342,8 @@ public class Game implements Runnable
     					Double.parseDouble(bAtt[3]),
     					Double.parseDouble(bAtt[4]),
     					Integer.parseInt(bAtt[0]),
-    					Integer.parseInt(bAtt[1]));
+    					Integer.parseInt(bAtt[1]),
+    					bAtt[5]);
     			
     			b.pressed = Boolean.parseBoolean(bAtt[5]);
     			
@@ -1211,18 +1366,22 @@ public class Game implements Runnable
     			
     			currentLine += thisLine;
     		}
-			
-    		length = 0;
+
+    		elements = currentLine.split(";");
     		
-    		if(currentLine.equals(""))
-    		{
-    			elements = null;
-    		}
-    		else
-    		{
-    			elements = currentLine.split(";");
-    			length = elements.length;
-    		}
+    		//Length is set to the amount of elements
+			length = elements.length;
+    		
+     	   /*
+      	    * If there is one element, and it is just blank space, then
+      	    * set the array to being null again.
+      	    */
+      		if(elements.length == 1
+      				&& elements[0].trim().equals(""))
+      		{
+      			elements = null;
+      			length = 0;
+      		}
 			
 			for(int i = 0; i < length; i++)
 			{
@@ -1237,7 +1396,7 @@ public class Game implements Runnable
 						Integer.parseInt(dAtt[6]),
 						Integer.parseInt(dAtt[9]),
 						Integer.parseInt(dAtt[1]),
-						Integer.parseInt(dAtt[11]));
+						Double.parseDouble(dAtt[11]) * 4);
 				
 				d.time = Integer.parseInt(dAtt[7]);
 				d.soundTime = Integer.parseInt(dAtt[8]);
@@ -1273,18 +1432,22 @@ public class Game implements Runnable
     			
     			currentLine += thisLine;
     		}
-			
-    		length = 0;
+
+    		elements = currentLine.split(";");
     		
-    		if(currentLine.equals(""))
-    		{
-    			elements = null;
-    		}
-    		else
-    		{
-    			elements = currentLine.split(";");
-    			length = elements.length;
-    		}
+    		//Length is set to the amount of elements
+			length = elements.length;
+    		
+     	   /*
+      	    * If there is one element, and it is just blank space, then
+      	    * set the array to being null again.
+      	    */
+      		if(elements.length == 1
+      				&& elements[0].trim().equals(""))
+      		{
+      			elements = null;
+      			length = 0;
+      		}
 			
 			for(int i = 0; i < length; i++)
 			{
@@ -1298,7 +1461,7 @@ public class Game implements Runnable
 						Integer.parseInt(eAtt[5]),
 						Integer.parseInt(eAtt[6]),
 						Integer.parseInt(eAtt[1]),
-						Integer.parseInt(eAtt[14]));
+						Double.parseDouble(eAtt[14]));
 				
 				e.height = Integer.parseInt(eAtt[7]);
 				e.soundTime = Integer.parseInt(eAtt[8]);
@@ -1336,18 +1499,22 @@ public class Game implements Runnable
     				
     			currentLine += thisLine;
     		}
+
+    		elements = currentLine.split(";");
     		
-    		length = 0;
+    		//Length is set to the amount of elements
+			length = elements.length;
     		
-    		if(currentLine.equals(""))
-    		{
-    			elements = null;
-    		}
-    		else
-    		{
-    			elements = currentLine.split(";");
-    			length = elements.length;
-    		}
+     	   /*
+      	    * If there is one element, and it is just blank space, then
+      	    * set the array to being null again.
+      	    */
+      		if(elements.length == 1
+      				&& elements[0].trim().equals(""))
+      		{
+      			elements = null;
+      			length = 0;
+      		}
     		
     		for(int i = 0; i < length; i++)
     		{
@@ -1374,8 +1541,10 @@ public class Game implements Runnable
 		catch(Exception e)
 		{
 			System.out.println(e);
-			System.exit(0);
 		}
+		
+		//Reset the music with this new audio file
+		display.resetMusic(mapAudio);
 	}
 	
    /**
@@ -1383,6 +1552,9 @@ public class Game implements Runnable
     */
 	public void setUpSurvival()
 	{
+		//Resets all the lists
+		resetLists();
+		
 		calculatedSize = 100;
 		
 		if(FPSLauncher.levelSizeChoice == 0)
@@ -1610,6 +1782,8 @@ public class Game implements Runnable
 				Render3D.renderDistanceDefault 
 					= Integer.parseInt(temp2[2]);
 				
+				Level.renderDistance = Render3D.renderDistanceDefault;
+				
 				mapAudio = temp2[3];
 				
 				mapFloor = Integer.parseInt(temp2[4]);
@@ -1676,9 +1850,14 @@ public class Game implements Runnable
 
 				double height = Integer.parseInt(blockValues[0]);
 				int wallID = Integer.parseInt(blockValues[1]);
-				int entityID = Integer.parseInt(blockValues[2]);
-				double rotation = 0;
-				int itemActID = 0;
+				int entityID1 = Integer.parseInt(blockValues[2]);
+				int entityID2 = 0;
+				double itemRotation = 0;
+				double itemRotation2 = 0;
+				int itemActID1 = 0;
+				int itemActID2 = 0;
+				boolean aboveBlock1 = true;
+				boolean aboveBlock2 = true;
 				int wallY = 0;
 				int doorRaiseHeight = 0;
 				String audioQueue = "";
@@ -1686,28 +1865,28 @@ public class Game implements Runnable
 				//Try to see if block has an entity with a given rotation
 				try
 				{
-					rotation = Integer.parseInt(blockValues[3]);
+					itemRotation = Integer.parseInt(blockValues[3]);
 					
 					//Sets to radians
-					rotation = (rotation / 180) * Math.PI;
+					itemRotation = (itemRotation / 180) * Math.PI;
 				}
 				catch (Exception e)
 				{
 					//If entity does not have a rotation, the default is 0
-					rotation = 0;
+					itemRotation = 0;
 				}
 				
 				//Try to see if block has an entity with a given
 				//Activation ID
 				try
 				{
-					itemActID = Integer.parseInt(blockValues[4]);
+					itemActID1 = Integer.parseInt(blockValues[4]);
 				}
 				catch (Exception e)
 				{
 					//If entity does not have a activation ID
 					//, the default is 0
-					itemActID = 0;
+					itemActID1 = 0;
 				}
 				
 				//Try to see if block has an entity with a given
@@ -1749,6 +1928,66 @@ public class Game implements Runnable
 					doorRaiseHeight = 0;
 				}
 				
+				//In early versions, there could not be two entities to a block
+				try
+				{
+					entityID2 = Integer.parseInt(blockValues[8]);
+				}
+				catch(Exception e)
+				{
+					entityID2 = 0;
+				}
+				
+				//Try to see if block has a second entity with a given
+				//Activation ID
+				try
+				{
+					itemActID2 = Integer.parseInt(blockValues[9]);
+				}
+				catch (Exception e)
+				{
+					//If entity does not have a activation ID
+					//, the default is 0
+					itemActID2 = 0;
+				}
+				
+				//Try to get the second rotation variable mapped for the 
+				//second item/entity
+				try
+				{
+					itemRotation2 = Integer.parseInt(blockValues[10]);
+					
+					//Sets to radians
+					itemRotation2 = (itemRotation2 / 180) * Math.PI;
+				}
+				catch (Exception e)
+				{
+					//If no item rotation is found, set to the default
+					itemRotation2 = 0;
+				}
+				
+				//Whether item1 is above or below the block
+				try
+				{
+					aboveBlock1 = Boolean.parseBoolean(blockValues[11]);
+				}
+				catch (Exception e)
+				{
+					//Above the block by default
+					aboveBlock1 = true;
+				}
+				
+				//Whether item1 is above or below the block
+				try
+				{
+					aboveBlock2 = Boolean.parseBoolean(blockValues[12]);
+				}
+				catch (Exception e)
+				{
+					//Above the block by default
+					aboveBlock2 = true;
+				}
+				
 			   /*
 			    * 100 is a special wall ID which tells this to move onto 
 			    * the next row of the map and begin again.
@@ -1761,10 +2000,24 @@ public class Game implements Runnable
 				}
 				else
 				{
+					int[] entities = new int[2];
+					int[] itemActIDs = new int[2];
+					double[] rotations = new double[2];
+					boolean[] aboveBlocks = new boolean[2];
+					entities[0] = entityID1;
+					entities[1] = entityID2;
+					itemActIDs[0] = itemActID1;
+					itemActIDs[1] = itemActID2;
+					rotations[0] = itemRotation;
+					rotations[1] = itemRotation2;
+					aboveBlocks[0] = aboveBlock1;
+					aboveBlocks[1] = aboveBlock2;
+					
 					//Set the next spot in the map to this new ValueHolder
 					tempMap[row][col] = 
-							new ValueHolder(height, wallID, entityID,
-									rotation, itemActID, audioQueue, wallY, doorRaiseHeight);
+							new ValueHolder(height, wallID, rotations,
+									audioQueue, wallY, doorRaiseHeight,
+									entities, itemActIDs, aboveBlocks);
 					
 					//Go to next column
 					col++;
@@ -1861,6 +2114,7 @@ public class Game implements Runnable
 		enemyProjectiles = new ArrayList<EnemyFire>();
 		activatable   = new ArrayList<Item>();
 		sprites 	  = new ArrayList<HitSprite>();
+		happySavers   = new ArrayList<Item>();
 	}
 
 }

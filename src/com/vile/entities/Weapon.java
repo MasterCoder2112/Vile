@@ -38,7 +38,11 @@ public abstract class Weapon
 	public int weaponShootTime2 = 0;
 	public int weaponPhase = 0;
 	public int weaponPhase2 = 0;
-	public int currentWeapon = 0;	
+	public int currentWeapon = 0;
+	
+	//Random chances it can be a critical hit. Can be lessened by weapon
+	//upgrade points
+	public int criticalHitChances = 20;
 	
 	//FLAGS
 	//Can the weapon be Equipped

@@ -14,9 +14,10 @@ public class ValueHolder
 {
 	public double height = 12;
 	public int wallID    = 1;
-	public int entityID  = 0;
-	public double rotation = 0;
-	public int itemActID = 0;
+	public int[] entities = new int[2];
+	public double[] rotations = new double[2];
+	public int[] itemActIDs = new int[2];
+	public boolean[] aboveBlocks = new boolean[2];
 	public int wallY = 0;
 	public int doorRaiseHeight = 0;
 	
@@ -31,15 +32,17 @@ public class ValueHolder
     * @param wallID
     * @param ID
     */
-	public ValueHolder(double height, int wallID, int ID,
-			double rotation, int itemActID, String audioQueue,
-			int wallY, int doorRaiseHeight) 
+	public ValueHolder(double height, int wallID,
+			double[] rotations, String audioQueue,
+			int wallY, int doorRaiseHeight, int[] entities,
+			int[] itemActIDs, boolean[] aboveBlocks) 
 	{
 		this.height = height;
 		this.wallID = wallID;
-		entityID = ID;
-		this.rotation = rotation;
-		this.itemActID = itemActID;
+		this.entities = entities;
+		this.rotations = rotations;
+		this.aboveBlocks = aboveBlocks;
+		this.itemActIDs = itemActIDs;
 		this.wallY = wallY;
 		this.doorRaiseHeight = doorRaiseHeight;
 		this.audioQueue = audioQueue;
