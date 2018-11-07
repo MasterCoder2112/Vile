@@ -706,6 +706,8 @@ public class Display extends Canvas implements Runnable {
 				tick();
 			}
 
+			// TODO Before this, if in multiplayer and a client, accept data from server so
+			// that the local game renders the correct data.
 			render();
 
 			frames++;
