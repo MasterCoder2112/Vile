@@ -63,7 +63,7 @@ import com.vile.levelGenerator.Level;
 /**
  * @title  FPSLauncher
  * @author Alex Byrd
- * @modified 4/26/2017
+ * @modified 11/10/2018
  * Description:
  * Starts the program off with the main menu. This holds the title
  * theme music, the Start New Game button, the Options menu to
@@ -109,7 +109,12 @@ public class FPSLauncher extends JFrame
 	private static JButton removeUser;
 	private static JButton saveGameMenu;
 	private static JButton removeSave;
-	
+	private static JButton multiplayer;
+	private static JButton host;
+	private static JButton joinServer;
+	private static JButton join;
+	private static JButton backMult;
+
 	private static JLabel  resolutionTitle;
 	private static JLabel  themeTitle;
 	private static JLabel  levelSizeTitle;
@@ -124,11 +129,15 @@ public class FPSLauncher extends JFrame
 	private static JLabel  error;
 	private static JLabel  availableGames;
 	private static JLabel  saveName;
+	private static JLabel  ipAddressTitle;
+	private static JLabel  portTitle;
 	
 	private static JTextArea readMeText;
 	public static JTextField newMapName;
 	private static JTextField newUserName;
 	private static JTextField saveTextfield;
+	private static JTextField ipAddress;
+	private static JTextField port;
 	/*********************************************End elements*/
 	
 	private static ImageIcon titleImage;
@@ -357,13 +366,13 @@ public class FPSLauncher extends JFrame
 			{
 				dispose();
 				new Options();
-				
+
 				//TODO change if need be
-				
+
 			   /*
 			    * Fixes an old bug where the textfield was unable to gain
-			    * focus sometimes, and therefore a mapname could not be 
-			    * entered if you wanted to do so. 
+			    * focus sometimes, and therefore a mapname could not be
+			    * entered if you wanted to do so.
 			    */
 				if(newMapName != null)
 				{
@@ -375,12 +384,37 @@ public class FPSLauncher extends JFrame
 					newMapName.grabFocus();
 				}
 			}
-			
+
+			//Start up Multiplayer menu
+			if(e.getSource() == multiplayer)
+			{
+
+				dispose();
+				new Multiplayer();
+
+			}
+
+			//Start up Join Server menu
+			if(e.getSource() == joinServer)
+			{
+
+				dispose();
+				new JoinServer();
+
+			}
+
 			//Start up controls menu
 			if(e.getSource() ==  controls)
 			{
 				dispose();
 				new Controls();
+			}
+
+			//Start up controls menu
+			if(e.getSource() ==  backMult)
+			{
+				dispose();
+				new Multiplayer();
 			}
 			
 			//Quit game button is clicked
@@ -1506,6 +1540,43 @@ public class FPSLauncher extends JFrame
 		play.addActionListener(aL);
 		panel.add(play);
 
+		multiplayer = new JButton("Multiplayer");
+
+		multiplayer.setBounds(0, 250, 265, 40);
+
+		//Button blends with background
+		multiplayer.setOpaque(false);
+		multiplayer.setContentAreaFilled(false);
+		multiplayer.setBorderPainted(false);
+
+		//Removes textbox focus so the textbox border is removed
+		multiplayer.setFocusPainted(false);
+
+		//Sets font type, mode, and size
+		multiplayer.setFont(new Font("Nasalization", Font.BOLD, 24));
+
+		//Uses a bitwise operator to merge the fonts of bold and italic
+		//for the text
+		multiplayer.setFont(multiplayer.getFont()
+				.deriveFont(Font.BOLD | Font.ITALIC));
+
+		multiplayer.setForeground(defaultColor);
+
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		multiplayer.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				multiplayer.setForeground(mouseColor);
+			}
+
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				multiplayer.setForeground(defaultColor);
+			}
+		});
+
+		multiplayer.addActionListener(aL);
+		panel.add(multiplayer);
+
 		playGame   = new JButton("New Game");
 		playGame.setBounds(0, 100, 270, 40);
 		
@@ -1599,7 +1670,7 @@ public class FPSLauncher extends JFrame
 		panel.add(saveGameMenu);
 		
 		options  = new JButton("Options");
-		options.setBounds(0, 250, 230, 40);
+		options.setBounds(0, 350, 230, 40);
 		
 		//Button blends with background
 		options.setOpaque(false);
@@ -1671,7 +1742,7 @@ public class FPSLauncher extends JFrame
 		panel.add(controls);
 		
 		quit      = new JButton("Quit");
-		quit.setBounds(0, 350, 180, 40);
+		quit.setBounds(0, 400, 180, 40);
 		
 		//Button blends with background
 		quit.setOpaque(false);
@@ -1733,13 +1804,13 @@ public class FPSLauncher extends JFrame
 		//Listens for whether the mouse has entered or exited the button
 		//area and if it has or has not, change color accordingly
 		logOut.addMouseListener(new java.awt.event.MouseAdapter() {
-		    public void mouseEntered(java.awt.event.MouseEvent evt) {
-		        logOut.setForeground(Color.GREEN);
-		    }
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				logOut.setForeground(Color.GREEN);
+			}
 
-		    public void mouseExited(java.awt.event.MouseEvent evt) {
-		        logOut.setForeground(Color.RED);
-		    }
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				logOut.setForeground(Color.RED);
+			}
 		});
 		
 		logOut.addActionListener(aL);
@@ -1748,34 +1819,34 @@ public class FPSLauncher extends JFrame
 		//Refreashes title screen to show all buttons and title perfectly
 		panel.repaint();
 	}
-	
+
    /**
-    * Draws up all the JButtons, Choice boxes, and textfields 
+    * Draws up all the JButtons, Choice boxes, and textfields
     * within the options menu when you pull it up.
     */
 	public void drawOptionsMenu()
 	{
 		back     = new JButton("Back To Main Menu");
 		back.setBounds(0, 325, 300, 40);
-		
+
 		//Button blends with background
 		back.setOpaque(false);
 		back.setContentAreaFilled(false);
 		back.setBorderPainted(false);
-		
+
 		//Removes textbox focus so the textbox border is removed
 		back.setFocusPainted(false);
-		
+
 		//Sets font type, mode, and size
 		back.setFont(new Font("Nasalization", Font.BOLD, 18));
-		
+
 		//Uses a bitwise operator to merge the fonts of bold and italic
 		//for the text
 		back.setFont(back.getFont()
 				.deriveFont(Font.BOLD | Font.ITALIC));
-		
+
 		back.setForeground(Color.RED);
-		
+
 		//Listens for whether the mouse has entered or exited the button
 		//area and if it has or has not, change color accordingly
 		back.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1787,10 +1858,10 @@ public class FPSLauncher extends JFrame
 		        back.setForeground(Color.RED);
 		    }
 		});
-		
+
 		back.addActionListener(aL);
 		panel.add(back);
-		
+
 		if(smoothFPS)
 		{
 			sFPS      = new JButton("Smooth FPS: On");
@@ -1799,27 +1870,27 @@ public class FPSLauncher extends JFrame
 		{
 			sFPS      = new JButton("Smooth FPS: Off");
 		}
-		
+
 		sFPS.setBounds(0, 275, 300, 40);
-		
+
 		//Button blends with background
 		sFPS.setOpaque(false);
 		sFPS.setContentAreaFilled(false);
 		sFPS.setBorderPainted(false);
-		
+
 		//Removes textbox focus so the textbox border is removed
 		sFPS.setFocusPainted(false);
-		
+
 		//Sets font type, mode, and size
 		sFPS.setFont(new Font("Nasalization", Font.BOLD, 18));
-		
+
 		//Uses a bitwise operator to merge the fonts of bold and italic
 		//for the text
 		sFPS.setFont(sFPS.getFont()
 				.deriveFont(Font.BOLD | Font.ITALIC));
-		
+
 		sFPS.setForeground(Color.RED);
-		
+
 		//Listens for whether the mouse has entered or exited the button
 		//area and if it has or has not, change color accordingly
 		sFPS.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1831,10 +1902,10 @@ public class FPSLauncher extends JFrame
 		        sFPS.setForeground(Color.RED);
 		    }
 		});
-		
+
 		sFPS.addActionListener(aL);
 		panel.add(sFPS);
-		
+
 		if(mouseStatus)
 		{
 			mouse     = new JButton("Mouse Status: On");
@@ -1843,27 +1914,27 @@ public class FPSLauncher extends JFrame
 		{
 			mouse     = new JButton("Mouse Status: Off");
 		}
-		
+
 		mouse.setBounds(300, 275, 250, 40);
-		
+
 		//Button blends with background
 		mouse.setOpaque(false);
 		mouse.setContentAreaFilled(false);
 		mouse.setBorderPainted(false);
-		
+
 		//Removes textbox focus so the textbox border is removed
 		mouse.setFocusPainted(false);
-		
+
 		//Sets font type, mode, and size
 		mouse.setFont(new Font("Nasalization", Font.BOLD, 18));
-		
+
 		//Uses a bitwise operator to merge the fonts of bold and italic
 		//for the text
 		mouse.setFont(mouse.getFont()
 				.deriveFont(Font.BOLD | Font.ITALIC));
-		
+
 		mouse.setForeground(Color.RED);
-		
+
 		//Listens for whether the mouse has entered or exited the button
 		//area and if it has or has not, change color accordingly
 		mouse.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1875,10 +1946,10 @@ public class FPSLauncher extends JFrame
 		        mouse.setForeground(Color.RED);
 		    }
 		});
-		
+
 		mouse.addActionListener(aL);
 		panel.add(mouse);
-		
+
 		if(nonDefaultMap)
 		{
 			customMap     = new JButton("Custom Map: On");
@@ -1887,27 +1958,27 @@ public class FPSLauncher extends JFrame
 		{
 			customMap     = new JButton("Custom Map: Off");
 		}
-		
+
 		customMap.setBounds(300, 325, 250, 40);
-		
+
 		//Button blends with background
 		customMap.setOpaque(false);
 		customMap.setContentAreaFilled(false);
 		customMap.setBorderPainted(false);
-		
+
 		//Removes textbox focus so the textbox border is removed
 		customMap.setFocusPainted(false);
-		
+
 		//Sets font type, mode, and size
 		customMap.setFont(new Font("Nasalization", Font.BOLD, 18));
-		
+
 		//Uses a bitwise operator to merge the fonts of bold and italic
 		//for the text
 		customMap.setFont(customMap.getFont()
 				.deriveFont(Font.BOLD | Font.ITALIC));
-		
+
 		customMap.setForeground(Color.RED);
-		
+
 		//Listens for whether the mouse has entered or exited the button
 		//area and if it has or has not, change color accordingly
 		customMap.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1919,15 +1990,15 @@ public class FPSLauncher extends JFrame
 		        customMap.setForeground(Color.RED);
 		    }
 		});
-		
+
 		customMap.addActionListener(aL);
 		panel.add(customMap);
-		
+
 		resolutionTitle = new JLabel("Resolution:");
-		resolutionTitle.setBounds(50, 25, 200, 10); 
+		resolutionTitle.setBounds(50, 25, 200, 10);
 		resolutionTitle.setForeground(Color.GREEN);
 		panel.add(resolutionTitle);
-		
+
 		//This Swing component allows a slide down menu with all the
 		//options you add here to choose from.
 		resolution.setBounds(50, 50, 200, 40);
@@ -1938,34 +2009,34 @@ public class FPSLauncher extends JFrame
 		resolution.add("Fullscreen Low Res");
 		resolution.add("Fullscreen High Res");
 		resolution.select(resolutionChoice);
-		panel.add(resolution);	
-		
-		
-		
+		panel.add(resolution);
+
+
+
 		themeTitle = new JLabel("Themes:");
 		themeTitle.setBounds(250, 100, 200, 10);
 		themeTitle.setForeground(Color.GREEN);
 		panel.add(themeTitle);
-		
+
 		theme.setBounds(175, 125, 200, 40);
-		
+
 		//Get the list of files within the directory with the given file path
 		File folder = new File("resources/");
 		File[] listOfFiles = folder.listFiles();
 
 		//Run through all the names and add them
-	    for (int i = 0; i < listOfFiles.length; i++) 
+	    for (int i = 0; i < listOfFiles.length; i++)
 	    {
 		    if (listOfFiles[i].isFile())
 		    {
 		      //At the moment do nothing here
-		    } 
-		    else if (listOfFiles[i].isDirectory()) 
+		    }
+		    else if (listOfFiles[i].isDirectory())
 		    {
 		    	theme.add(listOfFiles[i].getName());
 		    }
 	    }
-	    
+
 	    try
 	    {
 	    	theme.select(themeName.substring(1, themeName.length()));
@@ -1974,14 +2045,14 @@ public class FPSLauncher extends JFrame
 	    {
 	    	theme.select(0);
 	    }
-	    
+
 		panel.add(theme);
-		
+
 		levelSizeTitle = new JLabel("Level Size (Survival only):");
-		levelSizeTitle.setBounds(300, 25, 250, 15); 
+		levelSizeTitle.setBounds(300, 25, 250, 15);
 		levelSizeTitle.setForeground(Color.GREEN);
 		panel.add(levelSizeTitle);
-		
+
 		levelSize.setBounds(300, 50, 200, 40);
 		levelSize.add("10x10");
 		levelSize.add("25x25");
@@ -1990,12 +2061,12 @@ public class FPSLauncher extends JFrame
 		levelSize.add("250x250");
 		levelSize.select(levelSizeChoice);
 		panel.add(levelSize);
-		
+
 		modeTitle = new JLabel("Game Mode:");
-		modeTitle.setBounds(50, 175, 250, 15); 
+		modeTitle.setBounds(50, 175, 250, 15);
 		modeTitle.setForeground(Color.GREEN);
 		panel.add(modeTitle);
-		
+
 		mode.setBounds(50, 200, 200, 40);
 		mode.add("Peaceful");
 		mode.add("I'm scared to die");
@@ -2004,17 +2075,17 @@ public class FPSLauncher extends JFrame
 		mode.add("Death cannot touch me!");
 		mode.select(modeChoice);
 		panel.add(mode);
-		
+
 		musicTitle = new JLabel("Music Options:");
-		musicTitle.setBounds(300, 175, 200, 15); 
+		musicTitle.setBounds(300, 175, 200, 15);
 		musicTitle.setForeground(Color.GREEN);
 		panel.add(musicTitle);
-		
+
 		music.setBounds(300, 200, 200, 40);
 		music.add("Music Option 1");
 		music.add("Harder Rock Option");
 		music.add("Music Option 3");
-		
+
 	   /*
 	    * Music choice depends on theme or what the user chooses
 	    */
@@ -2026,57 +2097,288 @@ public class FPSLauncher extends JFrame
 		{
 			music.select(musicChoice);
 		}
-		
+
 		panel.add(music);
-		
+
 		musicVolumeTitle = new JLabel("Music Volume:");
-		musicVolumeTitle.setBounds(550, 200, 200, 10); 
+		musicVolumeTitle.setBounds(550, 200, 200, 10);
 		musicVolumeTitle.setForeground(Color.GREEN);
 		panel.add(musicVolumeTitle);
-		
+
 		musicVolume     = new JSlider();
 		musicVolume.setBounds(550, 220, 200, 40);
 		musicVolume.setMaximum(100);
 		musicVolume.setMinimum(0);
-		musicVolume.setValue((int) musicVolumeLevel); 
+		musicVolume.setValue((int) musicVolumeLevel);
 		musicVolume.setOpaque(true);
 		musicVolume.setToolTipText("Music Volume Level: "+musicVolumeLevel);
 		musicVolume.addChangeListener(change);
 		panel.add(musicVolume);
-		
-		
+
+
 		soundVolumeTitle = new JLabel("Sound Volume:");
-		soundVolumeTitle.setBounds(550, 100, 200, 10); 
+		soundVolumeTitle.setBounds(550, 100, 200, 10);
 		soundVolumeTitle.setForeground(Color.GREEN);
 		panel.add(soundVolumeTitle);
-		
+
 		soundVolume     = new JSlider();
 		soundVolume.setBounds(550, 120, 200, 40);
 		soundVolume.setMaximum(100);
 		soundVolume.setMinimum(0);
-		soundVolume.setValue((int) soundVolumeLevel); 
+		soundVolume.setValue((int) soundVolumeLevel);
 		soundVolume.setOpaque(true);
 		soundVolume.setToolTipText("Sound Volume Level: "
 					+soundVolumeLevel);
 		soundVolume.addChangeListener(change);
 		panel.add(soundVolume);
-		
+
 		//Title for custom map text field
 		newMapTitle = new JLabel("Custom Map:");
-		newMapTitle.setBounds(WIDTH - 250, 25, 200, 25); 
+		newMapTitle.setBounds(WIDTH - 250, 25, 200, 25);
 		newMapTitle.setForeground(Color.GREEN);
 		panel.add(newMapTitle);
-		
+
 		//Textfield to load up a custom map if you want
 		newMapName = new JTextField();
 		newMapName.setBounds(WIDTH - 250, 50, 200, 25);
 		newMapName.setText(startMap);
 		newMapName.setEditable(true);
 		panel.add(newMapName);
-		
+
 		panel.repaint();
 	}
-	
+
+	/**
+	 * Draws up a
+	 * within the Join Server menu when you pull it up.
+	 */
+	public void drawJoinServerMenu()
+	{
+		ipAddressTitle = new JLabel("IP Address:");
+		ipAddressTitle.setBounds(50, 150, 200, 25);
+		ipAddressTitle.setFont(new Font("Nasalization",
+				Font.BOLD | Font.ITALIC, 24));
+		ipAddressTitle.setForeground(Color.GREEN);
+		ipAddressTitle.setBackground(Color.BLACK);
+		ipAddressTitle.setVisible(true);
+		ipAddressTitle.setOpaque(true);
+		panel.add(ipAddressTitle);
+
+		ipAddress = new JTextField("");
+		ipAddress.setBounds(50, 175, 200, 25);
+		ipAddress.setEditable(true);
+		panel.add(ipAddress);
+
+		portTitle = new JLabel("Server Port:");
+		portTitle.setBounds(500, 150, 200, 25);
+		portTitle.setFont(new Font("Nasalization",
+				Font.BOLD | Font.ITALIC, 24));
+		portTitle.setForeground(Color.GREEN);
+		portTitle.setBackground(Color.BLACK);
+		portTitle.setVisible(true);
+		portTitle.setOpaque(true);
+		panel.add(portTitle);
+
+		port = new JTextField("");
+		port.setBounds(500, 175, 200, 25);
+		port.setEditable(true);
+		panel.add(port);
+
+		backMult     = new JButton("Back");
+		backMult.setBounds(0, 400, 300, 40);
+
+		//Button blends with background
+		backMult.setOpaque(false);
+		backMult.setContentAreaFilled(false);
+		backMult.setBorderPainted(false);
+
+		//Removes textbox focus so the textbox border is removed
+		backMult.setFocusPainted(false);
+
+		//Sets font type, mode, and size
+		backMult.setFont(new Font("Nasalization", Font.BOLD, 24));
+
+		//Uses a bitwise operator to merge the fonts of bold and italic
+		//for the text
+		backMult.setFont(backMult.getFont()
+				.deriveFont(Font.BOLD | Font.ITALIC));
+
+		backMult.setForeground(Color.RED);
+
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		backMult.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				backMult.setForeground(Color.GREEN);
+			}
+
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				backMult.setForeground(Color.RED);
+			}
+		});
+
+		backMult.addActionListener(aL);
+		panel.add(backMult);
+
+
+		join     = new JButton("Join Game");
+		join.setBounds(300, 300, 200, 40);
+
+		//Button blends with background
+		join.setOpaque(true);
+		join.setContentAreaFilled(true);
+		join.setBorderPainted(false);
+
+		//Removes textbox focus so the textbox border is removed
+		join.setFocusPainted(false);
+
+		//Sets font type, mode, and size
+		join.setFont(new Font("Nasalization", Font.BOLD, 24));
+
+		//Uses a bitwise operator to merge the fonts of bold and italic
+		//for the text
+		join.setFont(join.getFont()
+				.deriveFont(Font.BOLD | Font.ITALIC));
+
+		join.setForeground(Color.RED);
+		join.setBackground(Color.BLACK);
+
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		join.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				join.setForeground(Color.GREEN);
+			}
+
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				join.setForeground(Color.RED);
+			}
+		});
+
+		join.addActionListener(aL);
+		panel.add(join);
+
+		panel.repaint();
+	}
+
+	/**
+	 * Draws up a host, join server, and back button
+	 * within the multiplayer menu when you pull it up.
+	 */
+	public void drawMultiplayerMenu()
+	{
+
+		host     = new JButton("Host");
+		host.setBounds(-85, 100, 300, 40);
+
+		//Button blends with background
+		host.setOpaque(false);
+		host.setContentAreaFilled(false);
+		host.setBorderPainted(false);
+
+		//Removes textbox focus so the textbox border is removed
+		host.setFocusPainted(false);
+
+		//Sets font type, mode, and size
+		host.setFont(new Font("Nasalization", Font.BOLD, 24));
+
+		//Uses a bitwise operator to merge the fonts of bold and italic
+		//for the text
+		host.setFont(host.getFont()
+				.deriveFont(Font.BOLD | Font.ITALIC));
+
+		host.setForeground(Color.RED);
+
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		host.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				host.setForeground(Color.GREEN);
+			}
+
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				host.setForeground(Color.RED);
+			}
+		});
+
+		host.addActionListener(aL);
+		panel.add(host);
+
+		joinServer     = new JButton("Join Server");
+		joinServer.setBounds(-50, 150, 300, 40);
+
+		//Button blends with background
+		joinServer.setOpaque(false);
+		joinServer.setContentAreaFilled(false);
+		joinServer.setBorderPainted(false);
+
+		//Removes textbox focus so the textbox border is removed
+		joinServer.setFocusPainted(false);
+
+		//Sets font type, mode, and size
+		joinServer.setFont(new Font("Nasalization", Font.BOLD, 24));
+
+		//Uses a bitwise operator to merge the fonts of bold and italic
+		//for the text
+		joinServer.setFont(joinServer.getFont()
+				.deriveFont(Font.BOLD | Font.ITALIC));
+
+		joinServer.setForeground(Color.RED);
+
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		joinServer.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				joinServer.setForeground(Color.GREEN);
+			}
+
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				joinServer.setForeground(Color.RED);
+			}
+		});
+
+		joinServer.addActionListener(aL);
+		panel.add(joinServer);
+
+		back     = new JButton("Back To Main Menu");
+		back.setBounds(0, 200, 300, 40);
+
+		//Button blends with background
+		back.setOpaque(false);
+		back.setContentAreaFilled(false);
+		back.setBorderPainted(false);
+
+		//Removes textbox focus so the textbox border is removed
+		back.setFocusPainted(false);
+
+		//Sets font type, mode, and size
+		back.setFont(new Font("Nasalization", Font.BOLD, 24));
+
+		//Uses a bitwise operator to merge the fonts of bold and italic
+		//for the text
+		back.setFont(back.getFont()
+				.deriveFont(Font.BOLD | Font.ITALIC));
+
+		back.setForeground(Color.RED);
+
+		//Listens for whether the mouse has entered or exited the button
+		//area and if it has or has not, change color accordingly
+		back.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				back.setForeground(Color.GREEN);
+			}
+
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				back.setForeground(Color.RED);
+			}
+		});
+
+		back.addActionListener(aL);
+		panel.add(back);
+
+		panel.repaint();
+	}
+
    /**
     * Draws the JTextArea that shows all the controls the game has to
     * offer in the controls menu.
