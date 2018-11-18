@@ -87,6 +87,9 @@ public class Display extends Canvas implements Runnable {
 	// Determines whether the game is paused
 	public static boolean pauseGame = false;
 
+	// Is this a host or client game (host game by default)
+	public static boolean clientGame = false;
+
 	// New screen object
 	private Screen screen;
 
