@@ -932,7 +932,7 @@ public class Render3D extends Render {
 	 */
 	public void renderItems(double x, double y, double z, double hOffSet, int ID, Item item) {
 		// If Item is not seeable then just return
-		if (!item.isSeeable) {
+		if (!item.isSeeable || item.pickedUp) {
 			return;
 		}
 

@@ -608,6 +608,21 @@ public class Game implements Runnable {
 			double distance = Math.sqrt(((Math.abs(Player.x - item.x)) * (Math.abs(Player.x - item.x)))
 					+ ((Math.abs(Player.z - item.z)) * (Math.abs(Player.z - item.z))));
 
+			/*
+			 * If item has been picked up in respawnable mode, tick the count of how long it
+			 * has been picked up, and after a certain amount of ticks, allow it to appear
+			 * again and be able to be picked up.
+			 */
+			if (item.pickedUp) {
+				item.tick();
+
+				if (item.tickCount > 5000 * Render3D.fpsCheck) {
+					item.tickCount = 0;
+					item.pickedUp = false;
+					SoundController.teleportation.playAudioFile(distance);
+				}
+			}
+
 			// If the item is at least 0.7 units away, and its not
 			// a secret or linedef, and the player is not in noClip mode
 			if (distance <= 0.7 && Math.abs(item.y - Player.y) <= 6 && item.itemID != ItemNames.SECRET.itemID
@@ -620,7 +635,12 @@ public class Game implements Runnable {
 				 * audio queue is there is one
 				 */
 				if (activated) {
-					tempItems.add(item);
+
+					if (Display.itemsRespawn) {
+						item.pickedUp = true;
+					} else {
+						tempItems.add(item);
+					}
 
 					// Activate the audio queue if there is one
 					item.activateAudioQueue();
