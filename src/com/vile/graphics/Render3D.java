@@ -4,16 +4,12 @@ import java.util.ArrayList;
 
 import com.vile.Display;
 import com.vile.Game;
-import com.vile.PopUp;
 import com.vile.Sound;
 import com.vile.SoundController;
 import com.vile.entities.Bullet;
 import com.vile.entities.Corpse;
-import com.vile.entities.Door;
-import com.vile.entities.Elevator;
 import com.vile.entities.Enemy;
 import com.vile.entities.EnemyFire;
-import com.vile.entities.Entity;
 import com.vile.entities.Explosion;
 import com.vile.entities.HitSprite;
 import com.vile.entities.Item;
@@ -223,47 +219,6 @@ public class Render3D extends Render {
 		for (int i = 0; i < Game.enemies.size(); ++i) {
 			Enemy enemy = Game.enemies.get(i);
 
-			// Deactivate the enemies if the player is dead and they have
-			// no other target
-			if (Player.health <= 0 && enemy.targetEnemy == null) {
-				enemy.activated = false;
-			}
-
-			// tick the enemy, updating its values and such
-			enemy.tick(enemy);
-
-			// Update the enemies movements
-			enemy.move();
-
-			/*
-			 * If the enemy is within range of the door, open the door because enemies are
-			 * smarter than just letting a door stop them from killing you.
-			 * 
-			 * Also the enemy has to be activated to open doors.
-			 * 
-			 * Flying enemies can't open doors because they can just fly over them
-			 */
-			if (!enemy.canFly && enemy.activated) {
-				for (int a = 0; a < Game.doors.size(); a++) {
-					Door door = Game.doors.get(a);
-
-					// If door is in range of enemy, have it open as long
-					// as it is not a door requiring a key
-					if (Math.abs(door.getZ() - enemy.zPos) <= 1 && Math.abs(door.getX() - enemy.xPos) <= 1
-							&& door.itemActivationID == 0 && (-enemy.yPos < 2)) {
-						if (door.doorType == 0) {
-							door.activated = true;
-						}
-					}
-				}
-			}
-
-			/*
-			 * Attempt to attack the player as long as the player is alive. The method
-			 * itself will determine what attack if any the enemy will use though.
-			 */
-			enemy.attack(Player.y);
-
 			// Correct the enemies y so it appears correct graphically
 			double yCorrect = enemy.getY();
 
@@ -279,12 +234,6 @@ public class Render3D extends Render {
 			renderEnemy(enemy.getX(), yCorrect, enemy.getZ(), 0.2, enemy.ID, enemy);
 		}
 
-		// All entities are done checking if player is in their sight
-		Entity.checkSight = false;
-
-		// Items to delete
-		ArrayList<Item> tempItems = new ArrayList<Item>();
-
 		/*
 		 * For each item, render correctly and update its values, as well as see if it
 		 * can be picked up by the player to optimize the game since it already has to
@@ -298,211 +247,6 @@ public class Render3D extends Render {
 
 			// Difference between the item and the top of the block
 			double difference = item.y - (temp.height + (temp.y * 4) + temp.baseCorrect);
-
-			// Is this item on top of another solid item
-			boolean onItem = false;
-
-			for (Item it : temp.wallItems) {
-				// If on a solid object, place it on top, and only if it has hit
-				// the top of the item as well.
-				if (it.isSolid && !item.equals(it) && item.y - (it.y + it.height) < 6) {
-					item.y = it.y + it.height + 2;
-					onItem = true;
-
-					/*
-					 * If item is above the block, then set its height from the top of the block to
-					 * be the height of the solid item it is on greater than the top of the block.
-					 * If not though, it is below the block and there should be no difference in
-					 * height as it will not be falling.
-					 */
-					if (item.aboveBlock) {
-						difference += (item.y - it.height);
-					} else {
-						difference = 0;
-					}
-				}
-			}
-
-			/*
-			 * If the items y is greater than the blocks height plus its y value, then
-			 * decrease the items y until it reaches the ground.
-			 */
-			if (difference > 1) {
-				item.y -= 1;
-			} else {
-				/*
-				 * If the item is within the block, and not on top of the block, and the item is
-				 * not a door, then set the height to being the top of the block.
-				 */
-				if (item.y >= (temp.y * 4) && difference > (-1 - temp.baseCorrect) && item.aboveBlock) {
-					item.y = temp.height + (temp.y * 4) + temp.baseCorrect;
-				} else {
-					// If landed on flat ground and not on top of a solid item
-					if (!onItem) {
-						item.y = 0;
-					}
-				}
-			}
-
-			double distance = Math.sqrt(((Math.abs(Player.x - item.x)) * (Math.abs(Player.x - item.x)))
-					+ ((Math.abs(Player.z - item.z)) * (Math.abs(Player.z - item.z))));
-
-			// If the item is at least 0.7 units away, and its not
-			// a secret or linedef, and the player is not in noClip mode
-			if (distance <= 0.7 && Math.abs(item.y - Player.y) <= 6 && item.itemID != ItemNames.SECRET.itemID
-					&& item.itemID != ItemNames.LINEDEF.itemID && !Player.noClipOn) {
-				// Was the object activated?
-				boolean activated = item.activate();
-
-				/*
-				 * If the item was activated remove it. Otherwise keep it in the map. Also play
-				 * audio queue is there is one
-				 */
-				if (activated) {
-					tempItems.add(item);
-
-					// Activate the audio queue if there is one
-					item.activateAudioQueue();
-				}
-
-				// If item activates other items, then if the player walks over the
-				// item then activate other items whether the item was picked up
-				// or not. Some items cannot be activated by walking over them.
-				if (item.itemActivationID > 0 && item.itemID != ItemNames.ENEMYSPAWN.getID()
-						&& item.itemID != ItemNames.ACTIVATEEXP.getID() && item.itemID != ItemNames.BREAKABLEWALL.itemID
-						&& item.itemID != ItemNames.WALLBEGONE.itemID && item.itemID != ItemNames.ACTIVATEEXP.itemID
-						&& item.itemID != ItemNames.BUTTON.itemID && item.itemID != ItemNames.DOOR.itemID
-						&& item.itemID != ItemNames.GREENDOOR.itemID && item.itemID != ItemNames.REDDOOR.itemID
-						&& item.itemID != ItemNames.YELLOWDOOR.itemID && item.itemID != ItemNames.BLUEDOOR.itemID
-						&& item.itemID != ItemNames.ELEVATOR.itemID) {
-					// De-activate the button
-					item.activated = false;
-
-					Block blockOn = Level.getBlock((int) item.x, (int) item.z);
-
-					// Change the wall texture to show the button has been activated
-					// Only if the original wall it was on is a button
-					if (blockOn.wallID == 26) {
-						blockOn.wallID = 43;
-					}
-
-					// If special ID, turn on lights to make map brighter
-					if (item.itemActivationID == 1221) {
-						Render3D.renderDistanceDefault += 5000;
-					}
-
-					// Search through all the doors
-					for (int k = 0; k < Game.doors.size(); k++) {
-						Door door = Game.doors.get(k);
-
-						// If door has the same activation ID as the
-						// button then activate it.
-						if (door.itemActivationID == item.itemActivationID) {
-							/*
-							 * If the itemActivationID is the special ID, then just stop the door from
-							 * automatically opening and closing. Otherwise activate the door as normal.
-							 */
-							if (door.itemActivationID == 2112) {
-								// Hoping no one uses this id, but
-								// this stops the door from automatically
-								// opening and closing continuously.
-								door.itemActivationID = 1221;
-							}
-							// If this special ID, activate it to continue to
-							// move
-							else if (door.itemActivationID == 1221) {
-								door.itemActivationID = 2112;
-								door.activated = true;
-								door.stayOpen = false;
-							} else {
-								door.activated = true;
-							}
-						}
-					}
-
-					// Search through all the elevators
-					for (int k = 0; k < Game.elevators.size(); k++) {
-						Elevator e = Game.elevators.get(k);
-
-						// If elevator has the same activation ID as the
-						// button then activate it.
-						if (e.itemActivationID == item.itemActivationID) {
-							/*
-							 * If the itemActivationID is the special ID, then just stop the elevator from
-							 * automatically moving. Otherwise activate the elevator as normal.
-							 */
-							if (e.itemActivationID == 2112) {
-								// Hoping no one uses this id, but
-								// this stops the elevator from automatically
-								// moving continuously.
-								e.itemActivationID = 1221;
-							}
-							// If this special ID, activate it to continue to
-							// move
-							else if (e.itemActivationID == 1221) {
-								e.itemActivationID = 2112;
-								e.activated = true;
-							} else {
-								e.activated = true;
-							}
-						}
-					}
-
-					// Stores Items to be deleted
-					ArrayList<Item> tempItems2 = new ArrayList<Item>();
-
-					// Scan all activatable items
-					for (int j = 0; j < Game.activatable.size(); j++) {
-						Item item2 = Game.activatable.get(j);
-
-						// If Item is a Com satellite dish, activate it and
-						// state that it is activated
-						if (item2.itemID == ItemNames.RADAR.getID() && !item2.activated
-								&& item.itemActivationID == item2.itemActivationID) {
-							item2.activated = true;
-							Display.messages.add(new PopUp("COM SYSTEM ACTIVATED!"));
-							SoundController.uplink.playAudioFile(0);
-						} else {
-							// If item is enemy spawnpoint, then spawn the
-							// enemy, and add the item to the arraylist of
-							// items to be deleted
-							if (item2.itemID == ItemNames.ENEMYSPAWN.getID()
-									&& item.itemActivationID == item2.itemActivationID) {
-								Game.enemiesInMap++;
-								game.addEnemy(item2.x, item2.z, item2.rotation);
-								tempItems2.add(item2);
-							}
-							// If Explosion has same activation ID of the button
-							// then activate it
-							else if (item2.itemID == ItemNames.ACTIVATEEXP.getID()
-									&& item.itemActivationID == item2.itemActivationID) {
-								new Explosion(item2.x, item2.y, item2.z, 0, 0);
-								tempItems2.add(item2);
-							}
-							// If it gets rid of a wall, delete the wall and create an
-							// air wall in its place.
-							else if (item2.itemID == ItemNames.WALLBEGONE.getID()
-									&& item.itemActivationID == item2.itemActivationID) {
-								Block block2 = Level.getBlock((int) item2.x, (int) item2.z);
-
-								// Block is effectively no longer there
-								block2.height = 0;
-
-								block2.wallEntities = null;
-
-								tempItems2.add(item2);
-							}
-						}
-					}
-
-					// Remove all the items that need to be deleted now
-					for (int j = 0; j < tempItems2.size(); j++) {
-						Item temp2 = tempItems2.get(j);
-
-						temp2.removeItem();
-					}
-				}
-			}
 
 			/*
 			 * To correct corpse heights because again, graphics in this game make no gosh
@@ -589,14 +333,6 @@ public class Render3D extends Render {
 			}
 		}
 
-		// Remove all items within list
-		for (int j = 0; j < tempItems.size(); ++j) {
-			Item temp = tempItems.get(j);
-
-			// Removes all references of item in game
-			temp.removeItem();
-		}
-
 		/*
 		 * Renders all the corpses in the game, as well as updating their values for
 		 * optimization purposes so the game doesn't have to run through all the corpses
@@ -604,69 +340,6 @@ public class Render3D extends Render {
 		 */
 		for (int i = 0; i < Game.corpses.size(); i++) {
 			Corpse corpse = Game.corpses.get(i);
-
-			// Block corpse is on
-			Block temp = Level.getBlock((int) corpse.xPos, (int) corpse.zPos);
-
-			// The top of the block
-			double topOfBlock = (temp.height + (temp.y * 4) + temp.baseCorrect);
-
-			// Difference between the item and the top of the block
-			double difference = corpse.yPos - topOfBlock;
-
-			/*
-			 * If the items y is greater than the blocks height plus its y value, then
-			 * decrease the items y until it reaches the ground.
-			 */
-			if (corpse.yPos - 1 > topOfBlock) {
-				corpse.yPos -= 1;
-			} else {
-				/*
-				 * If not a door, and the y value of the corpse is inside the block, but towards
-				 * the top, then place it on top of the block. Otherwise, it shall stay on
-				 * ground level.
-				 */
-				if (corpse.yPos >= (temp.y * 4) && difference > (-1 - temp.baseCorrect)) {
-					corpse.yPos = topOfBlock;
-				} else {
-					// If on flat ground, the height is 3. This is
-					// so the textures don't go through the ground.
-					corpse.yPos = 0;
-				}
-			}
-
-			corpse.tick();
-
-			/*
-			 * If in Death cannot hurt me mode, the corpses will resurrect on their own
-			 * after 10000 ticks.
-			 */
-			if (FPSLauncher.modeChoice == 4) {
-				// If 10000 ticks have passed with correction for the fps
-				// and the corpse is not just a default corpse
-				if (corpse.time > (10000 / ((Display.fps / 30) + 1)) && corpse.enemyID != 0) {
-					/*
-					 * Reconstruct enemy depending on the ID the corpse was before it died. Also
-					 * activate the new resurrected enemy.
-					 */
-					Enemy newEnemy = new Enemy(corpse.xPos, 0, corpse.zPos, corpse.enemyID, 0, 0);
-
-					// Activate this new enemy
-					newEnemy.activated = true;
-
-					// Add enemy to the game
-					Game.enemies.add(newEnemy);
-
-					// Remove the corpse
-					Game.corpses.remove(corpse);
-
-					// Add to enemies in the map
-					Game.enemiesInMap++;
-
-					// Play teleportation/respawn sound effect
-					SoundController.teleportation.playAudioFile(newEnemy.distanceFromPlayer);
-				}
-			}
 
 			/*
 			 * To correct corpse heights because again, graphics in this game make no gosh
@@ -702,58 +375,35 @@ public class Render3D extends Render {
 		for (int i = 0; i < Game.explosions.size(); i++) {
 			Explosion explosion = Game.explosions.get(i);
 
-			explosion.tick();
-
 			renderExplosion(explosion.x, explosion.y, explosion.z, 0, explosion);
 		}
 
 		/*
-		 * Mainly for shotgun bullets. Since they are in a spread shot, and could
-		 * potentially hit the enemy at the same time, then make it so that the sound of
-		 * hitting the enemy doesn't play several times in the same tick otherwise it'll
-		 * be a super loud sound, and it's annoying. This checks for that and prevents
-		 * it.
-		 * 
-		 * These reset the values to false each tick.
-		 */
-		Projectile.bossHit = false;
-		Projectile.enemyHit = false;
-
-		/*
-		 * Renders all the bullet objects and moves the bullets as well. It goes through
-		 * this anyway so adding movement to this only seemed right in optimizing the
-		 * game more.
+		 * Renders the bullet objects in the game
 		 */
 		for (int i = 0; i < Game.bullets.size(); i++) {
 			Bullet bullet = Game.bullets.get(i);
-
-			bullet.move();
 
 			renderProjectiles(bullet.x, bullet.y, bullet.z, 0.2, bullet.ID, bullet);
 		}
 
 		/*
-		 * Renders all the enemy projectiles and moves them here for the same reasons as
-		 * stated above for bullets.
+		 * Renders all the enemy projectiles.
 		 */
 		for (int i = 0; i < Game.enemyProjectiles.size(); i++) {
 			EnemyFire temp = Game.enemyProjectiles.get(i);
-
-			temp.move();
 
 			renderProjectiles(temp.x, (temp.y) / 1.5, temp.z, 0.2, temp.ID, temp);
 		}
 
 		/*
-		 * Ticks and renders all extra sprites in the game
+		 * Renders all extra sprites in the game
 		 */
 		for (int i = 0; i < Game.sprites.size(); i++) {
 			HitSprite hS = Game.sprites.get(i);
 
 			// render sprite
 			renderHitSprite(hS.x, hS.y, hS.z, 0, hS);
-
-			hS.tick();
 		}
 
 		// Everything below draws up the crosshair
@@ -1282,7 +932,7 @@ public class Render3D extends Render {
 	 */
 	public void renderItems(double x, double y, double z, double hOffSet, int ID, Item item) {
 		// If Item is not seeable then just return
-		if (!item.isSeeable) {
+		if (!item.isSeeable || item.pickedUp) {
 			return;
 		}
 

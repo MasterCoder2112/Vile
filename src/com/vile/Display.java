@@ -87,6 +87,9 @@ public class Display extends Canvas implements Runnable {
 	// Determines whether the game is paused
 	public static boolean pauseGame = false;
 
+	// Is this a host or client game (host game by default)
+	public static boolean clientGame = false;
+
 	// New screen object
 	private Screen screen;
 
@@ -203,6 +206,9 @@ public class Display extends Canvas implements Runnable {
 	 */
 	public static boolean smoothFPS = false;
 	public static boolean smileMode = false;
+
+	// Items will respawn if this is turned on.
+	public static boolean itemsRespawn = false;
 
 	// Used so the inputStream can be closed for music after you pause or
 	// start a new game

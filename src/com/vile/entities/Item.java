@@ -67,6 +67,10 @@ public class Item {
 	// Items image to render
 	public Render itemImage = null;
 
+	// Items will tick so that they respawn if respawn is turned on.
+	public int tickCount = 0;
+	public boolean pickedUp = false;
+
 	// What pixels does this render on the screen
 	// public ArrayList<Integer> pixelsOnScreen = new ArrayList<Integer>();
 
@@ -288,6 +292,12 @@ public class Item {
 	 * @return
 	 */
 	public boolean activate() {
+
+		// If item was pickedUp then don't activate it again until respawned
+		if (pickedUp) {
+			return false;
+		}
+
 		// Was item used?
 		boolean itemUsed = false;
 
@@ -858,6 +868,12 @@ public class Item {
 	 * game.
 	 */
 	public void removeItem() {
+		// If items are set to respawn, then set pickedUp to true and return instead
+		// of removing the item.
+		if (Display.itemsRespawn) {
+			pickedUp = true;
+			return;
+		}
 		// Block the item is on
 		Block block = Level.getBlock((int) this.x, (int) this.z);
 
@@ -914,5 +930,12 @@ public class Item {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Tick the time the item has been gone, and wait to reach a certain amount.
+	 */
+	public void tick() {
+		tickCount++;
 	}
 }
