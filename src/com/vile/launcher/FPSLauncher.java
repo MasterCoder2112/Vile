@@ -58,16 +58,18 @@ import com.vile.entities.Weapon;
 import com.vile.graphics.Render3D;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
+import com.vile.server.ServerClient;
+import com.vile.server.ServerHost;
 
 /**
  * @title FPSLauncher
  * @author Alex Byrd
- * @modified 11/24/2018
- * Description:
- * Starts when the application is launched. Includes all the possible options for
- * a user playing the game. Starting a new single player game or joining or hosting a
- * multi player game. Also holds a vast range of options in the options menu and has a
- * quit and controls button as well. Also the ability to save and load game files at will.
+ * @modified 11/24/2018 Description: Starts when the application is launched.
+ *           Includes all the possible options for a user playing the game.
+ *           Starting a new single player game or joining or hosting a multi
+ *           player game. Also holds a vast range of options in the options menu
+ *           and has a quit and controls button as well. Also the ability to
+ *           save and load game files at will.
  *
  */
 public class FPSLauncher extends JFrame {
@@ -110,29 +112,29 @@ public class FPSLauncher extends JFrame {
 	private static JButton removeSave;
 	private static JButton multiplayer;
 	private static JButton host;
-	private static JButton joinServer;
 	private static JButton join;
+	private static JButton joinServer;
 	private static JButton backMult;
 	private static JButton hostServer;
 
-	private static JLabel  resolutionTitle;
-	private static JLabel  themeTitle;
-	private static JLabel  levelSizeTitle;
-	private static JLabel  modeTitle;
-	private static JLabel  musicTitle;
-	private static JLabel  musicVolumeTitle;
-	private static JLabel  soundVolumeTitle;
-	private static JLabel  title;
-	private static JLabel  newMapTitle;
-	private static JLabel  userTitle;
-	private static JLabel  newUserTitle;
-	private static JLabel  error;
-	private static JLabel  availableGames;
-	private static JLabel  saveName;
-	private static JLabel  ipAddressTitle;
-	private static JLabel  portTitle;
-	private static JLabel  hostTitle;
-  
+	private static JLabel resolutionTitle;
+	private static JLabel themeTitle;
+	private static JLabel levelSizeTitle;
+	private static JLabel modeTitle;
+	private static JLabel musicTitle;
+	private static JLabel musicVolumeTitle;
+	private static JLabel soundVolumeTitle;
+	private static JLabel title;
+	private static JLabel newMapTitle;
+	private static JLabel userTitle;
+	private static JLabel newUserTitle;
+	private static JLabel error;
+	private static JLabel availableGames;
+	private static JLabel saveName;
+	private static JLabel ipAddressTitle;
+	private static JLabel portTitle;
+	private static JLabel hostTitle;
+
 	private static JTextArea readMeText;
 	public static JTextField newMapName;
 	private static JTextField newUserName;
@@ -274,6 +276,8 @@ public class FPSLauncher extends JFrame {
 				Display.mouseOn = mouseStatus;
 				Display.musicTheme = musicChoice;
 				Display.smoothFPS = smoothFPS;
+				Display.itemsRespawn = false;
+				Display.clientGame = false;
 
 				loadingGame = false;
 				returning = false;
@@ -326,6 +330,8 @@ public class FPSLauncher extends JFrame {
 				Display.mouseOn = mouseStatus;
 				Display.musicTheme = musicChoice;
 				Display.smoothFPS = smoothFPS;
+				Display.itemsRespawn = false;
+				Display.clientGame = false;
 
 				// If custom map, send these values so the game knows
 				// what to load up
@@ -365,21 +371,140 @@ public class FPSLauncher extends JFrame {
 				new Multiplayer();
 
 			}
-      
+
 			// Start up Join Server menu
-			if (e.getSource() == joinServer) {
+			if (e.getSource() == join) {
 
 				dispose();
 				new JoinServer();
 
 			}
 
-			if(e.getSource() == host)
-			{
+			// Starts new Host server menu
+			if (e.getSource() == host) {
 				dispose();
 				new Host();
 			}
-      
+
+			// TODO Joining server stuff. Make sure set up before submission
+			/*
+			 * Does everything necessary to join a server and start a game
+			 */
+			if (e.getSource() == joinServer) {
+				// Close out of current music thread
+				try {
+					Display.inputStream.close();
+				} catch (Exception ex) {
+
+				}
+
+				Display.inputStream = null;
+
+				// Close out of current music thread
+				try {
+					input.close();
+				} catch (Exception ex) {
+
+				}
+
+				input = null;
+
+				try {
+					Display.music.close();
+				} catch (Exception ex) {
+
+				}
+
+				Display.music = null;
+
+				try {
+					RunGame.game = null;
+				} catch (Exception ex) {
+
+				}
+
+				// Garbage collect
+				System.gc();
+
+				audioOn = false;
+				dispose();
+				gameMode = 0;
+
+				Display.mouseOn = mouseStatus;
+				Display.musicTheme = musicChoice;
+				Display.smoothFPS = smoothFPS;
+
+				// If custom map, send these values so the game knows
+				// what to load up
+				Display.nonDefaultMap = nonDefaultMap;
+				Display.newMapName = startMap;
+
+				loadingGame = false;
+				returning = false;
+
+				new ServerClient(ipAddress.getText() + ":" + port.getText());
+			}
+
+			// TODO Host server stuff. Make sure set up before submission
+			/*
+			 * Does everything necessary to start a server and start a game
+			 */
+			if (e.getSource() == hostServer) {
+				// Close out of current music thread
+				try {
+					Display.inputStream.close();
+				} catch (Exception ex) {
+
+				}
+
+				Display.inputStream = null;
+
+				// Close out of current music thread
+				try {
+					input.close();
+				} catch (Exception ex) {
+
+				}
+
+				input = null;
+
+				try {
+					Display.music.close();
+				} catch (Exception ex) {
+
+				}
+
+				Display.music = null;
+
+				try {
+					RunGame.game = null;
+				} catch (Exception ex) {
+
+				}
+
+				// Garbage collect
+				System.gc();
+
+				audioOn = false;
+				dispose();
+				gameMode = 0;
+
+				Display.mouseOn = mouseStatus;
+				Display.musicTheme = musicChoice;
+				Display.smoothFPS = smoothFPS;
+
+				// If custom map, send these values so the game knows
+				// what to load up
+				Display.nonDefaultMap = nonDefaultMap;
+				Display.newMapName = startMap;
+
+				loadingGame = false;
+				returning = false;
+
+				// Starts new server with a given port number
+				new ServerHost(hostField.getText());
+			}
+
 			// Start up controls menu
 			if (e.getSource() == controls) {
 				dispose();
@@ -1343,7 +1468,8 @@ public class FPSLauncher extends JFrame {
 			public void mouseEntered(java.awt.event.MouseEvent evt) {
 				multiplayer.setForeground(mouseColor);
 			}
-      @Override
+
+			@Override
 			public void mouseExited(java.awt.event.MouseEvent evt) {
 				multiplayer.setForeground(defaultColor);
 			}
@@ -1351,7 +1477,7 @@ public class FPSLauncher extends JFrame {
 
 		multiplayer.addActionListener(aL);
 		panel.add(multiplayer);
-    
+
 		playGame = new JButton("New Game");
 		playGame.setBounds(0, 100, 270, 40);
 
@@ -1447,11 +1573,11 @@ public class FPSLauncher extends JFrame {
 
 		saveGameMenu.addActionListener(aL);
 		panel.add(saveGameMenu);
-		
-		options  = new JButton("Options");
+
+		options = new JButton("Options");
 		options.setBounds(0, 350, 230, 40);
-		
-		//Button blends with background
+
+		// Button blends with background
 		options.setOpaque(false);
 		options.setContentAreaFilled(false);
 		options.setBorderPainted(false);
@@ -1521,8 +1647,8 @@ public class FPSLauncher extends JFrame {
 
 		controls.addActionListener(aL);
 		panel.add(controls);
-		
-		//Button blends with background
+
+		// Button blends with background
 		quit = new JButton("Quit");
 		quit.setBounds(0, 400, 180, 40);
 		quit.setOpaque(false);
@@ -1911,15 +2037,13 @@ public class FPSLauncher extends JFrame {
 	}
 
 	/**
-	 * Draws up all the JButtons and Text fields
-	 * within the Host menu when you pull it up.
+	 * Draws up all the JButtons and Text fields within the Host menu when you pull
+	 * it up.
 	 */
-	public void drawHostMenu()
-	{
+	public void drawHostMenu() {
 		hostTitle = new JLabel("Port Number:");
 		hostTitle.setBounds(50, 150, 200, 25);
-		hostTitle.setFont(new Font("Nasalization",
-				Font.BOLD | Font.ITALIC, 24));
+		hostTitle.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		hostTitle.setForeground(Color.GREEN);
 		hostTitle.setBackground(Color.BLACK);
 		hostTitle.setVisible(true);
@@ -1931,34 +2055,35 @@ public class FPSLauncher extends JFrame {
 		hostField.setEditable(true);
 		panel.add(hostField);
 
-		backMult     = new JButton("Back");
+		backMult = new JButton("Back");
 		backMult.setBounds(0, 400, 300, 40);
 
-		//Button blends with background
+		// Button blends with background
 		backMult.setOpaque(false);
 		backMult.setContentAreaFilled(false);
 		backMult.setBorderPainted(false);
 
-		//Removes textbox focus so the textbox border is removed
+		// Removes textbox focus so the textbox border is removed
 		backMult.setFocusPainted(false);
 
-		//Sets font type, mode, and size
+		// Sets font type, mode, and size
 		backMult.setFont(new Font("Nasalization", Font.BOLD, 24));
 
-		//Uses a bitwise operator to merge the fonts of bold and italic
-		//for the text
-		backMult.setFont(backMult.getFont()
-				.deriveFont(Font.BOLD | Font.ITALIC));
+		// Uses a bitwise operator to merge the fonts of bold and italic
+		// for the text
+		backMult.setFont(backMult.getFont().deriveFont(Font.BOLD | Font.ITALIC));
 
 		backMult.setForeground(Color.RED);
 
-		//Listens for whether the mouse has entered or exited the button
-		//area and if it has or has not, change color accordingly
+		// Listens for whether the mouse has entered or exited the button
+		// area and if it has or has not, change color accordingly
 		backMult.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
 			public void mouseEntered(java.awt.event.MouseEvent evt) {
 				backMult.setForeground(Color.GREEN);
 			}
 
+			@Override
 			public void mouseExited(java.awt.event.MouseEvent evt) {
 				backMult.setForeground(Color.RED);
 			}
@@ -1967,36 +2092,36 @@ public class FPSLauncher extends JFrame {
 		backMult.addActionListener(aL);
 		panel.add(backMult);
 
-
-		hostServer     = new JButton("Host Game");
+		hostServer = new JButton("Host Game");
 		hostServer.setBounds(300, 300, 200, 40);
 
-		//Button blends with background
+		// Button blends with background
 		hostServer.setOpaque(true);
 		hostServer.setContentAreaFilled(true);
 		hostServer.setBorderPainted(false);
 
-		//Removes textbox focus so the textbox border is removed
+		// Removes textbox focus so the textbox border is removed
 		hostServer.setFocusPainted(false);
 
-		//Sets font type, mode, and size
+		// Sets font type, mode, and size
 		hostServer.setFont(new Font("Nasalization", Font.BOLD, 24));
 
-		//Uses a bitwise operator to merge the fonts of bold and italic
-		//for the text
-		hostServer.setFont(hostServer.getFont()
-				.deriveFont(Font.BOLD | Font.ITALIC));
+		// Uses a bitwise operator to merge the fonts of bold and italic
+		// for the text
+		hostServer.setFont(hostServer.getFont().deriveFont(Font.BOLD | Font.ITALIC));
 
 		hostServer.setForeground(Color.RED);
 		hostServer.setBackground(Color.BLACK);
 
-		//Listens for whether the mouse has entered or exited the button
-		//area and if it has or has not, change color accordingly
+		// Listens for whether the mouse has entered or exited the button
+		// area and if it has or has not, change color accordingly
 		hostServer.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
 			public void mouseEntered(java.awt.event.MouseEvent evt) {
 				hostServer.setForeground(Color.GREEN);
 			}
 
+			@Override
 			public void mouseExited(java.awt.event.MouseEvent evt) {
 				hostServer.setForeground(Color.RED);
 			}
@@ -2009,15 +2134,12 @@ public class FPSLauncher extends JFrame {
 	}
 
 	/**
-	 * Draws up a
-	 * within the Join Server menu when you pull it up.
+	 * Draws up a within the Join Server menu when you pull it up.
 	 */
-	public void drawJoinServerMenu()
-	{
+	public void drawJoinServerMenu() {
 		ipAddressTitle = new JLabel("IP Address:");
 		ipAddressTitle.setBounds(50, 150, 200, 25);
-		ipAddressTitle.setFont(new Font("Nasalization",
-				Font.BOLD | Font.ITALIC, 24));
+		ipAddressTitle.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		ipAddressTitle.setForeground(Color.GREEN);
 		ipAddressTitle.setBackground(Color.BLACK);
 		ipAddressTitle.setVisible(true);
@@ -2031,8 +2153,7 @@ public class FPSLauncher extends JFrame {
 
 		portTitle = new JLabel("Server Port:");
 		portTitle.setBounds(500, 150, 200, 25);
-		portTitle.setFont(new Font("Nasalization",
-				Font.BOLD | Font.ITALIC, 24));
+		portTitle.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		portTitle.setForeground(Color.GREEN);
 		portTitle.setBackground(Color.BLACK);
 		portTitle.setVisible(true);
@@ -2044,34 +2165,35 @@ public class FPSLauncher extends JFrame {
 		port.setEditable(true);
 		panel.add(port);
 
-		backMult     = new JButton("Back");
+		backMult = new JButton("Back");
 		backMult.setBounds(0, 400, 300, 40);
 
-		//Button blends with background
+		// Button blends with background
 		backMult.setOpaque(false);
 		backMult.setContentAreaFilled(false);
 		backMult.setBorderPainted(false);
 
-		//Removes textbox focus so the textbox border is removed
+		// Removes textbox focus so the textbox border is removed
 		backMult.setFocusPainted(false);
 
-		//Sets font type, mode, and size
+		// Sets font type, mode, and size
 		backMult.setFont(new Font("Nasalization", Font.BOLD, 24));
 
-		//Uses a bitwise operator to merge the fonts of bold and italic
-		//for the text
-		backMult.setFont(backMult.getFont()
-				.deriveFont(Font.BOLD | Font.ITALIC));
+		// Uses a bitwise operator to merge the fonts of bold and italic
+		// for the text
+		backMult.setFont(backMult.getFont().deriveFont(Font.BOLD | Font.ITALIC));
 
 		backMult.setForeground(Color.RED);
 
-		//Listens for whether the mouse has entered or exited the button
-		//area and if it has or has not, change color accordingly
+		// Listens for whether the mouse has entered or exited the button
+		// area and if it has or has not, change color accordingly
 		backMult.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
 			public void mouseEntered(java.awt.event.MouseEvent evt) {
 				backMult.setForeground(Color.GREEN);
 			}
 
+			@Override
 			public void mouseExited(java.awt.event.MouseEvent evt) {
 				backMult.setForeground(Color.RED);
 			}
@@ -2080,43 +2202,43 @@ public class FPSLauncher extends JFrame {
 		backMult.addActionListener(aL);
 		panel.add(backMult);
 
+		joinServer = new JButton("Join Game");
+		joinServer.setBounds(300, 300, 200, 40);
 
-		join     = new JButton("Join Game");
-		join.setBounds(300, 300, 200, 40);
+		// Button blends with background
+		joinServer.setOpaque(true);
+		joinServer.setContentAreaFilled(true);
+		joinServer.setBorderPainted(false);
 
-		//Button blends with background
-		join.setOpaque(true);
-		join.setContentAreaFilled(true);
-		join.setBorderPainted(false);
+		// Removes textbox focus so the textbox border is removed
+		joinServer.setFocusPainted(false);
 
-		//Removes textbox focus so the textbox border is removed
-		join.setFocusPainted(false);
+		// Sets font type, mode, and size
+		joinServer.setFont(new Font("Nasalization", Font.BOLD, 24));
 
-		//Sets font type, mode, and size
-		join.setFont(new Font("Nasalization", Font.BOLD, 24));
+		// Uses a bitwise operator to merge the fonts of bold and italic
+		// for the text
+		joinServer.setFont(joinServer.getFont().deriveFont(Font.BOLD | Font.ITALIC));
 
-		//Uses a bitwise operator to merge the fonts of bold and italic
-		//for the text
-		join.setFont(join.getFont()
-				.deriveFont(Font.BOLD | Font.ITALIC));
+		joinServer.setForeground(Color.RED);
+		joinServer.setBackground(Color.BLACK);
 
-		join.setForeground(Color.RED);
-		join.setBackground(Color.BLACK);
-
-		//Listens for whether the mouse has entered or exited the button
-		//area and if it has or has not, change color accordingly
-		join.addMouseListener(new java.awt.event.MouseAdapter() {
+		// Listens for whether the mouse has entered or exited the button
+		// area and if it has or has not, change color accordingly
+		joinServer.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
 			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				join.setForeground(Color.GREEN);
+				joinServer.setForeground(Color.GREEN);
 			}
 
+			@Override
 			public void mouseExited(java.awt.event.MouseEvent evt) {
-				join.setForeground(Color.RED);
+				joinServer.setForeground(Color.RED);
 			}
 		});
 
-		join.addActionListener(aL);
-		panel.add(join);
+		joinServer.addActionListener(aL);
+		panel.add(joinServer);
 
 		panel.repaint();
 	}
@@ -2164,42 +2286,42 @@ public class FPSLauncher extends JFrame {
 		host.addActionListener(aL);
 		panel.add(host);
 
-		joinServer = new JButton("Join Server");
-		joinServer.setBounds(-50, 150, 300, 40);
+		join = new JButton("Join Server");
+		join.setBounds(-50, 150, 300, 40);
 
 		// Button blends with background
-		joinServer.setOpaque(false);
-		joinServer.setContentAreaFilled(false);
-		joinServer.setBorderPainted(false);
+		join.setOpaque(false);
+		join.setContentAreaFilled(false);
+		join.setBorderPainted(false);
 
 		// Removes textbox focus so the textbox border is removed
-		joinServer.setFocusPainted(false);
+		join.setFocusPainted(false);
 
 		// Sets font type, mode, and size
-		joinServer.setFont(new Font("Nasalization", Font.BOLD, 24));
+		join.setFont(new Font("Nasalization", Font.BOLD, 24));
 
 		// Uses a bitwise operator to merge the fonts of bold and italic
 		// for the text
-		joinServer.setFont(joinServer.getFont().deriveFont(Font.BOLD | Font.ITALIC));
+		join.setFont(join.getFont().deriveFont(Font.BOLD | Font.ITALIC));
 
-		joinServer.setForeground(Color.RED);
+		join.setForeground(Color.RED);
 
 		// Listens for whether the mouse has entered or exited the button
 		// area and if it has or has not, change color accordingly
-		joinServer.addMouseListener(new java.awt.event.MouseAdapter() {
+		join.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				joinServer.setForeground(Color.GREEN);
+				join.setForeground(Color.GREEN);
 			}
 
 			@Override
 			public void mouseExited(java.awt.event.MouseEvent evt) {
-				joinServer.setForeground(Color.RED);
+				join.setForeground(Color.RED);
 			}
 		});
 
-		joinServer.addActionListener(aL);
-		panel.add(joinServer);
+		join.addActionListener(aL);
+		panel.add(join);
 
 		back = new JButton("Back To Main Menu");
 		back.setBounds(0, 200, 300, 40);

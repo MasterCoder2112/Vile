@@ -616,7 +616,7 @@ public class Game implements Runnable {
 			if (item.pickedUp) {
 				item.tick();
 
-				if (item.tickCount > 5000 * Render3D.fpsCheck) {
+				if (item.tickCount > 1000 * Render3D.fpsCheck) {
 					item.tickCount = 0;
 					item.pickedUp = false;
 					SoundController.teleportation.playAudioFile(distance);

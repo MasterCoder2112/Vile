@@ -3,8 +3,11 @@ package com.vile.server;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import com.vile.Display;
 import com.vile.Game;
+import com.vile.RunGame;
 import com.vile.entities.Bullet;
+import com.vile.launcher.FPSLauncher;
 
 /**
  * Title: ServerHost
@@ -29,10 +32,19 @@ public class ServerHost {
 
 	public ServerHost(String portNum) {
 
-		int portNumber = Integer.parseInt(portNum);
-
 		try {
+			int portNumber = Integer.parseInt(portNum);
+
 			serverSocket = new ServerSocket(portNumber);
+
+			Display.itemsRespawn = true;
+			Display.clientGame = false;
+
+			new RunGame();
+
+			// Don't use unless seeing if this fixes the issue
+			// Thread host = new Thread(this);
+			// host.run();
 
 			while (clientCount < maxClients) {
 				Socket clientSocket = serverSocket.accept();
@@ -46,6 +58,7 @@ public class ServerHost {
 			// TODO Figure out how to start the game somewhere in here for the host?
 		} catch (Exception e) {
 			// TODO Have something that says to the host the server could not be started
+			new FPSLauncher(0);
 		}
 	}
 

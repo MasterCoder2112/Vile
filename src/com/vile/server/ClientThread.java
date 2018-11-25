@@ -37,6 +37,8 @@ public class ClientThread implements Runnable {
 			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
+			System.out.println("Has client and is waiting...");
+
 			// TODO Read next commented area
 			/*
 			 * Below is from the tutorial on the web. Modify it in such a way so that this

@@ -5,6 +5,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import com.vile.Display;
+import com.vile.RunGame;
+import com.vile.launcher.FPSLauncher;
+
 /**
  * Title: ServerClient
  * 
@@ -29,6 +33,15 @@ public class ServerClient {
 			PrintWriter out = new PrintWriter(hostSocket.getOutputStream(), true);
 			BufferedReader in = new BufferedReader(new InputStreamReader(hostSocket.getInputStream()));
 
+			System.out.println("Connected");
+
+			Display.itemsRespawn = true;
+
+			// TODO change when data is sent back and forth
+			Display.clientGame = true;
+
+			new RunGame();
+
 			// TODO Somehow start a game from here, and output new information every tick to
 			// the server
 			// and wait for a response to update the local game information.
@@ -39,6 +52,7 @@ public class ServerClient {
 
 		} catch (Exception e) {
 			// TODO Send client back to main menu saying connection failed.
+			new FPSLauncher(0);
 		}
 	}
 
