@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import com.vile.Display;
 import com.vile.Game;
 import com.vile.PopUp;
+import com.vile.RunGame;
 import com.vile.SoundController;
 import com.vile.entities.Button;
 import com.vile.entities.Door;
@@ -339,7 +340,6 @@ public class Controller {
 				// If you're falling, accelerate down
 				if (Player.y > 0 + Player.maxHeight + Player.extraHeight && !inJump) {
 					Player.y -= fallSpeed;
-					fallAmount -= fallSpeed;
 					fallSpeed = fallSpeed + (fallSpeed * acceleration);
 				}
 			} else {
@@ -352,6 +352,11 @@ public class Controller {
 				if (Player.y >= Render3D.ceilingDefaultHeight) {
 					Player.y = Render3D.ceilingDefaultHeight;
 				}
+			}
+
+			// Reset fallAmount each tick so that falling off of things works as well.
+			if (fallAmount < Player.y - Player.maxHeight) {
+				fallAmount = Player.y - Player.maxHeight;
 			}
 
 			// If Player.y is negligibly close to his/her max height
@@ -377,9 +382,10 @@ public class Controller {
 			 * If you are on the ground, calculate whether you are getting fall damage or
 			 * not. If you havent fallen, then you recieve no damage.
 			 */
-			if (fallAmount > 0) {
-				if (!Player.godModeOn && Player.immortality == 0) {
-					Player.health -= (int) (5 * (fallAmount / 25));
+			if (fallAmount > Player.jumpHeight * 2 && Math.abs(Player.y - Player.maxHeight) <= 0) {
+				if (!Player.godModeOn && Player.immortality == 0 && !Player.flyOn) {
+					Player.health -= (int) (10 * (fallAmount / 25));
+					SoundController.crushed.playAudioFile(0);
 				}
 
 				fallAmount = 0;
@@ -968,7 +974,12 @@ public class Controller {
 			// If not survival, reload map
 			if (FPSLauncher.gameMode == 0) {
 				Display.messages = new ArrayList<PopUp>();
-				game.loadNextMap(false, "");
+
+				if (Display.nonDefaultMap) {
+					game = new Game(RunGame.game, Display.nonDefaultMap, Display.newMapName);
+				} else {
+					game.loadNextMap(false, "");
+				}
 			} else {
 				Display.messages = new ArrayList<PopUp>();
 				// If survival mode then restart survival

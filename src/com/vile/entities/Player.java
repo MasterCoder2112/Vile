@@ -110,6 +110,10 @@ public class Player {
 	// ID of the player in case he/she is on a server
 	public static int ID = 0;
 
+	// For multi player
+	public static int kills = 0;
+	public static int deaths = 0;
+
 	/**
 	 * Reset all of a Players variables and make a new Player
 	 */
@@ -144,6 +148,8 @@ public class Player {
 		weapons[2] = new PhaseCannon();
 		weapons[3] = new RocketLauncher();
 		weaponEquipped = 0;
+		kills = 0;
+		deaths = 0;
 
 		blockOn = Level.getBlock((int) Player.x, (int) Player.z);
 	}

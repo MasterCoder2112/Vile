@@ -16,6 +16,7 @@ import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
 import com.vile.entities.Player;
 import com.vile.entities.Projectile;
+import com.vile.entities.ServerPlayer;
 import com.vile.launcher.FPSLauncher;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
@@ -406,6 +407,16 @@ public class Render3D extends Render {
 			renderHitSprite(hS.x, hS.y, hS.z, 0, hS);
 		}
 
+		/*
+		 * Renders all other player sprites in the game
+		 */
+		// TODO This is not finished, only for testing the texture currently
+		for (int i = 0; i < Game.otherPlayers.size(); i++) {
+			ServerPlayer sP = Game.otherPlayers.get(i);
+			// render sprite
+			renderPlayers(sP.x, sP.y, sP.z, 0, sP.ID);
+		}
+
 		// Everything below draws up the crosshair
 		int crossWidth = WIDTH;
 		int crossHeight = HEIGHT;
@@ -570,6 +581,340 @@ public class Render3D extends Render {
 	}
 
 	/*
+	 * Renders other players on the server given their player ID and positions
+	 */
+	// TODO Not finished yet, fix this up
+	public void renderPlayers(double x, double y, double z, double hOffSet, int ID) {
+		/*
+		 * The change in x, y, and z coordinates in correlation to the player to correct
+		 * them in accordance to the players position so that they don't seem to move.
+		 * Casts a vector between the item and Player to figure out the difference in
+		 * distance.
+		 */
+		double xC = (x - Player.x) * 1.9;
+		double yC = (y) + (Player.yCorrect / 11);
+		double zC = (z - Player.z) * 1.9;
+
+		// Size of sprite in terms of pixels. 512 x 512 is typical
+		int spriteSize = 512;
+
+		/*
+		 * Draws the actually distance to the entity depending on the direction the
+		 * player is looking and the x, y, and z positions of the player and entity.
+		 */
+		double rotX = (xC * cosine) - (zC * sine);
+		double rotY = yC;
+		double rotZ = (zC * cosine) + (xC * sine);
+
+		// If enemy is behind player, and not in sight, then don't even try
+		// to render. This should speed things up immensely.
+		if (rotZ <= 0) {
+			return;
+		}
+
+		/*
+		 * Centers the way the sprites are rendered towards the center of the screen as
+		 * that is the center of your view
+		 */
+		double xCenter = WIDTH / 2;
+		// double yCenter = HEIGHT / 2;
+
+		// How wide in terms of pixels the sprite is on screen
+		double xPixel = ((rotX / rotZ) * HEIGHT) + xCenter;
+
+		// How high in terms of pixels the texture is on screen.
+		// Has to be slightly corrected when player looks up
+		// or down.
+		double yPixel = ((rotY / rotZ) * HEIGHT) + (HEIGHT / Math.sin(Player.upRotate) * Math.cos(Player.upRotate));
+
+		/*
+		 * Figures out the sides of the object being rendered by drawing vectors to
+		 * them. These sides will be used in int form below to loop through the image
+		 * rendering all of its pixels to the screen.
+		 */
+		double xPixelL = xPixel - (spriteSize / rotZ);
+		double xPixelR = xPixel + (spriteSize / rotZ);
+		double yPixelL = yPixel - (spriteSize / rotZ);
+		double yPixelR = yPixel + (spriteSize / rotZ);
+
+		// Converts them into ints
+		int xPixL = (int) (xPixelL);
+		int xPixR = (int) (xPixelR);
+		int yPixL = (int) (yPixelL);
+		int yPixR = (int) (yPixelR);
+
+		// I used this because it didn't work without this.
+		rotZ *= 8;
+
+		// Dimensions of image being loaded in
+		int imageDimensions = 256;
+
+		/*
+		 * Make sure it doesn't try to render textures off the screen because they can't
+		 * be
+		 */
+		if (yPixR > HEIGHT) {
+			yPixR = HEIGHT;
+		} else if (yPixR < 0) {
+			yPixR = 0;
+		}
+
+		if (xPixR > WIDTH) {
+			xPixR = WIDTH;
+		} else if (xPixR < 0) {
+			xPixR = 0;
+		}
+
+		if (yPixL > HEIGHT) {
+			yPixL = HEIGHT;
+		} else if (yPixL < 0) {
+			yPixL = 0;
+		}
+
+		if (xPixL > WIDTH) {
+			xPixL = WIDTH;
+		} else if (xPixL < 0) {
+			xPixL = 0;
+		}
+
+		// If the image is not on the screen. Return and do not render.
+		if (Math.abs(xPixL - xPixR) == 0) {
+			return;
+		}
+
+		Render playerModel = Textures.playerModel;
+
+		try {
+			/*
+			 * Performs different operations when looping through the pixels depending on
+			 * whether low resolution is turned on or not. This makes the game faster than
+			 * having if statements within the double for loops.
+			 */
+			if (lowRes) {
+				/*
+				 * Render each pixel in the sprite correctly, and with the (zBuffer) as well so
+				 * that sprites behind other sprites will not clip through sprites in front of
+				 * them.
+				 * 
+				 * For each sprite also texture them correctly and correct the textures for
+				 * rotation and movement.
+				 */
+				for (int yy = yPixL; yy < yPixR; yy += 2) {
+					// How the sprite rotates up or down based on players up and
+					// down rotation
+					double pixelRotationY = -((yy - yPixelR) / (yPixelL - yPixelR));
+
+					// Sets the current pixel to an int, and multiplies it by
+					// 256 since the image is 256 by 256
+					int yTexture = (int) (pixelRotationY * imageDimensions);
+
+					// Go through width of image now
+					for (int xx = xPixL; xx < xPixR; xx += 2) {
+						// Corrects the way the pixel faces in the x direction
+						// depending on the players rotation
+						double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+
+						// Sets the current pixel to an int and multiplies it by
+						// 256 as that is the size of the image.
+						int xTexture = (int) (pixelRotationX * imageDimensions);
+
+						// Can the textures be seen
+						boolean seen = false;
+
+						/*
+						 * In case a rare bug continues to occur.
+						 */
+						if (zBuffer[(xx) + (yy) * WIDTH] < 0) {
+							zBuffer[(xx) + (yy) * WIDTH] = 0;
+						}
+
+						try {
+							// If not behind something else, and still has pixels
+							// to be rendered, the enemy can be seen
+							if ((zBuffer[(xx) + (yy) * WIDTH] > rotZ && zBuffer[(xx) + (yy + 1) * WIDTH] > rotZ
+									&& zBuffer[(xx + 1) + (yy + 1) * WIDTH] > rotZ
+									&& zBuffer[(xx + 1) + (yy) * WIDTH] > rotZ)
+									|| (zBuffer[(xx) + (yy) * WIDTH] == 0 || zBuffer[(xx) + (yy + 1) * WIDTH] == 0
+											|| zBuffer[(xx + 1) + (yy + 1) * WIDTH] == 0
+											|| zBuffer[(xx + 1) + (yy) * WIDTH] == 0)) {
+								seen = true;
+							}
+						} catch (Exception e) {
+							continue;
+						}
+
+						// If pixel is seen and can be rendered
+						if (seen) {
+							int color = 0;
+
+							// Catch any weird errors and just continue
+							try {
+								// Set the color of the pixel to be generated.
+								color = playerModel.PIXELS[(xTexture & 255) + (yTexture & 255) * 256];
+
+								if (ID > 0 && color != 0xffffffff) {
+									if (ID == 1) {
+										color = changeColor(255, 255, 255, color, 8, 0, 16);
+									} else if (ID == 2) {
+										color = changeColor(255, 255, 255, color, 16, 0, 8);
+									} else {
+										color = changeColor(255, 255, 255, color, 0, 16, 8);
+									}
+								}
+							} catch (Exception e) {
+								continue;
+							}
+
+							/*
+							 * If color is not white, render it, otherwise don't to have transparency around
+							 * your image. First two ff's are the images alpha, 2nd two are red, 3rd two are
+							 * green, 4th two are blue. ff is 255.
+							 */
+							if (color != 0xffffffff) {
+								try {
+									// Sets pixel in 2D array to that color
+									PIXELS[xx + yy * WIDTH] = color;
+
+									// Adds to the pixels on screen this enemy takes up
+									// enemy.pixelsOnScreen.set((xx + 1) + (yy) * WIDTH, true);
+									// enemy.pixelsOnScreen.set((xx + 1) + (yy + 1) * WIDTH, true);
+									// enemy.pixelsOnScreen.set((xx) + (yy + 1) * WIDTH, true);
+									// enemy.pixelsOnScreen.set(xx + yy * WIDTH, true);
+
+									// This is now the nearest pixel to the
+									// player, at this coordinate so create
+									// the new buffer here.
+									zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+
+									PIXELS[(xx + 1) + (yy) * WIDTH] = color;
+									zBuffer[(xx + 1) + (yy) * WIDTH] = rotZ;
+									PIXELS[(xx + 1) + (yy + 1) * WIDTH] = color;
+									zBuffer[(xx + 1) + (yy + 1) * WIDTH] = rotZ;
+									PIXELS[(xx) + (yy + 1) * WIDTH] = color;
+									zBuffer[(xx) + (yy + 1) * WIDTH] = rotZ;
+								} catch (Exception e) {
+
+								}
+
+								// Reapers are translucent because theyre ghost
+								// technically
+								if (ID == 4 && !Display.smileMode) {
+									// Adds to the pixels on screen this takes up
+									// Reapers still take up the same amount of space
+									// Though they are translucent
+									// enemy.pixelsOnScreen.set((xx + 2) + (yy + 1) * WIDTH, true);
+									// enemy.pixelsOnScreen.set((xx + 2) + (yy) * WIDTH, true);
+									// enemy.pixelsOnScreen.set((xx + 3) + (yy + 1) * WIDTH, true);
+									// enemy.pixelsOnScreen.set((xx + 3) + (yy) * WIDTH, true);
+									// enemy.pixelsOnScreen.set((xx + 4) + (yy + 1) * WIDTH, true);
+									// enemy.pixelsOnScreen.set((xx + 4) + (yy) * WIDTH, true);
+
+									xx += 2;
+								}
+							}
+						}
+					}
+				}
+			} else {
+				/*
+				 * Render each pixel in the sprite correctly, and with the (zBuffer) as well so
+				 * that sprites behind other sprites will not clip through sprites in front of
+				 * them.
+				 * 
+				 * For each sprite also texture them correctly and correct the textures for
+				 * rotation and movement.
+				 */
+				for (int yy = yPixL; yy < yPixR; yy++) {
+					// How the sprite rotates up or down based on players up and
+					// down rotation
+					double pixelRotationY = -((yy - yPixelR) / (yPixelL - yPixelR));
+
+					// Sets the current pixel to an int, and multiplies it by
+					// 256 since the image is 256 by 256
+					int yTexture = (int) (pixelRotationY * imageDimensions);
+
+					// Go through width of image now
+					for (int xx = xPixL; xx < xPixR; xx++) {
+						// Corrects the way the pixel faces in the x direction
+						// depending on the players rotation
+						double pixelRotationX = -(xx - xPixelR) / (xPixelL - xPixelR);
+
+						// Sets the current pixel to an int and multiplies it by
+						// 256 as that is the size of the image.
+						int xTexture = (int) (pixelRotationX * imageDimensions);
+
+						// Can the textures be seen
+						boolean seen = false;
+
+						try {
+							// If not behind something else, and still has pixels
+							// to be rendered, the enemy can be seen
+							if (zBuffer[(xx) + (yy) * WIDTH] > rotZ || zBuffer[(xx) + (yy) * WIDTH] == 0) {
+								seen = true;
+							}
+						} catch (Exception e) {
+							continue;
+						}
+
+						// If pixel is seen and can be rendered
+						if (seen) {
+							int color = 0;
+
+							// Catch any weird errors and just continue
+							try {
+								// Set the color of the pixel to be generated.
+								color = playerModel.PIXELS[(xTexture & 255) + (yTexture & 255) * 256];
+
+								if (ID > 0 && color != 0xffffffff) {
+									if (ID == 1) {
+										color = changeColor(255, 255, 255, color, 8, 0, 16);
+									} else if (ID == 2) {
+										color = changeColor(60, 255, 255, color, 16, 8, 0);
+									} else {
+										color = changeColor(255, 255, 255, color, 0, 16, 8);
+									}
+								}
+							} catch (Exception e) {
+								continue;
+							}
+
+							/*
+							 * If color is not white, render it, otherwise don't to have transparency around
+							 * your image. First two ff's are the images alpha, 2nd two are red, 3rd two are
+							 * green, 4th two are blue. ff is 255.
+							 */
+							if (color != 0xffffffff) {
+								try {
+									// This is now the nearest pixel to the
+									// player, at this coordinate so create
+									// the new buffer here.
+									zBuffer[(xx) + (yy) * WIDTH] = rotZ;
+
+									// Sets pixel in 2D array to that color
+									PIXELS[xx + yy * WIDTH] = color;
+								} catch (Exception e) {
+
+								}
+
+								// Reapers are translucent because theyre ghost
+								// technically
+								if (ID == 4 && !Display.smileMode) {
+									// Adds to the pixels on screen this takes up
+									// enemy.pixelsOnScreen.set((xx + 1) + yy * WIDTH, true);
+
+									xx++;
+								}
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			return;
+		}
+	}
+
+	/*
 	 * Renders each enemy on the map as a sprite. Each sprites position is corrected
 	 * for the players movement so that it does not move (other than its own
 	 * movement) in correlation to the players movement.
@@ -676,6 +1021,11 @@ public class Render3D extends Render {
 			xPixL = WIDTH;
 		} else if (xPixL < 0) {
 			xPixL = 0;
+		}
+
+		// If the image is not on the screen. Return and do not render.
+		if (Math.abs(xPixL - xPixR) == 0) {
+			return;
 		}
 
 		// enemy.pixelsOnScreen = new ArrayList<Boolean>(Display.HEIGHT *
@@ -979,6 +1329,11 @@ public class Render3D extends Render {
 
 		if (yPixR > HEIGHT) {
 			yPixR = HEIGHT;
+		}
+
+		// If the image is not on the screen. Return and do not render.
+		if (Math.abs(xPixL - xPixR) == 0) {
+			return;
 		}
 
 		rotZ *= 8;
@@ -1776,19 +2131,6 @@ public class Render3D extends Render {
 			correction = 2;
 		}
 
-		// Don't let textures be rendered off screen
-		if (yPixR > HEIGHT) {
-			yPixR = HEIGHT;
-		} else if (yPixR < 0) {
-			yPixR = 0;
-		}
-
-		if (xPixR > WIDTH) {
-			xPixR = WIDTH;
-		} else if (xPixR < 0) {
-			xPixR = 0;
-		}
-
 		// item.pixelsOnScreen = new ArrayList<Integer>();
 
 		// boolean xRender = false;
@@ -2040,6 +2382,11 @@ public class Render3D extends Render {
 			xPixR = 0;
 		}
 
+		// If the image is not on the screen. Return and do not render.
+		if (Math.abs(xPixL - xPixR) == 0) {
+			return;
+		}
+
 		rotZ *= 8;
 
 		int imageDimensions = 256;
@@ -2285,6 +2632,11 @@ public class Render3D extends Render {
 			yPixR = HEIGHT;
 		}
 
+		// If the image is not on the screen. Return and do not render.
+		if (Math.abs(xPixL - xPixR) == 0) {
+			return;
+		}
+
 		rotZ *= 8;
 
 		int imageDimensions = 256;
@@ -2395,18 +2747,6 @@ public class Render3D extends Render {
 			}
 
 			break;
-		}
-
-		if (yPixR > HEIGHT) {
-			yPixR = HEIGHT;
-		} else if (yPixR < 0) {
-			yPixR = 0;
-		}
-
-		if (xPixR > WIDTH) {
-			xPixR = WIDTH;
-		} else if (xPixR < 0) {
-			xPixR = 0;
 		}
 
 		// boolean xRender = false;
@@ -2614,6 +2954,11 @@ public class Render3D extends Render {
 			yPixR = HEIGHT;
 		}
 
+		// If the image is not on the screen. Return and do not render.
+		if (Math.abs(xPixL - xPixR) == 0) {
+			return;
+		}
+
 		rotZ *= 8;
 
 		if (corpse.phaseTime > 0) {
@@ -2794,18 +3139,6 @@ public class Render3D extends Render {
 			}
 		}
 
-		if (yPixR > HEIGHT) {
-			yPixR = HEIGHT;
-		} else if (yPixR < 0) {
-			yPixR = 0;
-		}
-
-		if (xPixR > WIDTH) {
-			xPixR = WIDTH;
-		} else if (xPixR < 0) {
-			xPixR = 0;
-		}
-
 		if (lowRes) {
 			correction = 2;
 		}
@@ -2969,6 +3302,11 @@ public class Render3D extends Render {
 			yPixR = HEIGHT;
 		}
 
+		// If the image is not on the screen. Return and do not render.
+		if (Math.abs(xPixL - xPixR) == 0) {
+			return;
+		}
+
 		rotZ *= 8;
 
 		int correction = 1;
@@ -2998,18 +3336,6 @@ public class Render3D extends Render {
 			type = Textures.giantFireball;
 		} else {
 			type = Textures.electricShock;
-		}
-
-		if (yPixR > HEIGHT) {
-			yPixR = HEIGHT;
-		} else if (yPixR < 0) {
-			yPixR = 0;
-		}
-
-		if (xPixR > WIDTH) {
-			xPixR = WIDTH;
-		} else if (xPixR < 0) {
-			xPixR = 0;
 		}
 
 		// proj.pixelsOnScreen = new ArrayList<Integer>();
@@ -3272,6 +3598,11 @@ public class Render3D extends Render {
 			 */
 			if (xPixelRightInt > WIDTH) {
 				xPixelRightInt = WIDTH;
+			}
+
+			// If the image is not on the screen. Return and do not render.
+			if (Math.abs(xPixelLeftInt - xPixelRightInt) == 0) {
+				return;
 			}
 
 			/*
@@ -4364,6 +4695,49 @@ public class Render3D extends Render {
 				color = r << 16 | g << 8 | b;
 			}
 		}
+
+		// Return new color with new brightness
+		return color;
+	}
+
+	/**
+	 * Shifts the colors of a given sprite by a certain amount. Used primarily on
+	 * other players if playing on a server.
+	 * 
+	 * @param brightness
+	 * @param color
+	 * @param redShift
+	 * @param greenShift
+	 * @param blueShift
+	 * @return
+	 */
+	// TODO Still gotta fix this method.
+	public int changeColor(int redBrightness, int greenBrightness, int blueBrightness, int color, int redShift,
+			int greenShift, int blueShift) {
+		/*
+		 * Or you can use 0xff. It goes from 0 - 255, and 255 = 0xff. The 255 is not
+		 * technically needed as it just causes the number to stay the same, but it does
+		 * matter for the int b for some reason. I think because it causes the render
+		 * distance to fade to blue if not. The shifting of the ints causes the color to
+		 * change.
+		 * 
+		 * Converts the bit value of the color into an int so that it can be easily
+		 * tampered with
+		 */
+		int r = (color >> 16) & 255;
+		int g = (color >> 8) & 255;
+		int b = color & 255;
+
+		/*
+		 * Divides that value by 255, then multiplies it by the brightness level of the
+		 * pixel to determine how bright the reds, greens, and blues in each pixel will
+		 * get.
+		 */
+		r = (r * redBrightness) / 255;
+		g = (g * greenBrightness) / 255;
+		b = (b * blueBrightness) / 255;
+
+		color = r << redShift | g << greenShift | b << blueShift;
 
 		// Return new color with new brightness
 		return color;

@@ -595,8 +595,9 @@ public abstract class Projectile {
 						+ ((Math.abs(this.z - sP.z)) * (Math.abs(this.z - sP.z))));
 
 				// If it hits the player, and player is alive and not
-				// invincible.
-				if (distanceFromClient <= 0.3 && Math.abs((sP.y) + ((this.y * 10) / 1.2)) <= 8 && sP.alive) {
+				// invincible. And its not the players own projectile.
+				if (distanceFromClient <= 0.3 && Math.abs((sP.y) + ((this.y * 10) / 1.2)) <= 8 && sP.alive
+						&& sP.ID != this.clientID) {
 					double damage = this.damage;
 
 					// If critical hit
@@ -607,6 +608,24 @@ public abstract class Projectile {
 
 					sP.hurtPlayer(damage);
 					projectileHit(true);
+
+					/*
+					 * If the player dies, make sure to add to his/her deaths, add to the owner of
+					 * the projectiles kills, and display the kill message to everyone.
+					 */
+					if (sP.health <= 0) {
+						sP.deaths++;
+
+						for (int j = 0; j < Game.otherPlayers.size(); j++) {
+							ServerPlayer serverP = Game.otherPlayers.get(j);
+
+							if (serverP.ID == this.clientID) {
+								serverP.kills++;
+							}
+						}
+
+						sP.clientMessages.add(new PopUp("Player " + this.clientID + " destroyed Player " + sP.ID));
+					}
 
 					return false;
 				}

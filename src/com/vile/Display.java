@@ -109,9 +109,6 @@ public class Display extends Canvas implements Runnable {
 	// Used to display frames per second
 	public static int fps = 0;
 
-	// How many kills the player has
-	public static int kills = 0;
-
 	// Current music theme number
 	public static int musicTheme = 2;
 
@@ -445,9 +442,6 @@ public class Display extends Canvas implements Runnable {
 					Player.superSpeedOn = false;
 					Player.godModeOn = false;
 					Player.unlimitedAmmoOn = false;
-
-					// Reset kills
-					kills = 0;
 				} else {
 					// Set to no longer loading in a game if it got to here.
 					FPSLauncher.loadingGame = false;
@@ -625,6 +619,27 @@ public class Display extends Canvas implements Runnable {
 			newY = InputHandler.MouseY;
 			oldX = InputHandler.MouseX;
 			oldY = InputHandler.MouseY;
+
+			// TODO Add stuff for client here.
+			// Get all information from server when ready to set up game.
+			if (gameType == 1) {
+				loading.setTitle("Loading Host Game... 95% Loaded");
+				try {
+					PrintWriter out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
+					BufferedReader in = new BufferedReader(
+							new InputStreamReader(ServerClient.hostSocket.getInputStream()));
+
+					// Send ready status to host here.
+
+					// Before you get the new information, reset the game lists.
+					game.resetLists();
+
+					// Recieve information from host here.
+				} catch (Exception e) {
+					loading.dispose();
+					new FPSLauncher(0);
+				}
+			}
 
 			loading.setTitle("Done 100% Loaded");
 
@@ -909,8 +924,12 @@ public class Display extends Canvas implements Runnable {
 					BufferedReader in = new BufferedReader(
 							new InputStreamReader(ServerClient.hostSocket.getInputStream()));
 
+					// Send information to host here.
+
 					// Before you get the new information, reset the game lists.
 					game.resetLists();
+
+					// Recieve information from host here.
 				} catch (Exception e) {
 
 				}
@@ -1406,11 +1425,11 @@ public class Display extends Canvas implements Runnable {
 			if (smileMode) {
 				g.drawString("GOT DEPRESSED...", (WIDTH / 2) - 220, HEIGHT - gC + 18);
 
-				g.drawString("No Positivity " + Player.armor, (WIDTH / 2) - 190, HEIGHT - gC + 43);
+				g.drawString("No Positivity", (WIDTH / 2) - 190, HEIGHT - gC + 43);
 			} else {
 				g.drawString("PLAYER DIED...", (WIDTH / 2) - 220, HEIGHT - gC + 18);
 
-				g.drawString("No Armor " + Player.armor, (WIDTH / 2) - 190, HEIGHT - gC + 43);
+				g.drawString("No Armor", (WIDTH / 2) - 190, HEIGHT - gC + 43);
 			}
 
 			Controller.moveSpeed = 0.0;
@@ -1450,11 +1469,11 @@ public class Display extends Canvas implements Runnable {
 			if (smileMode) {
 				g.drawString("Unhappy Faces: " + Game.enemies.size(), (WIDTH / 2) + 200, HEIGHT - gC + 43);
 
-				g.drawString("Days Made: " + kills, (WIDTH / 2) + 200, HEIGHT - gC + 18);
+				g.drawString("Days Made: " + Player.kills, (WIDTH / 2) + 200, HEIGHT - gC + 18);
 			} else {
 				g.drawString("Enemies: " + Game.enemies.size(), (WIDTH / 2) + 200, HEIGHT - gC + 43);
 
-				g.drawString("Kills: " + kills, (WIDTH / 2) + 200, HEIGHT - gC + 18);
+				g.drawString("Kills: " + Player.kills, (WIDTH / 2) + 200, HEIGHT - gC + 18);
 			}
 		} else {
 			g.drawString("Secrets found: " + Game.secretsFound + " / " + Game.secretsInMap, (WIDTH / 2) + 200,
@@ -1463,9 +1482,10 @@ public class Display extends Canvas implements Runnable {
 			g.drawString(Game.mapName, (WIDTH / 2) - 390, HEIGHT - gC + 93);
 
 			if (smileMode) {
-				g.drawString("Made Happy: " + kills + " / " + Game.enemiesInMap, (WIDTH / 2) + 200, HEIGHT - gC + 43);
+				g.drawString("Made Happy: " + Player.kills + " / " + Game.enemiesInMap, (WIDTH / 2) + 200,
+						HEIGHT - gC + 43);
 			} else {
-				g.drawString("Kills: " + kills + " / " + Game.enemiesInMap, (WIDTH / 2) + 200, HEIGHT - gC + 43);
+				g.drawString("Kills: " + Player.kills + " / " + Game.enemiesInMap, (WIDTH / 2) + 200, HEIGHT - gC + 43);
 			}
 		}
 
@@ -2351,6 +2371,6 @@ public class Display extends Canvas implements Runnable {
 		game = new Game(this, false, "");
 
 		// Resets enemies made happy
-		kills = 0;
+		Player.kills = 0;
 	}
 }

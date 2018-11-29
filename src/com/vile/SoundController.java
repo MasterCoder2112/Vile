@@ -1,7 +1,7 @@
 package com.vile;
 
 import java.util.ArrayList;
-import com.vile.Sound;
+
 import com.vile.launcher.FPSLauncher;
 
 /**
@@ -9,21 +9,19 @@ import com.vile.launcher.FPSLauncher;
  * @author Alexander Byrd
  * @date 3/24/2017
  * 
- * Description:
- * The only purpose of this is to hold all the various sounds that the
- * game has, and makes them public and static so they can be accessed
- * from anywhere to be played. Instantiates all the sounds with a 
- * defaultSize of clips to be played, and the file location of the
- * audio file it needs to load.
+ *       Description: The only purpose of this is to hold all the various sounds
+ *       that the game has, and makes them public and static so they can be
+ *       accessed from anywhere to be played. Instantiates all the sounds with a
+ *       defaultSize of clips to be played, and the file location of the audio
+ *       file it needs to load.
  */
-public class SoundController 
-{
+public class SoundController {
 	// Clip that is played when the player picks up a health pack
 	public static Sound health;
 
 	// When the player picks up an ammo clip
 	public static Sound clip;
-	
+
 	public static Sound explosion;
 	public static Sound secret;
 	public static Sound megaPickUp;
@@ -40,16 +38,16 @@ public class SoundController
 	public static Sound glassBreak;
 	public static Sound belegothDeath;
 	public static Sound belegothActivate;
-	
+
 	// If player is injured by an enemy
 	public static Sound playerHurt;
-	
-	//This is public because it used by the door and lift classes
+
+	// This is public because it used by the door and lift classes
 	public static Sound lifting;
-	
+
 	// When the enemy is hit by the players bullet
 	public static Sound enemyHit;
-	
+
 	public static Sound bossHit;
 	public static Sound bossActivate;
 	public static Sound enemyActivate;
@@ -67,7 +65,7 @@ public class SoundController
 	public static Sound wallHit;
 	public static Sound rocketFly;
 	public static Sound rocketFire;
-	
+
 	// The enemy is killed clip that plays
 	public static Sound defaultKill;
 	public static Sound bossDeath;
@@ -76,7 +74,7 @@ public class SoundController
 	public static Sound enemy3Death;
 	public static Sound enemy4Death;
 	public static Sound enemy7Death;
-	
+
 	public static Sound tutorial1;
 	public static Sound tutorial2;
 	public static Sound tutorial3;
@@ -90,7 +88,7 @@ public class SoundController
 	public static Sound specialPickup;
 	public static Sound creepySound;
 	public static Sound phaseCannonHit;
-	
+
 	public static Sound activated;
 	public static Sound doorStart;
 	public static Sound doorEnd;
@@ -99,22 +97,22 @@ public class SoundController
 	public static Sound keyTry;
 	public static Sound uplink;
 	public static Sound criticalHit;
-	
-	//Stores all the sounds so that all the sounds can be
-	//set to certain settings at once
+	public static Sound crushed;
+
+	// Stores all the sounds so that all the sounds can be
+	// set to certain settings at once
 	public static ArrayList<Sound> allSounds;
-	
+
 	private int defaultSize = 4;
-	
-   /**
-    * Contructs all sounds held in the sound controller
-    */
-	public SoundController() 
-	{
-		//reset the arraylist
+
+	/**
+	 * Contructs all sounds held in the sound controller
+	 */
+	public SoundController() {
+		// reset the arraylist
 		allSounds = null;
 		allSounds = new ArrayList<Sound>();
-		
+
 		enemyHit = addSound(enemyHit, "enemyHit");
 		defaultKill = addSound(defaultKill, "enemyDeath");
 		health = addSound(health, "health");
@@ -180,70 +178,61 @@ public class SoundController
 		keyTry = addSound(keyTry, "keytry");
 		uplink = addSound(uplink, "uplink");
 		criticalHit = addSound(criticalHit, "criticalHit");
+		crushed = addSound(crushed, "crushed");
 	}
-	
-   /**
-    * Used to reset all of the sound volumes. Usually used when the game
-    * is reloaded.
-    * @param newVolume
-    */
-	public void resetAllVolumes(float newVolume)
-	{
-		for(Sound temp: allSounds)
-		{
+
+	/**
+	 * Used to reset all of the sound volumes. Usually used when the game is
+	 * reloaded.
+	 * 
+	 * @param newVolume
+	 */
+	public void resetAllVolumes(float newVolume) {
+		for (Sound temp : allSounds) {
 			temp.resetVolume(newVolume);
 		}
 	}
-	
-   /**
-    * Basically nullifies all sounds to clear the heap
-    */
-	public void resetSounds()
-	{
-		for(Sound temp: allSounds)
-		{
+
+	/**
+	 * Basically nullifies all sounds to clear the heap
+	 */
+	public void resetSounds() {
+		for (Sound temp : allSounds) {
 			temp.nullify();
 			temp = null;
 		}
-		
+
 		allSounds = null;
 	}
-	
-   /**
-    * Instantiates a single sound at a time, checking to see if first it
-    * is in the current resource pack, and then if not there it will use
-    * the default sound found in the default resource pack. If not in
-    * either the sound will just be null, but it will not cause the
-    * program to crash.
-    * @param temp
-    * @param fileName
-    */
-	private Sound addSound(Sound temp, String fileName)
-	{
-		try
-		{
-			//Try to find sound in current resource pack
-			temp =  new Sound(defaultSize, "resources"+FPSLauncher.themeName+"/audio/"+fileName+".wav");
+
+	/**
+	 * Instantiates a single sound at a time, checking to see if first it is in the
+	 * current resource pack, and then if not there it will use the default sound
+	 * found in the default resource pack. If not in either the sound will just be
+	 * null, but it will not cause the program to crash.
+	 * 
+	 * @param temp
+	 * @param fileName
+	 */
+	private Sound addSound(Sound temp, String fileName) {
+		try {
+			// Try to find sound in current resource pack
+			temp = new Sound(defaultSize, "resources" + FPSLauncher.themeName + "/audio/" + fileName + ".wav");
 			allSounds.add(temp);
 			temp.audioName = fileName;
-		}
-		catch(Exception e)
-		{
-			try
-			{
-				//If sound is not found in the resource pack
-				temp =  new Sound(defaultSize, "resources/default/audio/"+fileName+".wav");
+		} catch (Exception e) {
+			try {
+				// If sound is not found in the resource pack
+				temp = new Sound(defaultSize, "resources/default/audio/" + fileName + ".wav");
 				allSounds.add(temp);
 				temp.audioName = fileName;
-			}
-			catch(Exception ex)
-			{
-				//Sound is just null if not found in either
-				//Print exception though for debugging
-				//Sound will not be added to allSounds if this is the case
+			} catch (Exception ex) {
+				// Sound is just null if not found in either
+				// Print exception though for debugging
+				// Sound will not be added to allSounds if this is the case
 			}
 		}
-		
+
 		return temp;
 	}
 }

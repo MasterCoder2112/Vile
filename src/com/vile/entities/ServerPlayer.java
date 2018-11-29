@@ -125,6 +125,9 @@ public class ServerPlayer {
 	public ArrayList<String> audioToPlay = new ArrayList<String>();
 	public ArrayList<Integer> audioDistances = new ArrayList<Integer>();
 
+	public int kills = 0;
+	public int deaths = 0;
+
 	/**
 	 * Reset all of a Players variables and make a new Player
 	 */

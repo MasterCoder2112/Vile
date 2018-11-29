@@ -306,8 +306,8 @@ public class Game implements Runnable {
 				// If survival mode, see if its a new max number of kills
 				// or not and if it is then save the new max.
 				if (FPSLauncher.gameMode == 1) {
-					if (Display.kills > Player.maxKills) {
-						Player.maxKills = Display.kills;
+					if (Player.kills > Player.maxKills) {
+						Player.maxKills = Player.kills;
 					}
 				}
 			} else {
@@ -918,7 +918,13 @@ public class Game implements Runnable {
 		for (int i = 0; i < Game.bullets.size(); i++) {
 			Bullet bullet = Game.bullets.get(i);
 
-			bullet.move();
+			if (bullet.ID <= 2) {
+				while (bullet.move()) {
+
+				}
+			} else {
+				bullet.move();
+			}
 		}
 
 		/*
@@ -1507,11 +1513,7 @@ public class Game implements Runnable {
 
 			// For any bullets that are supposed to hit instantly, move them
 			// until they hit something.
-			if (bullet.ID <= 2) {
-				while (bullet.move()) {
-
-				}
-			}
+			bullet.move();
 		}
 
 		/*
@@ -1687,7 +1689,7 @@ public class Game implements Runnable {
 
 			secretsFound = Integer.parseInt(elements[2]);
 			enemiesInMap = Integer.parseInt(elements[3]);
-			Display.kills = Integer.parseInt(elements[4]);
+			Player.kills = Integer.parseInt(elements[4]);
 			FPSLauncher.themeName = (elements[5]);
 
 			// Length of elements to read in
@@ -2490,7 +2492,7 @@ public class Game implements Runnable {
 		enemiesInMap = 0;
 
 		// Player has no kills on the map when the map is first started
-		Display.kills = 0;
+		Player.kills = 0;
 
 		// Try and read the file correctly, if not catch exception
 		try {

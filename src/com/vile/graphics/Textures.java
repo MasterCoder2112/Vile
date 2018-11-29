@@ -288,6 +288,8 @@ public class Textures {
 	public static Render treeAlive = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/treeAlive.png");
 
 	/////////////////////////////////////////////// ENTITIES
+	public static Render playerModel = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/tempPlayerModel.png");
 	public static Render enemy1 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy1.png");
 	public static Render enemy2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy2.png");
 	public static Render enemy3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy3.png");

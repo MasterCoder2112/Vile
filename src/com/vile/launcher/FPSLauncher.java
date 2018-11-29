@@ -743,7 +743,7 @@ public class FPSLauncher extends JFrame {
 					rewrite = new BufferedWriter(new FileWriter("Users/" + currentUserName + "/" + fileName + ".txt"));
 
 					rewrite.write(Game.mapNum + ":" + gameMode + ":" + Game.secretsFound + ":" + Game.enemiesInMap + ":"
-							+ Display.kills + ":" + themeName);
+							+ Player.kills + ":" + themeName);
 
 					rewrite.newLine();
 
