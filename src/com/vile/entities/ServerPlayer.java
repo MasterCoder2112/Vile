@@ -1,6 +1,9 @@
 package com.vile.entities;
 
+import java.util.ArrayList;
+
 import com.vile.Game;
+import com.vile.PopUp;
 import com.vile.SoundController;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
@@ -20,102 +23,113 @@ import com.vile.levelGenerator.Level;
  */
 public class ServerPlayer {
 
+	public int ID = 0;
+
 	// Typical values
-	public static int health = 100;
-	public static int maxHealth = 200;
-	public static int armor = 0;
+	public int health = 100;
+	public int maxHealth = 200;
+	public int armor = 0;
 
 	// How many upgrade points has the player collected
-	public static int upgradePoints = 0;
+	public int upgradePoints = 0;
 
 	// How many health resurrections do you have
-	public static int resurrections = 0;
+	public int resurrections = 0;
 
 	// How long the player is protected from toxic waste/lava
-	public static int environProtectionTime = 0;
+	public int environProtectionTime = 0;
 
 	// How long the player is immortal for
-	public static int immortality = 0;
+	public int immortality = 0;
 
 	// Enhanced Vision/night vision
-	public static int vision = 0;
+	public int vision = 0;
 
 	// Invisibility. Enemies can't see player
-	public static int invisibility = 0;
+	public int invisibility = 0;
 
 	// How long since player was last hurt
-	public static int playerHurt = 0;
+	public int playerHurt = 0;
 
 	// Max number of kills in survival
-	public static int maxKills;
+	public int maxKills;
 
-	public static double height = 2.0;
-	public static double x = 0;
-	public static double y = 0;
-	public static double z = 0;
+	public double height = 2.0;
+	public double x = 0;
+	public double y = 0;
+	public double z = 0;
 
 	// yCorrect is used for when the player is crouching
-	public static double yCorrect = 0;
+	public double yCorrect = 0;
 
 	// Direction player is facing.
-	public static double rotation = 0;
+	public double rotation = 0;
 
 	// If an explosion effects movement of player, this is the effect on
 	// each direction of the player
-	public static double zEffects = 0;
-	public static double xEffects = 0;
-	public static double yEffects = 0;
+	public double zEffects = 0;
+	public double xEffects = 0;
+	public double yEffects = 0;
 
 	// Max Height a player can stand on at moment.
-	public static double maxHeight = 0;
+	public double maxHeight = 0;
 
 	// The height the player can jump at this moment
-	public static double jumpHeight = 8;
+	public double jumpHeight = 8;
 
 	// How high in the air player can jump no matter where he/she is
-	public static double totalJump = 8;
+	public double totalJump = 8;
 
 	// Used for rendering
-	public static double upRotate = 1.105;
+	public double upRotate = 1.105;
 
 	// If a solid item or enemy adds extra height to a player
-	public static double extraHeight = 0;
+	public double extraHeight = 0;
 
 	// Whether the player has the keys or not
-	public static boolean hasRedKey = false;
-	public static boolean hasBlueKey = false;
-	public static boolean hasGreenKey = false;
-	public static boolean hasYellowKey = false;
+	public boolean hasRedKey = false;
+	public boolean hasBlueKey = false;
+	public boolean hasGreenKey = false;
+	public boolean hasYellowKey = false;
 
 	// Player cheats
-	public static boolean noClipOn;
-	public static boolean flyOn;
-	public static boolean superSpeedOn;
-	public static boolean godModeOn;
-	public static boolean unlimitedAmmoOn;
+	public boolean noClipOn;
+	public boolean flyOn;
+	public boolean superSpeedOn;
+	public boolean godModeOn;
+	public boolean unlimitedAmmoOn;
 
 	// Is a wall crushing the player, forcing him/her to crouch
-	public static boolean forceCrouch;
+	public boolean forceCrouch;
 
 	// Is player still alive?
-	public static boolean alive = true;
+	public boolean alive = true;
 
 	// Block player is standing on
-	public static Block blockOn = null;
+	public Block blockOn = null;
 
 	/*
 	 * Weapon equipped. 0 for Pistols 1 for Shotgun 2 for Phase Cannon 3 for Rocket
 	 * Launcher
 	 */
-	public static int weaponEquipped = 0;
+	public int weaponEquipped = 0;
 
 	// Array of weapons player has
-	public static Weapon[] weapons = new Weapon[4];
+	public Weapon[] weapons = new Weapon[4];
+
+	// TODO New things added for client to take in and act.
+	// Any messages or audio to play on the client side activated by the server will
+	// be put here.
+	// Then these will be sent back to the client and the client will act on them.
+	public ArrayList<PopUp> clientMessages = new ArrayList<PopUp>();
+	public ArrayList<String> audioToPlay = new ArrayList<String>();
+	public ArrayList<Integer> audioDistances = new ArrayList<Integer>();
 
 	/**
 	 * Reset all of a Players variables and make a new Player
 	 */
 	public ServerPlayer() {
+		ID = Game.otherPlayers.size();
 		health = 100;
 		maxHealth = 200;
 		height = 2.0;
@@ -153,7 +167,7 @@ public class ServerPlayer {
 	/**
 	 * Updates the players buffs by counting down the ticks until they wear off.
 	 */
-	public static void updateBuffs() {
+	public void updateBuffs() {
 		/*
 		 * Each tick, take the time the the player is protected from environmental
 		 * conditions by 1.
@@ -230,7 +244,7 @@ public class ServerPlayer {
 	 * 
 	 * @param damage
 	 */
-	public static void hurtPlayer(double damage) {
+	public void hurtPlayer(double damage) {
 		// If the player is immortal then don't hurt
 		// Or if in peaceful mode don't hurt
 		if (godModeOn || immortality != 0 || Game.skillMode == 0 || !Player.alive) {

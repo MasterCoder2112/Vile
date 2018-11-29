@@ -2,6 +2,7 @@ package com.vile.entities;
 
 import java.util.Random;
 
+import com.vile.Display;
 import com.vile.SoundController;
 
 /**
@@ -57,157 +58,119 @@ public class Shotgun extends Weapon implements WeaponInterface {
 
 				SoundController.shoot.playAudioFile(0);
 
+				double bullY = -(Player.y * 0.085);
+
+				// Bullet will be lower if player is crouching
+				if (Player.yCorrect + 1 < Player.y) {
+					bullY = 0.8;
+				}
+
 				// Create the bullet
-				Bullet bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation, criticalHit);
-
-				// Bullet will be lower if player is crouching
-				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
-				}
+				Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation,
+						criticalHit);
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation + 0.06, criticalHit);
-
-				// Bullet will be lower if player is crouching
-				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
-				}
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.06,
+						criticalHit);
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation - 0.06, criticalHit);
-
-				// Bullet will be lower if player is crouching
-				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
-				}
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.06,
+						criticalHit);
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation + 0.04, criticalHit);
-
-				// Bullet will be lower if player is crouching
-				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
-				}
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.04,
+						criticalHit);
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation - 0.04, criticalHit);
-
-				// Bullet will be lower if player is crouching
-				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
-				}
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.04,
+						criticalHit);
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation + 0.08, criticalHit);
-
-				// Bullet will be lower if player is crouching
-				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
-				}
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.08,
+						criticalHit);
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation - 0.08, criticalHit);
-
-				// Bullet will be lower if player is crouching
-				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
-				}
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.08,
+						criticalHit);
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation + 0.015, criticalHit);
-
-				// Bullet will be lower if player is crouching
-				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
-				}
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.015,
+						criticalHit);
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation - 0.015, criticalHit);
-
-				// Bullet will be lower if player is crouching
-				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
-				}
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.015,
+						criticalHit);
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// Do nothing, just call the move method
 				}
 			} else if (weaponShootTime == 6) {

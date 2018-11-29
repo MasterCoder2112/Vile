@@ -17,6 +17,8 @@ import java.awt.image.DataBufferInt;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -39,6 +41,7 @@ import com.vile.input.Controller;
 import com.vile.input.InputHandler;
 import com.vile.launcher.FPSLauncher;
 import com.vile.launcher.LogIn;
+import com.vile.server.ServerClient;
 
 /**
  * @title Display
@@ -87,8 +90,9 @@ public class Display extends Canvas implements Runnable {
 	// Determines whether the game is paused
 	public static boolean pauseGame = false;
 
-	// Is this a host or client game (host game by default)
-	public static boolean clientGame = false;
+	// TODO This is where gameType variable is
+	// What type of game is this (0 = host, 1 = client, 2 = single player)
+	public static int gameType = 2;
 
 	// New screen object
 	private Screen screen;
@@ -266,279 +270,369 @@ public class Display extends Canvas implements Runnable {
 			game = null;
 		}
 
-		// A temporary frame to display where the game is at in the
-		// loading process
-		JFrame loading = new JFrame("Loading Variables... 0% Loaded");
+		// TODO Only loads for host. If problems with this come to this checkpoint
+		// Host only loads certain aspects up before starting the game.
+		if (gameType == 0) {
+			// The game is not ending yet
+			Controller.quitGame = false;
 
-		// Sets frame size, centers it on screen, makes it nonresizable,
-		// and still closable.
-		loading.setSize(WIDTH, HEIGHT);
-		loading.setLocationRelativeTo(null);
-		loading.setResizable(false);
-		loading.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		// Set app icon
-		ImageIcon titleIcon = new ImageIcon("resources" + FPSLauncher.themeName + "/textures/hud/titleIcon.png");
-		loading.setIconImage(titleIcon.getImage());
-
-		// Make frame visible
-		loading.setVisible(true);
-
-		// The game is not ending yet
-		Controller.quitGame = false;
-
-		// Game is not paused
-		Display.pauseGame = false;
-
-		// Just displays point in loading.
-		loading.setTitle("Loading sounds... 5% Loaded");
-
-		// Music changes if the themes aren't the same, or if the
-		// music theme for survival is changed.
-		if (!currentTheme.equals(FPSLauncher.themeName) || musicTheme != oldMusicTheme) {
-			try {
-				inputStream.close();
-			} catch (Exception e) {
-
-			}
-
-			inputStream = null;
-
-			try {
-				music.close();
-			} catch (Exception e) {
-
-			}
-
-			oldMusicTheme = musicTheme;
-
-			music = null;
-			audioOn = false;
-		}
-
-		// Only resets game values if the game needs to be restarted
-		if (!FPSLauncher.returning) {
-			loading.setTitle("Setting up game entities... 35% Loaded");
+			// Game is not paused
+			Display.pauseGame = false;
 
 			// If new game, reset the gameMode
 			Game.skillMode = FPSLauncher.modeChoice;
 
-			// Resets player values (health, ammo, etc...)
-			new Player();
-
-			// TODO Have this able to be changed.
-			// Pistol is the only weapon defaultly equipped (can change later for
-			// resource packs)
-			Player.weapons[0].canBeEquipped = true;
-
-			/*
-			 * When there is a new game, there is no previous music theme so oldMusicTheme
-			 * is set equal to the current music theme.
-			 */
-			oldMusicTheme = musicTheme;
-
 			// New Game and map. Sets up music for that map too
 			game = new Game(this, nonDefaultMap, newMapName);
 
-			// Reset the popup list
-			messages = new ArrayList<PopUp>();
+			// A new scanner object that is defaultly set to null
+			Scanner sc = null;
 
-			// Reset debug values
-			Controller.showFPS = false;
-
-			// Only if not loading the game.
-			if (!FPSLauncher.loadingGame) {
-				Player.flyOn = false;
-				Player.noClipOn = false;
-				Player.superSpeedOn = false;
-				Player.godModeOn = false;
-				Player.unlimitedAmmoOn = false;
-
-				// Reset kills
-				kills = 0;
-			} else {
-				// Set to no longer loading in a game if it got to here.
-				FPSLauncher.loadingGame = false;
-			}
-
-			loading.setTitle("Setting up music... 50% Loaded");
-
-			// Only do if there is music playing
-			if (audioOn) {
-				Sound.setMusicVolume(music);
-			}
-		}
-		// If just resuming game, most values are already loaded
-		else {
-			loading.setTitle("Setting up music... 50% Loaded");
-
-			// Only do if there is music playing
-			if (audioOn) {
-				Sound.setMusicVolume(music);
-			}
-		}
-
-		loading.setTitle("Resetting textures and GUI... 65% Loaded");
-
-		// A new scanner object that is defaultly set to null
-		Scanner sc = null;
-
-		/*
-		 * Try to read the file and if not, state the error
-		 */
-		try {
-			// Creates a Scanner that can read the file
-			sc = new Scanner(new BufferedReader(new FileReader("resources" + FPSLauncher.themeName + "/settings.txt")));
 			/*
-			 * Read through lines in the resource pack settings file to determine what game
-			 * settings to change depending on special attributes set within this resource
-			 * pack.
+			 * Try to read the file and if not, state the error
 			 */
-			String currentLine = "";
+			try {
+				// Creates a Scanner that can read the file
+				sc = new Scanner(
+						new BufferedReader(new FileReader("resources" + FPSLauncher.themeName + "/settings.txt")));
+				/*
+				 * Read through lines in the resource pack settings file to determine what game
+				 * settings to change depending on special attributes set within this resource
+				 * pack.
+				 */
+				String currentLine = "";
 
-			currentLine = sc.nextLine();
-			String[] elements = currentLine.split(":");
-			String[] colorAttributes = elements[1].split(",");
+				currentLine = sc.nextLine();
+				String[] elements = currentLine.split(":");
+				String[] colorAttributes = elements[1].split(",");
 
-			// Grab all the different color attributes
-			int transparency = Integer.parseInt(colorAttributes[0]);
-			int red = Integer.parseInt(colorAttributes[1]);
-			int green = Integer.parseInt(colorAttributes[2]);
-			int blue = Integer.parseInt(colorAttributes[3]);
+				// Grab all the different color attributes
+				int transparency = Integer.parseInt(colorAttributes[0]);
+				int red = Integer.parseInt(colorAttributes[1]);
+				int green = Integer.parseInt(colorAttributes[2]);
+				int blue = Integer.parseInt(colorAttributes[3]);
 
-			// Shift red bits 16, green 8, and blue none and add the bits together
-			// to get the color that will be transparent.
-			Render3D.seeThroughWallPixel = transparency << 24 | red << 16 | green << 8 | blue;
+				// Shift red bits 16, green 8, and blue none and add the bits together
+				// to get the color that will be transparent.
+				Render3D.seeThroughWallPixel = transparency << 24 | red << 16 | green << 8 | blue;
 
-			currentLine = sc.nextLine();
-			elements = currentLine.split(":");
+				currentLine = sc.nextLine();
+				elements = currentLine.split(":");
 
-			Controller.acceleration = Double.parseDouble(elements[1]);
+				Controller.acceleration = Double.parseDouble(elements[1]);
 
-			currentLine = sc.nextLine();
-			elements = currentLine.split(":");
+				currentLine = sc.nextLine();
+				elements = currentLine.split(":");
 
-			Player.totalJump = Integer.parseInt(elements[1]);
+				Player.totalJump = Integer.parseInt(elements[1]);
 
-			currentLine = sc.nextLine();
-			elements = currentLine.split(":");
+				currentLine = sc.nextLine();
+				elements = currentLine.split(":");
 
-			// Only if in survival
-			if (FPSLauncher.gameMode == 1) {
-				Render3D.renderDistanceDefault = Double.parseDouble(elements[1]);
-			}
+				// Only if in survival
+				if (FPSLauncher.gameMode == 1) {
+					Render3D.renderDistanceDefault = Double.parseDouble(elements[1]);
+				}
 
-			currentLine = sc.nextLine();
-			elements = currentLine.split(":");
+				currentLine = sc.nextLine();
+				elements = currentLine.split(":");
 
-			// Will game have smile mechanics or not
-			if (Integer.parseInt(elements[1]) == 1) {
-				smileMode = true;
-			} else {
+				// Will game have smile mechanics or not
+				if (Integer.parseInt(elements[1]) == 1) {
+					smileMode = true;
+				} else {
+					smileMode = false;
+				}
+			} catch (Exception e) {
+				System.out.println(e);
+				// Set to defaults if failed
+				Render3D.seeThroughWallPixel = 0xffffffff;
+				Controller.acceleration = 0.03;
+				Player.totalJump = 8;
+				Render3D.renderDistanceDefault = 100000.0;
 				smileMode = false;
 			}
-		} catch (Exception e) {
-			System.out.println(e);
-			// Set to defaults if failed
-			Render3D.seeThroughWallPixel = 0xffffffff;
-			Controller.acceleration = 0.03;
-			Player.totalJump = 8;
-			Render3D.renderDistanceDefault = 100000.0;
-			smileMode = false;
-		}
 
-		sc.close();
-		sc = null;
+			sc.close();
+			sc = null;
 
-		// If themes aren't the same, then reset the sounds. Otherwise it won't
-		if (!currentTheme.equals(FPSLauncher.themeName))
-		// if(currentTheme.equals(""))
-		{
-			try {
-				soundController.resetSounds();
-			} catch (Exception e) {
+		} else {
+
+			// A temporary frame to display where the game is at in the
+			// loading process
+			JFrame loading = new JFrame("Loading Variables... 0% Loaded");
+
+			// Sets frame size, centers it on screen, makes it nonresizable,
+			// and still closable.
+			loading.setSize(WIDTH, HEIGHT);
+			loading.setLocationRelativeTo(null);
+			loading.setResizable(false);
+			loading.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+			// Set app icon
+			ImageIcon titleIcon = new ImageIcon("resources" + FPSLauncher.themeName + "/textures/hud/titleIcon.png");
+			loading.setIconImage(titleIcon.getImage());
+
+			// Make frame visible
+			loading.setVisible(true);
+
+			// The game is not ending yet
+			Controller.quitGame = false;
+
+			// Game is not paused
+			Display.pauseGame = false;
+
+			// Just displays point in loading.
+			loading.setTitle("Loading sounds... 5% Loaded");
+
+			// Music changes if the themes aren't the same, or if the
+			// music theme for survival is changed.
+			if (!currentTheme.equals(FPSLauncher.themeName) || musicTheme != oldMusicTheme) {
+				try {
+					inputStream.close();
+				} catch (Exception e) {
+
+				}
+
+				inputStream = null;
+
+				try {
+					music.close();
+				} catch (Exception e) {
+
+				}
+
+				oldMusicTheme = musicTheme;
+
+				music = null;
+				audioOn = false;
 			}
-			// Loads all sounds and files
-			soundController = null;
-			soundController = new SoundController();
+
+			// Only resets game values if the game needs to be restarted
+			if (!FPSLauncher.returning) {
+				loading.setTitle("Setting up game entities... 35% Loaded");
+
+				// If new game, reset the gameMode
+				Game.skillMode = FPSLauncher.modeChoice;
+
+				// Resets player values (health, ammo, etc...)
+				new Player();
+
+				// TODO Have this able to be changed.
+				// Pistol is the only weapon defaultly equipped (can change later for
+				// resource packs)
+				Player.weapons[0].canBeEquipped = true;
+
+				/*
+				 * When there is a new game, there is no previous music theme so oldMusicTheme
+				 * is set equal to the current music theme.
+				 */
+				oldMusicTheme = musicTheme;
+
+				// New Game and map. Sets up music for that map too
+				game = new Game(this, nonDefaultMap, newMapName);
+
+				// Reset the popup list
+				messages = new ArrayList<PopUp>();
+
+				// Reset debug values
+				Controller.showFPS = false;
+
+				// Only if not loading the game.
+				if (!FPSLauncher.loadingGame) {
+					Player.flyOn = false;
+					Player.noClipOn = false;
+					Player.superSpeedOn = false;
+					Player.godModeOn = false;
+					Player.unlimitedAmmoOn = false;
+
+					// Reset kills
+					kills = 0;
+				} else {
+					// Set to no longer loading in a game if it got to here.
+					FPSLauncher.loadingGame = false;
+				}
+
+				loading.setTitle("Setting up music... 50% Loaded");
+
+				// Only do if there is music playing
+				if (audioOn) {
+					Sound.setMusicVolume(music);
+				}
+			}
+			// If just resuming game, most values are already loaded
+			else {
+				loading.setTitle("Setting up music... 50% Loaded");
+
+				// Only do if there is music playing
+				if (audioOn) {
+					Sound.setMusicVolume(music);
+				}
+			}
+
+			loading.setTitle("Resetting textures and GUI... 65% Loaded");
+
+			// A new scanner object that is defaultly set to null
+			Scanner sc = null;
+
+			/*
+			 * Try to read the file and if not, state the error
+			 */
+			try {
+				// Creates a Scanner that can read the file
+				sc = new Scanner(
+						new BufferedReader(new FileReader("resources" + FPSLauncher.themeName + "/settings.txt")));
+				/*
+				 * Read through lines in the resource pack settings file to determine what game
+				 * settings to change depending on special attributes set within this resource
+				 * pack.
+				 */
+				String currentLine = "";
+
+				currentLine = sc.nextLine();
+				String[] elements = currentLine.split(":");
+				String[] colorAttributes = elements[1].split(",");
+
+				// Grab all the different color attributes
+				int transparency = Integer.parseInt(colorAttributes[0]);
+				int red = Integer.parseInt(colorAttributes[1]);
+				int green = Integer.parseInt(colorAttributes[2]);
+				int blue = Integer.parseInt(colorAttributes[3]);
+
+				// Shift red bits 16, green 8, and blue none and add the bits together
+				// to get the color that will be transparent.
+				Render3D.seeThroughWallPixel = transparency << 24 | red << 16 | green << 8 | blue;
+
+				currentLine = sc.nextLine();
+				elements = currentLine.split(":");
+
+				Controller.acceleration = Double.parseDouble(elements[1]);
+
+				currentLine = sc.nextLine();
+				elements = currentLine.split(":");
+
+				Player.totalJump = Integer.parseInt(elements[1]);
+
+				currentLine = sc.nextLine();
+				elements = currentLine.split(":");
+
+				// Only if in survival
+				if (FPSLauncher.gameMode == 1) {
+					Render3D.renderDistanceDefault = Double.parseDouble(elements[1]);
+				}
+
+				currentLine = sc.nextLine();
+				elements = currentLine.split(":");
+
+				// Will game have smile mechanics or not
+				if (Integer.parseInt(elements[1]) == 1) {
+					smileMode = true;
+				} else {
+					smileMode = false;
+				}
+			} catch (Exception e) {
+				System.out.println(e);
+				// Set to defaults if failed
+				Render3D.seeThroughWallPixel = 0xffffffff;
+				Controller.acceleration = 0.03;
+				Player.totalJump = 8;
+				Render3D.renderDistanceDefault = 100000.0;
+				smileMode = false;
+			}
+
+			sc.close();
+			sc = null;
+
+			// If themes aren't the same, then reset the sounds. Otherwise it won't
+			if (!currentTheme.equals(FPSLauncher.themeName))
+			// if(currentTheme.equals(""))
+			{
+				try {
+					soundController.resetSounds();
+				} catch (Exception e) {
+				}
+				// Loads all sounds and files
+				soundController = null;
+				soundController = new SoundController();
+			}
+
+			currentTheme = FPSLauncher.themeName;
+
+			// All sound volumes are reset
+			soundController.resetAllVolumes(FPSLauncher.soundVolumeLevel);
+
+			// Try to load all the HUD images. If not catch the exception
+			try {
+				loadHUD();
+			} catch (Exception e) {
+
+			}
+
+			// Set up floor and ceiling textures
+			Textures.Textures();
+
+			// Try and set all textures (other than floor and ceiling) to null to prevent
+			// memory loss
+			Textures.setToNull();
+
+			// Resets games textures depending on theme
+			Textures.resetTextures();
+
+			// Resets the frames width and height
+			setGameWidth();
+			setGameHeight();
+
+			/*
+			 * Creates different dimensions of the screen that can be used
+			 */
+			Dimension size = new Dimension(WIDTH, HEIGHT);
+			Dimension minSize = new Dimension(0, 0);
+			Dimension maxSize = new Dimension(5000, 5000);
+
+			/*
+			 * Sets the max, min, and preferred sizes of the screen
+			 */
+			setPreferredSize(size);
+			setMinimumSize(minSize);
+			setMaximumSize(maxSize);
+
+			// Sets up the new screen used (2D array of int values (pixels)
+			// basically.
+			screen = new Screen(WIDTH, HEIGHT);
+
+			// Sets up the BufferedImage size, and type (ints = color info)
+			img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+
+			// Gets the data from each integer and converts it to a color type
+			Screen.render3D.PIXELS = null;
+			Screen.render3D.PIXELS = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
+
+			loading.setTitle("Setting up input handling listeners... 90% Loaded");
+
+			/*
+			 * Sets up all the input stuff and listeners
+			 */
+			input = null;
+			input = new InputHandler();
+			addKeyListener(input);
+			addMouseListener(input);
+			addFocusListener(input);
+			addMouseMotionListener(input);
+			addMouseWheelListener(input);
+
+			// Set mouse values to starting position
+			newX = InputHandler.MouseX;
+			newY = InputHandler.MouseY;
+			oldX = InputHandler.MouseX;
+			oldY = InputHandler.MouseY;
+
+			loading.setTitle("Done 100% Loaded");
+
+			// Get rid of loading frame when done loading
+			loading.dispose();
+
+			// System.out.println(Thread.activeCount());
 		}
-
-		currentTheme = FPSLauncher.themeName;
-
-		// All sound volumes are reset
-		soundController.resetAllVolumes(FPSLauncher.soundVolumeLevel);
-
-		// Try to load all the HUD images. If not catch the exception
-		try {
-			loadHUD();
-		} catch (Exception e) {
-
-		}
-
-		// Set up floor and ceiling textures
-		Textures.Textures();
-
-		// Try and set all textures (other than floor and ceiling) to null to prevent
-		// memory loss
-		Textures.setToNull();
-
-		// Resets games textures depending on theme
-		Textures.resetTextures();
-
-		// Resets the frames width and height
-		setGameWidth();
-		setGameHeight();
-
-		/*
-		 * Creates different dimensions of the screen that can be used
-		 */
-		Dimension size = new Dimension(WIDTH, HEIGHT);
-		Dimension minSize = new Dimension(0, 0);
-		Dimension maxSize = new Dimension(5000, 5000);
-
-		/*
-		 * Sets the max, min, and preferred sizes of the screen
-		 */
-		setPreferredSize(size);
-		setMinimumSize(minSize);
-		setMaximumSize(maxSize);
-
-		// Sets up the new screen used (2D array of int values (pixels)
-		// basically.
-		screen = new Screen(WIDTH, HEIGHT);
-
-		// Sets up the BufferedImage size, and type (ints = color info)
-		img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-
-		// Gets the data from each integer and converts it to a color type
-		Screen.render3D.PIXELS = null;
-		Screen.render3D.PIXELS = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
-
-		loading.setTitle("Setting up input handling listeners... 90% Loaded");
-
-		/*
-		 * Sets up all the input stuff and listeners
-		 */
-		input = null;
-		input = new InputHandler();
-		addKeyListener(input);
-		addMouseListener(input);
-		addFocusListener(input);
-		addMouseMotionListener(input);
-		addMouseWheelListener(input);
-
-		// Set mouse values to starting position
-		newX = InputHandler.MouseX;
-		newY = InputHandler.MouseY;
-		oldX = InputHandler.MouseX;
-		oldY = InputHandler.MouseY;
-
-		loading.setTitle("Done 100% Loaded");
-
-		// Get rid of loading frame when done loading
-		loading.dispose();
-
-		// System.out.println(Thread.activeCount());
 	}
 
 	/**
@@ -702,9 +796,12 @@ public class Display extends Canvas implements Runnable {
 			}
 
 			/*
-			 * Focuses your user on the screen so you don't have to click to start
+			 * Focuses your user on the screen so you don't have to click to start. Only if
+			 * not the host though.
 			 */
-			requestFocus();
+			if (gameType != 0) {
+				requestFocus();
+			}
 
 			Entity.checkSight = true;
 
@@ -713,83 +810,85 @@ public class Display extends Canvas implements Runnable {
 			}
 
 			// TODO Before this, if in multiplayer and a client, accept data from server so
-			// that the local game renders the correct data.
-			render();
+			// that the local game renders the correct data. Host doesn't render game.
+			if (gameType != 0) {
+				render();
 
-			frames++;
+				frames++;
 
-			// TODO Change for debug mode
-			// Only do this if the mouse is on
-			if (Display.mouseOn) {
-				// Get the JFrame on screen
-				Component c = RunGame.frame;
-
-				/*
-				 * Check to see if mouse is in frame, and if it isn't then bring it back into
-				 * it.
-				 */
-				if (!InputHandler.isMouseWithinComponent(c)) {
-					// Controls mouse without player input
-					Robot robot = null;
-
-					try {
-						robot = new Robot();
-					} catch (Exception ex) {
-						ex.printStackTrace();
-					}
+				// TODO Change for debug mode
+				// Only do this if the mouse is on
+				if (Display.mouseOn) {
+					// Get the JFrame on screen
+					Component c = RunGame.frame;
 
 					/*
-					 * Finds frames position on screen for mouse reposistioning
+					 * Check to see if mouse is in frame, and if it isn't then bring it back into
+					 * it.
 					 */
-					Rectangle bounds = c.getBounds();
-					bounds.setLocation(c.getLocationOnScreen());
+					if (!InputHandler.isMouseWithinComponent(c)) {
+						// Controls mouse without player input
+						Robot robot = null;
 
-					// Finds mousePos on screen
-					Point mousePos = MouseInfo.getPointerInfo().getLocation();
+						try {
+							robot = new Robot();
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
 
-					// If it went out of the right side, move mouse that
-					// way, but only for how much it moved while in the
-					// frame
-					if (mousePos.x > bounds.x + bounds.width) {
-						Display.mouseSpeedHorizontal = Math.abs(InputHandler.oldMouseX - (bounds.width / 2));
+						/*
+						 * Finds frames position on screen for mouse reposistioning
+						 */
+						Rectangle bounds = c.getBounds();
+						bounds.setLocation(c.getLocationOnScreen());
 
-						// Move back to the center of the screen
-						robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
-					}
-					/*
-					 * Same as above but for if the mouse moves out of the left of the frame.
-					 */
-					else if (mousePos.x < bounds.x) {
-						Display.mouseSpeedHorizontal = -Math.abs(InputHandler.oldMouseX - (bounds.width / 2));
+						// Finds mousePos on screen
+						Point mousePos = MouseInfo.getPointerInfo().getLocation();
 
-						robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
-					}
-					/*
-					 * If the x part of the mouse is still "in" the frame move it as much as it
-					 * moved in the x, so just like normal basically.
-					 */
-					else {
-						Display.mouseSpeedHorizontal = Math.abs(InputHandler.oldMouseX - InputHandler.MouseX);
+						// If it went out of the right side, move mouse that
+						// way, but only for how much it moved while in the
+						// frame
+						if (mousePos.x > bounds.x + bounds.width) {
+							Display.mouseSpeedHorizontal = Math.abs(InputHandler.oldMouseX - (bounds.width / 2));
 
-						robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
-					}
+							// Move back to the center of the screen
+							robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+						}
+						/*
+						 * Same as above but for if the mouse moves out of the left of the frame.
+						 */
+						else if (mousePos.x < bounds.x) {
+							Display.mouseSpeedHorizontal = -Math.abs(InputHandler.oldMouseX - (bounds.width / 2));
 
-					/*
-					 * Do all the same as the above just for the y direction. Such as if the mouse
-					 * went out of the top of the frame.
-					 */
-					if (mousePos.y > bounds.y + bounds.height) {
-						Display.mouseSpeedVertical = Math.abs(InputHandler.oldMouseY - (bounds.height / 2));
+							robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+						}
+						/*
+						 * If the x part of the mouse is still "in" the frame move it as much as it
+						 * moved in the x, so just like normal basically.
+						 */
+						else {
+							Display.mouseSpeedHorizontal = Math.abs(InputHandler.oldMouseX - InputHandler.MouseX);
 
-						robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
-					} else if (mousePos.y < bounds.y) {
-						Display.mouseSpeedVertical = -Math.abs(InputHandler.oldMouseY - (bounds.height / 2));
+							robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+						}
 
-						robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
-					} else {
-						Display.mouseSpeedVertical = Math.abs(InputHandler.oldMouseY - InputHandler.MouseY);
+						/*
+						 * Do all the same as the above just for the y direction. Such as if the mouse
+						 * went out of the top of the frame.
+						 */
+						if (mousePos.y > bounds.y + bounds.height) {
+							Display.mouseSpeedVertical = Math.abs(InputHandler.oldMouseY - (bounds.height / 2));
 
-						robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+							robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+						} else if (mousePos.y < bounds.y) {
+							Display.mouseSpeedVertical = -Math.abs(InputHandler.oldMouseY - (bounds.height / 2));
+
+							robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+						} else {
+							Display.mouseSpeedVertical = Math.abs(InputHandler.oldMouseY - InputHandler.MouseY);
+
+							robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+						}
 					}
 				}
 			}
@@ -798,6 +897,23 @@ public class Display extends Canvas implements Runnable {
 			// to end all thread events of the game
 			if (Controller.quitGame == true) {
 				stop();
+			}
+
+			// TODO Add stuff for client here.
+			// If a client is running the game, send the clients data to the server at this
+			// point
+			// and recieve the new data back. Don't continue until new data is recieved.
+			if (gameType == 1) {
+				try {
+					PrintWriter out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
+					BufferedReader in = new BufferedReader(
+							new InputStreamReader(ServerClient.hostSocket.getInputStream()));
+
+					// Before you get the new information, reset the game lists.
+					game.resetLists();
+				} catch (Exception e) {
+
+				}
 			}
 		}
 	}
@@ -1412,10 +1528,12 @@ public class Display extends Canvas implements Runnable {
 	 * handled by the sound controller.
 	 */
 	public synchronized void playAudio(String custom) {
-		// if(true)
-		// {
-		// return;
-		// }
+		// TODO maybe change if issues.
+		// Host does not play music.
+		if (gameType == 0) {
+			return;
+		}
+
 		try {
 			// If no music is already playing
 			if (!audioOn) {

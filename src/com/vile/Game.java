@@ -114,7 +114,14 @@ public class Game implements Runnable {
 	public static ArrayList<Item> activatable = new ArrayList<Item>();
 	public static ArrayList<Item> teleporters = new ArrayList<Item>();
 	public static ArrayList<HitSprite> sprites = new ArrayList<HitSprite>();
+
+	// Multiplayer stuff
 	public static ArrayList<ServerPlayer> otherPlayers = new ArrayList<ServerPlayer>();
+	public static ArrayList<Button> activatedButtons = new ArrayList<Button>();
+	public static ArrayList<Door> activatedDoors = new ArrayList<Door>();
+	public static ArrayList<Elevator> activatedElevators = new ArrayList<Elevator>();
+	public static ArrayList<Bullet> bulletsAdded = new ArrayList<Bullet>();
+	public static ArrayList<Item> itemsAdded = new ArrayList<Item>();
 
 	// For Smile resource pack only
 	public static ArrayList<Item> happySavers = new ArrayList<Item>();
@@ -247,6 +254,15 @@ public class Game implements Runnable {
 		// Always request focus
 		display.requestFocus();
 
+		// If client, reset all lists each time. These will be populated by information
+		// sent back
+		// from the server.
+		if (Display.gameType == 1) {
+			resetLists();
+		}
+
+		// TODO Get server information here.
+
 		/*
 		 * Keeps player within the first 2 PI of rotation so that the Players rotation
 		 * in respect to the enemies is kept in tact.
@@ -270,6 +286,22 @@ public class Game implements Runnable {
 				Player.alive = false;
 
 				SoundController.playerDeath.playAudioFile(0);
+
+				if (Display.gameType == 1) {
+					// Drop current weapon in multiplayer when you are killed
+					if (Player.weaponEquipped == 0) {
+						itemsAdded.add(new Item(10, Player.x, Player.y, Player.z, ItemNames.PISTOL.itemID, 0, 0, "-1"));
+					} else if (Player.weaponEquipped == 1) {
+						itemsAdded
+								.add(new Item(10, Player.x, Player.y, Player.z, ItemNames.SHOTGUN.itemID, 0, 0, "-1"));
+					} else if (Player.weaponEquipped == 2) {
+						itemsAdded.add(
+								new Item(10, Player.x, Player.y, Player.z, ItemNames.PHASECANNON.itemID, 0, 0, "-1"));
+					} else {
+						itemsAdded.add(new Item(10, Player.x, Player.y, Player.z, ItemNames.ROCKETLAUNCHER.itemID, 0, 0,
+								"-1"));
+					}
+				}
 
 				// If survival mode, see if its a new max number of kills
 				// or not and if it is then save the new max.
@@ -312,9 +344,13 @@ public class Game implements Runnable {
 			((RocketLauncher) (Player.weapons[3])).updateValues();
 		}
 
-		// Run game events only if the player is the host.
-		if (!Display.clientGame) {
-			runGameEvents();
+		// Run Single Player game events only if this is a single player game.
+		if (Display.gameType == 2) {
+			runSingleGameEvents();
+		}
+		// If game is being ran as a host
+		else if (Display.gameType == 0) {
+			runHostGameEvents();
 		}
 
 		// Perform all actions depending on keys pressed.
@@ -322,11 +358,594 @@ public class Game implements Runnable {
 	}
 
 	/**
+	 * Runs all the game events for a multiplayer game as the host.
+	 */
+	public void runHostGameEvents() {
+		// TODO For now enemies are disabled in multiplayer
+		// Sort enemies according to their distance to you but only if
+		// not in survival
+		// if (FPSLauncher.gameMode == 1) {
+		// Collections.sort(enemies);
+		// }
+
+		/*
+		 * Check all buttons to see if any are activated, and if they are perform the
+		 * desired action.
+		 */
+		for (int i = 0; i < buttons.size(); i++) {
+			Button temp = buttons.get(i);
+
+			// If an end button, load the next map
+			if (temp.itemActivationID == 0 && temp.activated) {
+				mapNum++;
+				loadNextMap(false, "");
+			}
+			// If a normal button
+			else if (temp.itemActivationID > 0 && temp.activated) {
+				// De-activate the button
+				temp.activated = false;
+
+				Block button = Level.getBlock((int) temp.x, (int) temp.z);
+
+				// Change the wall texture to show the button has been activated
+				// Only if the original wall it was on is a button
+				if (button.wallID == 26) {
+					button.wallID = 43;
+				}
+
+				// If special ID, turn on lights to make map brighter
+				if (temp.itemActivationID == 1221) {
+					Render3D.renderDistanceDefault = 12000;
+				}
+
+				// Search through all the doors
+				for (int k = 0; k < Game.doors.size(); k++) {
+					Door door = Game.doors.get(k);
+
+					// If door has the same activation ID as the
+					// button then activate it.
+					if (door.itemActivationID == temp.itemActivationID) {
+						/*
+						 * If the itemActivationID is the special ID, then just stop the door from
+						 * automatically opening and closing. Otherwise activate the door as normal.
+						 */
+						if (door.itemActivationID == 2112) {
+							// Hoping no one uses this id, but
+							// this stops the door from automatically
+							// opening and closing continuously.
+							door.itemActivationID = 1221;
+						}
+						// If this special ID, activate it to continue to
+						// move
+						else if (door.itemActivationID == 1221) {
+							door.itemActivationID = 2112;
+							door.activated = true;
+							door.stayOpen = false;
+						} else {
+							door.activated = true;
+						}
+					}
+				}
+
+				// Search through all the elevators
+				for (int k = 0; k < Game.elevators.size(); k++) {
+					Elevator e = Game.elevators.get(k);
+
+					// If elevator has the same activation ID as the
+					// button then activate it.
+					if (e.itemActivationID == temp.itemActivationID) {
+						/*
+						 * If the itemActivationID is the special ID, then just stop the elevator from
+						 * automatically moving. Otherwise activate the elevator as normal.
+						 */
+						if (e.itemActivationID == 2112) {
+							// Hoping no one uses this id, but
+							// this stops the elevator from automatically
+							// moving continuously.
+							e.itemActivationID = 1221;
+						}
+						// If this special ID, activate it to continue to
+						// move
+						else if (e.itemActivationID == 1221) {
+							e.itemActivationID = 2112;
+							e.activated = true;
+						} else {
+							e.activated = true;
+						}
+					}
+				}
+
+				// Stores Items to be deleted
+				ArrayList<Item> tempItems2 = new ArrayList<Item>();
+
+				// Scan all activatable items
+				for (int j = 0; j < activatable.size(); j++) {
+					Item item = activatable.get(j);
+
+					// If Item is a Com satellite dish, activate it and
+					// state that it is activated
+					if (item.itemID == ItemNames.RADAR.getID() && !item.activated
+							&& temp.itemActivationID == item.itemActivationID) {
+						item.activated = true;
+						Display.messages.add(new PopUp("COM SYSTEM ACTIVATED!"));
+						SoundController.uplink.playAudioFile(0);
+					} else {
+						// If item is enemy spawnpoint, then spawn the
+						// enemy, and add the item to the arraylist of
+						// items to be deleted
+						if (item.itemID == ItemNames.ENEMYSPAWN.getID()
+								&& temp.itemActivationID == item.itemActivationID) {
+							enemiesInMap++;
+							addEnemy(item.x, item.z, item.rotation);
+							tempItems2.add(item);
+						}
+						// If Explosion has same activation ID of the button
+						// then activate it
+						else if (item.itemID == ItemNames.ACTIVATEEXP.getID()
+								&& temp.itemActivationID == item.itemActivationID) {
+							new Explosion(item.x, item.y, item.z, 0, 0);
+							tempItems2.add(item);
+						}
+						// If it gets rid of a wall, delete the wall and create an
+						// air wall in its place.
+						else if (item.itemID == ItemNames.WALLBEGONE.getID()
+								&& temp.itemActivationID == item.itemActivationID) {
+							Block block2 = Level.getBlock((int) item.x, (int) item.z);
+
+							// Block is effectively no longer there
+							block2.height = 0;
+							block2.wallEntities = new ArrayList<Item>();
+
+							tempItems2.add(item);
+						}
+					}
+				}
+
+				// Remove all the items that need to be deleted now
+				for (int j = 0; j < tempItems2.size(); j++) {
+					Item temp2 = tempItems2.get(j);
+
+					temp2.removeItem();
+				}
+			}
+		}
+
+		/*
+		 * Check all door entities each tick through the game, and if the door is
+		 * activated, continue to move the door in whatever way it was moving before.
+		 * Otherwise do nothing to it.
+		 */
+		for (int i = 0; i < Game.doors.size(); i++) {
+			Door door = Game.doors.get(i);
+
+			if (door.activated || door.itemActivationID == 2112) {
+				door.move();
+			}
+		}
+
+		// Update all elevator entities, if its not already
+		// moving, then there is not need to continue moving it
+		for (int i = 0; i < Game.elevators.size(); i++) {
+			Elevator elevator = Game.elevators.get(i);
+
+			if (elevator.activated || elevator.itemActivationID == 2112) {
+				elevator.move();
+			}
+		}
+
+		// TODO For now enemies are not going to be added to the server.
+		// Tick through all the enemies
+		/*
+		 * for (int i = 0; i < enemies.size(); i++) { Enemy enemy = Game.enemies.get(i);
+		 * 
+		 * // Deactivate the enemies if the player is dead and they have // no other
+		 * target if (Player.health <= 0 && enemy.targetEnemy == null) { enemy.activated
+		 * = false; }
+		 * 
+		 * // tick the enemy, updating its values and such enemy.tick(enemy);
+		 * 
+		 * // Update the enemies movements enemy.move();
+		 * 
+		 * /* If the enemy is within range of the door, open the door because enemies
+		 * are smarter than just letting a door stop them from killing you.
+		 * 
+		 * Also the enemy has to be activated to open doors.
+		 * 
+		 * Flying enemies can't open doors because they can just fly over them
+		 */
+		/*
+		 * if (!enemy.canFly && enemy.activated) { for (int a = 0; a <
+		 * Game.doors.size(); a++) { Door door = Game.doors.get(a);
+		 * 
+		 * // If door is in range of enemy, have it open as long // as it is not a door
+		 * requiring a key if (Math.abs(door.getZ() - enemy.zPos) <= 1 &&
+		 * Math.abs(door.getX() - enemy.xPos) <= 1 && door.itemActivationID == 0 &&
+		 * (-enemy.yPos < 2)) { if (door.doorType == 0) { door.activated = true; } } } }
+		 * 
+		 * /* Attempt to attack the player as long as the player is alive. The method
+		 * itself will determine what attack if any the enemy will use though.
+		 */
+		// enemy.attack(Player.y);
+		// }
+
+		// All entities are done checking if player is in their sight
+		// Entity.checkSight = false;
+
+		// TODO Item code for server
+		// Run through all players on the server, seeing if they have picked up an item
+		// or not.
+		for (int s = 0; s < Game.otherPlayers.size(); s++) {
+			// Current Player
+			ServerPlayer sP = Game.otherPlayers.get(s);
+			// Items to delete
+			ArrayList<Item> tempItems = new ArrayList<Item>();
+
+			// ALL ITEM UPDATING
+			for (int i = 0; i < Game.items.size(); ++i) {
+				Item item = Game.items.get(i);
+
+				// Block item is over or on
+				Block temp = Level.getBlock((int) item.x, (int) item.z);
+
+				// Difference between the item and the top of the block
+				double difference = item.y - (temp.height + (temp.y * 4) + temp.baseCorrect);
+
+				// Is this item on top of another solid item
+				boolean onItem = false;
+
+				for (Item it : temp.wallItems) {
+					// If on a solid object, place it on top, and only if it has hit
+					// the top of the item as well.
+					if (it.isSolid && !item.equals(it) && item.y - (it.y + it.height) < 6) {
+						item.y = it.y + it.height + 2;
+						onItem = true;
+
+						/*
+						 * If item is above the block, then set its height from the top of the block to
+						 * be the height of the solid item it is on greater than the top of the block.
+						 * If not though, it is below the block and there should be no difference in
+						 * height as it will not be falling.
+						 */
+						if (item.aboveBlock) {
+							difference += (item.y - it.height);
+						} else {
+							difference = 0;
+						}
+					}
+				}
+
+				/*
+				 * If the items y is greater than the blocks height plus its y value, then
+				 * decrease the items y until it reaches the ground.
+				 */
+				if (difference > 1) {
+					item.y -= 1;
+				} else {
+					/*
+					 * If the item is within the block, and not on top of the block, and the item is
+					 * not a door, then set the height to being the top of the block.
+					 */
+					if (item.y >= (temp.y * 4) && difference > (-1 - temp.baseCorrect) && item.aboveBlock) {
+						item.y = temp.height + (temp.y * 4) + temp.baseCorrect;
+					} else {
+						// If landed on flat ground and not on top of a solid item
+						if (!onItem) {
+							item.y = 0;
+						}
+					}
+				}
+
+				double distance = Math.sqrt(((Math.abs(sP.x - item.x)) * (Math.abs(sP.x - item.x)))
+						+ ((Math.abs(sP.z - item.z)) * (Math.abs(sP.z - item.z))));
+
+				/*
+				 * If item has been picked up in respawnable mode, tick the count of how long it
+				 * has been picked up, and after a certain amount of ticks, allow it to appear
+				 * again and be able to be picked up. Also only run once per tick
+				 */
+				if (item.pickedUp && s == 0) {
+					item.tick();
+
+					if (item.tickCount > 1000 * Render3D.fpsCheck) {
+						item.tickCount = 0;
+						item.pickedUp = false;
+						SoundController.teleportation.playAudioFile(distance);
+					}
+				}
+
+				// If the item is at least 0.7 units away, and its not
+				// a secret or linedef, and the player is not in noClip mode
+				if (distance <= 0.7 && Math.abs(item.y - sP.y) <= 6 && item.itemID != ItemNames.SECRET.itemID
+						&& item.itemID != ItemNames.LINEDEF.itemID && !sP.noClipOn) {
+					// Was the object activated?
+					boolean activated = item.activateServer(sP);
+
+					/*
+					 * If the item was activated remove it. Otherwise keep it in the map. Also play
+					 * audio queue is there is one
+					 */
+					if (activated) {
+
+						if (Display.itemsRespawn) {
+							item.pickedUp = true;
+						} else {
+							tempItems.add(item);
+						}
+
+						// Activate the audio queue if there is one
+						item.activateAudioQueue();
+					}
+
+					// If item activates other items, then if the player walks over the
+					// item then activate other items whether the item was picked up
+					// or not. Some items cannot be activated by walking over them.
+					if (item.itemActivationID > 0 && item.itemID != ItemNames.ENEMYSPAWN.getID()
+							&& item.itemID != ItemNames.ACTIVATEEXP.getID()
+							&& item.itemID != ItemNames.BREAKABLEWALL.itemID
+							&& item.itemID != ItemNames.WALLBEGONE.itemID && item.itemID != ItemNames.ACTIVATEEXP.itemID
+							&& item.itemID != ItemNames.BUTTON.itemID && item.itemID != ItemNames.DOOR.itemID
+							&& item.itemID != ItemNames.GREENDOOR.itemID && item.itemID != ItemNames.REDDOOR.itemID
+							&& item.itemID != ItemNames.YELLOWDOOR.itemID && item.itemID != ItemNames.BLUEDOOR.itemID
+							&& item.itemID != ItemNames.ELEVATOR.itemID) {
+						// De-activate the button
+						item.activated = false;
+
+						Block blockOn = Level.getBlock((int) item.x, (int) item.z);
+
+						// Change the wall texture to show the button has been activated
+						// Only if the original wall it was on is a button
+						if (blockOn.wallID == 26) {
+							blockOn.wallID = 43;
+						}
+
+						// If special ID, turn on lights to make map brighter
+						if (item.itemActivationID == 1221) {
+							Render3D.renderDistanceDefault += 5000;
+						}
+
+						// Search through all the doors
+						for (int k = 0; k < Game.doors.size(); k++) {
+							Door door = Game.doors.get(k);
+
+							// If door has the same activation ID as the
+							// button then activate it.
+							if (door.itemActivationID == item.itemActivationID) {
+								/*
+								 * If the itemActivationID is the special ID, then just stop the door from
+								 * automatically opening and closing. Otherwise activate the door as normal.
+								 */
+								if (door.itemActivationID == 2112) {
+									// Hoping no one uses this id, but
+									// this stops the door from automatically
+									// opening and closing continuously.
+									door.itemActivationID = 1221;
+								}
+								// If this special ID, activate it to continue to
+								// move
+								else if (door.itemActivationID == 1221) {
+									door.itemActivationID = 2112;
+									door.activated = true;
+									door.stayOpen = false;
+								} else {
+									door.activated = true;
+								}
+							}
+						}
+
+						// Search through all the elevators
+						for (int k = 0; k < Game.elevators.size(); k++) {
+							Elevator e = Game.elevators.get(k);
+
+							// If elevator has the same activation ID as the
+							// button then activate it.
+							if (e.itemActivationID == item.itemActivationID) {
+								/*
+								 * If the itemActivationID is the special ID, then just stop the elevator from
+								 * automatically moving. Otherwise activate the elevator as normal.
+								 */
+								if (e.itemActivationID == 2112) {
+									// Hoping no one uses this id, but
+									// this stops the elevator from automatically
+									// moving continuously.
+									e.itemActivationID = 1221;
+								}
+								// If this special ID, activate it to continue to
+								// move
+								else if (e.itemActivationID == 1221) {
+									e.itemActivationID = 2112;
+									e.activated = true;
+								} else {
+									e.activated = true;
+								}
+							}
+						}
+
+						// Stores Items to be deleted
+						ArrayList<Item> tempItems2 = new ArrayList<Item>();
+
+						// Scan all activatable items
+						for (int j = 0; j < Game.activatable.size(); j++) {
+							Item item2 = Game.activatable.get(j);
+
+							// If Item is a Com satellite dish, activate it and
+							// state that it is activated
+							if (item2.itemID == ItemNames.RADAR.getID() && !item2.activated
+									&& item.itemActivationID == item2.itemActivationID) {
+								item2.activated = true;
+								Display.messages.add(new PopUp("COM SYSTEM ACTIVATED!"));
+								SoundController.uplink.playAudioFile(0);
+							} else {
+								// If item is enemy spawnpoint, then spawn the
+								// enemy, and add the item to the arraylist of
+								// items to be deleted
+								if (item2.itemID == ItemNames.ENEMYSPAWN.getID()
+										&& item.itemActivationID == item2.itemActivationID) {
+									Game.enemiesInMap++;
+									addEnemy(item2.x, item2.z, item2.rotation);
+									tempItems2.add(item2);
+								}
+								// If Explosion has same activation ID of the button
+								// then activate it
+								else if (item2.itemID == ItemNames.ACTIVATEEXP.getID()
+										&& item.itemActivationID == item2.itemActivationID) {
+									new Explosion(item2.x, item2.y, item2.z, 0, 0);
+									tempItems2.add(item2);
+								}
+								// If it gets rid of a wall, delete the wall and create an
+								// air wall in its place.
+								else if (item2.itemID == ItemNames.WALLBEGONE.getID()
+										&& item.itemActivationID == item2.itemActivationID) {
+									Block block2 = Level.getBlock((int) item2.x, (int) item2.z);
+
+									// Block is effectively no longer there
+									block2.height = 0;
+
+									block2.wallEntities = null;
+
+									tempItems2.add(item2);
+								}
+							}
+						}
+
+						// Remove all the items that need to be deleted now
+						for (int j = 0; j < tempItems2.size(); j++) {
+							Item temp2 = tempItems2.get(j);
+
+							temp2.removeItem();
+						}
+					}
+				}
+			}
+
+			// Remove all items within list
+			for (int j = 0; j < tempItems.size(); ++j) {
+				Item temp = tempItems.get(j);
+
+				// Removes all references of item in game
+				temp.removeItem();
+			}
+		}
+
+		for (int i = 0; i < Game.corpses.size(); i++) {
+			Corpse corpse = Game.corpses.get(i);
+
+			// Block corpse is on
+			Block temp = Level.getBlock((int) corpse.xPos, (int) corpse.zPos);
+
+			// The top of the block
+			double topOfBlock = (temp.height + (temp.y * 4) + temp.baseCorrect);
+
+			// Difference between the item and the top of the block
+			double difference = corpse.yPos - topOfBlock;
+
+			/*
+			 * If the items y is greater than the blocks height plus its y value, then
+			 * decrease the items y until it reaches the ground.
+			 */
+			if (corpse.yPos - 1 > topOfBlock) {
+				corpse.yPos -= 1;
+			} else {
+				/*
+				 * If not a door, and the y value of the corpse is inside the block, but towards
+				 * the top, then place it on top of the block. Otherwise, it shall stay on
+				 * ground level.
+				 */
+				if (corpse.yPos >= (temp.y * 4) && difference > (-1 - temp.baseCorrect)) {
+					corpse.yPos = topOfBlock;
+				} else {
+					// If on flat ground, the height is 3. This is
+					// so the textures don't go through the ground.
+					corpse.yPos = 0;
+				}
+			}
+
+			corpse.tick();
+
+			/*
+			 * If in Death cannot hurt me mode, the corpses will resurrect on their own
+			 * after 10000 ticks.
+			 */
+			if (FPSLauncher.modeChoice == 4) {
+				// If 10000 ticks have passed with correction for the fps
+				// and the corpse is not just a default corpse
+				if (corpse.time > (10000 / ((Display.fps / 30) + 1)) && corpse.enemyID != 0) {
+					/*
+					 * Reconstruct enemy depending on the ID the corpse was before it died. Also
+					 * activate the new resurrected enemy.
+					 */
+					Enemy newEnemy = new Enemy(corpse.xPos, 0, corpse.zPos, corpse.enemyID, 0, 0);
+
+					// Activate this new enemy
+					newEnemy.activated = true;
+
+					// Add enemy to the game
+					Game.enemies.add(newEnemy);
+
+					// Remove the corpse
+					Game.corpses.remove(corpse);
+
+					// Add to enemies in the map
+					Game.enemiesInMap++;
+
+					// Play teleportation/respawn sound effect
+					SoundController.teleportation.playAudioFile(newEnemy.distanceFromPlayer);
+				}
+			}
+		}
+
+		// Tick all explosions
+		for (int i = 0; i < Game.explosions.size(); i++) {
+			Explosion explosion = Game.explosions.get(i);
+
+			explosion.tick();
+		}
+
+		/*
+		 * Mainly for shotgun bullets. Since they are in a spread shot, and could
+		 * potentially hit the enemy at the same time, then make it so that the sound of
+		 * hitting the enemy doesn't play several times in the same tick otherwise it'll
+		 * be a super loud sound, and it's annoying. This checks for that and prevents
+		 * it.
+		 * 
+		 * These reset the values to false each tick.
+		 */
+		Projectile.bossHit = false;
+		Projectile.enemyHit = false;
+
+		/*
+		 * Moves the game bullets in a given direction and checks for collisions
+		 */
+		for (int i = 0; i < Game.bullets.size(); i++) {
+			Bullet bullet = Game.bullets.get(i);
+
+			bullet.move();
+		}
+
+		/*
+		 * Moves enemy projectiles. Also checks for collisions
+		 */
+		for (int i = 0; i < Game.enemyProjectiles.size(); i++) {
+			EnemyFire temp = Game.enemyProjectiles.get(i);
+
+			temp.move();
+		}
+
+		/*
+		 * Ticks and renders all extra sprites in the game
+		 */
+		for (int i = 0; i < Game.sprites.size(); i++) {
+			HitSprite hS = Game.sprites.get(i);
+
+			hS.tick();
+		}
+	}
+
+	/**
 	 * Runs all the games events, such as updating entity movement and variables,
 	 * item pickups, etc... Only the host can run these events. Player is
 	 * automatically a host in single player games.
 	 */
-	public void runGameEvents() {
+	public void runSingleGameEvents() {
 		// Sort enemies according to their distance to you but only if
 		// not in survival
 		if (FPSLauncher.gameMode == 1) {
@@ -886,7 +1505,13 @@ public class Game implements Runnable {
 		for (int i = 0; i < Game.bullets.size(); i++) {
 			Bullet bullet = Game.bullets.get(i);
 
-			bullet.move();
+			// For any bullets that are supposed to hit instantly, move them
+			// until they hit something.
+			if (bullet.ID <= 2) {
+				while (bullet.move()) {
+
+				}
+			}
 		}
 
 		/*
@@ -919,12 +1544,15 @@ public class Game implements Runnable {
 	 * This entity is used to hit enemies and make them happy.
 	 */
 	public static void addBullet(int damage, int ID, double speed, double rotation, boolean criticalHit) {
-		Bullet b = new Bullet(damage, speed, Player.x, ((-Player.y) * 0.085), Player.z, ID, rotation, criticalHit);
+
+		double bullY = ((-Player.y) * 0.085);
 
 		// Bullet will be lower if player is crouching
 		if (Player.yCorrect + 1 < Player.y) {
-			b.y = 0.8;
+			bullY = 0.8;
 		}
+
+		Bullet b = new Bullet(damage, speed, Player.x, bullY, Player.z, ID, rotation, criticalHit);
 
 		bullets.add(b);
 	}
@@ -2216,6 +2844,11 @@ public class Game implements Runnable {
 		sprites = new ArrayList<HitSprite>();
 		happySavers = new ArrayList<Item>();
 		otherPlayers = new ArrayList<ServerPlayer>();
+		activatedButtons = new ArrayList<Button>();
+		activatedDoors = new ArrayList<Door>();
+		activatedElevators = new ArrayList<Elevator>();
+		bulletsAdded = new ArrayList<Bullet>();
+		itemsAdded = new ArrayList<Item>();
 	}
 
 }

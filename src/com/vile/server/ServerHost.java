@@ -25,8 +25,8 @@ import com.vile.launcher.FPSLauncher;
  */
 public class ServerHost {
 
-	public int maxClients = 3;
-	public int clientCount = 0;
+	public static final int maxClients = 4;
+	public static int clientCount = 0;
 	public Thread[] clientThreads = new Thread[maxClients];
 	public ServerSocket serverSocket;
 
@@ -38,7 +38,7 @@ public class ServerHost {
 			serverSocket = new ServerSocket(portNumber);
 
 			Display.itemsRespawn = true;
-			Display.clientGame = false;
+			Display.gameType = 0;
 
 			new RunGame();
 
@@ -102,6 +102,9 @@ public class ServerHost {
 		b.xa = Double.parseDouble(bAtt[6]);
 		b.za = Double.parseDouble(bAtt[7]);
 		b.initialSpeed = Double.parseDouble(bAtt[8]);
+
+		// TODO implement me
+		b.clientID = Integer.parseInt(bAtt[9]);
 
 		Game.bullets.add(b);
 	}

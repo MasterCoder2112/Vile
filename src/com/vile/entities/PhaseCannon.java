@@ -71,14 +71,16 @@ public class PhaseCannon extends Weapon implements WeaponInterface {
 
 				weaponPhase = 0;
 
-				// Create the bullet
-				Bullet bullet = new Bullet(damage, 0.03, Player.x, -(Player.y * 0.085), Player.z, weaponID,
-						Player.rotation, criticalHit);
+				double bullY = -(Player.y * 0.085);
 
 				// Bullet will be lower if player is crouching
 				if (Player.yCorrect + 1 < Player.y) {
-					bullet.y = 0.8;
+					bullY = 0.8;
 				}
+
+				// Create the bullet
+				Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation,
+						criticalHit);
 
 				int crossWidth = Display.WIDTH;
 				int crossHeight = Display.HEIGHT;
@@ -98,7 +100,7 @@ public class PhaseCannon extends Weapon implements WeaponInterface {
 				 * instantaneously in small increments to make it look like it hits the enemy
 				 * instantaneously and also makes it more precise.
 				 */
-				while (bullet.move()) {
+				while (bullet.move() && Display.gameType != 1) {
 					// System.out.println(bullet.y);
 					// Do nothing, just call the move method
 				}

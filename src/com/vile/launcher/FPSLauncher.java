@@ -277,7 +277,7 @@ public class FPSLauncher extends JFrame {
 				Display.musicTheme = musicChoice;
 				Display.smoothFPS = smoothFPS;
 				Display.itemsRespawn = false;
-				Display.clientGame = false;
+				Display.gameType = 2;
 
 				loadingGame = false;
 				returning = false;
@@ -331,7 +331,7 @@ public class FPSLauncher extends JFrame {
 				Display.musicTheme = musicChoice;
 				Display.smoothFPS = smoothFPS;
 				Display.itemsRespawn = false;
-				Display.clientGame = false;
+				Display.gameType = 2;
 
 				// If custom map, send these values so the game knows
 				// what to load up

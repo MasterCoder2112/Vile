@@ -732,6 +732,11 @@ public class Controller {
 					// Has to be in range of button
 					if (Math.abs(button.z - Player.z) <= 0.95 && Math.abs(button.x - Player.x) <= 0.95
 							&& !button.pressed) {
+
+						// If client, then add this to activated things to add to the server
+						if (Display.gameType == 1) {
+							Game.activatedButtons.add(button);
+						}
 						button.pressed = true;
 						button.activated = true;
 						anyActivated = true;
@@ -764,6 +769,12 @@ public class Controller {
 							if (!SoundController.keyUse.isStillActive()) {
 								SoundController.keyUse.playAudioFile(door.distanceFromPlayer + 10);
 							}
+
+							// If client, then add this to activated things to add to the server
+							if (Display.gameType == 1) {
+								Game.activatedDoors.add(door);
+							}
+
 							door.activated = true;
 							anyActivated = true;
 						} else if (door.itemActivationID > 0) {
@@ -896,6 +907,12 @@ public class Controller {
 				if (Math.abs(elevator.getZ() - Player.z) <= 0.95 && Math.abs(elevator.getX() - Player.x) <= 0.95) {
 					// If door doesn't have to be activated by a button
 					if (elevator.itemActivationID == 0) {
+
+						// If client, then add this to activated things to add to the server
+						if (Display.gameType == 1) {
+							Game.activatedElevators.add(elevator);
+						}
+
 						elevator.activated = true;
 						anyActivated = true;
 
@@ -1228,6 +1245,11 @@ public class Controller {
 								} else {
 									door.activated = true;
 								}
+
+								// If client, then add this to activated things to add to the server
+								if (Display.gameType == 1) {
+									Game.activatedDoors.add(door);
+								}
 							}
 						}
 
@@ -1255,6 +1277,11 @@ public class Controller {
 									e.activated = true;
 								} else {
 									e.activated = true;
+								}
+
+								// If client, then add this to activated things to add to the server
+								if (Display.gameType == 1) {
+									Game.activatedElevators.add(e);
 								}
 							}
 						}

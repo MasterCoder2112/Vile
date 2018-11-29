@@ -855,6 +855,650 @@ public class Item {
 	}
 
 	/**
+	 * Activates an item but it is a little bit different than the method above.
+	 * This one activates it only for a particular server player because this method
+	 * will only be called for clients connected to a server.
+	 * 
+	 * @return
+	 */
+	public boolean activateServer(ServerPlayer sP) {
+
+		// If item was pickedUp then don't activate it again until respawned
+		if (pickedUp) {
+			return false;
+		}
+
+		// Was item used?
+		boolean itemUsed = false;
+
+		distanceFromPlayer = Math
+				.sqrt(((Math.abs(x - sP.x)) * (Math.abs(x - sP.x))) + ((Math.abs(z - sP.z)) * (Math.abs(z - sP.z))));
+
+		/*
+		 * If MegaHealth, then heal the player completely.
+		 */
+		if (itemID == ItemNames.MEGAHEALTH.getID()) {
+			if (sP.health < sP.maxHealth) {
+				sP.health = sP.maxHealth;
+
+				// Displays that the player picked up the megahealth
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("Picked up the MEGAHAPPINESS!"));
+				} else {
+					sP.clientMessages.add(new PopUp("Picked up the MEGAHEALTH!"));
+				}
+
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.megaPickUp.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+				itemUsed = true;
+			}
+		}
+		/*
+		 * If a Health pack, heal the player accordingly
+		 */
+		else if (itemID == ItemNames.HEALTHPACK.getID()) {
+			if (sP.health >= 100) {
+				return false;
+			}
+
+			sP.health += ItemNames.HEALTHPACK.getValue();
+
+			if (sP.health >= 100) {
+				sP.health = 100;
+			}
+
+			// Displays that the player picked up a Health Pack
+			if (Display.smileMode) {
+				sP.clientMessages.add(new PopUp("It probably contained puppies and stuff"));
+				sP.clientMessages.add(new PopUp("A happy pack has made you more happy!"));
+			} else {
+				sP.clientMessages.add(new PopUp("You heal yourself with a healthpack!"));
+			}
+
+			// Play correlating sound effect
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.healthBig.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+
+			itemUsed = true;
+		}
+
+		/*
+		 * With anything that gives a weapon ammo, check to see if the ammo can be added
+		 * or not, and then if it is, pick up the item and display what you picked up.
+		 * Add the ammo to its corresponding weapon as well.
+		 */
+		else if (hasAmmo) {
+			if (itemID == ItemNames.PISTOL.getID() || itemID == ItemNames.BULLETS.getID()
+					|| itemID == ItemNames.BOXOFBULLETS.getID()) {
+				itemUsed = sP.weapons[0].addAmmo(itemValue);
+			} else if (itemID == ItemNames.SHELLS.getID() || itemID == ItemNames.SHOTGUN.getID()
+					|| itemID == ItemNames.SHELLBOX.getID()) {
+				itemUsed = sP.weapons[1].addAmmo(itemValue);
+			} else if (itemID == ItemNames.PHASECANNON.getID() || itemID == ItemNames.SMALLCHARGE.getID()
+					|| itemID == ItemNames.LARGECHARGE.getID()) {
+				itemUsed = sP.weapons[2].addAmmo(itemValue);
+			}
+			// Rocket Launcher stuff
+			else {
+				itemUsed = sP.weapons[3].addAmmo(itemValue);
+			}
+
+			/*
+			 * Return if ammo couldn't be added for any reason and the Player does not have
+			 * the weapon. If the player doesn't have the weapon, it will not be equipped
+			 * but ammo won't be added.
+			 */
+			if (!itemUsed) {
+				if (itemID == ItemNames.PHASECANNON.getID() && !sP.weapons[2].canBeEquipped
+						|| itemID == ItemNames.SHOTGUN.getID() && !sP.weapons[1].canBeEquipped
+						|| itemID == ItemNames.PISTOL.getID() && !sP.weapons[0].dualWield
+						|| itemID == ItemNames.ROCKETLAUNCHER.getID() && !sP.weapons[3].canBeEquipped) {
+
+				} else {
+					return false;
+				}
+			}
+
+			if (itemID == ItemNames.SHELLS.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("Man this stuff is powerful"));
+					sP.clientMessages.add(new PopUp("You picked up some joy!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You picked up some shotgun shells!"));
+				}
+
+				try {
+					// Play ammo pick up sound effect
+					// Add sound and distance from sound to server player
+					sP.audioToPlay.add(SoundController.clip.audioName);
+					sP.audioDistances.add((int) (distanceFromPlayer));
+				} catch (Exception e) {
+
+				}
+			} else if (itemID == ItemNames.SHOTGUN.getID()) {
+				// Displays that the player picked up the joy Spreader
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("Better make like Jesus and spread that joy"));
+					sP.clientMessages.add(new PopUp("You found the joy spreader!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You found the shotgun!"));
+				}
+
+				// Weapon Pick up sound
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.weaponPickUp.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+				// If weapon can't already be equipped, make it so that
+				// it can be, and equip it
+				if (!sP.weapons[1].canBeEquipped) {
+					sP.weapons[1].canBeEquipped = true;
+					sP.weaponEquipped = 1;
+				}
+			}
+
+			else if (itemID == ItemNames.SHELLBOX.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("More Joy than you can handle"));
+					sP.clientMessages.add(new PopUp("You found a box of joy!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You pick up a shellbox!"));
+				}
+
+				// Play ammo pick up sound effect
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.clip.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+			} else if (itemID == ItemNames.PHASECANNON.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("It doesn't sound peaceful but trust me it is"));
+					sP.clientMessages.add(new PopUp("You found a Peacecannon!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You found the Phasecannon!"));
+				}
+
+				// Weapon Pick up sound
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.weaponPickUp.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+				// If weapon can't already be equipped, make it so that
+				// it can be, and equip it
+				if (!sP.weapons[2].canBeEquipped) {
+					sP.weapons[2].canBeEquipped = true;
+					sP.weaponEquipped = 2;
+				}
+			} else if (itemID == ItemNames.SMALLCHARGE.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("A Little bit of peace please?"));
+					sP.clientMessages.add(new PopUp("You found a small peace charge!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You found a small phase charge!"));
+				}
+
+				// Play ammo pick up sound effect
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.clip.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+			} else if (itemID == ItemNames.LARGECHARGE.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("We charge in peace"));
+					sP.clientMessages.add(new PopUp("You found a large Peace charge!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You found a large Phase charge!"));
+				}
+
+				// Play ammo pick up sound effect
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.clip.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+			} else if (itemID == ItemNames.PISTOL.getID()) {
+				// Weapon Pick up sound
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.weaponPickUp.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+				// If weapon cant be dual wielded yet, make it so that it
+				// is
+				if (!sP.weapons[0].dualWield) {
+					sP.weapons[0].dualWield = true;
+					sP.weaponEquipped = 0;
+					sP.clientMessages.add(new PopUp("Hell yeah! Dual wielding!"));
+
+					if (Display.smileMode) {
+						sP.clientMessages
+								.add(new PopUp("Never can make too many people fall in love. (Except for you...)"));
+						sP.clientMessages.add(new PopUp("Heck yeah! Making Cupid proud!"));
+					} else {
+						sP.clientMessages.add(new PopUp("Hell yeah! Dual wielding!"));
+					}
+				} else {
+					if (Display.smileMode) {
+						sP.clientMessages.add(new PopUp("All the more to love you my dear"));
+						sP.clientMessages.add(new PopUp("You pick up a cupids bow!"));
+					} else {
+						sP.clientMessages.add(new PopUp("You pick up a pistol!"));
+					}
+				}
+			} else if (itemID == ItemNames.BULLETS.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("I need your love"));
+					sP.clientMessages.add(new PopUp("You pick up some love arrows!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You pick up a bullet clip!"));
+				}
+
+				// Play ammo pick up sound effect
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.clip.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+			} else if (itemID == ItemNames.BOXOFBULLETS.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("Give me all your love! ALL OF IT"));
+					sP.clientMessages.add(new PopUp("You found a quiver of love arrows!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You found a box of bullets!"));
+				}
+
+				// Play ammo pick up sound effect
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.clip.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+			}
+
+			else if (itemID == ItemNames.ROCKETLAUNCHER.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("Kill them with cuteness"));
+					sP.clientMessages.add(new PopUp("No way... The Teddy Bear Launcher!"));
+				} else {
+					sP.clientMessages.add(new PopUp("OH YEAH! You got the Rocket Launcher"));
+				}
+
+				// Weapon Pick up sound
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.weaponPickUp.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+				// If weapon can't already be equipped, make it so that
+				// it can be, and equip it
+				if (!sP.weapons[3].canBeEquipped) {
+					sP.weapons[3].canBeEquipped = true;
+					sP.weaponEquipped = 3;
+				}
+			} else if (itemID == ItemNames.ROCKETS.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("Take a Teddy Bear to the face!"));
+					sP.clientMessages.add(new PopUp("You found some Teddy Bears!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You found some rockets!"));
+				}
+
+				// Play ammo pick up sound effect
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.clip.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+
+			} else if (itemID == ItemNames.ROCKETCRATE.getID()) {
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("Contains lots of them Teddy Bears"));
+					sP.clientMessages.add(new PopUp("You found a toy box!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You open a rocket crate!"));
+				}
+
+				// Play ammo pick up sound effect
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.clip.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+			}
+		}
+
+		/*
+		 * Keys
+		 */
+		else if (itemID == ItemNames.REDKEY.getID()) {
+			sP.hasRedKey = true;
+			itemUsed = true;
+
+			sP.clientMessages.add(new PopUp("You picked up the red keycard!"));
+
+			// Key pick up sound
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.keyPickUp.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		} else if (itemID == ItemNames.BLUEKEY.getID()) {
+			sP.hasBlueKey = true;
+			itemUsed = true;
+
+			// Displays that the player picked up the Blue key
+			sP.clientMessages.add(new PopUp("You picked up the blue keycard!"));
+
+			// Key pick up sound
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.keyPickUp.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		} else if (itemID == ItemNames.GREENKEY.getID()) {
+			sP.hasGreenKey = true;
+			itemUsed = true;
+
+			// Displays that the player picked up the green key
+			sP.clientMessages.add(new PopUp("You picked up the green keycard!"));
+
+			// Key pick up sound
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.keyPickUp.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		} else if (itemID == ItemNames.YELLOWKEY.getID()) {
+			sP.hasYellowKey = true;
+			itemUsed = true;
+
+			// Displays that the player picked up the yellow key
+			sP.clientMessages.add(new PopUp("You picked up the yellow keycard!"));
+
+			// Key pick up sound
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.keyPickUp.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// If a secret
+		else if (itemID == ItemNames.SECRET.getID()) {
+			Game.secretsFound++;
+			itemUsed = true;
+
+			// Display that a secret was found
+			sP.clientMessages.add(new PopUp("A SECRET is discovered!"));
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.secret.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Skull of Resurrection
+		else if (itemID == ItemNames.SKULLOFRES.getID()) {
+			sP.resurrections++;
+			itemUsed = true;
+
+			if (Display.smileMode) {
+				sP.clientMessages
+						.add(new PopUp("If you get sad... I'm always here to make you happy again... temporarily."));
+				sP.clientMessages.add(new PopUp("Your happiness has enfused with the Happy Sphere!"));
+			} else {
+				sP.clientMessages.add(new PopUp("Your soul has binded with the skull of resurrection!"));
+			}
+
+			// Creepy sound is played
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.creepySound.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Environment Suit
+		else if (itemID == ItemNames.BIOSUIT.getID()) {
+			sP.environProtectionTime = 1100;
+			itemUsed = true;
+
+			sP.clientMessages.add(new PopUp("You adorn the environmental suit!"));
+
+			// Play special pick up sound for this item
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.specialPickup.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Goblet of invurnuralbility
+		else if (itemID == ItemNames.GOBLET.getID()) {
+			sP.immortality = 1100 * (int) Render3D.fpsCheck;
+			sP.vision = 1100 * (int) Render3D.fpsCheck;
+			itemUsed = true;
+
+			if (Display.smileMode) {
+				sP.clientMessages.add(new PopUp("It's Inconcievable!"));
+				sP.clientMessages.add(new PopUp("A Goblet of Inconcievable Joy!"));
+			} else {
+				sP.clientMessages.add(new PopUp("You drink from the Goblet, and play God!"));
+			}
+
+			// Play correlating sound effect
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.healthBig.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Adrenaline
+		else if (itemID == ItemNames.ADRENALINE.getID()) {
+			sP.maxHealth++;
+			sP.health++;
+
+			itemUsed = true;
+
+			if (Display.smileMode) {
+				sP.clientMessages.add(new PopUp("Mmmmm... Donuts..."));
+				sP.clientMessages.add(new PopUp("You eat the donut!"));
+			} else {
+				sP.clientMessages.add(new PopUp("You inject the adrenaline!"));
+			}
+
+			// Play special pick up sound for this item
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.specialPickup.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Glasses of vision
+		else if (itemID == ItemNames.VISIONGLASSES.getID()) {
+			sP.vision = 1100 * (int) Render3D.fpsCheck;
+
+			itemUsed = true;
+			sP.clientMessages.add(new PopUp("You're vision has been enhanced!"));
+
+			// Mega Item pick up sound
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.megaPickUp.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Chainmeal armor
+		else if (itemID == ItemNames.CHAINMEAL.getID()) {
+			if (sP.armor < 50) {
+				sP.armor = ItemNames.CHAINMEAL.getValue();
+
+				itemUsed = true;
+
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("This will help you! I'm Positive!"));
+					sP.clientMessages.add(new PopUp("50 Positivity Points!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You adorn the chainmeal armor!"));
+				}
+
+				// Play Armor pick up sound
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.armorPickup.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+			} else {
+				itemUsed = false;
+			}
+		}
+		// Combat Armor
+		else if (itemID == ItemNames.COMBAT.getID()) {
+			if (sP.armor < 100) {
+				sP.armor = ItemNames.COMBAT.getValue();
+
+				itemUsed = true;
+
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("Full of positive thoughts you are."));
+					sP.clientMessages.add(new PopUp("100 Positivity Points!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You adorn the combat armor!"));
+				}
+
+				// Play Armor pick up sound
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.armorPickup.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+			} else {
+				itemUsed = false;
+			}
+		}
+		// Argent Armor
+		else if (itemID == ItemNames.ARGENT.getID()) {
+			if (sP.armor < 200) {
+				sP.armor = ItemNames.ARGENT.getValue();
+
+				itemUsed = true;
+
+				if (Display.smileMode) {
+					sP.clientMessages.add(new PopUp("Positivily Outstanding!"));
+					sP.clientMessages.add(new PopUp("200 Positivity Points!"));
+				} else {
+					sP.clientMessages.add(new PopUp("You adorn the powerful Argent Armor!"));
+				}
+
+				// Play Armor pick up sound
+				// Add sound and distance from sound to server player
+				sP.audioToPlay.add(SoundController.armorPickup.audioName);
+				sP.audioDistances.add((int) (distanceFromPlayer));
+			} else {
+				itemUsed = false;
+			}
+		}
+		// Armor Shard
+		else if (itemID == ItemNames.SHARD.getID()) {
+			if (sP.armor < 200) {
+				sP.armor++;
+			}
+
+			itemUsed = true;
+
+			if (Display.smileMode) {
+				sP.clientMessages.add(new PopUp("Keep your chin up! You're doing fine! Be positive."));
+				sP.clientMessages.add(new PopUp("1 Positivity Point!"));
+			} else {
+				sP.clientMessages.add(new PopUp("You pick up an armor shard!"));
+			}
+
+			// Play Armor pick up sound
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.armorPickup.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Health vial
+		else if (itemID == ItemNames.VIAL.getID()) {
+			sP.health += ItemNames.VIAL.value;
+
+			itemUsed = true;
+			if (Display.smileMode) {
+				sP.clientMessages.add(new PopUp("You take your medicine..."));
+				sP.clientMessages.add(new PopUp("Hey you're happier now! You're fine!"));
+			} else {
+				sP.clientMessages.add(new PopUp("You consume the health vial!"));
+			}
+
+			// Play correlating sound effect
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.health.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Beer
+		else if (itemID == ItemNames.BEER.getID()) {
+			sP.health += ItemNames.BEER.value;
+
+			itemUsed = true;
+			if (Display.smileMode) {
+				sP.clientMessages.add(new PopUp("Just taste that carbonation!"));
+				sP.clientMessages.add(new PopUp("You consume the Soda!"));
+			} else {
+				sP.clientMessages.add(new PopUp("You consume the Beer!"));
+			}
+
+			// Play correlating sound effect
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.health.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Burger
+		else if (itemID == ItemNames.BURGER.getID()) {
+			sP.health += ItemNames.BURGER.value;
+
+			itemUsed = true;
+			if (Display.smileMode) {
+				sP.clientMessages.add(new PopUp("Tastes like American Goodness!"));
+				sP.clientMessages.add(new PopUp("You consume the Burger!"));
+			} else {
+				sP.clientMessages.add(new PopUp("You consume the Burger!"));
+			}
+
+			// Play correlating sound effect
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.health.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Upgrade point
+		else if (itemID == ItemNames.UPGRADE.getID()) {
+			itemUsed = true;
+			sP.clientMessages.add(new PopUp("No use yet though..."));
+			sP.clientMessages.add(new PopUp("You collect an upgrade point!"));
+
+			// Add to upgradePoints player has
+			sP.upgradePoints += 1;
+
+			// Play special pick up sound for this item
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.specialPickup.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Holy Water
+		else if (itemID == ItemNames.HOLYWATER.getID()) {
+			itemUsed = false;
+			if (Display.smileMode) {
+				sP.clientMessages.add(new PopUp("You're already happy, no need to be saved..."));
+				return false;
+			} else {
+				sP.clientMessages.add(new PopUp("You collect the holy water!"));
+			}
+
+			// Play correlating sound effect
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.health.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+
+			// Becomes just a normal table
+			itemID = 42;
+		}
+		// Scepter of Deciet
+		else if (itemID == ItemNames.DECIETSCEPTER.getID()) {
+			itemUsed = true;
+			if (Display.smileMode) {
+				sP.clientMessages.add(new PopUp("Make those sad faces love for you!"));
+				sP.clientMessages.add(new PopUp("You hold the Scepter of Love!"));
+			} else {
+				sP.clientMessages.add(new PopUp("Power surges from the Scepter of Deciet!"));
+			}
+
+			// Play creepy pick up sound for this item
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.creepySound.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+		// Invisibility Emerald
+		else if (itemID == ItemNames.INVISEMERALD.getID()) {
+			itemUsed = true;
+			sP.clientMessages.add(new PopUp("You are now invisible!"));
+
+			// Player is now invisible for a certain amount of ticks
+			sP.invisibility = 1100 * (int) Render3D.fpsCheck;
+
+			// Play correlating sound effect
+			// Add sound and distance from sound to server player
+			sP.audioToPlay.add(SoundController.health.audioName);
+			sP.audioDistances.add((int) (distanceFromPlayer));
+		}
+
+		return itemUsed;
+	}
+
+	/**
 	 * If item can be moved and has a force on it, then move that object until it is
 	 * stopped. Speed will decrease by half until it reaches a negligible distance
 	 * from 0. This will be the first test of simple game physics.

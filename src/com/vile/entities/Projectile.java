@@ -61,6 +61,9 @@ public abstract class Projectile {
 	// The type of projectile
 	public int ID = 0;
 
+	// The id of the client that shot this
+	public int clientID = 0;
+
 	// Change in x and z values.
 	public double xa = 0;
 	public double za = 0;
@@ -581,6 +584,33 @@ public abstract class Projectile {
 			}
 		} catch (Exception e) {
 
+		}
+
+		// If this is the host, see if the projectile hits any of the players
+		if (Display.gameType == 2) {
+			for (int i = 0; i < Game.otherPlayers.size(); i++) {
+				ServerPlayer sP = Game.otherPlayers.get(i);
+				// The projectiles distance from the player. Updated every tick
+				double distanceFromClient = Math.sqrt(((Math.abs(x - sP.x)) * (Math.abs(x - sP.x)))
+						+ ((Math.abs(this.z - sP.z)) * (Math.abs(this.z - sP.z))));
+
+				// If it hits the player, and player is alive and not
+				// invincible.
+				if (distanceFromClient <= 0.3 && Math.abs((sP.y) + ((this.y * 10) / 1.2)) <= 8 && sP.alive) {
+					double damage = this.damage;
+
+					// If critical hit
+					if (criticalHit) {
+						damage *= 2;
+						sP.clientMessages.add(new PopUp("OWW! That was a critical!"));
+					}
+
+					sP.hurtPlayer(damage);
+					projectileHit(true);
+
+					return false;
+				}
+			}
 		}
 
 		/*

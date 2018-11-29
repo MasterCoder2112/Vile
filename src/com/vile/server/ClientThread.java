@@ -5,6 +5,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import com.vile.Game;
+import com.vile.entities.ServerPlayer;
+
 /**
  * Title: ClientThread
  * 
@@ -20,9 +23,13 @@ import java.net.Socket;
 public class ClientThread implements Runnable {
 
 	Socket clientSocket;
+	int clientID = 0;
 
 	public ClientThread(Socket clientSocket) {
 		this.clientSocket = clientSocket;
+		ServerPlayer newPlayer = new ServerPlayer();
+		Game.otherPlayers.add(newPlayer);
+		clientID = newPlayer.ID;
 	}
 
 	/**
@@ -37,19 +44,19 @@ public class ClientThread implements Runnable {
 			PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-			System.out.println("Has client and is waiting...");
+			System.out.println("Has client and is waiting... Client ID: " + clientID);
 
 			// TODO Read next commented area
 			/*
-			 * Below is from the tutorial on the web. Modify it in such a way so that this
-			 * thread waits for a response from the client (client will send positional data
-			 * and any bullets that were added within the current tick to the server here.
-			 * It will also send any items that it picked up so the server can remove those
-			 * as well.) and then add that data to the server. Data is added to the server
-			 * through the methods found in the ServerHost class. After the server hosts
-			 * data has been updated, then the server will send the completely updated data
-			 * back to all the clients so all new data is seen on all the clients games.
-			 * Then this thread will loop and wait for the next response from the client.
+			 * For data transfer, make sure the client receives all the servers game
+			 * information right off the bat so the map and everything can be loaded
+			 * correctly. Also send the clients ID so that the player object can set it's
+			 * ID. After having done that then have code that waits for the client to
+			 * respond after he/she ticks and when the client does respond update the
+			 * servers game and then send the game data back to the client. If the client is
+			 * lagging, it will be like any other game where the client will just have to
+			 * catch up with the server. Nothing we can do about this currently. Look at the
+			 * Game classes loadGame() method and FPSLauncher classes saveGame code.
 			 */
 
 			// String inputLine, outputLine;
