@@ -64,12 +64,14 @@ import com.vile.server.ServerHost;
 /**
  * @title FPSLauncher
  * @author Alex Byrd
- * @modified 11/24/2018 Description: Starts when the application is launched.
- *           Includes all the possible options for a user playing the game.
- *           Starting a new single player game or joining or hosting a multi
- *           player game. Also holds a vast range of options in the options menu
- *           and has a quit and controls button as well. Also the ability to
- *           save and load game files at will.
+ * @modified 11/24/2018
+ * 
+ *           Description: Starts when the application is launched. Includes all
+ *           the possible options for a user playing the game. Starting a new
+ *           single player game or joining or hosting a multi player game. Also
+ *           holds a vast range of options in the options menu and has a quit
+ *           and controls button as well. Also the ability to save and load game
+ *           files at will.
  *
  */
 public class FPSLauncher extends JFrame {

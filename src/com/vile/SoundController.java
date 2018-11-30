@@ -206,6 +206,15 @@ public class SoundController {
 	}
 
 	/**
+	 * Ends any currently playing sounds
+	 */
+	public void stopSounds() {
+		for (Sound temp : allSounds) {
+			temp.stopAll();
+		}
+	}
+
+	/**
 	 * Instantiates a single sound at a time, checking to see if first it is in the
 	 * current resource pack, and then if not there it will use the default sound
 	 * found in the default resource pack. If not in either the sound will just be

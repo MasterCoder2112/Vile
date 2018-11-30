@@ -2484,6 +2484,12 @@ public class Game implements Runnable {
 		Player.environProtectionTime = 0;
 		Player.vision = 0;
 
+		try {
+			Display.soundController.stopSounds();
+		} catch (Exception e) {
+
+		}
+
 		/*
 		 * Every map starts with 0 enemies, 0 secrets, and no secrets found on default.
 		 */

@@ -631,6 +631,12 @@ public class Display extends Canvas implements Runnable {
 
 					// Send ready status to host here.
 
+					/*
+					 * TODO Look at ClientThread load method to implement how to load all the
+					 * servers game data in initially here and set all the values. Now before doing
+					 * this make sure to send the server a "ready" status.
+					 */
+
 					// Before you get the new information, reset the game lists.
 					game.resetLists();
 
@@ -925,6 +931,14 @@ public class Display extends Canvas implements Runnable {
 							new InputStreamReader(ServerClient.hostSocket.getInputStream()));
 
 					// Send information to host here.
+
+					/*
+					 * TODO Look at ClientThread class and the load and send methods and basically
+					 * just do the opposite for here. It will send out data first about things
+					 * updated within this clients version of the game, and then it will take in all
+					 * the game data from the servers game so that the clients game values will be
+					 * updated.
+					 */
 
 					// Before you get the new information, reset the game lists.
 					game.resetLists();
@@ -1486,6 +1500,15 @@ public class Display extends Canvas implements Runnable {
 						HEIGHT - gC + 43);
 			} else {
 				g.drawString("Kills: " + Player.kills + " / " + Game.enemiesInMap, (WIDTH / 2) + 200, HEIGHT - gC + 43);
+			}
+
+			// Only show deaths if in multiplayer deathmatch mode
+			if (gameType == 1) {
+				if (smileMode) {
+					g.drawString("Got sad: " + Player.deaths, (WIDTH / 2) + 200, HEIGHT - gC + 68);
+				} else {
+					g.drawString("Deaths: " + Player.deaths, (WIDTH / 2) + 200, HEIGHT - gC + 68);
+				}
 			}
 		}
 
