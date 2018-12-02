@@ -6,7 +6,15 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 import com.vile.Game;
+import com.vile.entities.Bullet;
+import com.vile.entities.Button;
+import com.vile.entities.Door;
+import com.vile.entities.Elevator;
+import com.vile.entities.Explosion;
+import com.vile.entities.Item;
 import com.vile.entities.ServerPlayer;
+import com.vile.levelGenerator.Block;
+import com.vile.levelGenerator.Level;
 
 /**
  * Title: ClientThread
@@ -100,137 +108,98 @@ public class ClientThread implements Runnable {
 		 * below) and write it to a string which will be sent through the PrintWriter to
 		 * the clients socket.
 		 */
+		String dataString = "";
+		for(int i = 0; i < Game.otherPlayers.size(); i++) {
+			ServerPlayer sP = Game.otherPlayers.get(i);
+			
+			if(sP.ID != clientID)
+			{
+				dataString += sP.x+" : "+sP.y+" : "+sP.z+" : "+sP.ID+";";
+			}else {
+				dataString += sP.health+" : "+sP.maxHealth+" : "+sP.armor+" : "+sP.environProtectionTime+
+						" : "+sP.immortality+" : "+sP.vision+" : "+sP.invisibility+" : "+sP.height+" : "+
+						" : "+sP.height+" : "+sP.rotation+" : "+sP.zEffects+" : "+sP.xEffects+" : "+sP.yEffects+
+						" : "+sP.noClipOn+" : "+sP.flyOn+" : "+sP.superSpeedOn+" : "+sP.godModeOn+" : "+
+						sP.unlimitedAmmoOn+" : "+sP.alive+" : "+sP.weaponEquipped+" : "+sP.weapons+" : "
+						+sP.kills+" : "+sP.deaths+";";
+				//TODO arrayLists do stuff
+				//sP.clientMessages+" : "+sP.audioToPlay+" : "+sP.audioDistances+
+			};
+		};
+		
+		dataString += "?";
+		dataString += "Walls:";
+		
+		for (int i = 0; i < Level.blocks.length; i++) 
+		{
+			Block b = Level.blocks[i];
+			dataString += (b.health+" : "+b.x+" : "+b.y+" : "+b.z + " : "+b.wallID+ 
+					" : "+b.wallPhase+" : "+b.height+" : "+b.isSolid+" : "+b.seeThrough+";"); 
+		}
+		
+		dataString += "?";
+		dataString += "Items:";
+		
+		  for (int i = 0; i < Game.items.size(); i++) 
+		  {
+			  Item item = Game.items.get(i);
+			  dataString+=(item.itemID + " : " + item.x + " : "
+			  + item.y + " : " + item.z + " : " + item.rotation+";"); 
+		  }
+		  
+		  dataString += "?";
+		  dataString += "Bullets:";
+		  for (int i = 0; i < Game.bullets.size(); i++) 
+		  { 
+			  Bullet b = Game.bullets.get(i); 
+			  dataString+=(b.ID + ":" + b.x + " : " + b.y + " : " + b.z + ";"); 
+		  }
+		  
+		  dataString += "?";
+		  dataString += "Explosions:";
+		  
+		  for (int i = 0; i < Game.explosions.size(); i++) 
+		  {
+			  Explosion exp =Game.explosions.get(i); 
+			  dataString+=(exp.ID + " : " + exp.phaseTime + " : " + exp.x + " : " + exp.y + " : " + exp.z + ";"); 
+		  };
+		  
+		  dataString += "?";
+		  dataString += "Buttons:";
+		  
+		  for (int i = 0; i < Game.buttons.size(); i++) 
+		  { 
+			  Button b =Game.buttons.get(i);
+			  dataString+=(b.itemID + " : " + b.itemActivationID + " : "+ b.x + " : " + b.y + " : " + b.z + 
+					  " : " + b.pressed + ";");
+		  }
+		 
+		 dataString += "?";
+		 dataString += "Doors:";
 
-		/*
-		 * Tries to write game data into a save file within the current users directory
-		 */
-		/*
-		 * try { rewrite = new BufferedWriter(new FileWriter("Users/" + currentUserName
-		 * + "/" + fileName + ".txt"));
-		 * 
-		 * rewrite.write(Game.mapNum + ":" + gameMode + ":" + Game.secretsFound + ":" +
-		 * Game.enemiesInMap + ":" + Player.kills + ":" + themeName);
-		 * 
-		 * rewrite.newLine();
-		 * 
-		 * // Player and level stuff rewrite.write(Player.health + ":" +
-		 * Player.maxHealth + ":" + Player.armor + ":" + Player.x + ":" + Player.y + ":"
-		 * + Player.z + ":" + Player.rotation + ":" + Player.maxHeight + ":" +
-		 * Player.hasRedKey + ":" + Player.hasBlueKey + ":" + Player.hasGreenKey + ":" +
-		 * Player.hasYellowKey + ":" + Player.upRotate + ":" + Player.extraHeight + ":"
-		 * + Player.resurrections + ":" + Player.environProtectionTime + ":" +
-		 * Player.immortality + ":" + Player.vision + ":" + Player.invisibility + ":" +
-		 * Player.weaponEquipped + ":" + Player.godModeOn + ":" + Player.noClipOn + ":"
-		 * + Player.flyOn + ":" + Player.superSpeedOn + ":" + Player.unlimitedAmmoOn +
-		 * ":" + Player.upgradePoints + ":" + Level.width + ":" + Level.height + ":" +
-		 * Game.mapNum + ":" + Game.mapAudio + ":" + Game.mapFloor + ":" +
-		 * Game.mapCeiling + ":" + Render3D.ceilingDefaultHeight + ":" +
-		 * Level.renderDistance + ":" + Game.mapName + ",");
-		 * 
-		 * // Weapons for (int i = 0; i < Player.weapons.length; i++) { Weapon w =
-		 * Player.weapons[i]; int size = w.cartridges.size();
-		 * 
-		 * rewrite.write(w.weaponID + ":" + w.canBeEquipped + ":" + w.dualWield + ":" +
-		 * w.ammo);
-		 * 
-		 * for (int j = 0; j < size; j++) { int cartSize = w.cartridges.get(j).ammo;
-		 * rewrite.write(":" + cartSize); }
-		 * 
-		 * rewrite.write(";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Walls:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Level.blocks.length; i++) { Block b = Level.blocks[i];
-		 * rewrite.write(b.health + ":" + b.x + ":" + b.y + ":" + b.z + ":" + b.wallID +
-		 * ":" + b.wallPhase + ":" + b.height + ":" + b.isSolid + ":" + b.seeThrough +
-		 * ";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Enemies:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.enemies.size(); i++) { Enemy en =
-		 * Game.enemies.get(i); rewrite.write(en.health + ":" + en.xPos + ":" + en.yPos
-		 * + ":" + en.zPos + ":" + en.ID + ":" + en.itemActivationID + ":" +
-		 * en.maxHeight + ":" + en.newTarget + ":" + en.targetX + ":" + en.targetY + ":"
-		 * + en.targetZ + ":" + en.activated + ":" + en.rotation + ":" + en.isAttacking
-		 * + ":" + en.isFiring + ":" + en.isABoss + ":" + en.xEffects + ":" +
-		 * en.yEffects + ":" + en.zEffects + ":" + en.tick + ":" + en.tickRound + ":" +
-		 * en.tickAmount + ";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Bosses:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.bosses.size(); i++) { Enemy en = Game.bosses.get(i);
-		 * rewrite.write(en.health + ":" + en.xPos + ":" + en.yPos + ":" + en.zPos + ":"
-		 * + en.ID + ":" + en.itemActivationID + ":" + en.maxHeight + ":" + en.newTarget
-		 * + ":" + en.targetX + ":" + en.targetY + ":" + en.targetZ + ":" + en.activated
-		 * + ":" + en.rotation + ":" + en.isAttacking + ":" + en.isFiring + ":" +
-		 * en.isABoss + ":" + en.xEffects + ":" + en.yEffects + ":" + en.zEffects + ":"
-		 * + en.tick + ":" + en.tickRound + ":" + en.tickAmount + ";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Items:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.items.size(); i++) { Item item = Game.items.get(i);
-		 * String audioQueue = item.audioQueue;
-		 * 
-		 * // So any null audio queues will be set as -1 // to be ignored if
-		 * (audioQueue.equals("")) { audioQueue = "-1"; }
-		 * 
-		 * rewrite.write(item.itemActivationID + ":" + item.itemID + ":" + item.x + ":"
-		 * + item.y + ":" + item.z + ":" + item.rotation + ":" + audioQueue + ";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Bullets:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.bullets.size(); i++) { Bullet b =
-		 * Game.bullets.get(i); rewrite.write(b.ID + ":" + b.damage + ":" + b.speed +
-		 * ":" + b.x + ":" + b.y + ":" + b.z + ":" + b.xa + ":" + b.za + ":" +
-		 * b.initialSpeed + ";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Enemy Projectiles:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.enemyProjectiles.size(); i++) { EnemyFire b =
-		 * Game.enemyProjectiles.get(i); rewrite.write(b.ID + ":" + b.damage + ":" +
-		 * b.speed + ":" + b.x + ":" + b.y + ":" + b.z + ":" + b.xa + ":" + b.za + ":" +
-		 * b.initialSpeed + ";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Explosions:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.explosions.size(); i++) { Explosion exp =
-		 * Game.explosions.get(i); rewrite.write(exp.ID + ":" + exp.phaseTime + ":" +
-		 * exp.x + ":" + exp.y + ":" + exp.z + ":" + exp.exploded + ":" +
-		 * exp.itemActivationID + ";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Buttons:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.buttons.size(); i++) { Button b =
-		 * Game.buttons.get(i); rewrite.write(b.itemID + ":" + b.itemActivationID + ":"
-		 * + b.x + ":" + b.y + ":" + b.z + ":" + b.pressed + ":" + b.audioQueue + ";");
-		 * }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Doors:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.doors.size(); i++) { Door d = Game.doors.get(i);
-		 * rewrite.write(d.ID + ":" + d.itemActivationID + ":" + d.xPos + ":" + d.yPos +
-		 * ":" + d.zPos + ":" + d.doorX + ":" + d.doorZ + ":" + d.time + ":" +
-		 * d.soundTime + ":" + d.doorType + ":" + d.doorY + ":" + d.maxHeight + ";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Elevators:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.elevators.size(); i++) { Elevator ele =
-		 * Game.elevators.get(i); rewrite.write(ele.ID + ":" + ele.itemActivationID +
-		 * ":" + ele.xPos + ":" + ele.yPos + ":" + ele.zPos + ":" + ele.elevatorX + ":"
-		 * + ele.elevatorZ + ":" + ele.height + ":" + ele.soundTime + ":" + ele.movingUp
-		 * + ":" + ele.movingDown + ":" + ele.waitTime + ":" + ele.upHeight + ":" +
-		 * ele.activated + ":" + ele.maxHeight + ";"); }
-		 * 
-		 * rewrite.newLine(); rewrite.write("Corpses:"); rewrite.newLine();
-		 * 
-		 * for (int i = 0; i < Game.corpses.size(); i++) { Corpse cor =
-		 * Game.corpses.get(i); rewrite.write(cor.enemyID + ":" + cor.phaseTime + ":" +
-		 * cor.xPos + ":" + cor.yPos + ":" + cor.zPos + ":" + cor.time + ":" +
-		 * cor.xEffects + ":" + cor.yEffects + ":" + cor.zEffects + ";"); }
-		 * 
-		 * rewrite.close(); } catch (IOException ex) { System.out.println(ex); //
-		 * exception handling left as an exercise for the reader }
-		 */
+		 for (int i = 0; i < Game.doors.size(); i++) 
+		 {
+			 Door d = Game.doors.get(i);
+			 dataString+=(d.ID + " : " + d.itemActivationID + " : " + d.xPos + " : " + d.yPos +
+					 " : " + d.zPos + " : " + d.doorX + " : " + d.doorZ + " : " + d.time + " : " +
+					 d.soundTime + " : " + d.doorType + " : " + d.doorY + " : " + d.maxHeight + ";"); 
+		 }
+		 
+		 dataString += "?";
+		 dataString += "Elevators:";
+		 
+		 for (int i = 0; i < Game.elevators.size(); i++) 
+		 {
+			 Elevator ele = Game.elevators.get(i);
+			 dataString+=(ele.ID + " : " + ele.itemActivationID + " : " + ele.xPos + " : " 
+			 + ele.yPos + " : " + ele.zPos + " : " + ele.elevatorX + " : "+ ele.elevatorZ 
+			 + " : " + ele.height + " : " + ele.soundTime + " : " + ele.movingUp+ " : " 
+			 + ele.movingDown + " : " + ele.waitTime + " : " + ele.upHeight + " : " +ele.activated 
+			 + " : " + ele.maxHeight + ";"); 
+		 }
+		 
+		out.print(dataString);
+		 
 	}
 
 	/**
