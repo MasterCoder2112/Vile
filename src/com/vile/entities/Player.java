@@ -104,6 +104,9 @@ public class Player {
 	 */
 	public static int weaponEquipped = 0;
 
+	// How drunk is the player
+	public static double drunkLevels = 0;
+
 	// Array of weapons player has
 	public static Weapon[] weapons = new Weapon[4];
 
@@ -185,6 +188,13 @@ public class Player {
 		 */
 		if (invisibility > 0) {
 			invisibility--;
+		}
+
+		// Each tick the player becomes less drunk
+		if (drunkLevels > 0) {
+			drunkLevels -= 0.75;
+		} else {
+			drunkLevels = 0;
 		}
 
 		/*

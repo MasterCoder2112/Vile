@@ -4575,8 +4575,6 @@ public class Render3D extends Render {
 			}
 		}
 
-		// TODO heresa
-
 		// IF the block being checked is solid
 		if (block.isSolid) {
 			/*
@@ -4785,7 +4783,7 @@ public class Render3D extends Render {
 				brightness4 = (int) (renderDistance / (zBuffer[i + 4]));
 				brightness5 = (int) (renderDistance / (zBuffer[i + 5]));
 			}
-			// If the player is immortal
+			// If the player has full vision
 			else {
 				brightness = 255;
 				brightness1 = 255;
@@ -4864,41 +4862,128 @@ public class Render3D extends Render {
 			/*
 			 * Divides that value by 255, then multiplies it by the brightness level of the
 			 * pixel to determine how bright the reds, greens, and blues in each pixel will
-			 * get.
+			 * get. Getting drunk causes the players vision to get darker and a little bit
+			 * distorted.
 			 */
-			r = (r * brightness) / 255;
-			g = (g * brightness) / 255;
-			b = (b * brightness) / 255;
-			r1 = (color1 >> 16) & 255;
-			g1 = (color1 >> 8) & 255;
-			b1 = color1 & 255;
-			r2 = (color2 >> 16) & 255;
-			g2 = (color2 >> 8) & 255;
-			b2 = color2 & 255;
-			r3 = (color3 >> 16) & 255;
-			g3 = (color3 >> 8) & 255;
-			b3 = color3 & 255;
-			r4 = (color4 >> 16) & 255;
-			g4 = (color4 >> 8) & 255;
-			b4 = color4 & 255;
-			r5 = (color5 >> 16) & 255;
-			g5 = (color5 >> 8) & 255;
-			b5 = color5 & 255;
-			r1 = (r1 * brightness1) / 255;
-			g1 = (g1 * brightness1) / 255;
-			b1 = (b1 * brightness1) / 255;
-			r2 = (r2 * brightness2) / 255;
-			g2 = (g2 * brightness2) / 255;
-			b2 = (b2 * brightness2) / 255;
-			r3 = (r3 * brightness3) / 255;
-			g3 = (g3 * brightness3) / 255;
-			b3 = (b3 * brightness3) / 255;
-			r4 = (r4 * brightness4) / 255;
-			g4 = (g4 * brightness4) / 255;
-			b4 = (b4 * brightness4) / 255;
-			r5 = (r5 * brightness5) / 255;
-			g5 = (g5 * brightness5) / 255;
-			b5 = (b5 * brightness5) / 255;
+			if (Player.drunkLevels > 500) {
+				int redLess = brightness;
+				int greenLess = brightness;
+				int blueLess = brightness;
+
+				if (Player.drunkLevels > 4000) {
+					redLess -= 255;
+					greenLess -= 255;
+					blueLess -= 255;
+				} else if (Player.drunkLevels > 3500) {
+					redLess -= 235;
+					greenLess -= 220;
+					blueLess -= 255;
+				} else if (Player.drunkLevels > 3000) {
+					redLess -= 180;
+					greenLess -= 200;
+					blueLess -= 145;
+				} else if (Player.drunkLevels > 2500) {
+					redLess -= 145;
+					greenLess -= 90;
+					blueLess -= 115;
+				} else if (Player.drunkLevels > 2000) {
+					redLess -= 90;
+					greenLess -= 60;
+					blueLess -= 45;
+				} else if (Player.drunkLevels > 1500) {
+					redLess -= 15;
+					greenLess -= 45;
+					blueLess -= 30;
+				} else if (Player.drunkLevels > 1000) {
+					redLess -= 10;
+					greenLess -= 30;
+					blueLess -= 5;
+				} else {
+					redLess -= 7;
+					greenLess -= 3;
+					blueLess -= 8;
+				}
+
+				if (redLess < 0) {
+					redLess = 0;
+				}
+
+				if (greenLess < 0) {
+					greenLess = 0;
+				}
+
+				if (blueLess < 0) {
+					blueLess = 0;
+				}
+
+				r = (r * redLess) / 255;
+				g = (g * greenLess) / 255;
+				b = (b * blueLess) / 255;
+				r1 = (color1 >> 16) & 255;
+				g1 = (color1 >> 8) & 255;
+				b1 = color1 & 255;
+				r2 = (color2 >> 16) & 255;
+				g2 = (color2 >> 8) & 255;
+				b2 = color2 & 255;
+				r3 = (color3 >> 16) & 255;
+				g3 = (color3 >> 8) & 255;
+				b3 = color3 & 255;
+				r4 = (color4 >> 16) & 255;
+				g4 = (color4 >> 8) & 255;
+				b4 = color4 & 255;
+				r5 = (color5 >> 16) & 255;
+				g5 = (color5 >> 8) & 255;
+				b5 = color5 & 255;
+				r1 = (r1 * redLess) / 255;
+				g1 = (g1 * greenLess) / 255;
+				b1 = (b1 * blueLess) / 255;
+				r2 = (r2 * redLess) / 255;
+				g2 = (g2 * greenLess) / 255;
+				b2 = (b2 * blueLess) / 255;
+				r3 = (r3 * redLess) / 255;
+				g3 = (g3 * greenLess) / 255;
+				b3 = (b3 * blueLess) / 255;
+				r4 = (r4 * redLess) / 255;
+				g4 = (g4 * greenLess) / 255;
+				b4 = (b4 * blueLess) / 255;
+				r5 = (r5 * redLess) / 255;
+				g5 = (g5 * greenLess) / 255;
+				b5 = (b5 * blueLess) / 255;
+			} else {
+				r = (r * brightness) / 255;
+				g = (g * brightness) / 255;
+				b = (b * brightness) / 255;
+				r1 = (color1 >> 16) & 255;
+				g1 = (color1 >> 8) & 255;
+				b1 = color1 & 255;
+				r2 = (color2 >> 16) & 255;
+				g2 = (color2 >> 8) & 255;
+				b2 = color2 & 255;
+				r3 = (color3 >> 16) & 255;
+				g3 = (color3 >> 8) & 255;
+				b3 = color3 & 255;
+				r4 = (color4 >> 16) & 255;
+				g4 = (color4 >> 8) & 255;
+				b4 = color4 & 255;
+				r5 = (color5 >> 16) & 255;
+				g5 = (color5 >> 8) & 255;
+				b5 = color5 & 255;
+				r1 = (r1 * brightness1) / 255;
+				g1 = (g1 * brightness1) / 255;
+				b1 = (b1 * brightness1) / 255;
+				r2 = (r2 * brightness2) / 255;
+				g2 = (g2 * brightness2) / 255;
+				b2 = (b2 * brightness2) / 255;
+				r3 = (r3 * brightness3) / 255;
+				g3 = (g3 * brightness3) / 255;
+				b3 = (b3 * brightness3) / 255;
+				r4 = (r4 * brightness4) / 255;
+				g4 = (g4 * brightness4) / 255;
+				b4 = (b4 * brightness4) / 255;
+				r5 = (r5 * brightness5) / 255;
+				g5 = (g5 * brightness5) / 255;
+				b5 = (b5 * brightness5) / 255;
+			}
 
 			// Reset the bits of that particular pixel
 			if (Player.alive && Player.playerHurt == 0) {

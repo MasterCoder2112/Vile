@@ -254,11 +254,8 @@ public class Game implements Runnable {
 		// Always request focus
 		display.requestFocus();
 
-		// If client, reset all lists each time. These will be populated by information
-		// sent back
-		// from the server.
-		if (Display.gameType == 1) {
-			resetLists();
+		if (Player.drunkLevels > 4000) {
+			Display.messages.add(new PopUp("Blacked Out! Please sober up..."));
 		}
 
 		// TODO Get server information here.

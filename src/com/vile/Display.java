@@ -90,7 +90,6 @@ public class Display extends Canvas implements Runnable {
 	// Determines whether the game is paused
 	public static boolean pauseGame = false;
 
-	// TODO This is where gameType variable is
 	// What type of game is this (0 = host, 1 = client, 2 = single player)
 	public static int gameType = 2;
 
@@ -967,8 +966,6 @@ public class Display extends Canvas implements Runnable {
 		else {
 			isRunning = false;
 
-			// TODO wFTADFS
-
 			// Start new launcher
 			try {
 				new FPSLauncher(0);
@@ -1571,7 +1568,6 @@ public class Display extends Canvas implements Runnable {
 	 * handled by the sound controller.
 	 */
 	public synchronized void playAudio(String custom) {
-		// TODO maybe change if issues.
 		// Host does not play music.
 		if (gameType == 0) {
 			return;

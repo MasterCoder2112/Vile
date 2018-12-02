@@ -771,6 +771,8 @@ public class Item {
 		// Beer
 		else if (itemID == ItemNames.BEER.getID()) {
 			Player.health += ItemNames.BEER.value;
+			Player.armor += ItemNames.BEER.value;
+			Player.drunkLevels += 500;
 
 			itemUsed = true;
 			if (Display.smileMode) {

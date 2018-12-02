@@ -67,6 +67,9 @@ public class Controller {
 	private int time;
 	private int time2;
 
+	// How much time have you been drunk
+	private int drunkTime = 0;
+
 	/*
 	 * Variables used in falling acceleration (gravity)
 	 */
@@ -234,24 +237,23 @@ public class Controller {
 					if (Player.flyOn && Player.y >= Player.maxHeight + Player.extraHeight) {
 						Player.y -= 0.8;
 					}
-					// If falling from getting out of flyMode
-					else if (fallAmount > 0) {
-						/*
-						 * If you are falling, your not crouching, but you are increasing your speed
-						 * downward due to becoming smaller, and so your speed increases.
-						 */
-						crouching = false;
-						fallSpeed *= 1.005;
+					// TODO Fix this eventually
+					// If falling from getting out of flyMode.
+					// else if (fallAmount > 0) {
+					/*
+					 * If you are falling, your not crouching, but you are increasing your speed
+					 * downward due to becoming smaller, and so your speed increases.
+					 */
+					// crouching = false;
+					// fallSpeed *= 1.005;
 
-						/*
-						 * Only increase the acceleration once when falling and hunkering down while
-						 * falling
-						 */
-						if (!once) {
-							fallAmount *= 1.1;
-							once = true;
-						}
-					}
+					/*
+					 * Only increase the acceleration once when falling and hunkering down while
+					 * falling
+					 */
+					/*
+					 * if (!once) { fallAmount *= 1.1; once = true; } }
+					 */
 					// If not falling, just crouch at the normal speed
 					// Also you have to be at your normal height or
 					// below it already.
@@ -304,13 +306,10 @@ public class Controller {
 				Player.forceCrouch = false;
 			}
 
-			// TODO here2
-
 			/*
 			 * If fly mode is not on, jump like normal
 			 */
 			if (!Player.flyOn) {
-				// System.out.println(Player.y+" : "+Player.maxHeight+" : "+Player.extraHeight);
 				/*
 				 * If the Player is trying to jump, and the player is on the ground, then jump.
 				 */
@@ -354,11 +353,6 @@ public class Controller {
 				}
 			}
 
-			// Reset fallAmount each tick so that falling off of things works as well.
-			if (fallAmount < Player.y - Player.maxHeight) {
-				fallAmount = Player.y - Player.maxHeight;
-			}
-
 			// If Player.y is negligibly close to his/her max height
 			// then just set the player at being their maxHeight
 			if (Player.y < 0.4 + Player.maxHeight + Player.extraHeight
@@ -376,6 +370,11 @@ public class Controller {
 				Player.y = -7 + Player.maxHeight;
 				inJump = false;
 				fallSpeed = 0.4;
+			}
+
+			// Reset fallAmount each tick so that falling off of things works as well.
+			if (fallAmount < Player.y - Player.maxHeight && firstCheck) {
+				fallAmount = Player.y - Player.maxHeight;
 			}
 
 			/*
@@ -1109,6 +1108,58 @@ public class Controller {
 		 */
 		xa += ((moveX * Math.cos(Player.rotation)) + (moveZ * Math.sin(Player.rotation))) * moveSpeed;
 		za += ((moveZ * Math.cos(Player.rotation)) - (moveX * Math.sin(Player.rotation))) * moveSpeed;
+
+		/*
+		 * If player is drunk enough he/she will sway in random directions more and
+		 * more.
+		 */
+		if (Player.drunkLevels >= 1500) {
+			double swayEffect = 0.5;
+
+			if (Player.drunkLevels > 3500) {
+				swayEffect = 4;
+			} else if (Player.drunkLevels > 3000) {
+				swayEffect = 3;
+			} else if (Player.drunkLevels > 2500) {
+				swayEffect = 2;
+			} else if (Player.drunkLevels > 2000) {
+				swayEffect = 1;
+			}
+
+			boolean left = false;
+			boolean back = false;
+
+			if (drunkTime > 38) {
+				left = true;
+				back = true;
+			} else if (drunkTime > 25) {
+				left = false;
+				back = true;
+			} else if (drunkTime > 12) {
+				left = true;
+				back = false;
+			}
+
+			if (drunkTime > 50) {
+				drunkTime = 0;
+			}
+
+			// TODO add crap
+
+			if (left) {
+				xa -= (swayEffect / 21.3);
+			} else {
+				xa += (swayEffect / 21.3);
+			}
+
+			if (back) {
+				za -= (swayEffect / 21.3);
+			} else {
+				za += (swayEffect / 21.3);
+			}
+
+			drunkTime++;
+		}
 
 		double xEffects = 0;
 		double zEffects = 0;
