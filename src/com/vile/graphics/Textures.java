@@ -321,6 +321,8 @@ public class Textures {
 	public static Render corpse8 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/corpse8.png");
 	public static Render corpseType2 = loadBitMap(
 			"resources" + FPSLauncher.themeName + "/textures/entities/corpseType2.png");
+	public static Render playerCorpse = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/playerCorpse.png");
 	public static Render enemy4b = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy4-2.png");
 	public static Render enemy3b = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy3-2.png");
 	public static Render enemy3c = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy3-3.png");

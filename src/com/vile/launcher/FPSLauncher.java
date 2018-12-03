@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -254,6 +256,31 @@ public class FPSLauncher extends JFrame {
 			// If Survival mode is pressed then close the main menu
 			// music, dispose of the menu, and start new game
 			if (e.getSource() == play) {
+				if (Display.gameType == 1) {
+					try {
+						PrintWriter out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
+						BufferedReader in = new BufferedReader(
+								new InputStreamReader(ServerClient.hostSocket.getInputStream()));
+
+						// Send ready status to host here.
+
+						/*
+						 * TODO Look at ClientThread load method to implement how to load all the
+						 * servers game data in initially here and set all the values. Now before doing
+						 * this make sure to send the server a "ready" status.
+						 */
+						// TODO also sets up initial player starting position in case the player dies
+						// and needs to respawn.
+
+						// Before you get the new information, reset the game lists.
+						out.print("bye");
+
+						// Recieve information from host here.
+					} catch (Exception ex) {
+						new FPSLauncher(0);
+					}
+				}
+
 				try {
 					Display.music.close();
 				} catch (Exception ex) {
@@ -290,6 +317,30 @@ public class FPSLauncher extends JFrame {
 			// Same stuff as above but start a new game with either a
 			// custom map or the default map
 			if (e.getSource() == playGame) {
+				if (Display.gameType == 1) {
+					try {
+						PrintWriter out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
+						BufferedReader in = new BufferedReader(
+								new InputStreamReader(ServerClient.hostSocket.getInputStream()));
+
+						// Send ready status to host here.
+
+						/*
+						 * TODO Look at ClientThread load method to implement how to load all the
+						 * servers game data in initially here and set all the values. Now before doing
+						 * this make sure to send the server a "ready" status.
+						 */
+						// TODO also sets up initial player starting position in case the player dies
+						// and needs to respawn.
+
+						// Before you get the new information, reset the game lists.
+						out.print("bye");
+
+						// Recieve information from host here.
+					} catch (Exception ex) {
+						new FPSLauncher(0);
+					}
+				}
 				// Close out of current music thread
 				try {
 					Display.inputStream.close();
@@ -393,6 +444,30 @@ public class FPSLauncher extends JFrame {
 			 * Does everything necessary to join a server and start a game
 			 */
 			if (e.getSource() == joinServer) {
+				if (Display.gameType == 1) {
+					try {
+						PrintWriter out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
+						BufferedReader in = new BufferedReader(
+								new InputStreamReader(ServerClient.hostSocket.getInputStream()));
+
+						// Send ready status to host here.
+
+						/*
+						 * TODO Look at ClientThread load method to implement how to load all the
+						 * servers game data in initially here and set all the values. Now before doing
+						 * this make sure to send the server a "ready" status.
+						 */
+						// TODO also sets up initial player starting position in case the player dies
+						// and needs to respawn.
+
+						// Before you get the new information, reset the game lists.
+						out.print("bye");
+
+						// Recieve information from host here.
+					} catch (Exception ex) {
+						new FPSLauncher(0);
+					}
+				}
 				// Close out of current music thread
 				try {
 					Display.inputStream.close();
@@ -452,6 +527,30 @@ public class FPSLauncher extends JFrame {
 			 * Does everything necessary to start a server and start a game
 			 */
 			if (e.getSource() == hostServer) {
+				if (Display.gameType == 1) {
+					try {
+						PrintWriter out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
+						BufferedReader in = new BufferedReader(
+								new InputStreamReader(ServerClient.hostSocket.getInputStream()));
+
+						// Send ready status to host here.
+
+						/*
+						 * TODO Look at ClientThread load method to implement how to load all the
+						 * servers game data in initially here and set all the values. Now before doing
+						 * this make sure to send the server a "ready" status.
+						 */
+						// TODO also sets up initial player starting position in case the player dies
+						// and needs to respawn.
+
+						// Before you get the new information, reset the game lists.
+						out.print("bye");
+
+						// Recieve information from host here.
+					} catch (Exception ex) {
+						new FPSLauncher(0);
+					}
+				}
 				// Close out of current music thread
 				try {
 					Display.inputStream.close();
@@ -521,6 +620,31 @@ public class FPSLauncher extends JFrame {
 
 			// Quit game button is clicked
 			if (e.getSource() == quit) {
+				if (Display.gameType == 1) {
+					try {
+						PrintWriter out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
+						BufferedReader in = new BufferedReader(
+								new InputStreamReader(ServerClient.hostSocket.getInputStream()));
+
+						// Send ready status to host here.
+
+						/*
+						 * TODO Look at ClientThread load method to implement how to load all the
+						 * servers game data in initially here and set all the values. Now before doing
+						 * this make sure to send the server a "ready" status.
+						 */
+						// TODO also sets up initial player starting position in case the player dies
+						// and needs to respawn.
+
+						// Before you get the new information, reset the game lists.
+						out.print("bye");
+
+						// Recieve information from host here.
+					} catch (Exception ex) {
+						new FPSLauncher(0);
+					}
+				}
+
 				quitGame();
 			}
 

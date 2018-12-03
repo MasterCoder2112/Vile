@@ -15,6 +15,7 @@ import com.vile.entities.HurtingBlock;
 import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
 import com.vile.entities.Player;
+import com.vile.entities.Position;
 import com.vile.graphics.Render3D;
 
 /**
@@ -227,6 +228,15 @@ public class Level {
 						Player.rotation = rotation;
 						Render3D.isInitialSound = true;
 						Render3D.firstAudio = map[i][j].audioQueue;
+
+						// Adds spawnpoints for multiplayer to tell the clients their starting x, y, and
+						// z
+						Position p = new Position();
+						p.x = i + 0.5;
+						p.z = j + 0.5;
+						p.y = Player.y;
+						p.spawnID = itemActID;
+						Game.spawnPoints.add(p);
 					}
 					// End button or normal button
 					else if (itemID == ItemNames.BUTTON.getID()) {

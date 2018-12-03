@@ -1,5 +1,6 @@
 package com.vile.entities;
 
+import com.vile.Display;
 import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.levelGenerator.Block;
@@ -45,9 +46,14 @@ public class Player {
 	public static int maxKills;
 
 	public static double height = 2.0;
-	public static double x = 0;
+	public static double x = 1.5;
 	public static double y = 0;
-	public static double z = 0;
+	public static double z = 1.5;
+
+	// Mainly for multiplayer
+	public static double startX = 0;
+	public static double startY = 0;
+	public static double startZ = 0;
 
 	// yCorrect is used for when the player is crouching
 	public static double yCorrect = 0;
@@ -151,8 +157,12 @@ public class Player {
 		weapons[2] = new PhaseCannon();
 		weapons[3] = new RocketLauncher();
 		weaponEquipped = 0;
-		kills = 0;
-		deaths = 0;
+
+		// These do not get reset in multiplayer.
+		if (Display.gameType != 1) {
+			kills = 0;
+			deaths = 0;
+		}
 
 		blockOn = Level.getBlock((int) Player.x, (int) Player.z);
 	}

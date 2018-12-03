@@ -2,10 +2,10 @@ package com.vile.server;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import com.vile.Display;
 import com.vile.Game;
-import com.vile.RunGame;
 import com.vile.entities.Bullet;
 import com.vile.launcher.FPSLauncher;
 
@@ -27,7 +27,8 @@ public class ServerHost {
 
 	public static final int maxClients = 4;
 	public static int clientCount = 0;
-	public Thread[] clientThreads = new Thread[maxClients];
+	public static ArrayList<Thread> clientThreads = new ArrayList<Thread>();
+	public static ArrayList<ClientThread> clients = new ArrayList<ClientThread>();
 	public ServerSocket serverSocket;
 
 	public ServerHost(String portNum) {
@@ -40,20 +41,23 @@ public class ServerHost {
 			Display.itemsRespawn = true;
 			Display.gameType = 0;
 
-			new RunGame();
+			// new RunGame();
 
 			// Don't use unless seeing if this fixes the issue
 			// Thread host = new Thread(this);
 			// host.run();
 
-			while (clientCount < maxClients) {
+			// while (true) {
+			if (clientCount < maxClients) {
 				Socket clientSocket = serverSocket.accept();
 				ClientThread client = new ClientThread(clientSocket);
+				clients.add(clientCount, client);
 				Thread newThread = new Thread(client);
-				clientThreads[clientCount] = newThread;
+				clientThreads.add(clientCount, newThread);
 				newThread.start();
 				clientCount++;
 			}
+			// }
 
 			// TODO Figure out how to start the game somewhere in here for the host?
 		} catch (Exception e) {

@@ -26,6 +26,7 @@ import com.vile.entities.ItemNames;
 import com.vile.entities.PhaseCannon;
 import com.vile.entities.Pistol;
 import com.vile.entities.Player;
+import com.vile.entities.Position;
 import com.vile.entities.Projectile;
 import com.vile.entities.RocketLauncher;
 import com.vile.entities.ServerPlayer;
@@ -122,6 +123,11 @@ public class Game implements Runnable {
 	public static ArrayList<Elevator> activatedElevators = new ArrayList<Elevator>();
 	public static ArrayList<Bullet> bulletsAdded = new ArrayList<Bullet>();
 	public static ArrayList<Item> itemsAdded = new ArrayList<Item>();
+	public static Corpse playerCorpse;
+
+	// Don't worry about really sending this data, but it's still needed for
+	// multiplayer
+	public static ArrayList<Position> spawnPoints = new ArrayList<Position>();
 
 	// For Smile resource pack only
 	public static ArrayList<Item> happySavers = new ArrayList<Item>();
@@ -298,6 +304,14 @@ public class Game implements Runnable {
 						itemsAdded.add(new Item(10, Player.x, Player.y, Player.z, ItemNames.ROCKETLAUNCHER.itemID, 0, 0,
 								"-1"));
 					}
+
+					playerCorpse = new Corpse(Player.x, Player.z, Player.y, 0, Player.xEffects, Player.zEffects,
+							Player.yEffects);
+
+					playerCorpse.clientID = Player.ID;
+
+					Player.deaths++;
+
 				}
 
 				// If survival mode, see if its a new max number of kills
@@ -862,32 +876,34 @@ public class Game implements Runnable {
 			 * If in Death cannot hurt me mode, the corpses will resurrect on their own
 			 * after 10000 ticks.
 			 */
-			if (FPSLauncher.modeChoice == 4) {
-				// If 10000 ticks have passed with correction for the fps
-				// and the corpse is not just a default corpse
-				if (corpse.time > (10000 / ((Display.fps / 30) + 1)) && corpse.enemyID != 0) {
-					/*
-					 * Reconstruct enemy depending on the ID the corpse was before it died. Also
-					 * activate the new resurrected enemy.
-					 */
-					Enemy newEnemy = new Enemy(corpse.xPos, 0, corpse.zPos, corpse.enemyID, 0, 0);
+			// if (FPSLauncher.modeChoice == 4) {
+			// If 10000 ticks have passed with correction for the fps
+			// and the corpse is not just a default corpse
+			// if (corpse.time > (10000 / ((Display.fps / 30) + 1)) && corpse.enemyID != 0)
+			// {
+			/*
+			 * Reconstruct enemy depending on the ID the corpse was before it died. Also
+			 * activate the new resurrected enemy.
+			 */
+			// Enemy newEnemy = new Enemy(corpse.xPos, 0, corpse.zPos, corpse.enemyID, 0,
+			// 0);
 
-					// Activate this new enemy
-					newEnemy.activated = true;
+			// Activate this new enemy
+			// newEnemy.activated = true;
 
-					// Add enemy to the game
-					Game.enemies.add(newEnemy);
+			// Add enemy to the game
+			// Game.enemies.add(newEnemy);
 
-					// Remove the corpse
-					Game.corpses.remove(corpse);
+			// Remove the corpse
+			// Game.corpses.remove(corpse);
 
-					// Add to enemies in the map
-					Game.enemiesInMap++;
+			// Add to enemies in the map
+			// Game.enemiesInMap++;
 
-					// Play teleportation/respawn sound effect
-					SoundController.teleportation.playAudioFile(newEnemy.distanceFromPlayer);
-				}
-			}
+			// Play teleportation/respawn sound effect
+			// SoundController.teleportation.playAudioFile(newEnemy.distanceFromPlayer);
+			// }
+			// }
 		}
 
 		// Tick all explosions

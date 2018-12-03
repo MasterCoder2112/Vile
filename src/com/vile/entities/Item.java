@@ -1442,8 +1442,9 @@ public class Item {
 			sP.clientMessages.add(new PopUp("No use yet though..."));
 			sP.clientMessages.add(new PopUp("You collect an upgrade point!"));
 
-			// Add to upgradePoints player has
-			sP.upgradePoints += 1;
+			// Add to upgradePoints player has. NOT NEEDED CURRENTLY
+			// TODO eventually
+			// sP.upgradePoints += 1;
 
 			// Play special pick up sound for this item
 			// Add sound and distance from sound to server player

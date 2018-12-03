@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -269,6 +270,7 @@ public class Display extends Canvas implements Runnable {
 		// TODO Only loads for host. If problems with this come to this checkpoint
 		// Host only loads certain aspects up before starting the game.
 		if (gameType == 0) {
+			new Player();
 			// The game is not ending yet
 			Controller.quitGame = false;
 
@@ -351,6 +353,9 @@ public class Display extends Canvas implements Runnable {
 
 			sc.close();
 			sc = null;
+
+			input = null;
+			input = new InputHandler();
 
 		} else {
 
@@ -619,33 +624,6 @@ public class Display extends Canvas implements Runnable {
 			oldX = InputHandler.MouseX;
 			oldY = InputHandler.MouseY;
 
-			// TODO Add stuff for client here.
-			// Get all information from server when ready to set up game.
-			if (gameType == 1) {
-				loading.setTitle("Loading Host Game... 95% Loaded");
-				try {
-					PrintWriter out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
-					BufferedReader in = new BufferedReader(
-							new InputStreamReader(ServerClient.hostSocket.getInputStream()));
-
-					// Send ready status to host here.
-
-					/*
-					 * TODO Look at ClientThread load method to implement how to load all the
-					 * servers game data in initially here and set all the values. Now before doing
-					 * this make sure to send the server a "ready" status.
-					 */
-
-					// Before you get the new information, reset the game lists.
-					game.resetLists();
-
-					// Recieve information from host here.
-				} catch (Exception e) {
-					loading.dispose();
-					new FPSLauncher(0);
-				}
-			}
-
 			loading.setTitle("Done 100% Loaded");
 
 			// Get rid of loading frame when done loading
@@ -758,6 +736,375 @@ public class Display extends Canvas implements Runnable {
 		// The last time the game ticked. Initially set to current time
 		long previousTime = System.nanoTime();
 
+		if (Display.gameType == 1) {
+			String fromServer = "";
+			String fromUser = "";
+
+			/*
+			 * Focuses your user on the screen so you don't have to click to start
+			 */
+			requestFocus();
+
+			try {
+				PrintWriter out;
+				BufferedReader in;
+				ServerClient.hostSocket = new Socket(ServerClient.hostData[0],
+						Integer.parseInt(ServerClient.hostData[1]));
+				out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
+				in = new BufferedReader(new InputStreamReader(ServerClient.hostSocket.getInputStream()));
+				// While the game is running, keep ticking and rendering
+				// while (isRunning == true) {
+				while ((fromServer = in.readLine()) != null) {
+					System.out.println("Server: " + fromServer);
+					// Current time
+					long currentTime = System.nanoTime();
+
+					// How much time has passed between ticks
+					long passedTime = currentTime - previousTime;
+
+					// Reset previousTime to now
+					previousTime = currentTime;
+
+					/*
+					 * I'm guessing the negligible amount of time these calculations take? To be
+					 * honest I had to get this fps check code off the internet and had to try to
+					 * understand it from there. It makes more sense now, but somethings are very
+					 * hard to understand.
+					 */
+					unprocessedSeconds += (passedTime / 1000000000.0);
+
+					/*
+					 * Basically checks for the difference in seconds between the set value and
+					 * calculated value. As long as unprocessedSeconds is more than secondsPerTick
+					 * it will continue to loop through. Each loop it will tick, and
+					 * unprocessedSeconds will keep going down. Every 60 loops, it will print out
+					 * the number of frames that the game has, set frames back to 0, and add to
+					 * previousTime. Why it does all this I am not 100% sure yet, but it works.
+					 */
+					while (unprocessedSeconds > secondsPerTick) {
+						// See how many ticks occured within one second
+						unprocessedSeconds -= secondsPerTick;
+
+						// Add to tick count
+						tickCount++;
+
+						if (!smoothFPS) {
+							tick();
+						}
+
+						// Every sixty ticks
+						if (tickCount % 60 == 0) {
+							// Set how many frames per second are rendered
+							fps = frames;
+
+							// Reset number of frames rendered in current second
+							frames = 0;
+
+							// Approximately how much time in nanoseconds it took
+							// to run this loop I'm guessing
+							previousTime += 1000;
+						}
+					}
+
+					/*
+					 * Focuses your user on the screen so you don't have to click to start. Only if
+					 * not the host though.
+					 */
+					if (gameType != 0) {
+						requestFocus();
+					}
+
+					Entity.checkSight = true;
+
+					if (smoothFPS) {
+						tick();
+					}
+
+					// TODO Before this, if in multiplayer and a client, accept data from server so
+					// that the local game renders the correct data. Host doesn't render game.
+					if (gameType != 0) {
+						render();
+
+						frames++;
+
+						// TODO Change for debug mode
+						// Only do this if the mouse is on
+						// if (Display.mouseOn) {
+						if (false) {
+							// Get the JFrame on screen
+							Component c = RunGame.frame;
+
+							/*
+							 * Check to see if mouse is in frame, and if it isn't then bring it back into
+							 * it.
+							 */
+							if (!InputHandler.isMouseWithinComponent(c)) {
+								// Controls mouse without player input
+								Robot robot = null;
+
+								try {
+									robot = new Robot();
+								} catch (Exception ex) {
+									ex.printStackTrace();
+								}
+
+								/*
+								 * Finds frames position on screen for mouse reposistioning
+								 */
+								Rectangle bounds = c.getBounds();
+								bounds.setLocation(c.getLocationOnScreen());
+
+								// Finds mousePos on screen
+								Point mousePos = MouseInfo.getPointerInfo().getLocation();
+
+								// If it went out of the right side, move mouse that
+								// way, but only for how much it moved while in the
+								// frame
+								if (mousePos.x > bounds.x + bounds.width) {
+									Display.mouseSpeedHorizontal = Math
+											.abs(InputHandler.oldMouseX - (bounds.width / 2));
+
+									// Move back to the center of the screen
+									robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+								}
+								/*
+								 * Same as above but for if the mouse moves out of the left of the frame.
+								 */
+								else if (mousePos.x < bounds.x) {
+									Display.mouseSpeedHorizontal = -Math
+											.abs(InputHandler.oldMouseX - (bounds.width / 2));
+
+									robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+								}
+								/*
+								 * If the x part of the mouse is still "in" the frame move it as much as it
+								 * moved in the x, so just like normal basically.
+								 */
+								else {
+									Display.mouseSpeedHorizontal = Math
+											.abs(InputHandler.oldMouseX - InputHandler.MouseX);
+
+									robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+								}
+
+								/*
+								 * Do all the same as the above just for the y direction. Such as if the mouse
+								 * went out of the top of the frame.
+								 */
+								if (mousePos.y > bounds.y + bounds.height) {
+									Display.mouseSpeedVertical = Math.abs(InputHandler.oldMouseY - (bounds.height / 2));
+
+									robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+								} else if (mousePos.y < bounds.y) {
+									Display.mouseSpeedVertical = -Math
+											.abs(InputHandler.oldMouseY - (bounds.height / 2));
+
+									robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+								} else {
+									Display.mouseSpeedVertical = Math.abs(InputHandler.oldMouseY - InputHandler.MouseY);
+
+									robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+								}
+							}
+						}
+					}
+
+					fromUser = "keep going";
+					if (fromUser != null) {
+						System.out.println("Client: " + fromUser);
+						out.println(fromUser);
+					}
+
+					// If game is supposed to be quit, then call the stop method
+					// to end all thread events of the game
+					if (Controller.quitGame == true) {
+						stop();
+					}
+				}
+			} catch (Exception e) {
+
+			}
+		} else {
+			requestFocus();
+
+			while (isRunning) {
+				// Current time
+				long currentTime = System.nanoTime();
+
+				// How much time has passed between ticks
+				long passedTime = currentTime - previousTime;
+
+				// Reset previousTime to now
+				previousTime = currentTime;
+
+				/*
+				 * I'm guessing the negligible amount of time these calculations take? To be
+				 * honest I had to get this fps check code off the internet and had to try to
+				 * understand it from there. It makes more sense now, but somethings are very
+				 * hard to understand.
+				 */
+				unprocessedSeconds += (passedTime / 1000000000.0);
+
+				/*
+				 * Basically checks for the difference in seconds between the set value and
+				 * calculated value. As long as unprocessedSeconds is more than secondsPerTick
+				 * it will continue to loop through. Each loop it will tick, and
+				 * unprocessedSeconds will keep going down. Every 60 loops, it will print out
+				 * the number of frames that the game has, set frames back to 0, and add to
+				 * previousTime. Why it does all this I am not 100% sure yet, but it works.
+				 */
+				while (unprocessedSeconds > secondsPerTick) {
+					// See how many ticks occured within one second
+					unprocessedSeconds -= secondsPerTick;
+
+					// Add to tick count
+					tickCount++;
+
+					if (!smoothFPS) {
+						tick();
+					}
+
+					// Every sixty ticks
+					if (tickCount % 60 == 0) {
+						// Set how many frames per second are rendered
+						fps = frames;
+
+						// Reset number of frames rendered in current second
+						frames = 0;
+
+						// Approximately how much time in nanoseconds it took
+						// to run this loop I'm guessing
+						previousTime += 1000;
+					}
+				}
+
+				/*
+				 * Focuses your user on the screen so you don't have to click to start. Only if
+				 * not the host though.
+				 */
+				if (gameType != 0) {
+					requestFocus();
+				}
+
+				Entity.checkSight = true;
+
+				if (smoothFPS) {
+					tick();
+				}
+
+				// TODO Before this, if in multiplayer and a client, accept data from server so
+				// that the local game renders the correct data. Host doesn't render game.
+				if (gameType != 0) {
+					render();
+
+					frames++;
+
+					// TODO Change for debug mode
+					// Only do this if the mouse is on
+					// if (Display.mouseOn) {
+					if (false) {
+						// Get the JFrame on screen
+						Component c = RunGame.frame;
+
+						/*
+						 * Check to see if mouse is in frame, and if it isn't then bring it back into
+						 * it.
+						 */
+						if (!InputHandler.isMouseWithinComponent(c)) {
+							// Controls mouse without player input
+							Robot robot = null;
+
+							try {
+								robot = new Robot();
+							} catch (Exception ex) {
+								ex.printStackTrace();
+							}
+
+							/*
+							 * Finds frames position on screen for mouse reposistioning
+							 */
+							Rectangle bounds = c.getBounds();
+							bounds.setLocation(c.getLocationOnScreen());
+
+							// Finds mousePos on screen
+							Point mousePos = MouseInfo.getPointerInfo().getLocation();
+
+							// If it went out of the right side, move mouse that
+							// way, but only for how much it moved while in the
+							// frame
+							if (mousePos.x > bounds.x + bounds.width) {
+								Display.mouseSpeedHorizontal = Math.abs(InputHandler.oldMouseX - (bounds.width / 2));
+
+								// Move back to the center of the screen
+								robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+							}
+							/*
+							 * Same as above but for if the mouse moves out of the left of the frame.
+							 */
+							else if (mousePos.x < bounds.x) {
+								Display.mouseSpeedHorizontal = -Math.abs(InputHandler.oldMouseX - (bounds.width / 2));
+
+								robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+							}
+							/*
+							 * If the x part of the mouse is still "in" the frame move it as much as it
+							 * moved in the x, so just like normal basically.
+							 */
+							else {
+								Display.mouseSpeedHorizontal = Math.abs(InputHandler.oldMouseX - InputHandler.MouseX);
+
+								robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+							}
+
+							/*
+							 * Do all the same as the above just for the y direction. Such as if the mouse
+							 * went out of the top of the frame.
+							 */
+							if (mousePos.y > bounds.y + bounds.height) {
+								Display.mouseSpeedVertical = Math.abs(InputHandler.oldMouseY - (bounds.height / 2));
+
+								robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+							} else if (mousePos.y < bounds.y) {
+								Display.mouseSpeedVertical = -Math.abs(InputHandler.oldMouseY - (bounds.height / 2));
+
+								robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+							} else {
+								Display.mouseSpeedVertical = Math.abs(InputHandler.oldMouseY - InputHandler.MouseY);
+
+								robot.mouseMove(bounds.x + (bounds.width / 2), bounds.y + (bounds.height / 2));
+							}
+						}
+					}
+				}
+
+				// If game is supposed to be quit, then call the stop method
+				// to end all thread events of the game
+				if (Controller.quitGame == true) {
+					stop();
+				}
+			}
+		}
+	}
+
+	public void multiRun() {
+		// Frames that have elapsed within the last second
+		int frames = 0;
+
+		// How many ticks between seconds
+		int tickCount = 0;
+
+		/*
+		 * I.... I'm still learning how this one works. I'm guessing maybe the time lost
+		 * while this is checking for the games fps?
+		 */
+		double unprocessedSeconds = 0;
+
+		// How many seconds are in a tick I'm guessing
+		double secondsPerTick = (1 / 60.0);
+
+		// The last time the game ticked. Initially set to current time
+		long previousTime = System.nanoTime();
+
 		/*
 		 * Focuses your user on the screen so you don't have to click to start
 		 */
@@ -838,7 +1185,8 @@ public class Display extends Canvas implements Runnable {
 
 				// TODO Change for debug mode
 				// Only do this if the mouse is on
-				if (Display.mouseOn) {
+				// if (Display.mouseOn) {
+				if (false) {
 					// Get the JFrame on screen
 					Component c = RunGame.frame;
 
@@ -917,35 +1265,6 @@ public class Display extends Canvas implements Runnable {
 			// to end all thread events of the game
 			if (Controller.quitGame == true) {
 				stop();
-			}
-
-			// TODO Add stuff for client here.
-			// If a client is running the game, send the clients data to the server at this
-			// point
-			// and recieve the new data back. Don't continue until new data is recieved.
-			if (gameType == 1) {
-				try {
-					PrintWriter out = new PrintWriter(ServerClient.hostSocket.getOutputStream(), true);
-					BufferedReader in = new BufferedReader(
-							new InputStreamReader(ServerClient.hostSocket.getInputStream()));
-
-					// Send information to host here.
-
-					/*
-					 * TODO Look at ClientThread class and the load and send methods and basically
-					 * just do the opposite for here. It will send out data first about things
-					 * updated within this clients version of the game, and then it will take in all
-					 * the game data from the servers game so that the clients game values will be
-					 * updated.
-					 */
-
-					// Before you get the new information, reset the game lists.
-					game.resetLists();
-
-					// Recieve information from host here.
-				} catch (Exception e) {
-
-				}
 			}
 		}
 	}

@@ -1,5 +1,7 @@
 package com.vile.entities;
 
+import com.vile.Display;
+import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
@@ -59,7 +61,20 @@ public class Elevator extends Entity {
 			}
 
 			soundTime = 0;
+
 			SoundController.doorStart.playAudioFile(distanceFromPlayer * 2);
+
+			// If the host, play sounds for all clients that are connected.
+			if (Display.gameType == 0) {
+				for (int i = 0; i < Game.otherPlayers.size(); i++) {
+					ServerPlayer sP = Game.otherPlayers.get(i);
+					double distanceFromClient = Math.sqrt(((Math.abs(xPos - sP.x)) * (Math.abs(xPos - sP.x)))
+							+ ((Math.abs(zPos - sP.z)) * (Math.abs(zPos - sP.z))));
+
+					sP.audioToPlay.add("doorStart");
+					sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
+				}
+			}
 		}
 
 		// As long as it hasn't reached ground, keep moving the height down
@@ -70,6 +85,18 @@ public class Elevator extends Entity {
 			// Only play sound every 10 ticks
 			if (soundTime == 0) {
 				SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
+
+				// If the host, play sounds for all clients that are connected.
+				if (Display.gameType == 0) {
+					for (int i = 0; i < Game.otherPlayers.size(); i++) {
+						ServerPlayer sP = Game.otherPlayers.get(i);
+						double distanceFromClient = Math.sqrt(((Math.abs(xPos - sP.x)) * (Math.abs(xPos - sP.x)))
+								+ ((Math.abs(zPos - sP.z)) * (Math.abs(zPos - sP.z))));
+
+						sP.audioToPlay.add("lifting");
+						sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
+					}
+				}
 
 				soundTime++;
 			}
@@ -85,6 +112,18 @@ public class Elevator extends Entity {
 			SoundController.lifting.stopAll();
 			SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 
+			// If the host, play sounds for all clients that are connected.
+			if (Display.gameType == 0) {
+				for (int i = 0; i < Game.otherPlayers.size(); i++) {
+					ServerPlayer sP = Game.otherPlayers.get(i);
+					double distanceFromClient = Math.sqrt(((Math.abs(xPos - sP.x)) * (Math.abs(xPos - sP.x)))
+							+ ((Math.abs(zPos - sP.z)) * (Math.abs(zPos - sP.z))));
+
+					sP.audioToPlay.add("doorEnd");
+					sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
+				}
+			}
+
 			soundTime = 0;
 		}
 		// After waiting for player, begin moving up
@@ -92,6 +131,18 @@ public class Elevator extends Entity {
 			movingUp = true;
 			waitTime = 0;
 			SoundController.doorStart.playAudioFile(distanceFromPlayer * 2);
+
+			// If the host, play sounds for all clients that are connected.
+			if (Display.gameType == 0) {
+				for (int i = 0; i < Game.otherPlayers.size(); i++) {
+					ServerPlayer sP = Game.otherPlayers.get(i);
+					double distanceFromClient = Math.sqrt(((Math.abs(xPos - sP.x)) * (Math.abs(xPos - sP.x)))
+							+ ((Math.abs(zPos - sP.z)) * (Math.abs(zPos - sP.z))));
+
+					sP.audioToPlay.add("doorStart");
+					sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
+				}
+			}
 		}
 
 		// While not at top, keep moving up
@@ -101,6 +152,18 @@ public class Elevator extends Entity {
 
 			if (soundTime == 0) {
 				SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
+
+				// If the host, play sounds for all clients that are connected.
+				if (Display.gameType == 0) {
+					for (int i = 0; i < Game.otherPlayers.size(); i++) {
+						ServerPlayer sP = Game.otherPlayers.get(i);
+						double distanceFromClient = Math.sqrt(((Math.abs(xPos - sP.x)) * (Math.abs(xPos - sP.x)))
+								+ ((Math.abs(zPos - sP.z)) * (Math.abs(zPos - sP.z))));
+
+						sP.audioToPlay.add("lifting");
+						sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
+					}
+				}
 
 				soundTime++;
 			}
@@ -115,6 +178,18 @@ public class Elevator extends Entity {
 
 			SoundController.lifting.stopAll();
 			SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
+
+			// If the host, play sounds for all clients that are connected.
+			if (Display.gameType == 0) {
+				for (int i = 0; i < Game.otherPlayers.size(); i++) {
+					ServerPlayer sP = Game.otherPlayers.get(i);
+					double distanceFromClient = Math.sqrt(((Math.abs(xPos - sP.x)) * (Math.abs(xPos - sP.x)))
+							+ ((Math.abs(zPos - sP.z)) * (Math.abs(zPos - sP.z))));
+
+					sP.audioToPlay.add("doorEnd");
+					sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
+				}
+			}
 
 			// If special ID, keep moving up and down
 			if (itemActivationID == 2112) {

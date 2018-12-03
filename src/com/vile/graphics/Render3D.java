@@ -3139,6 +3139,11 @@ public class Render3D extends Render {
 			}
 		}
 
+		// If its a player corpse
+		if (corpse.enemyID == 0 && corpse.clientID != -1) {
+			corpseGraphics = Textures.playerCorpse;
+		}
+
 		if (lowRes) {
 			correction = 2;
 		}
@@ -3196,6 +3201,16 @@ public class Render3D extends Render {
 
 					try {
 						color = corpseGraphics.PIXELS[(xTexture & 255) + (yTexture & 255) * 256];
+
+						if (color != 0xffffffff && corpse.clientID >= 1) {
+							if (corpse.clientID == 1) {
+								color = changeColor(255, 255, 255, color, 8, 0, 16);
+							} else if (corpse.clientID == 2) {
+								color = changeColor(60, 255, 255, color, 16, 8, 0);
+							} else {
+								color = changeColor(255, 255, 255, color, 0, 16, 8);
+							}
+						}
 					} catch (Exception e) {
 						continue;
 					}

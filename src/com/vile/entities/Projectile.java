@@ -597,7 +597,7 @@ public abstract class Projectile {
 				// If it hits the player, and player is alive and not
 				// invincible. And its not the players own projectile.
 				if (distanceFromClient <= 0.3 && Math.abs((sP.y) + ((this.y * 10) / 1.2)) <= 8 && sP.alive
-						&& sP.ID != this.clientID) {
+						&& sP.ID != this.clientID && sP.immortality == 0 && !sP.godModeOn) {
 					double damage = this.damage;
 
 					// If critical hit

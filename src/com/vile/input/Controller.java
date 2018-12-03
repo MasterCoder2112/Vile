@@ -974,10 +974,18 @@ public class Controller {
 			if (FPSLauncher.gameMode == 0) {
 				Display.messages = new ArrayList<PopUp>();
 
-				if (Display.nonDefaultMap) {
-					game = new Game(RunGame.game, Display.nonDefaultMap, Display.newMapName);
+				// Clients do not start a new game, they just reset their positions back to
+				// their original place but everything else about them is reset.
+				if (Display.gameType == 1) {
+					Player.x = Player.startX;
+					Player.y = Player.startY;
+					Player.z = Player.startZ;
 				} else {
-					game.loadNextMap(false, "");
+					if (Display.nonDefaultMap) {
+						game = new Game(RunGame.game, Display.nonDefaultMap, Display.newMapName);
+					} else {
+						game.loadNextMap(false, "");
+					}
 				}
 			} else {
 				Display.messages = new ArrayList<PopUp>();

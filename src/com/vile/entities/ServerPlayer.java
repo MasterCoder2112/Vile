@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import com.vile.Game;
 import com.vile.PopUp;
 import com.vile.SoundController;
-import com.vile.levelGenerator.Block;
-import com.vile.levelGenerator.Level;
 
 /**
  * Title: ServerPlayer
@@ -30,12 +28,6 @@ public class ServerPlayer {
 	public int maxHealth = 200;
 	public int armor = 0;
 
-	// How many upgrade points has the player collected
-	public int upgradePoints = 0;
-
-	// How many health resurrections do you have
-	public int resurrections = 0;
-
 	// How long the player is protected from toxic waste/lava
 	public int environProtectionTime = 0;
 
@@ -51,16 +43,11 @@ public class ServerPlayer {
 	// How long since player was last hurt
 	public int playerHurt = 0;
 
-	// Max number of kills in survival
-	public int maxKills;
-
 	public double height = 2.0;
+	public double maxHeight = 0;
 	public double x = 0;
 	public double y = 0;
 	public double z = 0;
-
-	// yCorrect is used for when the player is crouching
-	public double yCorrect = 0;
 
 	// Direction player is facing.
 	public double rotation = 0;
@@ -71,27 +58,6 @@ public class ServerPlayer {
 	public double xEffects = 0;
 	public double yEffects = 0;
 
-	// Max Height a player can stand on at moment.
-	public double maxHeight = 0;
-
-	// The height the player can jump at this moment
-	public double jumpHeight = 8;
-
-	// How high in the air player can jump no matter where he/she is
-	public double totalJump = 8;
-
-	// Used for rendering
-	public double upRotate = 1.105;
-
-	// If a solid item or enemy adds extra height to a player
-	public double extraHeight = 0;
-
-	// Whether the player has the keys or not
-	public boolean hasRedKey = false;
-	public boolean hasBlueKey = false;
-	public boolean hasGreenKey = false;
-	public boolean hasYellowKey = false;
-
 	// Player cheats
 	public boolean noClipOn;
 	public boolean flyOn;
@@ -99,14 +65,20 @@ public class ServerPlayer {
 	public boolean godModeOn;
 	public boolean unlimitedAmmoOn;
 
-	// Is a wall crushing the player, forcing him/her to crouch
+	// Is player being crushed?
 	public boolean forceCrouch;
+
+	// Does player have these keys
+	public boolean hasGreenKey;
+	public boolean hasRedKey;
+	public boolean hasYellowKey;
+	public boolean hasBlueKey;
+
+	// How many resurrections does the player have
+	public int resurrections;
 
 	// Is player still alive?
 	public boolean alive = true;
-
-	// Block player is standing on
-	public Block blockOn = null;
 
 	/*
 	 * Weapon equipped. 0 for Pistols 1 for Shotgun 2 for Phase Cannon 3 for Rocket
@@ -136,35 +108,23 @@ public class ServerPlayer {
 		health = 100;
 		maxHealth = 200;
 		height = 2.0;
+		maxHeight = 0;
 		alive = true;
 		armor = 0;
-		maxHeight = 0;
 		x = 1.5;
 		y = 0;
 		z = 1.5;
 		rotation = 0;
-		upRotate = 1.105;
-		jumpHeight = 8;
 
-		hasRedKey = false;
-		hasBlueKey = false;
-		hasGreenKey = false;
-		hasYellowKey = false;
-
-		resurrections = 0;
 		environProtectionTime = 0;
 		immortality = 0;
 		vision = 0;
-
-		forceCrouch = false;
 
 		weapons[0] = new Pistol();
 		weapons[1] = new Shotgun();
 		weapons[2] = new PhaseCannon();
 		weapons[3] = new RocketLauncher();
 		weaponEquipped = 0;
-
-		blockOn = Level.getBlock((int) Player.x, (int) Player.z);
 	}
 
 	/**
@@ -238,7 +198,6 @@ public class ServerPlayer {
 			xEffects = 0;
 		}
 
-		blockOn = Level.getBlock((int) Player.x, (int) Player.z);
 	}
 
 	/**
