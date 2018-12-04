@@ -124,7 +124,6 @@ public class Door extends Entity {
 		// If the wall was just activated, restart the sound time
 		if (doorBlock.y <= startY && time == 0) {
 			soundTime = 0;
-			SoundController.doorStart.playAudioFile(distanceFromPlayer * 2);
 
 			// If the host, play sounds for all clients that are connected.
 			if (Display.gameType == 0) {
@@ -136,6 +135,9 @@ public class Door extends Entity {
 					sP.audioToPlay.add("doorStart");
 					sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 				}
+			} else {
+
+				SoundController.doorStart.playAudioFile(distanceFromPlayer * 2);
 			}
 		}
 
@@ -149,8 +151,6 @@ public class Door extends Entity {
 
 			if (!soundPlayed) {
 				soundPlayed = true;
-				SoundController.lifting.stopAll();
-				SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 
 				// If the host, play sounds for all clients that are connected.
 				if (Display.gameType == 0) {
@@ -162,6 +162,9 @@ public class Door extends Entity {
 						sP.audioToPlay.add("doorEnd");
 						sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 					}
+				} else {
+					SoundController.lifting.stopAll();
+					SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 				}
 			}
 		}
@@ -183,8 +186,6 @@ public class Door extends Entity {
 
 			// Reset time between sounds
 			soundTime = 0;
-			SoundController.lifting.stopAll();
-			SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 
 			// If the host, play sounds for all clients that are connected.
 			if (Display.gameType == 0) {
@@ -196,6 +197,9 @@ public class Door extends Entity {
 					sP.audioToPlay.add("doorEnd");
 					sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 				}
+			} else {
+				SoundController.lifting.stopAll();
+				SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 			}
 
 			// Reset
@@ -215,7 +219,6 @@ public class Door extends Entity {
 
 			// Only play sound every 10 ticks
 			if (soundTime == 0) {
-				SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
 
 				// If the host, play sounds for all clients that are connected.
 				if (Display.gameType == 0) {
@@ -227,6 +230,8 @@ public class Door extends Entity {
 						sP.audioToPlay.add("lifting");
 						sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 					}
+				} else {
+					SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
 				}
 
 				soundTime++;
@@ -286,7 +291,6 @@ public class Door extends Entity {
 
 			// Only play sound every 10 ticks
 			if (soundTime == 0) {
-				SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
 
 				// If the host, play sounds for all clients that are connected.
 				if (Display.gameType == 0) {
@@ -298,6 +302,8 @@ public class Door extends Entity {
 						sP.audioToPlay.add("lifting");
 						sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 					}
+				} else {
+					SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
 				}
 
 				soundTime++;
@@ -312,7 +318,6 @@ public class Door extends Entity {
 		// If door hasn't started moving yet
 		if (doorBlock.y >= startY && time == 0) {
 			soundTime = 0;
-			SoundController.doorStart.playAudioFile(distanceFromPlayer * 2);
 
 			// If the host, play sounds for all clients that are connected.
 			if (Display.gameType == 0) {
@@ -324,6 +329,8 @@ public class Door extends Entity {
 					sP.audioToPlay.add("doorStart");
 					sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 				}
+			} else {
+				SoundController.doorStart.playAudioFile(distanceFromPlayer * 2);
 			}
 		}
 
@@ -337,8 +344,6 @@ public class Door extends Entity {
 
 			if (!soundPlayed) {
 				soundPlayed = true;
-				SoundController.lifting.stopAll();
-				SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 
 				// If the host, play sounds for all clients that are connected.
 				if (Display.gameType == 0) {
@@ -350,6 +355,9 @@ public class Door extends Entity {
 						sP.audioToPlay.add("doorEnd");
 						sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 					}
+				} else {
+					SoundController.lifting.stopAll();
+					SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 				}
 			}
 		}
@@ -370,8 +378,6 @@ public class Door extends Entity {
 
 			// Reset time between sounds
 			soundTime = 0;
-			SoundController.lifting.stopAll();
-			SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 
 			// If the host, play sounds for all clients that are connected.
 			if (Display.gameType == 0) {
@@ -383,6 +389,9 @@ public class Door extends Entity {
 					sP.audioToPlay.add("doorEnd");
 					sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 				}
+			} else {
+				SoundController.lifting.stopAll();
+				SoundController.doorEnd.playAudioFile(distanceFromPlayer * 2);
 			}
 
 			// Reset
@@ -458,7 +467,6 @@ public class Door extends Entity {
 
 			// Only play sound every 10 ticks
 			if (soundTime == 0) {
-				SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
 
 				// If the host, play sounds for all clients that are connected.
 				if (Display.gameType == 0) {
@@ -470,6 +478,8 @@ public class Door extends Entity {
 						sP.audioToPlay.add("lifting");
 						sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 					}
+				} else {
+					SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
 				}
 
 				soundTime++;
@@ -482,7 +492,6 @@ public class Door extends Entity {
 
 			// Only play sound every 10 ticks
 			if (soundTime == 0) {
-				SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
 
 				// If the host, play sounds for all clients that are connected.
 				if (Display.gameType == 0) {
@@ -494,6 +503,8 @@ public class Door extends Entity {
 						sP.audioToPlay.add("lifting");
 						sP.audioDistances.add(new Integer((int) distanceFromClient * 2));
 					}
+				} else {
+					SoundController.lifting.playAudioFile(distanceFromPlayer * 2);
 				}
 
 				soundTime++;

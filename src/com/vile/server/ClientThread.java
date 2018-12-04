@@ -9,14 +9,12 @@ import java.util.ArrayList;
 import com.vile.Game;
 import com.vile.PopUp;
 import com.vile.entities.Bullet;
-import com.vile.entities.Button;
-import com.vile.entities.Door;
-import com.vile.entities.Elevator;
 import com.vile.entities.Explosion;
+import com.vile.entities.HitSprite;
 import com.vile.entities.Item;
+import com.vile.entities.Position;
 import com.vile.entities.ServerPlayer;
-import com.vile.levelGenerator.Block;
-import com.vile.levelGenerator.Level;
+import com.vile.entities.Weapon;
 
 /**
  * Title: ClientThread
@@ -32,10 +30,11 @@ import com.vile.levelGenerator.Level;
  */
 public class ClientThread implements Runnable {
 
-	Socket clientSocket;
-	int clientID = 0;
-	PrintWriter out;
-	BufferedReader in;
+	public Socket clientSocket;
+	public int clientID = 0;
+	public PrintWriter out;
+	public BufferedReader in;
+
 	// public Thread clientThread;
 
 	public ClientThread(Socket clientSocket) {
@@ -66,46 +65,70 @@ public class ClientThread implements Runnable {
 
 			System.out.println("Has client and is waiting... Client ID: " + clientID);
 
-			// TODO Read next commented area
-			/*
-			 * For data transfer, make sure the client receives all the servers game
-			 * information right off the bat so the map and everything can be loaded
-			 * correctly. Also send the clients ID so that the player object can set it's
-			 * ID. After having done that then have code that waits for the client to
-			 * respond after he/she ticks and when the client does respond update the
-			 * servers game and then send the game data back to the client. If the client is
-			 * lagging, it will be like any other game where the client will just have to
-			 * catch up with the server. Nothing we can do about this currently. Look at the
-			 * Game classes loadGame() method and FPSLauncher classes saveGame code.
-			 */
-
-			// String inputLine, outputLine;
-
-			// Initiate conversation with client
-			// KnockKnockProtocol kkp = new KnockKnockProtocol();
-			// outputLine = kkp.processInput(null);
-			// out.println(outputLine);
-
-			// while ((inputLine = in.readLine()) != null) {
-			// outputLine = kkp.processInput(inputLine);
-			// out.println(outputLine);
-			// if (outputLine.equals("Bye."))
-			// break;
-			// }
-
 			// TODO Only issue I could see maybe happening is that unlike C I don't know if
 			// it will wait
 			// for client input before doing these things. I'm thinking it will though.
 			String inputLine = "";
 			String outputLine = "";
 
-			out.println("Has started");
+			for (int i = 0; i < Game.spawnPoints.size(); i++) {
+				Position p = Game.spawnPoints.get(i);
+
+				// Sends client starting data for their starting positions as well as normal
+				// data as well.
+				if (p.spawnID == clientID) {
+					outputLine += p.x + ":" + p.y + ":" + p.z + ":" + Game.mapName + "?";
+				}
+			}
+
+			outputLine = sendDataToClient(outputLine);
+
+			out.println(outputLine);
 
 			while ((inputLine = in.readLine()) != null) {
-				outputLine = "Still alive";
-				out.println(outputLine);
-				if (outputLine.equals("Bye."))
+
+				// If client ends connection
+				if (inputLine.equals("bye")) {
+					// All other clients ID's go down by 1
+					for (int i = clientID + 1; i < ServerHost.clients.size(); i++) {
+						ClientThread c = ServerHost.clients.get(i);
+						c.clientID -= 1;
+					}
+
+					// Make the ID's of the actually Server Players go down too to adjust
+					for (int i = clientID + 1; i < Game.otherPlayers.size(); i++) {
+						ServerPlayer sP = Game.otherPlayers.get(i);
+
+						sP.ID--;
+					}
+
+					// Remove this player from the server
+					Game.otherPlayers.remove(clientID);
+
+					// Remove clientThread class
+					ServerHost.clients.remove(clientID);
+
+					// Client count goes down.
+					ServerHost.clientCount--;
+
+					System.out.println("Client " + clientID + " left the server by error");
+
+					try {
+						ServerHost.clientThreads.get(clientID).join();
+					} catch (Exception ex) {
+						System.out.println(ex);
+					}
+
 					break;
+				} else if (inputLine.trim() == "Parsing") {
+					out.println("ok");
+				} else {
+					// TODO uncomment this
+					// loadDataFromClient(inputLine);
+					outputLine = "";
+					outputLine = sendDataToClient(outputLine);
+					out.println(outputLine);
+				}
 			}
 
 			// String firstLine = in.readLine().trim();
@@ -188,7 +211,7 @@ public class ClientThread implements Runnable {
 	 * 
 	 * @param out
 	 */
-	public void sendDataToClient(PrintWriter out, String dataString) {
+	public String sendDataToClient(String dataString) {
 		/*
 		 * TODO below is the code used by the FPSLauncher to save data needed for a
 		 * savefile to be created. In a similar manner, we will take all the game data
@@ -200,16 +223,33 @@ public class ClientThread implements Runnable {
 			ServerPlayer sP = Game.otherPlayers.get(i);
 
 			if (sP.ID != clientID) {
-				dataString += "Other : " + sP.x + " : " + sP.y + " : " + sP.z + " : " + sP.ID + ";";
+				dataString += "Other:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ";";
 			} else {
-				dataString += "Client : " + sP.health + " : " + sP.maxHealth + " : " + sP.armor + " : "
-						+ sP.environProtectionTime + " : " + sP.immortality + " : " + sP.vision + " : "
-						+ sP.invisibility + " : " + sP.height + " : " + " : " + sP.height + " : " + sP.rotation + " : "
-						+ sP.zEffects + " : " + sP.xEffects + " : " + sP.yEffects + " : " + sP.noClipOn + " : "
-						+ sP.flyOn + " : " + sP.superSpeedOn + " : " + sP.godModeOn + " : " + sP.unlimitedAmmoOn + " : "
-						+ sP.alive + " : " + sP.weaponEquipped + " : " + sP.weapons + " : " + sP.kills + " : "
-						+ sP.deaths + " : " + sP.forceCrouch + " : " + sP.hasBlueKey + " : " + sP.hasRedKey + " : "
-						+ sP.hasGreenKey + " : " + sP.hasYellowKey + " : " + sP.resurrections + " : ";
+				dataString += "Client:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ":" + sP.health + ":"
+						+ sP.maxHealth + ":" + sP.armor + ":" + sP.environProtectionTime + ":" + sP.immortality + ":"
+						+ sP.vision + ":" + sP.invisibility + ":" + sP.height + ":" + sP.rotation + ":" + sP.xEffects
+						+ ":" + sP.yEffects + ":" + sP.zEffects + ":" + sP.alive + ":" + sP.kills + ":" + sP.deaths
+						+ ":" + sP.forceCrouch + ":" + sP.hasBlueKey + ":" + sP.hasRedKey + ":" + sP.hasGreenKey + ":"
+						+ sP.hasYellowKey + ":" + sP.resurrections + ":" + sP.weaponEquipped + ":";
+
+				// Weapons this player
+				for (int j = 0; j < sP.weapons.length; j++) {
+					Weapon w = sP.weapons[i];
+					int size = w.cartridges.size();
+
+					dataString += w.weaponID + "," + w.canBeEquipped + "," + w.dualWield + "," + w.ammo;
+
+					for (int k = 0; k < size; k++) {
+						int cartSize = w.cartridges.get(k).ammo;
+						dataString += "," + cartSize;
+					}
+
+					if (j < sP.weapons.length - 1) {
+						dataString += "-";
+					}
+				}
+
+				dataString += ":";
 
 				// All messages that should have been displayed this tick for the client.
 				for (int j = 0; j < sP.clientMessages.size(); j++) {
@@ -218,7 +258,7 @@ public class ClientThread implements Runnable {
 					if (j == sP.clientMessages.size() - 1) {
 						dataString += p.getText();
 					} else {
-						dataString += p.getText() + " - ";
+						dataString += p.getText() + "-";
 					}
 				}
 
@@ -226,7 +266,7 @@ public class ClientThread implements Runnable {
 					dataString += "-1";
 				}
 
-				dataString += " : ";
+				dataString += ":";
 				sP.clientMessages = new ArrayList<PopUp>();
 
 				// Any audio files that were supposed to be activated this tick for the client.
@@ -236,7 +276,7 @@ public class ClientThread implements Runnable {
 					if (j == sP.audioToPlay.size() - 1) {
 						dataString += s;
 					} else {
-						dataString += s + " - ";
+						dataString += s + "-";
 					}
 				}
 
@@ -244,7 +284,7 @@ public class ClientThread implements Runnable {
 					dataString += "-1";
 				}
 
-				dataString += " : ";
+				dataString += ":";
 				sP.audioToPlay = new ArrayList<String>();
 
 				// Any audio files that were supposed to be activated have a distance from the
@@ -256,7 +296,7 @@ public class ClientThread implements Runnable {
 					if (j == sP.audioDistances.size() - 1) {
 						dataString += dist;
 					} else {
-						dataString += dist + " - ";
+						dataString += dist + "-";
 					}
 				}
 
@@ -270,29 +310,31 @@ public class ClientThread implements Runnable {
 
 		}
 
-		dataString += "?";
-		dataString += "Walls:";
-
-		for (int i = 0; i < Level.blocks.length; i++) {
-			Block b = Level.blocks[i];
-			dataString += (b.health + " : " + b.x + " : " + b.y + " : " + b.z + " : " + b.wallID + " : " + b.wallPhase
-					+ " : " + b.height + " : " + b.isSolid + " : " + b.seeThrough + ";");
-		}
+		/*
+		 * if (firstTime) { dataString += "?"; dataString += "Walls: " + Level.height +
+		 * " : " + Level.width + " ; ";
+		 * 
+		 * for (int i = 0; i < Level.blocks.length; i++) { Block b = Level.blocks[i];
+		 * dataString += (b.health + " : " + b.x + " : " + b.y + " : " + b.z + " : " +
+		 * b.wallID + " : " + b.wallPhase + " : " + b.height + " : " + b.isSolid + " : "
+		 * + b.seeThrough + ";"); }
+		 * 
+		 * firstTime = false; }
+		 */
 
 		dataString += "?";
 		dataString += "Items:";
 
 		for (int i = 0; i < Game.items.size(); i++) {
 			Item item = Game.items.get(i);
-			dataString += (item.itemID + " : " + item.x + " : " + item.y + " : " + item.z + " : " + item.rotation
-					+ ";");
+			dataString += (item.itemID + ":" + item.x + ":" + item.y + ":" + item.z + ":" + item.rotation + ";");
 		}
 
 		dataString += "?";
 		dataString += "Bullets:";
 		for (int i = 0; i < Game.bullets.size(); i++) {
 			Bullet b = Game.bullets.get(i);
-			dataString += (b.ID + ":" + b.x + " : " + b.y + " : " + b.z + ";");
+			dataString += (b.ID + ":" + b.x + ":" + b.y + ":" + b.z + ";");
 		}
 
 		dataString += "?";
@@ -300,42 +342,43 @@ public class ClientThread implements Runnable {
 
 		for (int i = 0; i < Game.explosions.size(); i++) {
 			Explosion exp = Game.explosions.get(i);
-			dataString += (exp.ID + " : " + exp.phaseTime + " : " + exp.x + " : " + exp.y + " : " + exp.z + ";");
+			dataString += (exp.ID + ":" + exp.phaseTime + ":" + exp.x + ":" + exp.y + ":" + exp.z + ";");
 		}
-		;
 
+		/*
+		 * dataString += "?"; dataString += "Buttons:";
+		 * 
+		 * for (int i = 0; i < Game.buttons.size(); i++) { Button b =
+		 * Game.buttons.get(i); dataString += (b.itemID + " : " + b.itemActivationID +
+		 * " : " + b.x + " : " + b.y + " : " + b.z + " : " + b.pressed + ";"); }
+		 * 
+		 * dataString += "?"; dataString += "Doors:";
+		 * 
+		 * for (int i = 0; i < Game.doors.size(); i++) { Door d = Game.doors.get(i);
+		 * dataString += (d.ID + " : " + d.itemActivationID + " : " + d.xPos + " : " +
+		 * d.yPos + " : " + d.zPos + " : " + d.doorX + " : " + d.doorZ + " : " + d.time
+		 * + " : " + d.soundTime + " : " + d.doorType + " : " + d.doorY + " : " +
+		 * d.maxHeight + ";"); }
+		 * 
+		 * dataString += "?"; dataString += "Elevators:";
+		 * 
+		 * for (int i = 0; i < Game.elevators.size(); i++) { Elevator ele =
+		 * Game.elevators.get(i); dataString += (ele.ID + " : " + ele.itemActivationID +
+		 * " : " + ele.xPos + " : " + ele.yPos + " : " + ele.zPos + " : " +
+		 * ele.elevatorX + " : " + ele.elevatorZ + " : " + ele.height + " : " +
+		 * ele.soundTime + " : " + ele.movingUp + " : " + ele.movingDown + " : " +
+		 * ele.waitTime + " : " + ele.upHeight + " : " + ele.activated + " : " +
+		 * ele.maxHeight + ";"); }
+		 */
 		dataString += "?";
-		dataString += "Buttons:";
+		dataString += "HitSprites:";
 
-		for (int i = 0; i < Game.buttons.size(); i++) {
-			Button b = Game.buttons.get(i);
-			dataString += (b.itemID + " : " + b.itemActivationID + " : " + b.x + " : " + b.y + " : " + b.z + " : "
-					+ b.pressed + ";");
+		for (int i = 0; i < Game.sprites.size(); i++) {
+			HitSprite hS = Game.sprites.get(i);
+			dataString += (hS.ID + " : " + hS.x + " : " + hS.y + " : " + hS.z + " : " + hS.phaseTime + ";");
 		}
 
-		dataString += "?";
-		dataString += "Doors:";
-
-		for (int i = 0; i < Game.doors.size(); i++) {
-			Door d = Game.doors.get(i);
-			dataString += (d.ID + " : " + d.itemActivationID + " : " + d.xPos + " : " + d.yPos + " : " + d.zPos + " : "
-					+ d.doorX + " : " + d.doorZ + " : " + d.time + " : " + d.soundTime + " : " + d.doorType + " : "
-					+ d.doorY + " : " + d.maxHeight + ";");
-		}
-
-		dataString += "?";
-		dataString += "Elevators:";
-
-		for (int i = 0; i < Game.elevators.size(); i++) {
-			Elevator ele = Game.elevators.get(i);
-			dataString += (ele.ID + " : " + ele.itemActivationID + " : " + ele.xPos + " : " + ele.yPos + " : "
-					+ ele.zPos + " : " + ele.elevatorX + " : " + ele.elevatorZ + " : " + ele.height + " : "
-					+ ele.soundTime + " : " + ele.movingUp + " : " + ele.movingDown + " : " + ele.waitTime + " : "
-					+ ele.upHeight + " : " + ele.activated + " : " + ele.maxHeight + ";");
-		}
-
-		out.print(dataString);
-
+		return dataString;
 	}
 
 	/**
@@ -344,7 +387,83 @@ public class ClientThread implements Runnable {
 	 * 
 	 * @param in
 	 */
-	public void loadDataFromClient(BufferedReader in) {
+	public void loadDataFromClient(String inputLine) {
+
+		String[] elements = inputLine.split("\\?");
+
+		// take the first element ServerPlayer and break it down
+		String[] playerList = elements[0].split(":");
+
+		// assign each piece of the element to the ServerPlayer object
+		ServerPlayer sP = Game.otherPlayers.get(clientID);
+//		sP.ID = Integer.parseInt(playerList[0]);
+//		sP.health = Integer.parseInt(playerList[1]);
+//		sP.maxHealth = Integer.parseInt(playerList[2]);
+//		sP.armor = Integer.parseInt(playerList[3]);
+//		sP.environProtectionTime = Integer.parseInt(playerList[4]);
+//		sP.immortality = Integer.parseInt(playerList[5]);
+//		sP.vision = Integer.parseInt(playerList[6]);
+//		sP.invisibility = Integer.parseInt(playerList[7]);
+//		sP.playerHurt = Integer.parseInt(playerList[8]);
+//		sP.height = Double.parseDouble(playerList[9]);
+//		sP.maxHeight = Double.parseDouble(playerList[10]);
+
+		sP.x = Double.parseDouble(playerList[0]);
+		sP.y = Double.parseDouble(playerList[1]);
+		sP.z = Double.parseDouble(playerList[2]);
+		sP.rotation = Double.parseDouble(playerList[3]);
+
+//		sP.zEffects = Double.parseDouble(playerList[15]);
+//		sP.xEffects = Double.parseDouble(playerList[16]);
+//		sP.yEffects = Double.parseDouble(playerList[17]);
+//		sP.noClipOn = Boolean.parseBoolean(playerList[18]);
+//		sP.flyOn = Boolean.parseBoolean(playerList[19]);
+//		sP.superSpeedOn = Boolean.parseBoolean(playerList[20]);
+//		sP.godModeOn = Boolean.parseBoolean(playerList[21]);
+//		sP.unlimitedAmmoOn = Boolean.parseBoolean(playerList[22]);
+//		sP.forceCrouch = Boolean.parseBoolean(playerList[23]);
+//		sP.hasGreenKey = Boolean.parseBoolean(playerList[24]);
+//		sP.hasRedKey = Boolean.parseBoolean(playerList[25]);
+//		sP.hasYellowKey = Boolean.parseBoolean(playerList[26]);
+//		sP.hasBlueKey = Boolean.parseBoolean(playerList[27]);
+//		sP.resurrections = Integer.parseInt(playerList[28]);
+//		sP.alive = Boolean.parseBoolean(playerList[29]);
+//		sP.weaponEquipped = Integer.parseInt(playerList[30]);
+
+		// split weaponList into an array
+//		String[] weaponList = playerList[31].split(",");
+//
+//		for (int i = 0; i < weaponList.length; i++) {
+//			sP.weapons[i].weaponID = Integer.parseInt(weaponList[0]);
+//			sP.weapons[i].name = Integer.parseInt(weaponList[1]);
+//			sP.weapons[i].damage = Integer.parseInt(weaponList[2]);
+//			sP.weapons[i].ammo = Integer.parseInt(weaponList[3]);
+//			//sP.weapons[i].cartridges = Integer.parseInt(weaponList[0]);
+//			sP.weapons[i].weaponID = Integer.parseInt(weaponList[0]);
+//			sP.weapons[i].weaponID = Integer.parseInt(weaponList[0]);
+//		}
+		// sP.clientMessages
+		// sp.audioToPlay
+		// sp.audioDistances
+		// sp.kills
+		// sp.deaths
+
+		String[] bulletStrings = elements[1].split(";");
+
+		for (int i = 0; i < bulletStrings.length; i++) {
+			String[] boolets = bulletStrings[i].split(":"); // array is delimited by ,
+			Bullet b = new Bullet(Integer.parseInt(boolets[0]), // damage
+					Double.parseDouble(boolets[1]), // speed
+					Double.parseDouble(boolets[2]), // x
+					Double.parseDouble(boolets[3]), // y
+					Double.parseDouble(boolets[4]), // z
+					Integer.parseInt(boolets[5]), // ID
+					Double.parseDouble(boolets[6]), // rotation
+					false); // criticalHit
+			Game.bullets.add(b);
+
+			b.upRotation = Double.parseDouble(boolets[7]); // uprotation
+		}
 		// TODO Below is the code from when I loaded information from a file for the
 		// game.
 		// Use this code to do a similar thing in parsing data that the client sends in.

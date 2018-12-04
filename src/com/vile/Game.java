@@ -73,10 +73,7 @@ public class Game implements Runnable {
 	private static ValueHolder[][] map;
 
 	// The level the game has loaded up
-	private static Level level;
-
-	// Size of level
-	public static int levelSize;
+	public static Level level;
 
 	// Skill level
 	public static int skillMode = 2;
@@ -1844,7 +1841,7 @@ public class Game implements Runnable {
 				otherStuff = elements[i];
 				String[] bAt = otherStuff.split(":");
 
-				// Create enemy with its needed values
+				// Create block with its needed values
 				Block b = new Block(Double.parseDouble(bAt[6]), Integer.parseInt(bAt[4]),
 						Double.parseDouble(bAt[2]) * 4, Integer.parseInt(bAt[1]), Integer.parseInt(bAt[3]));
 
@@ -2415,11 +2412,8 @@ public class Game implements Runnable {
 			calculatedSize = 100;
 		}
 
-		// Reset level size to calculated size
-		levelSize = calculatedSize;
-
 		// Set up new level with this size
-		level = new Level(levelSize, levelSize);
+		level = new Level(calculatedSize, calculatedSize);
 
 		// Add initial enemy
 		addEnemy();
@@ -2805,17 +2799,6 @@ public class Game implements Runnable {
 				for (int j = 0; j < map[0].length; j++) {
 					map[i][j] = tempMap[i][j];
 				}
-			}
-
-			/*
-			 * Figures out how many blocks in both the x and z direction that the game needs
-			 * to render. It uses the farthest direction as the amount to render in every
-			 * direction
-			 */
-			if (map.length > map[0].length) {
-				levelSize = map.length;
-			} else {
-				levelSize = map[0].length;
 			}
 
 			// Constructs the new level

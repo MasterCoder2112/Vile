@@ -31,8 +31,11 @@ import javax.sound.sampled.FloatControl;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
+import com.vile.entities.Bullet;
+import com.vile.entities.Cartridge;
 import com.vile.entities.Entity;
 import com.vile.entities.Player;
+import com.vile.entities.ServerPlayer;
 import com.vile.entities.Weapon;
 import com.vile.graphics.Render3D;
 import com.vile.graphics.Screen;
@@ -431,7 +434,9 @@ public class Display extends Canvas implements Runnable {
 				oldMusicTheme = musicTheme;
 
 				// New Game and map. Sets up music for that map too
-				game = new Game(this, nonDefaultMap, newMapName);
+				if (gameType == 2) {
+					game = new Game(this, nonDefaultMap, newMapName);
+				}
 
 				// Reset the popup list
 				messages = new ArrayList<PopUp>();
@@ -740,6 +745,8 @@ public class Display extends Canvas implements Runnable {
 			String fromServer = "";
 			String fromUser = "";
 
+			boolean firstTime = true;
+
 			/*
 			 * Focuses your user on the screen so you don't have to click to start
 			 */
@@ -755,7 +762,238 @@ public class Display extends Canvas implements Runnable {
 				// While the game is running, keep ticking and rendering
 				// while (isRunning == true) {
 				while ((fromServer = in.readLine()) != null) {
-					System.out.println("Server: " + fromServer);
+					// TODO during the first time there is extra data to load in
+					if (firstTime) {
+						String[] sections = fromServer.split("\\?");
+
+						// TODO This is to keep this as a checkpoint. STARTING COORDINATES
+						String currentSection = sections[0];
+						String[] attributes = currentSection.split(":");
+
+						Player.startX = Double.parseDouble(attributes[0]);
+						Player.startY = Double.parseDouble(attributes[1]);
+						Player.startZ = Double.parseDouble(attributes[2]);
+						game = new Game(this, true, attributes[3].trim());
+						firstTime = false;
+
+						// TODO ALL CLIENT INFORMATION
+						currentSection = sections[1];
+						String[] entitiesOfType = currentSection.split(";");
+
+						for (String player : entitiesOfType) {
+							attributes = player.split(":");
+
+							if (attributes[0].trim() == "Client") {
+								Player.x = Player.startX;
+								Player.y = Player.startY;
+								Player.z = Player.startZ;
+								Player.ID = Integer.parseInt(attributes[4]);
+								Player.health = Integer.parseInt(attributes[5]);
+								Player.maxHealth = Integer.parseInt(attributes[6]);
+								Player.armor = Integer.parseInt(attributes[7]);
+								Player.environProtectionTime = Integer.parseInt(attributes[8]);
+								Player.immortality = Integer.parseInt(attributes[9]);
+								Player.vision = Integer.parseInt(attributes[10]);
+								Player.invisibility = Integer.parseInt(attributes[11]);
+								Player.height = Double.parseDouble(attributes[12]);
+								Player.rotation = Double.parseDouble(attributes[13]);
+								Player.xEffects = Double.parseDouble(attributes[14]);
+								Player.yEffects = Double.parseDouble(attributes[15]);
+								Player.zEffects = Double.parseDouble(attributes[16]);
+								Player.alive = Boolean.parseBoolean(attributes[17]);
+								Player.kills = Integer.parseInt(attributes[18]);
+								Player.deaths = Integer.parseInt(attributes[19]);
+								Player.forceCrouch = Boolean.parseBoolean(attributes[20]);
+								Player.hasBlueKey = Boolean.parseBoolean(attributes[21]);
+								Player.hasRedKey = Boolean.parseBoolean(attributes[22]);
+								Player.hasGreenKey = Boolean.parseBoolean(attributes[23]);
+								Player.hasYellowKey = Boolean.parseBoolean(attributes[24]);
+								Player.resurrections = Integer.parseInt(attributes[25]);
+								Player.weaponEquipped = Integer.parseInt(attributes[26]);
+
+								String[] weapons = attributes[27].split("-");
+								/*
+								 * For each weapon, load in its attributes depending on what they were when the
+								 * game was saved.
+								 */
+								for (int i = 0; i < weapons.length; i++) {
+									Weapon w = Player.weapons[i];
+
+									String[] weaponStats = weapons[i].split(",");
+
+									int size = weaponStats.length - 4;
+
+									w.weaponID = Integer.parseInt(weaponStats[0]);
+									w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
+									w.dualWield = Boolean.parseBoolean(weaponStats[2]);
+									w.ammo = Integer.parseInt(weaponStats[3]);
+
+									for (int j = 0; j < size; j++) {
+										w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[4 + j])));
+									}
+								}
+
+								// Pop up messages are added immediately
+								String[] messages = attributes[28].split("-");
+
+								if (messages[0].trim() != "-1") {
+									for (String message : messages) {
+										Display.messages.add(new PopUp(message));
+									}
+								}
+
+								// Audio stuff that should also be played immediately every tick
+								String[] audioNames = attributes[29].split("-");
+								String[] distances = attributes[20].split("-");
+
+								if (audioNames[0].trim() != "-1" && distances[0].trim() != "-1"
+										&& audioNames.length == distances.length) {
+									for (int i = 0; i < audioNames.length; i++) {
+										for (Sound currentSound : soundController.allSounds) {
+											if (audioNames[i].trim() == currentSound.audioName.trim()) {
+												currentSound.playAudioFile(Double.parseDouble(distances[i]));
+											}
+										}
+									}
+								}
+
+							} else {
+								ServerPlayer sP = new ServerPlayer();
+								sP.x = Double.parseDouble(attributes[1]);
+								sP.y = Double.parseDouble(attributes[2]);
+								sP.z = Double.parseDouble(attributes[3]);
+								sP.ID = Integer.parseInt(attributes[4]);
+							}
+
+						}
+
+						// TODO Set up blocks on the level now
+
+						// currentSection = sections[2];
+						// entitiesOfType = currentSection.split(";");
+
+						/*
+						 * if (entitiesOfType.length > 1) { attributes = entitiesOfType[0].split(":");
+						 * Level.height = Integer.parseInt(attributes[1]); Level.width =
+						 * Integer.parseInt(attributes[2]); Level.blocks = new Block[Level.height *
+						 * Level.width];
+						 * 
+						 * for (int i = 1; i < entitiesOfType.length; i++) { attributes =
+						 * entitiesOfType[i].split(":");
+						 * 
+						 * // Create enemy with its needed values Block b = new
+						 * Block(Double.parseDouble(attributes[6]), Integer.parseInt(attributes[4]),
+						 * Double.parseDouble(attributes[2]) * 4, Integer.parseInt(attributes[1]),
+						 * Integer.parseInt(attributes[3]));
+						 * 
+						 * b.health = Integer.parseInt(attributes[0]); b.wallPhase =
+						 * Integer.parseInt(attributes[5]); b.isSolid =
+						 * Boolean.parseBoolean(attributes[7]); b.seeThrough =
+						 * Boolean.parseBoolean(attributes[8]);
+						 * 
+						 * Level.blocks[b.x + b.z * Level.width] = b; } }
+						 */
+
+					} else {
+						// TODO for every time other than first time
+						game.resetLists();
+
+						String[] sections = fromServer.split("\\?");
+
+						String[] attributes;
+
+						// TODO ALL CLIENT INFORMATION
+						String currentSection = sections[0];
+						String[] entitiesOfType = currentSection.split(";");
+
+						for (String player : entitiesOfType) {
+							attributes = player.split(":");
+
+							if (attributes[0].trim() == "Client") {
+								Player.x = Player.startX;
+								Player.y = Player.startY;
+								Player.z = Player.startZ;
+								Player.ID = Integer.parseInt(attributes[4]);
+								Player.health = Integer.parseInt(attributes[5]);
+								Player.maxHealth = Integer.parseInt(attributes[6]);
+								Player.armor = Integer.parseInt(attributes[7]);
+								Player.environProtectionTime = Integer.parseInt(attributes[8]);
+								Player.immortality = Integer.parseInt(attributes[9]);
+								Player.vision = Integer.parseInt(attributes[10]);
+								Player.invisibility = Integer.parseInt(attributes[11]);
+								Player.height = Double.parseDouble(attributes[12]);
+								Player.rotation = Double.parseDouble(attributes[13]);
+								Player.xEffects = Double.parseDouble(attributes[14]);
+								Player.yEffects = Double.parseDouble(attributes[15]);
+								Player.zEffects = Double.parseDouble(attributes[16]);
+								Player.alive = Boolean.parseBoolean(attributes[17]);
+								Player.kills = Integer.parseInt(attributes[18]);
+								Player.deaths = Integer.parseInt(attributes[19]);
+								Player.forceCrouch = Boolean.parseBoolean(attributes[20]);
+								Player.hasBlueKey = Boolean.parseBoolean(attributes[21]);
+								Player.hasRedKey = Boolean.parseBoolean(attributes[22]);
+								Player.hasGreenKey = Boolean.parseBoolean(attributes[23]);
+								Player.hasYellowKey = Boolean.parseBoolean(attributes[24]);
+								Player.resurrections = Integer.parseInt(attributes[25]);
+								Player.weaponEquipped = Integer.parseInt(attributes[26]);
+
+								String[] weapons = attributes[27].split("-");
+								/*
+								 * For each weapon, load in its attributes depending on what they were when the
+								 * game was saved.
+								 */
+								for (int i = 0; i < weapons.length; i++) {
+									Weapon w = Player.weapons[i];
+
+									String[] weaponStats = weapons[i].split(",");
+
+									int size = weaponStats.length - 4;
+
+									w.weaponID = Integer.parseInt(weaponStats[0]);
+									w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
+									w.dualWield = Boolean.parseBoolean(weaponStats[2]);
+									w.ammo = Integer.parseInt(weaponStats[3]);
+
+									for (int j = 0; j < size; j++) {
+										w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[4 + j])));
+									}
+								}
+
+								// Pop up messages are added immediately
+								String[] messages = attributes[28].split("-");
+
+								if (messages[0].trim() != "-1") {
+									for (String message : messages) {
+										Display.messages.add(new PopUp(message));
+									}
+								}
+
+								// Audio stuff that should also be played immediately every tick
+								String[] audioNames = attributes[29].split("-");
+								String[] distances = attributes[20].split("-");
+
+								if (audioNames[0].trim() != "-1" && distances[0].trim() != "-1"
+										&& audioNames.length == distances.length) {
+									for (int i = 0; i < audioNames.length; i++) {
+										for (Sound currentSound : soundController.allSounds) {
+											if (audioNames[i].trim() == currentSound.audioName.trim()) {
+												currentSound.playAudioFile(Double.parseDouble(distances[i]));
+											}
+										}
+									}
+								}
+
+							} else {
+								ServerPlayer sP = new ServerPlayer();
+								sP.x = Double.parseDouble(attributes[1]);
+								sP.y = Double.parseDouble(attributes[2]);
+								sP.z = Double.parseDouble(attributes[3]);
+								sP.ID = Integer.parseInt(attributes[4]);
+							}
+
+						}
+					}
+
 					// Current time
 					long currentTime = System.nanoTime();
 
@@ -909,9 +1147,15 @@ public class Display extends Canvas implements Runnable {
 						}
 					}
 
-					fromUser = "keep going";
+					fromUser = Player.x + ":" + Player.y + ":" + Player.z + ":" + Player.rotation + "?";
+
+					for (Bullet b : Game.bulletsAdded) {
+						fromUser += b.damage + ":" + b.speed + ":" + b.x + ":" + b.y + ":" + b.z + ":" + b.ID + ":"
+								+ Player.rotation + ":" + b.upRotation + ";";
+					}
+
 					if (fromUser != null) {
-						System.out.println("Client: " + fromUser);
+						// System.out.println("Client: " + fromUser);
 						out.println(fromUser);
 					}
 
@@ -922,9 +1166,11 @@ public class Display extends Canvas implements Runnable {
 					}
 				}
 			} catch (Exception e) {
-
+				e.printStackTrace();
 			}
-		} else {
+		} else
+
+		{
 			requestFocus();
 
 			while (isRunning) {
