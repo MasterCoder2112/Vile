@@ -783,7 +783,7 @@ public class Display extends Canvas implements Runnable {
 						for (String player : entitiesOfType) {
 							attributes = player.split(":");
 
-							if (attributes[0].trim() == "Client") {
+							if (attributes[0].trim().equals("Client")) {
 								Player.x = Player.startX;
 								Player.y = Player.startY;
 								Player.z = Player.startZ;
@@ -838,7 +838,7 @@ public class Display extends Canvas implements Runnable {
 
 								if (messages[0].trim() != "-1") {
 									for (String message : messages) {
-										Display.messages.add(new PopUp(message));
+										// Display.messages.add(new PopUp(message));
 									}
 								}
 
@@ -863,6 +863,7 @@ public class Display extends Canvas implements Runnable {
 								sP.y = Double.parseDouble(attributes[2]);
 								sP.z = Double.parseDouble(attributes[3]);
 								sP.ID = Integer.parseInt(attributes[4]);
+								Game.otherPlayers.add(sP);
 							}
 
 						}
@@ -909,10 +910,10 @@ public class Display extends Canvas implements Runnable {
 						for (String player : entitiesOfType) {
 							attributes = player.split(":");
 
-							if (attributes[0].trim() == "Client") {
-								Player.x = Player.startX;
-								Player.y = Player.startY;
-								Player.z = Player.startZ;
+							if (attributes[0].trim().equals("Client")) {
+								Player.x = Double.parseDouble(attributes[1]);
+								Player.y = Double.parseDouble(attributes[2]);
+								Player.z = Double.parseDouble(attributes[3]);
 								Player.ID = Integer.parseInt(attributes[4]);
 								Player.health = Integer.parseInt(attributes[5]);
 								Player.maxHealth = Integer.parseInt(attributes[6]);
@@ -964,7 +965,7 @@ public class Display extends Canvas implements Runnable {
 
 								if (messages[0].trim() != "-1") {
 									for (String message : messages) {
-										Display.messages.add(new PopUp(message));
+										// Display.messages.add(new PopUp(message));
 									}
 								}
 
@@ -989,6 +990,7 @@ public class Display extends Canvas implements Runnable {
 								sP.y = Double.parseDouble(attributes[2]);
 								sP.z = Double.parseDouble(attributes[3]);
 								sP.ID = Integer.parseInt(attributes[4]);
+								Game.otherPlayers.add(sP);
 							}
 
 						}

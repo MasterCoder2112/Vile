@@ -120,11 +120,9 @@ public class ClientThread implements Runnable {
 					}
 
 					break;
-				} else if (inputLine.trim() == "Parsing") {
-					out.println("ok");
 				} else {
 					// TODO uncomment this
-					// loadDataFromClient(inputLine);
+					loadDataFromClient(inputLine);
 					outputLine = "";
 					outputLine = sendDataToClient(outputLine);
 					out.println(outputLine);
@@ -171,7 +169,7 @@ public class ClientThread implements Runnable {
 			 */
 
 		} catch (Exception e) {
-			System.out.println(e);
+			e.printStackTrace();
 
 			// All other clients ID's go down by 1
 			for (int i = clientID + 1; i < ServerHost.clients.size(); i++) {
@@ -448,21 +446,23 @@ public class ClientThread implements Runnable {
 		// sp.kills
 		// sp.deaths
 
-		String[] bulletStrings = elements[1].split(";");
+		if (elements.length > 1) {
+			String[] bulletStrings = elements[1].split(";");
 
-		for (int i = 0; i < bulletStrings.length; i++) {
-			String[] boolets = bulletStrings[i].split(":"); // array is delimited by ,
-			Bullet b = new Bullet(Integer.parseInt(boolets[0]), // damage
-					Double.parseDouble(boolets[1]), // speed
-					Double.parseDouble(boolets[2]), // x
-					Double.parseDouble(boolets[3]), // y
-					Double.parseDouble(boolets[4]), // z
-					Integer.parseInt(boolets[5]), // ID
-					Double.parseDouble(boolets[6]), // rotation
-					false); // criticalHit
-			Game.bullets.add(b);
+			for (int i = 0; i < bulletStrings.length; i++) {
+				String[] boolets = bulletStrings[i].split(":"); // array is delimited by ,
+				Bullet b = new Bullet(Integer.parseInt(boolets[0]), // damage
+						Double.parseDouble(boolets[1]), // speed
+						Double.parseDouble(boolets[2]), // x
+						Double.parseDouble(boolets[3]), // y
+						Double.parseDouble(boolets[4]), // z
+						Integer.parseInt(boolets[5]), // ID
+						Double.parseDouble(boolets[6]), // rotation
+						false); // criticalHit
+				Game.bullets.add(b);
 
-			b.upRotation = Double.parseDouble(boolets[7]); // uprotation
+				b.upRotation = Double.parseDouble(boolets[7]); // uprotation
+			}
 		}
 		// TODO Below is the code from when I loaded information from a file for the
 		// game.
