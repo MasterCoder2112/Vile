@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import com.vile.Game;
 import com.vile.PopUp;
-import com.vile.SoundController;
 
 /**
  * Title: ServerPlayer
@@ -210,38 +209,39 @@ public class ServerPlayer {
 	public void hurtPlayer(double damage) {
 		// If the player is immortal then don't hurt
 		// Or if in peaceful mode don't hurt
-		if (godModeOn || immortality != 0 || Game.skillMode == 0 || !Player.alive) {
+		if (godModeOn || immortality != 0 || Game.skillMode == 0 || !this.alive) {
 			return;
 		}
 
 		// Hurt player depending on how much damage the enemy deals
 		// and on the armor the player is wearing.
-		if (Player.armor > 150) {
-			Player.health -= (int) (damage / 2);
-			Player.armor -= damage;
+		if (this.armor > 150) {
+			this.health -= (int) (damage / 2);
+			this.armor -= damage;
 		} else if (Player.armor > 100) {
-			Player.health -= (int) (damage / 1.75);
-			Player.armor -= damage * 1.5;
+			this.health -= (int) (damage / 1.75);
+			this.armor -= damage * 1.5;
 		} else if (Player.armor > 50) {
-			Player.health -= (int) (damage / 1.5);
-			Player.armor -= damage * 2;
+			this.health -= (int) (damage / 1.5);
+			this.armor -= damage * 2;
 		} else if (Player.armor > 0) {
-			Player.health -= (int) (damage / 1.25);
-			Player.armor -= damage * 3;
+			this.health -= (int) (damage / 1.25);
+			this.armor -= damage * 3;
 		} else {
-			Player.health -= damage;
+			this.health -= damage;
 		}
 
 		// If player armor is out, just set it to 0
-		if (Player.armor < 0) {
-			Player.armor = 0;
+		if (this.armor < 0) {
+			this.armor = 0;
 		}
 
 		// Player is "hurting" for 10 ticks
 		playerHurt = 10;
 
 		// Player hurt sound
-		SoundController.playerHurt.playAudioFile(0);
+		this.audioToPlay.add("playerHurt");
+		this.audioDistances.add(0);
 	}
 
 }

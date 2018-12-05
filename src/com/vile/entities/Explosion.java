@@ -220,6 +220,8 @@ public class Explosion {
 				double distanceFromClient = Math.sqrt(
 						((Math.abs(x - sP.x)) * (Math.abs(x - sP.x))) + ((Math.abs(z - sP.z)) * (Math.abs(z - sP.z))));
 
+				System.out.println(sP.x + " : " + sP.z + " : " + sP.y + " : " + distanceFromClient);
+
 				if (distanceFromClient <= 3) {
 					double damage = 60;
 					double force = 0;

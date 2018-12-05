@@ -587,7 +587,7 @@ public abstract class Projectile {
 		}
 
 		// If this is the host, see if the projectile hits any of the players
-		if (Display.gameType == 2) {
+		if (Display.gameType == 0) {
 			for (int i = 0; i < Game.otherPlayers.size(); i++) {
 				ServerPlayer sP = Game.otherPlayers.get(i);
 				// The projectiles distance from the player. Updated every tick
@@ -615,6 +615,7 @@ public abstract class Projectile {
 					 */
 					if (sP.health <= 0) {
 						sP.deaths++;
+						sP.alive = false;
 
 						for (int j = 0; j < Game.otherPlayers.size(); j++) {
 							ServerPlayer serverP = Game.otherPlayers.get(j);

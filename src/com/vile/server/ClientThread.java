@@ -241,7 +241,7 @@ public class ClientThread implements Runnable {
 					dataString += w.weaponID + "," + w.canBeEquipped + "," + w.dualWield + "," + w.ammo;
 
 					if (w.canBeEquipped) {
-						System.out.println(w.weaponID + ":" + w.dualWield);
+						// System.out.println(w.weaponID + ":" + w.dualWield);
 					}
 
 					for (int k = 0; k < size; k++) {
