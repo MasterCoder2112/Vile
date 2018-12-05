@@ -1,7 +1,5 @@
 package com.vile.entities;
 
-import com.vile.Display;
-import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.launcher.FPSLauncher;
 
@@ -145,12 +143,6 @@ public class Bullet extends Projectile {
 		 * upward.
 		 */
 		upRotation = -(speed * Math.tan(angle)) * angleChanger;
-
-		// If this is a client, add this bullet to the bulletsAdded arraylist so that it
-		// may be added to the server and ticked there.
-		if (Display.gameType == 1) {
-			Game.bulletsAdded.add(this);
-		}
 	}
 
 	/**

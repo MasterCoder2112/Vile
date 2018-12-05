@@ -592,7 +592,7 @@ public class Render3D extends Render {
 		 * distance.
 		 */
 		double xC = (x - Player.x) * 1.9;
-		double yC = (Player.y / 11) - (y / 11);
+		double yC = (Player.yCorrect / 11) - (y / 11);
 		double zC = (z - Player.z) * 1.9;
 
 		// TODO FIX JUMPING AND CROUCHING

@@ -3,6 +3,7 @@ package com.vile.entities;
 import java.util.Random;
 
 import com.vile.Display;
+import com.vile.Game;
 import com.vile.SoundController;
 import com.vile.launcher.FPSLauncher;
 
@@ -130,6 +131,12 @@ public class Pistol extends Weapon implements WeaponInterface {
 		}
 		// Create the bullet
 		Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation, criticalHit);
+
+		// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+		// may be added to the server and ticked there.
+		if (Display.gameType == 1) {
+			Game.bulletsAdded.add(bullet);
+		}
 
 		int crossWidth = Display.WIDTH;
 		int crossHeight = Display.HEIGHT;

@@ -1,5 +1,6 @@
 package com.vile.entities;
 
+import com.vile.Display;
 import com.vile.Game;
 import com.vile.graphics.Render;
 import com.vile.graphics.Render3D;
@@ -48,6 +49,10 @@ public class HitSprite {
 	 */
 	public void tick() {
 		phaseTime++;
+
+		if (Display.gameType == 0) {
+			Render3D.fpsCheck = 10;
+		}
 
 		// Remove bullets after the animation is over
 		if (phaseTime > spriteTime * Render3D.fpsCheck) {

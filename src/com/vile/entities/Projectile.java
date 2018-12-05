@@ -606,7 +606,7 @@ public abstract class Projectile {
 						sP.clientMessages.add(new PopUp("OWW! That was a critical!"));
 					}
 
-					// System.out.println(distanceFromClient + " : " + sP.ID + " : " + damage);
+					// System.out.println(this.clientID + " : " + sP.ID + " : " + damage);
 
 					sP.hurtPlayer(damage);
 					projectileHit(true);

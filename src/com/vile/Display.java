@@ -34,6 +34,7 @@ import javax.swing.JFrame;
 import com.vile.entities.Bullet;
 import com.vile.entities.Cartridge;
 import com.vile.entities.Entity;
+import com.vile.entities.Explosion;
 import com.vile.entities.ExplosiveCanister;
 import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
@@ -864,7 +865,9 @@ public class Display extends Canvas implements Runnable {
 
 								if (!messages[0].trim().equals("-1")) {
 									for (String message : messages) {
-										Display.messages.add(new PopUp(message));
+										if (!message.trim().equals("1") && !message.trim().equals("")) {
+											Display.messages.add(new PopUp(message));
+										}
 									}
 								}
 
@@ -998,7 +1001,7 @@ public class Display extends Canvas implements Runnable {
 
 								if (!messages[0].trim().equals("-1")) {
 									for (String message : messages) {
-										if (!message.trim().equals("1")) {
+										if (!message.trim().equals("1") && !message.trim().equals("")) {
 											Display.messages.add(new PopUp(message));
 										}
 									}
@@ -1064,6 +1067,7 @@ public class Display extends Canvas implements Runnable {
 									}
 
 									temp.pickedUp = Boolean.parseBoolean(attributes[6]);
+									temp.phaseTime = Integer.parseInt(attributes[7]);
 
 									// Game.items.add(temp);
 
@@ -1099,6 +1103,39 @@ public class Display extends Canvas implements Runnable {
 
 							// TODO Bullets loading in
 							currentSection = sections[2];
+							entitiesOfType = currentSection.split(";");
+
+							if (entitiesOfType.length > 1 && entitiesOfType[0].trim().equals("Bullets")) {
+								for (int i = 1; i < entitiesOfType.length; i++) {
+									Bullet b = null;
+
+									String[] bAtt = entitiesOfType[i].split(":");
+
+									b = new Bullet(10, 1, Double.parseDouble(bAtt[1]), Double.parseDouble(bAtt[2]),
+											Double.parseDouble(bAtt[3]), Integer.parseInt(bAtt[0]), 0, false);
+
+									Game.bullets.add(b);
+								}
+							}
+
+							// Everything dealing with explosions
+							currentSection = sections[3];
+							entitiesOfType = currentSection.split(";");
+
+							if (entitiesOfType.length > 1 && entitiesOfType[0].trim().equals("Explosions")) {
+								for (int i = 1; i < entitiesOfType.length; i++) {
+									Explosion exp = null;
+
+									String[] expAtt = entitiesOfType[i].split(":");
+
+									exp = new Explosion(Double.parseDouble(expAtt[2]), Double.parseDouble(expAtt[3]),
+											Double.parseDouble(expAtt[4]), Integer.parseInt(expAtt[0]), 0);
+
+									exp.phaseTime = Integer.parseInt(expAtt[1]);
+
+									Game.explosions.add(exp);
+								}
+							}
 
 						}
 					}
@@ -1260,7 +1297,8 @@ public class Display extends Canvas implements Runnable {
 							+ ":" + Player.maxHealth + ":" + Player.armor + ":" + Player.immortality + ":"
 							+ Player.godModeOn + ":" + Player.alive + ":" + Player.kills + ":" + Player.deaths + ":"
 							+ Player.weaponEquipped + ":" + Player.hasRedKey + ":" + Player.hasGreenKey + ":"
-							+ Player.hasBlueKey + ":" + Player.hasYellowKey + ":";
+							+ Player.hasBlueKey + ":" + Player.hasYellowKey + ":" + Player.xEffects + ":"
+							+ Player.yEffects + ":" + Player.zEffects + ":";
 
 					// Weapons this player has, and the ammo they contain
 

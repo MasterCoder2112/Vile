@@ -363,8 +363,11 @@ public class Game implements Runnable {
 			return;
 		}
 
-		// Perform all actions depending on keys pressed.
-		controls.performActions(this);
+		// Host shouldn't run this
+		if (Display.gameType != 0) {
+			// Perform all actions depending on keys pressed.
+			controls.performActions(this);
+		}
 	}
 
 	/**
@@ -660,7 +663,6 @@ public class Game implements Runnable {
 					if (item.tickCount > 2000) {
 						item.tickCount = 0;
 						item.pickedUp = false;
-						SoundController.teleportation.playAudioFile(distance);
 
 						sP.audioToPlay.add("teleportation");
 						sP.audioDistances.add((int) distance);
@@ -1571,6 +1573,12 @@ public class Game implements Runnable {
 		}
 
 		Bullet b = new Bullet(damage, speed, Player.x, bullY, Player.z, ID, rotation, criticalHit);
+
+		// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+		// may be added to the server and ticked there.
+		if (Display.gameType == 1) {
+			Game.bulletsAdded.add(b);
+		}
 
 		bullets.add(b);
 	}
@@ -2596,7 +2604,7 @@ public class Game implements Runnable {
 
 				mapCeiling = Integer.parseInt(temp2[5]);
 			} catch (Exception e) {
-
+				e.printStackTrace();
 			}
 
 			// Reset the music with this new audio file
@@ -2851,6 +2859,7 @@ public class Game implements Runnable {
 		solidItems = new ArrayList<Item>();
 		enemyProjectiles = new ArrayList<EnemyFire>();
 		activatable = new ArrayList<Item>();
+		teleporters = new ArrayList<Item>();
 		sprites = new ArrayList<HitSprite>();
 		happySavers = new ArrayList<Item>();
 		otherPlayers = new ArrayList<ServerPlayer>();

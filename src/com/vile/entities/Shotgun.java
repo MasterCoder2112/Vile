@@ -3,6 +3,7 @@ package com.vile.entities;
 import java.util.Random;
 
 import com.vile.Display;
+import com.vile.Game;
 import com.vile.SoundController;
 
 /**
@@ -69,6 +70,12 @@ public class Shotgun extends Weapon implements WeaponInterface {
 				Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation,
 						criticalHit);
 
+				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+				// may be added to the server and ticked there.
+				if (Display.gameType == 1) {
+					Game.bulletsAdded.add(bullet);
+				}
+
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
@@ -80,6 +87,12 @@ public class Shotgun extends Weapon implements WeaponInterface {
 
 				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.06,
 						criticalHit);
+
+				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+				// may be added to the server and ticked there.
+				if (Display.gameType == 1) {
+					Game.bulletsAdded.add(bullet);
+				}
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
@@ -93,6 +106,12 @@ public class Shotgun extends Weapon implements WeaponInterface {
 				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.06,
 						criticalHit);
 
+				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+				// may be added to the server and ticked there.
+				if (Display.gameType == 1) {
+					Game.bulletsAdded.add(bullet);
+				}
+
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
@@ -104,6 +123,12 @@ public class Shotgun extends Weapon implements WeaponInterface {
 
 				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.04,
 						criticalHit);
+
+				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+				// may be added to the server and ticked there.
+				if (Display.gameType == 1) {
+					Game.bulletsAdded.add(bullet);
+				}
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
@@ -117,6 +142,12 @@ public class Shotgun extends Weapon implements WeaponInterface {
 				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.04,
 						criticalHit);
 
+				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+				// may be added to the server and ticked there.
+				if (Display.gameType == 1) {
+					Game.bulletsAdded.add(bullet);
+				}
+
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
@@ -128,6 +159,12 @@ public class Shotgun extends Weapon implements WeaponInterface {
 
 				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.08,
 						criticalHit);
+
+				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+				// may be added to the server and ticked there.
+				if (Display.gameType == 1) {
+					Game.bulletsAdded.add(bullet);
+				}
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
@@ -141,6 +178,12 @@ public class Shotgun extends Weapon implements WeaponInterface {
 				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.08,
 						criticalHit);
 
+				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+				// may be added to the server and ticked there.
+				if (Display.gameType == 1) {
+					Game.bulletsAdded.add(bullet);
+				}
+
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
@@ -153,6 +196,12 @@ public class Shotgun extends Weapon implements WeaponInterface {
 				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.015,
 						criticalHit);
 
+				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+				// may be added to the server and ticked there.
+				if (Display.gameType == 1) {
+					Game.bulletsAdded.add(bullet);
+				}
+
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement
 				 * instantaneously in small increments to make it look like it hits the enemy
@@ -164,6 +213,12 @@ public class Shotgun extends Weapon implements WeaponInterface {
 
 				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.015,
 						criticalHit);
+
+				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+				// may be added to the server and ticked there.
+				if (Display.gameType == 1) {
+					Game.bulletsAdded.add(bullet);
+				}
 
 				/*
 				 * Instead of rendering the bullet and all that, just check its movement

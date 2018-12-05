@@ -12,7 +12,6 @@ import com.vile.PopUp;
 import com.vile.entities.Bullet;
 import com.vile.entities.Cartridge;
 import com.vile.entities.Explosion;
-import com.vile.entities.HitSprite;
 import com.vile.entities.Item;
 import com.vile.entities.Position;
 import com.vile.entities.ServerPlayer;
@@ -333,7 +332,7 @@ public class ClientThread implements Runnable {
 		for (int i = 0; i < Game.items.size(); i++) {
 			Item item = Game.items.get(i);
 			dataString += (item.itemID + ":" + item.x + ":" + item.y + ":" + item.z + ":" + item.rotation + ":"
-					+ item.itemActivationID + ":" + item.pickedUp + ":" + item.tickCount + ";");
+					+ item.itemActivationID + ":" + item.pickedUp + ":" + item.tickCount + ":" + item.phaseTime + ";");
 		}
 
 		dataString += "?";
@@ -376,13 +375,13 @@ public class ClientThread implements Runnable {
 		 * ele.waitTime + " : " + ele.upHeight + " : " + ele.activated + " : " +
 		 * ele.maxHeight + ";"); }
 		 */
-		dataString += "?";
-		dataString += "HitSprites:";
-
-		for (int i = 0; i < Game.sprites.size(); i++) {
-			HitSprite hS = Game.sprites.get(i);
-			dataString += (hS.ID + " : " + hS.x + " : " + hS.y + " : " + hS.z + " : " + hS.phaseTime + ";");
-		}
+		/*
+		 * dataString += "?"; dataString += "HitSprites:";
+		 * 
+		 * for (int i = 0; i < Game.sprites.size(); i++) { HitSprite hS =
+		 * Game.sprites.get(i); dataString += (hS.ID + " : " + hS.x + " : " + hS.y +
+		 * " : " + hS.z + " : " + hS.phaseTime + ";"); }
+		 */
 
 		return dataString;
 	}
@@ -422,16 +421,16 @@ public class ClientThread implements Runnable {
 		sP.kills = Integer.parseInt(playerList[10]);
 		sP.deaths = Integer.parseInt(playerList[11]);
 		sP.weaponEquipped = Integer.parseInt(playerList[12]);
-
-		// System.out.println("Server effects: " + sP.xEffects + " : " + sP.yEffects + "
-		// : " + sP.zEffects);
+		sP.xEffects = Double.parseDouble(playerList[17]);
+		sP.yEffects = Double.parseDouble(playerList[18]);
+		sP.zEffects = Double.parseDouble(playerList[19]);
 
 		if (sP.ID == 0) {
 			Display.hostTick = 1;
 		}
 
 		// split weaponList into an array
-		String[] weapons = playerList[17].split("-");
+		String[] weapons = playerList[20].split("-");
 		/*
 		 * For each weapon, load in its attributes depending on what they were when the
 		 * game was saved.

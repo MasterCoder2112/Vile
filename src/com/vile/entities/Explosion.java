@@ -105,6 +105,9 @@ public class Explosion {
 	public void tick() {
 		phaseTime++;
 
+		if (Display.gameType == 0) {
+			Render3D.fpsCheck = 2;
+		}
 		/*
 		 * If the explosion is a rocket, let it hurt anything in the area right on
 		 * impact. If an explosive canster, it waits for a few ticks before actually
@@ -219,8 +222,6 @@ public class Explosion {
 				ServerPlayer sP = Game.otherPlayers.get(i);
 				double distanceFromClient = Math.sqrt(
 						((Math.abs(x - sP.x)) * (Math.abs(x - sP.x))) + ((Math.abs(z - sP.z)) * (Math.abs(z - sP.z))));
-
-				System.out.println(sP.x + " : " + sP.z + " : " + sP.y + " : " + distanceFromClient);
 
 				if (distanceFromClient <= 3) {
 					double damage = 60;

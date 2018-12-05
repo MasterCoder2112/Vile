@@ -44,9 +44,9 @@ public class ServerPlayer {
 
 	public double height = 2.0;
 	public double maxHeight = 0;
-	public double x = 0;
+	public double x = 500;
 	public double y = 0;
-	public double z = 0;
+	public double z = 500;
 
 	// Direction player is facing.
 	public double rotation = 0;
