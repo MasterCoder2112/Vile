@@ -30,9 +30,6 @@ public class Bullet extends Projectile {
 			boolean criticalHit) {
 		super(damage, speed, x, y, z, ID, criticalHit);
 
-		// Bullets clientID is the ID of the player that shot it
-		super.clientID = Player.ID;
-
 		/*
 		 * Corrects Player.rotation so that the bullet is centered on the screen to the
 		 * player. Don't know why its so specific but it is

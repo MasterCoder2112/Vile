@@ -597,8 +597,6 @@ public class Render3D extends Render {
 
 		// TODO FIX JUMPING AND CROUCHING
 
-		yC = -yC;
-
 		// Size of sprite in terms of pixels. 512 x 512 is typical
 		int spriteSize = 512;
 

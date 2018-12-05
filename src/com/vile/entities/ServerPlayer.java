@@ -218,13 +218,13 @@ public class ServerPlayer {
 		if (this.armor > 150) {
 			this.health -= (int) (damage / 2);
 			this.armor -= damage;
-		} else if (Player.armor > 100) {
+		} else if (this.armor > 100) {
 			this.health -= (int) (damage / 1.75);
 			this.armor -= damage * 1.5;
-		} else if (Player.armor > 50) {
+		} else if (this.armor > 50) {
 			this.health -= (int) (damage / 1.5);
 			this.armor -= damage * 2;
-		} else if (Player.armor > 0) {
+		} else if (this.armor > 0) {
 			this.health -= (int) (damage / 1.25);
 			this.armor -= damage * 3;
 		} else {

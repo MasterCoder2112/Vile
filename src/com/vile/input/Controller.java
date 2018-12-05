@@ -1218,7 +1218,7 @@ public class Controller {
 		// Update player buffs (invincibility, etc...)
 		Player.updateBuffs();
 
-		System.out.println("HERE");
+		// System.out.println("HERE");
 
 		try {
 			for (Item e : Player.blockOn.wallEntities) {

@@ -945,11 +945,12 @@ public class Game implements Runnable {
 		/*
 		 * Moves enemy projectiles. Also checks for collisions
 		 */
-		for (int i = 0; i < Game.enemyProjectiles.size(); i++) {
-			EnemyFire temp = Game.enemyProjectiles.get(i);
-
-			temp.move();
-		}
+		/*
+		 * for (int i = 0; i < Game.enemyProjectiles.size(); i++) { EnemyFire temp =
+		 * Game.enemyProjectiles.get(i);
+		 * 
+		 * temp.move(); }
+		 */
 
 		/*
 		 * Ticks and renders all extra sprites in the game

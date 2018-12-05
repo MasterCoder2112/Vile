@@ -877,7 +877,11 @@ public class Display extends Canvas implements Runnable {
 									for (int i = 0; i < audioNames.length; i++) {
 										for (Sound currentSound : soundController.allSounds) {
 											if (audioNames[i].trim().equals(currentSound.audioName.trim())) {
-												currentSound.playAudioFile(Double.parseDouble(distances[i]));
+												try {
+													currentSound.playAudioFile(Double.parseDouble(distances[i]));
+												} catch (Exception e) {
+
+												}
 											}
 										}
 									}
@@ -1366,12 +1370,6 @@ public class Display extends Canvas implements Runnable {
 
 				if (smoothFPS) {
 					tick();
-				}
-
-				if (gameType == 0 && Game.otherPlayers.size() > 0) {
-					// for (PopUp p : Game.otherPlayers.get(0).clientMessages) {
-					// System.out.println(p.text);
-					// }
 				}
 
 				// TODO Before this, if in multiplayer and a client, accept data from server so

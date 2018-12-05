@@ -606,6 +606,8 @@ public abstract class Projectile {
 						sP.clientMessages.add(new PopUp("OWW! That was a critical!"));
 					}
 
+					// System.out.println(distanceFromClient + " : " + sP.ID + " : " + damage);
+
 					sP.hurtPlayer(damage);
 					projectileHit(true);
 
@@ -623,9 +625,9 @@ public abstract class Projectile {
 							if (serverP.ID == this.clientID) {
 								serverP.kills++;
 							}
-						}
 
-						sP.clientMessages.add(new PopUp("Player " + this.clientID + " destroyed Player " + sP.ID));
+							sP.clientMessages.add(new PopUp("Player " + this.clientID + " destroyed Player " + sP.ID));
+						}
 					}
 
 					return false;

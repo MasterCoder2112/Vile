@@ -226,7 +226,7 @@ public class ClientThread implements Runnable {
 				dataString += "Other:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ";";
 			} else {
 
-				dataString += "Client:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ":" + sP.health + ":"
+				dataString += "Client:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + clientID + ":" + sP.health + ":"
 						+ sP.maxHealth + ":" + sP.armor + ":" + sP.environProtectionTime + ":" + sP.immortality + ":"
 						+ sP.vision + ":" + sP.invisibility + ":" + sP.height + ":" + sP.rotation + ":" + sP.xEffects
 						+ ":" + sP.yEffects + ":" + sP.zEffects + ":" + sP.alive + ":" + sP.kills + ":" + sP.deaths
@@ -406,6 +406,7 @@ public class ClientThread implements Runnable {
 		sP.x = Double.parseDouble(playerList[0]);
 		sP.y = Double.parseDouble(playerList[1]);
 		sP.z = Double.parseDouble(playerList[2]);
+		sP.ID = clientID;
 		sP.rotation = Double.parseDouble(playerList[3]);
 		sP.health = Integer.parseInt(playerList[4]);
 		sP.maxHealth = Integer.parseInt(playerList[5]);
@@ -473,6 +474,7 @@ public class ClientThread implements Runnable {
 				Game.bullets.add(b);
 
 				b.upRotation = Double.parseDouble(boolets[7]); // uprotation
+				b.clientID = clientID;
 			}
 		}
 
