@@ -112,7 +112,7 @@ public class ClientThread implements Runnable {
 					// Client count goes down.
 					ServerHost.clientCount--;
 
-					System.out.println("Client " + clientID + " left the server by error");
+					System.out.println("Client " + clientID + " left the server");
 
 					try {
 						ServerHost.clientThreads.get(clientID).join();

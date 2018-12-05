@@ -1326,15 +1326,17 @@ public class Display extends Canvas implements Runnable {
 								+ Player.rotation + ":" + b.upRotation + ";";
 					}
 
-					if (fromUser != null) {
-						// System.out.println("Client: " + fromUser);
-						out.println(fromUser);
-					}
-
 					// If game is supposed to be quit, then call the stop method
 					// to end all thread events of the game
 					if (Controller.quitGame == true) {
+						fromUser = "bye";
+						out.println(fromUser);
 						stop();
+					}
+
+					if (fromUser != null) {
+						// System.out.println("Client: " + fromUser);
+						out.println(fromUser);
 					}
 				}
 			} catch (Exception e) {
