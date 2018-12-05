@@ -357,8 +357,10 @@ public class Game implements Runnable {
 			runSingleGameEvents();
 		}
 		// If game is being ran as a host
-		else if (Display.gameType == 0) {
+		else if (Display.gameType == 0 && Display.hostTick > 0) {
+			Display.hostTick--;
 			runHostGameEvents();
+			return;
 		}
 
 		// Perform all actions depending on keys pressed.
@@ -369,6 +371,7 @@ public class Game implements Runnable {
 	 * Runs all the game events for a multiplayer game as the host.
 	 */
 	public void runHostGameEvents() {
+
 		// TODO For now enemies are disabled in multiplayer
 		// Sort enemies according to their distance to you but only if
 		// not in survival
@@ -651,23 +654,25 @@ public class Game implements Runnable {
 				 * has been picked up, and after a certain amount of ticks, allow it to appear
 				 * again and be able to be picked up. Also only run once per tick
 				 */
-				if (item.pickedUp && s == 0) {
+				if (item.pickedUp) {
 					item.tick();
 
-					if (item.tickCount > 1000 * Render3D.fpsCheck) {
+					if (item.tickCount > 2000) {
 						item.tickCount = 0;
 						item.pickedUp = false;
 						SoundController.teleportation.playAudioFile(distance);
+
+						sP.audioToPlay.add("teleportation");
+						sP.audioDistances.add((int) distance);
 					}
 				}
 
 				// If the item is at least 0.7 units away, and its not
 				// a secret or linedef, and the player is not in noClip mode
 				if (distance <= 0.7 && Math.abs(item.y - sP.y) <= 6 && item.itemID != ItemNames.SECRET.itemID
-						&& item.itemID != ItemNames.LINEDEF.itemID && !sP.noClipOn) {
+						&& item.itemID != ItemNames.LINEDEF.itemID && !sP.noClipOn && !item.pickedUp) {
 					// Was the object activated?
 					boolean activated = item.activateServer(sP);
-
 					/*
 					 * If the item was activated remove it. Otherwise keep it in the map. Also play
 					 * audio queue is there is one

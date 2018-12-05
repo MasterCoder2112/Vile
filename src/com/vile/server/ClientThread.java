@@ -6,9 +6,11 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 
+import com.vile.Display;
 import com.vile.Game;
 import com.vile.PopUp;
 import com.vile.entities.Bullet;
+import com.vile.entities.Cartridge;
 import com.vile.entities.Explosion;
 import com.vile.entities.HitSprite;
 import com.vile.entities.Item;
@@ -223,6 +225,7 @@ public class ClientThread implements Runnable {
 			if (sP.ID != clientID) {
 				dataString += "Other:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ";";
 			} else {
+
 				dataString += "Client:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ":" + sP.health + ":"
 						+ sP.maxHealth + ":" + sP.armor + ":" + sP.environProtectionTime + ":" + sP.immortality + ":"
 						+ sP.vision + ":" + sP.invisibility + ":" + sP.height + ":" + sP.rotation + ":" + sP.xEffects
@@ -230,12 +233,16 @@ public class ClientThread implements Runnable {
 						+ ":" + sP.forceCrouch + ":" + sP.hasBlueKey + ":" + sP.hasRedKey + ":" + sP.hasGreenKey + ":"
 						+ sP.hasYellowKey + ":" + sP.resurrections + ":" + sP.weaponEquipped + ":";
 
-				// Weapons this player
+				// Weapons this player should have
 				for (int j = 0; j < sP.weapons.length; j++) {
-					Weapon w = sP.weapons[i];
+					Weapon w = sP.weapons[j];
 					int size = w.cartridges.size();
 
 					dataString += w.weaponID + "," + w.canBeEquipped + "," + w.dualWield + "," + w.ammo;
+
+					if (w.canBeEquipped) {
+						System.out.println(w.weaponID + ":" + w.dualWield);
+					}
 
 					for (int k = 0; k < size; k++) {
 						int cartSize = w.cartridges.get(k).ammo;
@@ -253,7 +260,7 @@ public class ClientThread implements Runnable {
 				for (int j = 0; j < sP.clientMessages.size(); j++) {
 					PopUp p = sP.clientMessages.get(j);
 
-					if (j == sP.clientMessages.size() - 1) {
+					if (j == sP.clientMessages.size() - 2) {
 						dataString += p.getText();
 					} else {
 						dataString += p.getText() + "-";
@@ -271,7 +278,7 @@ public class ClientThread implements Runnable {
 				for (int j = 0; j < sP.audioToPlay.size(); j++) {
 					String s = sP.audioToPlay.get(j);
 
-					if (j == sP.audioToPlay.size() - 1) {
+					if (j == sP.audioToPlay.size() - 2) {
 						dataString += s;
 					} else {
 						dataString += s + "-";
@@ -291,7 +298,7 @@ public class ClientThread implements Runnable {
 				for (int j = 0; j < sP.audioDistances.size(); j++) {
 					int dist = sP.audioDistances.get(j).intValue();
 
-					if (j == sP.audioDistances.size() - 1) {
+					if (j == sP.audioDistances.size() - 2) {
 						dataString += dist;
 					} else {
 						dataString += dist + "-";
@@ -321,22 +328,23 @@ public class ClientThread implements Runnable {
 		 */
 
 		dataString += "?";
-		dataString += "Items:";
+		dataString += "Items;";
 
 		for (int i = 0; i < Game.items.size(); i++) {
 			Item item = Game.items.get(i);
-			dataString += (item.itemID + ":" + item.x + ":" + item.y + ":" + item.z + ":" + item.rotation + ";");
+			dataString += (item.itemID + ":" + item.x + ":" + item.y + ":" + item.z + ":" + item.rotation + ":"
+					+ item.itemActivationID + ":" + item.pickedUp + ":" + item.tickCount + ";");
 		}
 
 		dataString += "?";
-		dataString += "Bullets:";
+		dataString += "Bullets;";
 		for (int i = 0; i < Game.bullets.size(); i++) {
 			Bullet b = Game.bullets.get(i);
 			dataString += (b.ID + ":" + b.x + ":" + b.y + ":" + b.z + ";");
 		}
 
 		dataString += "?";
-		dataString += "Explosions:";
+		dataString += "Explosions;";
 
 		for (int i = 0; i < Game.explosions.size(); i++) {
 			Explosion exp = Game.explosions.get(i);
@@ -394,62 +402,65 @@ public class ClientThread implements Runnable {
 
 		// assign each piece of the element to the ServerPlayer object
 		ServerPlayer sP = Game.otherPlayers.get(clientID);
-//		sP.ID = Integer.parseInt(playerList[0]);
-//		sP.health = Integer.parseInt(playerList[1]);
-//		sP.maxHealth = Integer.parseInt(playerList[2]);
-//		sP.armor = Integer.parseInt(playerList[3]);
-//		sP.environProtectionTime = Integer.parseInt(playerList[4]);
-//		sP.immortality = Integer.parseInt(playerList[5]);
-//		sP.vision = Integer.parseInt(playerList[6]);
-//		sP.invisibility = Integer.parseInt(playerList[7]);
-//		sP.playerHurt = Integer.parseInt(playerList[8]);
-//		sP.height = Double.parseDouble(playerList[9]);
-//		sP.maxHeight = Double.parseDouble(playerList[10]);
 
 		sP.x = Double.parseDouble(playerList[0]);
 		sP.y = Double.parseDouble(playerList[1]);
 		sP.z = Double.parseDouble(playerList[2]);
 		sP.rotation = Double.parseDouble(playerList[3]);
-
-//		sP.zEffects = Double.parseDouble(playerList[15]);
-//		sP.xEffects = Double.parseDouble(playerList[16]);
-//		sP.yEffects = Double.parseDouble(playerList[17]);
-//		sP.noClipOn = Boolean.parseBoolean(playerList[18]);
-//		sP.flyOn = Boolean.parseBoolean(playerList[19]);
-//		sP.superSpeedOn = Boolean.parseBoolean(playerList[20]);
-//		sP.godModeOn = Boolean.parseBoolean(playerList[21]);
-//		sP.unlimitedAmmoOn = Boolean.parseBoolean(playerList[22]);
+		sP.health = Integer.parseInt(playerList[4]);
+		sP.maxHealth = Integer.parseInt(playerList[5]);
+		sP.armor = Integer.parseInt(playerList[6]);
+		sP.immortality = Integer.parseInt(playerList[7]);
+		sP.godModeOn = Boolean.parseBoolean(playerList[8]);
 //		sP.forceCrouch = Boolean.parseBoolean(playerList[23]);
-//		sP.hasGreenKey = Boolean.parseBoolean(playerList[24]);
-//		sP.hasRedKey = Boolean.parseBoolean(playerList[25]);
-//		sP.hasYellowKey = Boolean.parseBoolean(playerList[26]);
-//		sP.hasBlueKey = Boolean.parseBoolean(playerList[27]);
-//		sP.resurrections = Integer.parseInt(playerList[28]);
-//		sP.alive = Boolean.parseBoolean(playerList[29]);
-//		sP.weaponEquipped = Integer.parseInt(playerList[30]);
+		sP.hasGreenKey = Boolean.parseBoolean(playerList[14]);
+		sP.hasRedKey = Boolean.parseBoolean(playerList[13]);
+		sP.hasYellowKey = Boolean.parseBoolean(playerList[16]);
+		sP.hasBlueKey = Boolean.parseBoolean(playerList[15]);
+		sP.alive = Boolean.parseBoolean(playerList[9]);
+		sP.kills = Integer.parseInt(playerList[10]);
+		sP.deaths = Integer.parseInt(playerList[11]);
+		sP.weaponEquipped = Integer.parseInt(playerList[12]);
+
+		// System.out.println("Server effects: " + sP.xEffects + " : " + sP.yEffects + "
+		// : " + sP.zEffects);
+
+		if (sP.ID == 0) {
+			Display.hostTick = 1;
+		}
 
 		// split weaponList into an array
-//		String[] weaponList = playerList[31].split(",");
-//
-//		for (int i = 0; i < weaponList.length; i++) {
-//			sP.weapons[i].weaponID = Integer.parseInt(weaponList[0]);
-//			sP.weapons[i].name = Integer.parseInt(weaponList[1]);
-//			sP.weapons[i].damage = Integer.parseInt(weaponList[2]);
-//			sP.weapons[i].ammo = Integer.parseInt(weaponList[3]);
-//			//sP.weapons[i].cartridges = Integer.parseInt(weaponList[0]);
-//			sP.weapons[i].weaponID = Integer.parseInt(weaponList[0]);
-//			sP.weapons[i].weaponID = Integer.parseInt(weaponList[0]);
-//		}
-		// sP.clientMessages
-		// sp.audioToPlay
-		// sp.audioDistances
-		// sp.kills
-		// sp.deaths
+		String[] weapons = playerList[17].split("-");
+		/*
+		 * For each weapon, load in its attributes depending on what they were when the
+		 * game was saved.
+		 */
+		for (int i = 0; i < weapons.length; i++) {
+			Weapon w = sP.weapons[i];
+			w.cartridges = new ArrayList<Cartridge>();
 
-		if (elements.length > 1) {
-			String[] bulletStrings = elements[1].split(";");
+			String[] weaponStats = weapons[i].split(",");
 
-			for (int i = 0; i < bulletStrings.length; i++) {
+			int size = weaponStats.length - 4;
+
+			w.weaponID = Integer.parseInt(weaponStats[0]);
+			w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
+			w.dualWield = Boolean.parseBoolean(weaponStats[2]);
+			w.ammo = Integer.parseInt(weaponStats[3]);
+
+			for (int j = 0; j < size; j++) {
+				w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[4 + j])));
+			}
+		}
+
+		// sP.clientMessages = new ArrayList<PopUp>();
+		// sP.audioToPlay = new ArrayList<String>();
+		// sP.audioDistances = new ArrayList<Integer>();
+
+		String[] bulletStrings = elements[1].split(";");
+
+		if (bulletStrings.length > 1 && bulletStrings[0].trim().equals("Bullets")) {
+			for (int i = 1; i < bulletStrings.length; i++) {
 				String[] boolets = bulletStrings[i].split(":"); // array is delimited by ,
 				Bullet b = new Bullet(Integer.parseInt(boolets[0]), // damage
 						Double.parseDouble(boolets[1]), // speed
@@ -464,6 +475,7 @@ public class ClientThread implements Runnable {
 				b.upRotation = Double.parseDouble(boolets[7]); // uprotation
 			}
 		}
+
 		// TODO Below is the code from when I loaded information from a file for the
 		// game.
 		// Use this code to do a similar thing in parsing data that the client sends in.

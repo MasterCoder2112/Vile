@@ -34,6 +34,9 @@ import javax.swing.JFrame;
 import com.vile.entities.Bullet;
 import com.vile.entities.Cartridge;
 import com.vile.entities.Entity;
+import com.vile.entities.ExplosiveCanister;
+import com.vile.entities.Item;
+import com.vile.entities.ItemNames;
 import com.vile.entities.Player;
 import com.vile.entities.ServerPlayer;
 import com.vile.entities.Weapon;
@@ -45,6 +48,8 @@ import com.vile.input.Controller;
 import com.vile.input.InputHandler;
 import com.vile.launcher.FPSLauncher;
 import com.vile.launcher.LogIn;
+import com.vile.levelGenerator.Block;
+import com.vile.levelGenerator.Level;
 import com.vile.server.ServerClient;
 
 /**
@@ -96,6 +101,9 @@ public class Display extends Canvas implements Runnable {
 
 	// What type of game is this (0 = host, 1 = client, 2 = single player)
 	public static int gameType = 2;
+
+	// Only tick host as fast as first client on the server for now.
+	public static int hostTick = 0;
 
 	// New screen object
 	private Screen screen;
@@ -285,6 +293,24 @@ public class Display extends Canvas implements Runnable {
 
 			// New Game and map. Sets up music for that map too
 			game = new Game(this, nonDefaultMap, newMapName);
+
+			// If themes aren't the same, then reset the sounds. Otherwise it won't
+			if (!currentTheme.equals(FPSLauncher.themeName))
+			// if(currentTheme.equals(""))
+			{
+				try {
+					soundController.resetSounds();
+				} catch (Exception e) {
+				}
+				// Loads all sounds and files
+				soundController = null;
+				soundController = new SoundController();
+			}
+
+			currentTheme = FPSLauncher.themeName;
+
+			// All sound volumes are reset
+			soundController.resetAllVolumes(FPSLauncher.soundVolumeLevel);
 
 			// A new scanner object that is defaultly set to null
 			Scanner sc = null;
@@ -836,9 +862,9 @@ public class Display extends Canvas implements Runnable {
 								// Pop up messages are added immediately
 								String[] messages = attributes[28].split("-");
 
-								if (messages[0].trim() != "-1") {
+								if (!messages[0].trim().equals("-1")) {
 									for (String message : messages) {
-										// Display.messages.add(new PopUp(message));
+										Display.messages.add(new PopUp(message));
 									}
 								}
 
@@ -846,11 +872,11 @@ public class Display extends Canvas implements Runnable {
 								String[] audioNames = attributes[29].split("-");
 								String[] distances = attributes[20].split("-");
 
-								if (audioNames[0].trim() != "-1" && distances[0].trim() != "-1"
+								if (!audioNames[0].trim().equals("-1") && !distances[0].trim().equals("-1")
 										&& audioNames.length == distances.length) {
 									for (int i = 0; i < audioNames.length; i++) {
 										for (Sound currentSound : soundController.allSounds) {
-											if (audioNames[i].trim() == currentSound.audioName.trim()) {
+											if (audioNames[i].trim().equals(currentSound.audioName.trim())) {
 												currentSound.playAudioFile(Double.parseDouble(distances[i]));
 											}
 										}
@@ -899,6 +925,8 @@ public class Display extends Canvas implements Runnable {
 						// TODO for every time other than first time
 						game.resetLists();
 
+						// System.out.println(fromServer);
+
 						String[] sections = fromServer.split("\\?");
 
 						String[] attributes;
@@ -930,7 +958,7 @@ public class Display extends Canvas implements Runnable {
 								Player.alive = Boolean.parseBoolean(attributes[17]);
 								Player.kills = Integer.parseInt(attributes[18]);
 								Player.deaths = Integer.parseInt(attributes[19]);
-								Player.forceCrouch = Boolean.parseBoolean(attributes[20]);
+								// Player.forceCrouch = Boolean.parseBoolean(attributes[20]);
 								Player.hasBlueKey = Boolean.parseBoolean(attributes[21]);
 								Player.hasRedKey = Boolean.parseBoolean(attributes[22]);
 								Player.hasGreenKey = Boolean.parseBoolean(attributes[23]);
@@ -945,6 +973,7 @@ public class Display extends Canvas implements Runnable {
 								 */
 								for (int i = 0; i < weapons.length; i++) {
 									Weapon w = Player.weapons[i];
+									w.cartridges = new ArrayList<Cartridge>();
 
 									String[] weaponStats = weapons[i].split(",");
 
@@ -963,21 +992,23 @@ public class Display extends Canvas implements Runnable {
 								// Pop up messages are added immediately
 								String[] messages = attributes[28].split("-");
 
-								if (messages[0].trim() != "-1") {
+								if (!messages[0].trim().equals("-1")) {
 									for (String message : messages) {
-										// Display.messages.add(new PopUp(message));
+										if (!message.trim().equals("1")) {
+											Display.messages.add(new PopUp(message));
+										}
 									}
 								}
 
 								// Audio stuff that should also be played immediately every tick
 								String[] audioNames = attributes[29].split("-");
-								String[] distances = attributes[20].split("-");
+								String[] distances = attributes[30].split("-");
 
-								if (audioNames[0].trim() != "-1" && distances[0].trim() != "-1"
+								if (!audioNames[0].trim().equals("-1") && !distances[0].trim().equals("-1")
 										&& audioNames.length == distances.length) {
 									for (int i = 0; i < audioNames.length; i++) {
 										for (Sound currentSound : soundController.allSounds) {
-											if (audioNames[i].trim() == currentSound.audioName.trim()) {
+											if (audioNames[i].trim().equals(currentSound.audioName.trim())) {
 												currentSound.playAudioFile(Double.parseDouble(distances[i]));
 											}
 										}
@@ -992,6 +1023,78 @@ public class Display extends Canvas implements Runnable {
 								sP.ID = Integer.parseInt(attributes[4]);
 								Game.otherPlayers.add(sP);
 							}
+
+							// System.out.println("Client effects: " + Player.xEffects + " : " +
+							// Player.yEffects + " : "
+							// + Player.zEffects);
+
+							// TODO Items
+							currentSection = sections[1];
+							entitiesOfType = currentSection.split(";");
+
+							if (entitiesOfType.length > 1 && entitiesOfType[0].trim().equals("Items")) {
+
+								for (int i = 1; i < entitiesOfType.length; i++) {
+									attributes = entitiesOfType[i].split(":");
+
+									int itemID = Integer.parseInt(attributes[0]);
+
+									Item temp = null;
+
+									// TODO update item loading stuff maybe
+
+									/*
+									 * If its not an explosive canister, add it as a normal item. Otherwise add it
+									 * as an explosive canister
+									 */
+									if (itemID != ItemNames.CANISTER.getID()) {
+										temp = new Item(10, Double.parseDouble(attributes[1]),
+												Double.parseDouble(attributes[2]), Double.parseDouble(attributes[3]),
+												itemID, Integer.parseInt(attributes[4]),
+												Integer.parseInt(attributes[5]), "");
+									} else {
+										temp = new ExplosiveCanister(10, Double.parseDouble(attributes[1]),
+												Double.parseDouble(attributes[2]), Double.parseDouble(attributes[3]),
+												itemID, Integer.parseInt(attributes[4]),
+												Integer.parseInt(attributes[5]));
+									}
+
+									temp.pickedUp = Boolean.parseBoolean(attributes[6]);
+
+									// Game.items.add(temp);
+
+									Block itemBlock = Level.getBlock((int) temp.x, (int) temp.z);
+
+									// If the item gives the block a specific quality, or if the
+									// item can not be removed from the block (if its solid)
+									if (temp.isSolid || itemID == ItemNames.BREAKABLEWALL.getID()
+											|| itemID == ItemNames.SECRET.getID()
+											|| itemID == ItemNames.LINEDEF.getID()) {
+										// Set item to being the item that is within this
+										// block only if it is solid
+										itemBlock.wallItems.add(temp);
+									}
+
+									// If satellite dish, add to activatable list as well
+									if (itemID == ItemNames.RADAR.getID()) {
+										Game.activatable.add(temp);
+									}
+									// If item supposed to be activated by button
+									else if (itemID == ItemNames.ACTIVATEEXP.getID()
+											|| itemID == ItemNames.ENEMYSPAWN.getID()
+											|| itemID == ItemNames.WALLBEGONE.getID()) {
+										Game.activatable.add(temp);
+									} else if (itemID == ItemNames.TELEPORTEREXIT.getID()
+											|| itemID == ItemNames.TELEPORTERENTER.getID()) {
+										Game.teleporters.add(temp);
+
+										itemBlock.wallEntities.add(temp);
+									}
+								}
+							}
+
+							// TODO Bullets loading in
+							currentSection = sections[2];
 
 						}
 					}
@@ -1149,7 +1252,32 @@ public class Display extends Canvas implements Runnable {
 						}
 					}
 
-					fromUser = Player.x + ":" + Player.y + ":" + Player.z + ":" + Player.rotation + "?";
+					fromUser = Player.x + ":" + Player.y + ":" + Player.z + ":" + Player.rotation + ":" + Player.health
+							+ ":" + Player.maxHealth + ":" + Player.armor + ":" + Player.immortality + ":"
+							+ Player.godModeOn + ":" + Player.alive + ":" + Player.kills + ":" + Player.deaths + ":"
+							+ Player.weaponEquipped + ":" + Player.hasRedKey + ":" + Player.hasGreenKey + ":"
+							+ Player.hasBlueKey + ":" + Player.hasYellowKey + ":";
+
+					// Weapons this player has, and the ammo they contain
+
+					for (int j = 0; j < Player.weapons.length; j++) {
+						Weapon w = Player.weapons[j];
+						int size = w.cartridges.size();
+
+						fromUser += w.weaponID + "," + w.canBeEquipped + "," + w.dualWield + "," + w.ammo;
+
+						for (int k = 0; k < size; k++) {
+							int cartSize = w.cartridges.get(k).ammo;
+							fromUser += "," + cartSize;
+						}
+
+						if (j < Player.weapons.length - 1) {
+							fromUser += "-";
+						}
+					}
+
+					fromUser += "?";
+					fromUser += "Bullets;";
 
 					for (Bullet b : Game.bulletsAdded) {
 						fromUser += b.damage + ":" + b.speed + ":" + b.x + ":" + b.y + ":" + b.z + ":" + b.ID + ":"
@@ -1238,6 +1366,12 @@ public class Display extends Canvas implements Runnable {
 
 				if (smoothFPS) {
 					tick();
+				}
+
+				if (gameType == 0 && Game.otherPlayers.size() > 0) {
+					// for (PopUp p : Game.otherPlayers.get(0).clientMessages) {
+					// System.out.println(p.text);
+					// }
 				}
 
 				// TODO Before this, if in multiplayer and a client, accept data from server so

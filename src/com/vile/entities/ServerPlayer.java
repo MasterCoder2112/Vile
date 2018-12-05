@@ -121,6 +121,7 @@ public class ServerPlayer {
 		vision = 0;
 
 		weapons[0] = new Pistol();
+		weapons[0].canBeEquipped = true;
 		weapons[1] = new Shotgun();
 		weapons[2] = new PhaseCannon();
 		weapons[3] = new RocketLauncher();
