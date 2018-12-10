@@ -158,6 +158,9 @@ public class Player {
 		weapons[3] = new RocketLauncher();
 		weaponEquipped = 0;
 
+		// TODO for now, always make pistols equippable.
+		weapons[0].canBeEquipped = true;
+
 		// These do not get reset in multiplayer.
 		if (Display.gameType != 1) {
 			kills = 0;

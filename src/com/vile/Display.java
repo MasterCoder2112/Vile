@@ -967,7 +967,7 @@ public class Display extends Canvas implements Runnable {
 										sP.audioDistances.add(new Integer(distances[i]));
 									}
 								}
-								Game.otherPlayers.set(sP.ID, sP);
+								Game.otherPlayers.add(sP);
 
 							}
 						}
@@ -1170,7 +1170,7 @@ public class Display extends Canvas implements Runnable {
 										sP.audioDistances.add(new Integer(distances[i]));
 									}
 								}
-								Game.otherPlayers.set(sP.ID, sP);
+								Game.otherPlayers.add(sP);
 							}
 
 							// System.out.println("Client effects: " + Player.xEffects + " : " +
