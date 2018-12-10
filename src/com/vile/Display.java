@@ -1468,6 +1468,9 @@ public class Display extends Canvas implements Runnable {
 								+ Player.rotation + ":" + b.upRotation + ";";
 					}
 
+					fromUser += "?";
+					fromUser += "Players;";
+
 					for (ServerPlayer sP : Game.otherPlayers) {
 						fromUser += "Player:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ":" + sP.health + ":"
 								+ sP.maxHealth + ":" + sP.armor + ":" + sP.environProtectionTime + ":" + sP.immortality

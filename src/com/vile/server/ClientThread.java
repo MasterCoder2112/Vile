@@ -564,82 +564,85 @@ public class ClientThread implements Runnable {
 		String currentSection = elements[2];
 		playerList = currentSection.split(";");
 
-		for (String player : playerList) {
-			String[] attributes = player.split(":");
-			ServerPlayer serverP = Game.otherPlayers.get(Integer.parseInt(attributes[4]));
+		if (playerList.length > 1 && playerList[0].trim().equals("Players")) {
+			for (int k = 1; k < playerList.length; k++) {
+				String player = playerList[k];
+				String[] attributes = player.split(":");
+				ServerPlayer serverP = Game.otherPlayers.get(Integer.parseInt(attributes[4]));
 
-			serverP.x = Double.parseDouble(attributes[1]);
-			serverP.y = Double.parseDouble(attributes[2]);
-			serverP.z = Double.parseDouble(attributes[3]);
-			serverP.ID = Integer.parseInt(attributes[4]);
-			serverP.health = Integer.parseInt(attributes[5]);
-			serverP.maxHealth = Integer.parseInt(attributes[6]);
-			serverP.armor = Integer.parseInt(attributes[7]);
-			serverP.environProtectionTime = Integer.parseInt(attributes[8]);
-			serverP.immortality = Integer.parseInt(attributes[9]);
-			serverP.vision = Integer.parseInt(attributes[10]);
-			serverP.invisibility = Integer.parseInt(attributes[11]);
-			serverP.height = Double.parseDouble(attributes[12]);
-			serverP.rotation = Double.parseDouble(attributes[13]);
-			serverP.xEffects = Double.parseDouble(attributes[14]);
-			serverP.yEffects = Double.parseDouble(attributes[15]);
-			serverP.zEffects = Double.parseDouble(attributes[16]);
-			serverP.alive = Boolean.parseBoolean(attributes[17]);
-			serverP.kills = Integer.parseInt(attributes[18]);
-			serverP.deaths = Integer.parseInt(attributes[19]);
-			serverP.forceCrouch = Boolean.parseBoolean(attributes[20]);
-			serverP.hasBlueKey = Boolean.parseBoolean(attributes[21]);
-			serverP.hasRedKey = Boolean.parseBoolean(attributes[22]);
-			serverP.hasGreenKey = Boolean.parseBoolean(attributes[23]);
-			serverP.hasYellowKey = Boolean.parseBoolean(attributes[24]);
-			serverP.resurrections = Integer.parseInt(attributes[25]);
-			serverP.weaponEquipped = Integer.parseInt(attributes[26]);
+				serverP.x = Double.parseDouble(attributes[1]);
+				serverP.y = Double.parseDouble(attributes[2]);
+				serverP.z = Double.parseDouble(attributes[3]);
+				serverP.ID = Integer.parseInt(attributes[4]);
+				serverP.health = Integer.parseInt(attributes[5]);
+				serverP.maxHealth = Integer.parseInt(attributes[6]);
+				serverP.armor = Integer.parseInt(attributes[7]);
+				serverP.environProtectionTime = Integer.parseInt(attributes[8]);
+				serverP.immortality = Integer.parseInt(attributes[9]);
+				serverP.vision = Integer.parseInt(attributes[10]);
+				serverP.invisibility = Integer.parseInt(attributes[11]);
+				serverP.height = Double.parseDouble(attributes[12]);
+				serverP.rotation = Double.parseDouble(attributes[13]);
+				serverP.xEffects = Double.parseDouble(attributes[14]);
+				serverP.yEffects = Double.parseDouble(attributes[15]);
+				serverP.zEffects = Double.parseDouble(attributes[16]);
+				serverP.alive = Boolean.parseBoolean(attributes[17]);
+				serverP.kills = Integer.parseInt(attributes[18]);
+				serverP.deaths = Integer.parseInt(attributes[19]);
+				serverP.forceCrouch = Boolean.parseBoolean(attributes[20]);
+				serverP.hasBlueKey = Boolean.parseBoolean(attributes[21]);
+				serverP.hasRedKey = Boolean.parseBoolean(attributes[22]);
+				serverP.hasGreenKey = Boolean.parseBoolean(attributes[23]);
+				serverP.hasYellowKey = Boolean.parseBoolean(attributes[24]);
+				serverP.resurrections = Integer.parseInt(attributes[25]);
+				serverP.weaponEquipped = Integer.parseInt(attributes[26]);
 
-			weapons = attributes[27].split("-");
-			/*
-			 * For each weapon, load in its attributes depending on what they were when the
-			 * game was saved.
-			 */
-			for (int i = 0; i < weapons.length; i++) {
-				Weapon w = serverP.weapons[i];
+				weapons = attributes[27].split("-");
+				/*
+				 * For each weapon, load in its attributes depending on what they were when the
+				 * game was saved.
+				 */
+				for (int i = 0; i < weapons.length; i++) {
+					Weapon w = serverP.weapons[i];
 
-				String[] weaponStats = weapons[i].split(",");
+					String[] weaponStats = weapons[i].split(",");
 
-				int size = weaponStats.length - 4;
+					int size = weaponStats.length - 4;
 
-				w.weaponID = Integer.parseInt(weaponStats[0]);
-				w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
-				w.dualWield = Boolean.parseBoolean(weaponStats[2]);
-				w.ammo = Integer.parseInt(weaponStats[3]);
+					w.weaponID = Integer.parseInt(weaponStats[0]);
+					w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
+					w.dualWield = Boolean.parseBoolean(weaponStats[2]);
+					w.ammo = Integer.parseInt(weaponStats[3]);
 
-				for (int j = 0; j < size; j++) {
-					w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[4 + j])));
-				}
-			}
-
-			// Pop up messages are added immediately
-			String[] messages = attributes[28].split("-");
-
-			if (!messages[0].trim().equals("-1")) {
-				for (String message : messages) {
-					if (!message.trim().equals("1") && !message.trim().equals("")) {
-						serverP.clientMessages.add(new PopUp(message));
+					for (int j = 0; j < size; j++) {
+						w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[4 + j])));
 					}
 				}
-			}
 
-			// Audio stuff that should also be played immediately every tick
-			String[] audioNames = attributes[29].split("-");
-			String[] distances = attributes[20].split("-");
+				// Pop up messages are added immediately
+				String[] messages = attributes[28].split("-");
 
-			if (!audioNames[0].trim().equals("-1") && !distances[0].trim().equals("-1")
-					&& audioNames.length == distances.length) {
-				for (int i = 0; i < audioNames.length; i++) {
-					serverP.audioToPlay.add(audioNames[i]);
-					serverP.audioDistances.add(new Integer(distances[i]));
+				if (!messages[0].trim().equals("-1")) {
+					for (String message : messages) {
+						if (!message.trim().equals("1") && !message.trim().equals("")) {
+							serverP.clientMessages.add(new PopUp(message));
+						}
+					}
 				}
+
+				// Audio stuff that should also be played immediately every tick
+				String[] audioNames = attributes[29].split("-");
+				String[] distances = attributes[20].split("-");
+
+				if (!audioNames[0].trim().equals("-1") && !distances[0].trim().equals("-1")
+						&& audioNames.length == distances.length) {
+					for (int i = 0; i < audioNames.length; i++) {
+						serverP.audioToPlay.add(audioNames[i]);
+						serverP.audioDistances.add(new Integer(distances[i]));
+					}
+				}
+				Game.otherPlayers.set(serverP.ID, serverP);
 			}
-			Game.otherPlayers.set(serverP.ID, serverP);
 		}
 
 		// TODO Below is the code from when I loaded information from a file for the
