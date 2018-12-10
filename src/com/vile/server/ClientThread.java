@@ -222,7 +222,91 @@ public class ClientThread implements Runnable {
 			ServerPlayer sP = Game.otherPlayers.get(i);
 
 			if (sP.ID != clientID) {
-				dataString += "Other:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ";";
+				dataString += "Other:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ":" + sP.health + ":"
+						+ sP.maxHealth + ":" + sP.armor + ":" + sP.environProtectionTime + ":" + sP.immortality + ":"
+						+ sP.vision + ":" + sP.invisibility + ":" + sP.height + ":" + sP.rotation + ":" + sP.xEffects
+						+ ":" + sP.yEffects + ":" + sP.zEffects + ":" + sP.alive + ":" + sP.kills + ":" + sP.deaths
+						+ ":" + sP.forceCrouch + ":" + sP.hasBlueKey + ":" + sP.hasRedKey + ":" + sP.hasGreenKey + ":"
+						+ sP.hasYellowKey + ":" + sP.resurrections + ":" + sP.weaponEquipped + ":";
+
+				// Weapons this player should have
+				for (int j = 0; j < sP.weapons.length; j++) {
+					Weapon w = sP.weapons[j];
+					int size = w.cartridges.size();
+
+					dataString += w.weaponID + "," + w.canBeEquipped + "," + w.dualWield + "," + w.ammo;
+
+					if (w.canBeEquipped) {
+						// System.out.println(w.weaponID + ":" + w.dualWield);
+					}
+
+					for (int k = 0; k < size; k++) {
+						int cartSize = w.cartridges.get(k).ammo;
+						dataString += "," + cartSize;
+					}
+
+					if (j < sP.weapons.length - 1) {
+						dataString += "-";
+					}
+				}
+
+				dataString += ":";
+
+				// All messages that should have been displayed this tick for the client.
+				for (int j = 0; j < sP.clientMessages.size(); j++) {
+					PopUp p = sP.clientMessages.get(j);
+
+					if (j == sP.clientMessages.size() - 2) {
+						dataString += p.getText();
+					} else {
+						dataString += p.getText() + "-";
+					}
+				}
+
+				if (sP.clientMessages.size() == 0) {
+					dataString += "-1";
+				}
+
+				dataString += ":";
+				sP.clientMessages = new ArrayList<PopUp>();
+
+				// Any audio files that were supposed to be activated this tick for the client.
+				for (int j = 0; j < sP.audioToPlay.size(); j++) {
+					String s = sP.audioToPlay.get(j);
+
+					if (j == sP.audioToPlay.size() - 2) {
+						dataString += s;
+					} else {
+						dataString += s + "-";
+					}
+				}
+
+				if (sP.audioToPlay.size() == 0) {
+					dataString += "-1";
+				}
+
+				dataString += ":";
+				sP.audioToPlay = new ArrayList<String>();
+
+				// Any audio files that were supposed to be activated have a distance from the
+				// player
+				// that they were activated from to seem realistic.s
+				for (int j = 0; j < sP.audioDistances.size(); j++) {
+					int dist = sP.audioDistances.get(j).intValue();
+
+					if (j == sP.audioDistances.size() - 2) {
+						dataString += dist;
+					} else {
+						dataString += dist + "-";
+					}
+				}
+
+				if (sP.audioDistances.size() == 0) {
+					dataString += "-1";
+				}
+
+				dataString += ";";
+				sP.audioDistances = new ArrayList<Integer>();
 			} else {
 
 				dataString += "Client:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + clientID + ":" + sP.health + ":"
@@ -475,6 +559,87 @@ public class ClientThread implements Runnable {
 				b.upRotation = Double.parseDouble(boolets[7]); // uprotation
 				b.clientID = clientID;
 			}
+		}
+
+		String currentSection = elements[2];
+		playerList = currentSection.split(";");
+
+		for (String player : playerList) {
+			String[] attributes = player.split(":");
+			ServerPlayer serverP = Game.otherPlayers.get(Integer.parseInt(attributes[4]));
+
+			serverP.x = Double.parseDouble(attributes[1]);
+			serverP.y = Double.parseDouble(attributes[2]);
+			serverP.z = Double.parseDouble(attributes[3]);
+			serverP.ID = Integer.parseInt(attributes[4]);
+			serverP.health = Integer.parseInt(attributes[5]);
+			serverP.maxHealth = Integer.parseInt(attributes[6]);
+			serverP.armor = Integer.parseInt(attributes[7]);
+			serverP.environProtectionTime = Integer.parseInt(attributes[8]);
+			serverP.immortality = Integer.parseInt(attributes[9]);
+			serverP.vision = Integer.parseInt(attributes[10]);
+			serverP.invisibility = Integer.parseInt(attributes[11]);
+			serverP.height = Double.parseDouble(attributes[12]);
+			serverP.rotation = Double.parseDouble(attributes[13]);
+			serverP.xEffects = Double.parseDouble(attributes[14]);
+			serverP.yEffects = Double.parseDouble(attributes[15]);
+			serverP.zEffects = Double.parseDouble(attributes[16]);
+			serverP.alive = Boolean.parseBoolean(attributes[17]);
+			serverP.kills = Integer.parseInt(attributes[18]);
+			serverP.deaths = Integer.parseInt(attributes[19]);
+			serverP.forceCrouch = Boolean.parseBoolean(attributes[20]);
+			serverP.hasBlueKey = Boolean.parseBoolean(attributes[21]);
+			serverP.hasRedKey = Boolean.parseBoolean(attributes[22]);
+			serverP.hasGreenKey = Boolean.parseBoolean(attributes[23]);
+			serverP.hasYellowKey = Boolean.parseBoolean(attributes[24]);
+			serverP.resurrections = Integer.parseInt(attributes[25]);
+			serverP.weaponEquipped = Integer.parseInt(attributes[26]);
+
+			weapons = attributes[27].split("-");
+			/*
+			 * For each weapon, load in its attributes depending on what they were when the
+			 * game was saved.
+			 */
+			for (int i = 0; i < weapons.length; i++) {
+				Weapon w = serverP.weapons[i];
+
+				String[] weaponStats = weapons[i].split(",");
+
+				int size = weaponStats.length - 4;
+
+				w.weaponID = Integer.parseInt(weaponStats[0]);
+				w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
+				w.dualWield = Boolean.parseBoolean(weaponStats[2]);
+				w.ammo = Integer.parseInt(weaponStats[3]);
+
+				for (int j = 0; j < size; j++) {
+					w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[4 + j])));
+				}
+			}
+
+			// Pop up messages are added immediately
+			String[] messages = attributes[28].split("-");
+
+			if (!messages[0].trim().equals("-1")) {
+				for (String message : messages) {
+					if (!message.trim().equals("1") && !message.trim().equals("")) {
+						serverP.clientMessages.add(new PopUp(message));
+					}
+				}
+			}
+
+			// Audio stuff that should also be played immediately every tick
+			String[] audioNames = attributes[29].split("-");
+			String[] distances = attributes[20].split("-");
+
+			if (!audioNames[0].trim().equals("-1") && !distances[0].trim().equals("-1")
+					&& audioNames.length == distances.length) {
+				for (int i = 0; i < audioNames.length; i++) {
+					serverP.audioToPlay.add(audioNames[i]);
+					serverP.audioDistances.add(new Integer(distances[i]));
+				}
+			}
+			Game.otherPlayers.set(serverP.ID, serverP);
 		}
 
 		// TODO Below is the code from when I loaded information from a file for the

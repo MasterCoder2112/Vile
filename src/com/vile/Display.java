@@ -66,7 +66,7 @@ public class Display extends Canvas implements Runnable {
 	private static final long serialVersionUID = 1L;
 
 	// Version Number
-	private static final double versionNumber = 1.6;
+	private static final double versionNumber = 1.7;
 
 	// Frame Width and height
 	public static int HEIGHT = 600;
@@ -77,7 +77,7 @@ public class Display extends Canvas implements Runnable {
 	public static int screenWidth = 0;
 
 	// Frame title
-	public static final String TITLE = "Vile Alpha " + versionNumber + " Dev 3";
+	public static final String TITLE = "Vile Alpha " + versionNumber;
 
 	// Is music audio on?
 	public static boolean audioOn = false;
@@ -892,13 +892,84 @@ public class Display extends Canvas implements Runnable {
 
 							} else {
 								ServerPlayer sP = new ServerPlayer();
+
+								currentSection = sections[1];
+								entitiesOfType = currentSection.split(";");
+
 								sP.x = Double.parseDouble(attributes[1]);
 								sP.y = Double.parseDouble(attributes[2]);
 								sP.z = Double.parseDouble(attributes[3]);
 								sP.ID = Integer.parseInt(attributes[4]);
-								Game.otherPlayers.add(sP);
-							}
+								sP.health = Integer.parseInt(attributes[5]);
+								sP.maxHealth = Integer.parseInt(attributes[6]);
+								sP.armor = Integer.parseInt(attributes[7]);
+								sP.environProtectionTime = Integer.parseInt(attributes[8]);
+								sP.immortality = Integer.parseInt(attributes[9]);
+								sP.vision = Integer.parseInt(attributes[10]);
+								sP.invisibility = Integer.parseInt(attributes[11]);
+								sP.height = Double.parseDouble(attributes[12]);
+								sP.rotation = Double.parseDouble(attributes[13]);
+								sP.xEffects = Double.parseDouble(attributes[14]);
+								sP.yEffects = Double.parseDouble(attributes[15]);
+								sP.zEffects = Double.parseDouble(attributes[16]);
+								sP.alive = Boolean.parseBoolean(attributes[17]);
+								sP.kills = Integer.parseInt(attributes[18]);
+								sP.deaths = Integer.parseInt(attributes[19]);
+								sP.forceCrouch = Boolean.parseBoolean(attributes[20]);
+								sP.hasBlueKey = Boolean.parseBoolean(attributes[21]);
+								sP.hasRedKey = Boolean.parseBoolean(attributes[22]);
+								sP.hasGreenKey = Boolean.parseBoolean(attributes[23]);
+								sP.hasYellowKey = Boolean.parseBoolean(attributes[24]);
+								sP.resurrections = Integer.parseInt(attributes[25]);
+								sP.weaponEquipped = Integer.parseInt(attributes[26]);
 
+								String[] weapons = attributes[27].split("-");
+								/*
+								 * For each weapon, load in its attributes depending on what they were when the
+								 * game was saved.
+								 */
+								for (int i = 0; i < weapons.length; i++) {
+									Weapon w = sP.weapons[i];
+
+									String[] weaponStats = weapons[i].split(",");
+
+									int size = weaponStats.length - 4;
+
+									w.weaponID = Integer.parseInt(weaponStats[0]);
+									w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
+									w.dualWield = Boolean.parseBoolean(weaponStats[2]);
+									w.ammo = Integer.parseInt(weaponStats[3]);
+
+									for (int j = 0; j < size; j++) {
+										w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[4 + j])));
+									}
+								}
+
+								// Pop up messages are added immediately
+								String[] messages = attributes[28].split("-");
+
+								if (!messages[0].trim().equals("-1")) {
+									for (String message : messages) {
+										if (!message.trim().equals("1") && !message.trim().equals("")) {
+											sP.clientMessages.add(new PopUp(message));
+										}
+									}
+								}
+
+								// Audio stuff that should also be played immediately every tick
+								String[] audioNames = attributes[29].split("-");
+								String[] distances = attributes[20].split("-");
+
+								if (!audioNames[0].trim().equals("-1") && !distances[0].trim().equals("-1")
+										&& audioNames.length == distances.length) {
+									for (int i = 0; i < audioNames.length; i++) {
+										sP.audioToPlay.add(audioNames[i]);
+										sP.audioDistances.add(new Integer(distances[i]));
+									}
+								}
+								Game.otherPlayers.set(sP.ID, sP);
+
+							}
 						}
 
 						// TODO Set up blocks on the level now
@@ -1024,11 +1095,82 @@ public class Display extends Canvas implements Runnable {
 
 							} else {
 								ServerPlayer sP = new ServerPlayer();
+
+								currentSection = sections[1];
+								entitiesOfType = currentSection.split(";");
+
 								sP.x = Double.parseDouble(attributes[1]);
 								sP.y = Double.parseDouble(attributes[2]);
 								sP.z = Double.parseDouble(attributes[3]);
 								sP.ID = Integer.parseInt(attributes[4]);
-								Game.otherPlayers.add(sP);
+								sP.health = Integer.parseInt(attributes[5]);
+								sP.maxHealth = Integer.parseInt(attributes[6]);
+								sP.armor = Integer.parseInt(attributes[7]);
+								sP.environProtectionTime = Integer.parseInt(attributes[8]);
+								sP.immortality = Integer.parseInt(attributes[9]);
+								sP.vision = Integer.parseInt(attributes[10]);
+								sP.invisibility = Integer.parseInt(attributes[11]);
+								sP.height = Double.parseDouble(attributes[12]);
+								sP.rotation = Double.parseDouble(attributes[13]);
+								sP.xEffects = Double.parseDouble(attributes[14]);
+								sP.yEffects = Double.parseDouble(attributes[15]);
+								sP.zEffects = Double.parseDouble(attributes[16]);
+								sP.alive = Boolean.parseBoolean(attributes[17]);
+								sP.kills = Integer.parseInt(attributes[18]);
+								sP.deaths = Integer.parseInt(attributes[19]);
+								sP.forceCrouch = Boolean.parseBoolean(attributes[20]);
+								sP.hasBlueKey = Boolean.parseBoolean(attributes[21]);
+								sP.hasRedKey = Boolean.parseBoolean(attributes[22]);
+								sP.hasGreenKey = Boolean.parseBoolean(attributes[23]);
+								sP.hasYellowKey = Boolean.parseBoolean(attributes[24]);
+								sP.resurrections = Integer.parseInt(attributes[25]);
+								sP.weaponEquipped = Integer.parseInt(attributes[26]);
+
+								String[] weapons = attributes[27].split("-");
+								/*
+								 * For each weapon, load in its attributes depending on what they were when the
+								 * game was saved.
+								 */
+								for (int i = 0; i < weapons.length; i++) {
+									Weapon w = sP.weapons[i];
+
+									String[] weaponStats = weapons[i].split(",");
+
+									int size = weaponStats.length - 4;
+
+									w.weaponID = Integer.parseInt(weaponStats[0]);
+									w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
+									w.dualWield = Boolean.parseBoolean(weaponStats[2]);
+									w.ammo = Integer.parseInt(weaponStats[3]);
+
+									for (int j = 0; j < size; j++) {
+										w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[4 + j])));
+									}
+								}
+
+								// Pop up messages are added immediately
+								String[] messages = attributes[28].split("-");
+
+								if (!messages[0].trim().equals("-1")) {
+									for (String message : messages) {
+										if (!message.trim().equals("1") && !message.trim().equals("")) {
+											sP.clientMessages.add(new PopUp(message));
+										}
+									}
+								}
+
+								// Audio stuff that should also be played immediately every tick
+								String[] audioNames = attributes[29].split("-");
+								String[] distances = attributes[20].split("-");
+
+								if (!audioNames[0].trim().equals("-1") && !distances[0].trim().equals("-1")
+										&& audioNames.length == distances.length) {
+									for (int i = 0; i < audioNames.length; i++) {
+										sP.audioToPlay.add(audioNames[i]);
+										sP.audioDistances.add(new Integer(distances[i]));
+									}
+								}
+								Game.otherPlayers.set(sP.ID, sP);
 							}
 
 							// System.out.println("Client effects: " + Player.xEffects + " : " +
@@ -1324,6 +1466,95 @@ public class Display extends Canvas implements Runnable {
 					for (Bullet b : Game.bulletsAdded) {
 						fromUser += b.damage + ":" + b.speed + ":" + b.x + ":" + b.y + ":" + b.z + ":" + b.ID + ":"
 								+ Player.rotation + ":" + b.upRotation + ";";
+					}
+
+					for (ServerPlayer sP : Game.otherPlayers) {
+						fromUser += "Player:" + sP.x + ":" + sP.y + ":" + sP.z + ":" + sP.ID + ":" + sP.health + ":"
+								+ sP.maxHealth + ":" + sP.armor + ":" + sP.environProtectionTime + ":" + sP.immortality
+								+ ":" + sP.vision + ":" + sP.invisibility + ":" + sP.height + ":" + sP.rotation + ":"
+								+ sP.xEffects + ":" + sP.yEffects + ":" + sP.zEffects + ":" + sP.alive + ":" + sP.kills
+								+ ":" + sP.deaths + ":" + sP.forceCrouch + ":" + sP.hasBlueKey + ":" + sP.hasRedKey
+								+ ":" + sP.hasGreenKey + ":" + sP.hasYellowKey + ":" + sP.resurrections + ":"
+								+ sP.weaponEquipped + ":";
+
+						// Weapons this player should have
+						for (int j = 0; j < sP.weapons.length; j++) {
+							Weapon w = sP.weapons[j];
+							int size = w.cartridges.size();
+
+							fromUser += w.weaponID + "," + w.canBeEquipped + "," + w.dualWield + "," + w.ammo;
+
+							if (w.canBeEquipped) {
+								// System.out.println(w.weaponID + ":" + w.dualWield);
+							}
+
+							for (int k = 0; k < size; k++) {
+								int cartSize = w.cartridges.get(k).ammo;
+								fromUser += "," + cartSize;
+							}
+
+							if (j < sP.weapons.length - 1) {
+								fromUser += "-";
+							}
+						}
+
+						fromUser += ":";
+
+						// All messages that should have been displayed this tick for the client.
+						for (int j = 0; j < sP.clientMessages.size(); j++) {
+							PopUp p = sP.clientMessages.get(j);
+
+							if (j == sP.clientMessages.size() - 2) {
+								fromUser += p.getText();
+							} else {
+								fromUser += p.getText() + "-";
+							}
+						}
+
+						if (sP.clientMessages.size() == 0) {
+							fromUser += "-1";
+						}
+
+						fromUser += ":";
+						sP.clientMessages = new ArrayList<PopUp>();
+
+						// Any audio files that were supposed to be activated this tick for the client.
+						for (int j = 0; j < sP.audioToPlay.size(); j++) {
+							String s = sP.audioToPlay.get(j);
+
+							if (j == sP.audioToPlay.size() - 2) {
+								fromUser += s;
+							} else {
+								fromUser += s + "-";
+							}
+						}
+
+						if (sP.audioToPlay.size() == 0) {
+							fromUser += "-1";
+						}
+
+						fromUser += ":";
+						sP.audioToPlay = new ArrayList<String>();
+
+						// Any audio files that were supposed to be activated have a distance from the
+						// player
+						// that they were activated from to seem realistic.s
+						for (int j = 0; j < sP.audioDistances.size(); j++) {
+							int dist = sP.audioDistances.get(j).intValue();
+
+							if (j == sP.audioDistances.size() - 2) {
+								fromUser += dist;
+							} else {
+								fromUser += dist + "-";
+							}
+						}
+
+						if (sP.audioDistances.size() == 0) {
+							fromUser += "-1";
+						}
+
+						fromUser += ";";
+						sP.audioDistances = new ArrayList<Integer>();
 					}
 
 					// If game is supposed to be quit, then call the stop method

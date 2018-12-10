@@ -390,6 +390,10 @@ public class Enemy extends Entity implements Comparable {
 		// Morgoth
 		else if (ID == 6) {
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.MEGAHEALTH.getID(), 0, 0, "");
+
+			for (int i = 0; i < 10; i++) {
+				new Item(2, xPos, -yPos * 10, zPos, ItemNames.UPGRADE.getID(), 0, 0, "");
+			}
 		}
 		// Vile Warrior
 		else if (ID == 7) {
@@ -398,10 +402,14 @@ public class Enemy extends Entity implements Comparable {
 		// Belegoth
 		else if (ID == 8) {
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.GREENKEY.getID(), 0, 0, "");
+
+			for (int i = 0; i < 10; i++) {
+				new Item(2, xPos, -yPos * 10, zPos, ItemNames.UPGRADE.getID(), 0, 0, "");
+			}
 		}
 
 		// Create random number from 0 to 99
-		int temp = random.nextInt(100);
+		int temp = random.nextInt(101);
 
 		// Random drops. Rare chances that they'll drop with
 		// Everything else.
@@ -423,6 +431,8 @@ public class Enemy extends Entity implements Comparable {
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.HEALTHPACK.getID(), 0, 0, "");
 		} else if (temp == 90) {
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHOTGUN.getID(), 0, 0, "");
+		} else if (temp == 100) {
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.UPGRADE.getID(), 0, 0, "");
 		}
 
 		// Add corpse to the map

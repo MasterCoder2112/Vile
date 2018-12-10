@@ -57,12 +57,6 @@ public class HurtingBlock extends Item {
 	@Override
 	public boolean activate() {
 
-		// TODO this is currently failing for some reason so it is temporarily removed
-		// for project
-		if (true) {
-			return false;
-		}
-
 		// The block this item correlates to
 		Block temp = Level.getBlock(blockX, blockZ);
 
