@@ -50,9 +50,6 @@ public class Controller {
 	private boolean inJump = false;
 	private boolean crouching = false;
 
-	// If crouching while falling, only increase damage once
-	private boolean once = false;
-
 	// Whether certain weapons are to be switched to or not
 	// They are static so that switching through the mouse
 	// wheel also works
@@ -383,8 +380,12 @@ public class Controller {
 			 */
 			if (fallAmount > Player.jumpHeight * 2 && Math.abs(Player.y - Player.maxHeight) <= 0) {
 				if (!Player.godModeOn && Player.immortality == 0 && !Player.flyOn) {
-					Player.health -= (int) (10 * (fallAmount / 25));
+					Player.hurtPlayer((int) (10 * (fallAmount / 25)));
 					SoundController.crushed.playAudioFile(0);
+
+					if (Player.health <= 0) {
+						Display.messages.add(new PopUp("Player fell to a clumsy death!"));
+					}
 				}
 
 				fallAmount = 0;

@@ -1,5 +1,7 @@
 package com.vile.entities;
 
+import com.vile.Display;
+import com.vile.PopUp;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
@@ -71,11 +73,19 @@ public class HurtingBlock extends Item {
 			if (blockType == 0) {
 				// Only deals damage of 2
 				Player.hurtPlayer(2);
+
+				if (Player.health <= 0) {
+					Display.messages.add(new PopUp("Player got mutated by the toxic waste!"));
+				}
 			}
 			// Lava
 			else {
 				// Deals damage of 5
 				Player.hurtPlayer(5);
+
+				if (Player.health <= 0) {
+					Display.messages.add(new PopUp("Player melted in the lava!"));
+				}
 			}
 		}
 

@@ -581,7 +581,7 @@ public abstract class Projectile {
 
 					// If Player died to an enemy projectile, depending on the enemy display
 					// a particular death message
-					if (!Player.alive) {
+					if (Player.health <= 0) {
 						int enemyID = sourceEnemy.ID;
 
 						if (!Display.smileMode) {

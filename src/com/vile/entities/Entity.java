@@ -4,6 +4,7 @@ import java.util.Random;
 
 import com.vile.Display;
 import com.vile.Game;
+import com.vile.PopUp;
 import com.vile.SoundController;
 import com.vile.graphics.Render;
 import com.vile.graphics.Render3D;
@@ -470,6 +471,76 @@ public abstract class Entity {
 				// If target is Player
 				if (distanceFromPlayer <= 1 && targetEnemy == null) {
 					Player.hurtPlayer(damage);
+
+					if (Player.health <= 0) {
+						if (!Display.smileMode) {
+							switch (ID) {
+							case (1):
+								Display.messages.add(new PopUp("You were chomped by a Brainomorph!"));
+								break;
+							case (2):
+								Display.messages.add(new PopUp("You were ground to a pulp by a Sentinel!"));
+								break;
+							case (3):
+								Display.messages.add(new PopUp("You were turned to ash by a Mutated Commando!"));
+								break;
+							case (4):
+								Display.messages.add(new PopUp("You were taken to the underworld by a Reaper!"));
+								break;
+							case (5):
+								Display.messages.add(new PopUp("You were sacrificed by a Magistrate!"));
+								break;
+							case (6):
+								Display.messages.add(new PopUp("Morgoth has made you his minion!"));
+								break;
+							case (7):
+								Display.messages.add(new PopUp("You were slashed by a Vile Warrior!"));
+								break;
+							case (8):
+								Display.messages.add(new PopUp("Belegoth utterly decimated you!"));
+								break;
+							case (9):
+								Display.messages.add(new PopUp("The Watcher saw you..."));
+								break;
+							default:
+								Display.messages.add(new PopUp("You were killed by the enemy!"));
+								break;
+							}
+						} else {
+							switch (ID) {
+							case (1):
+								Display.messages.add(new PopUp("Crying man brought you to tears!"));
+								break;
+							case (2):
+								Display.messages.add(new PopUp("You became confused by the Confuser!"));
+								break;
+							case (3):
+								Display.messages.add(new PopUp("That was not sick of him to do to you!"));
+								break;
+							case (4):
+								Display.messages.add(new PopUp("Anger has filled you with too much rage!"));
+								break;
+							case (5):
+								Display.messages.add(new PopUp("You became depressed by another depressed person!"));
+								break;
+							case (6):
+								Display.messages.add(new PopUp("Trauma has caused you to become bewildered!"));
+								break;
+							case (7):
+								Display.messages.add(new PopUp("You were made sad by a sad guy!"));
+								break;
+							case (8):
+								Display.messages.add(new PopUp("Angorth has made you better... haha"));
+								break;
+							case (9):
+								Display.messages.add(new PopUp("Paranoia has seen you..."));
+								break;
+							default:
+								Display.messages.add(new PopUp("You were made depressed by the enemy!"));
+								break;
+							}
+						}
+					}
 				}
 				// If target is not player, then the enemy attacks the
 				// other enemy, and causes that enemy to want to attack

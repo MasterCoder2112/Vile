@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.vile.Display;
 import com.vile.Game;
+import com.vile.PopUp;
 import com.vile.SoundController;
 import com.vile.graphics.Render3D;
 import com.vile.levelGenerator.Block;
@@ -213,6 +214,10 @@ public class Explosion {
 
 			if (Player.immortality == 0 && !Player.godModeOn) {
 				Player.hurtPlayer(damage);
+
+				if (Player.health <= 0) {
+					Display.messages.add(new PopUp("Player turned to dust by an explosion!"));
+				}
 			}
 		}
 
