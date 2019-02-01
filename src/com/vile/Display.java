@@ -33,7 +33,7 @@ import javax.swing.JFrame;
 
 import com.vile.entities.Bullet;
 import com.vile.entities.Cartridge;
-import com.vile.entities.Entity;
+import com.vile.entities.EntityParent;
 import com.vile.entities.Explosion;
 import com.vile.entities.ExplosiveCanister;
 import com.vile.entities.Item;
@@ -142,6 +142,12 @@ public class Display extends Canvas implements Runnable {
 	private BufferedImage redKey;
 	private BufferedImage blueKey;
 	private BufferedImage greenKey;
+	private BufferedImage decietScepter;
+	private BufferedImage decietScepter1;
+	private BufferedImage decietScepter2;
+	private BufferedImage decietScepter3;
+	private BufferedImage decietScepter4;
+	private BufferedImage frozenFace;
 	private BufferedImage HUD;
 	private BufferedImage healthyFace1;
 	private BufferedImage healthyFace2;
@@ -187,6 +193,10 @@ public class Display extends Canvas implements Runnable {
 	private BufferedImage pistolRight3;
 	private BufferedImage pistolRight4;
 	private BufferedImage pistolRight5;
+	private BufferedImage weaponUpgradePoint1;
+	private BufferedImage weaponUpgradePoint2;
+	private BufferedImage weaponUpgradePoint3;
+	private BufferedImage weaponUpgradePoint4;
 
 	/*
 	 * Sets up a string that can change and disappears after 100 ticks about the
@@ -226,6 +236,8 @@ public class Display extends Canvas implements Runnable {
 	// Used so the inputStream can be closed for music after you pause or
 	// start a new game
 	public static AudioInputStream inputStream;
+
+	private int hudMovementTick = 0;
 
 	/**
 	 * Creates a new display by setting up the screen and its dimensions, sets up
@@ -462,6 +474,19 @@ public class Display extends Canvas implements Runnable {
 
 				// New Game and map. Sets up music for that map too
 				if (gameType == 2) {
+					// If themes aren't the same, then reset the sounds. Otherwise it won't
+					if (!currentTheme.equals(FPSLauncher.themeName))
+					// if(currentTheme.equals(""))
+					{
+						try {
+							soundController.resetSounds();
+						} catch (Exception e) {
+						}
+						// Loads all sounds and files
+						soundController = null;
+						soundController = new SoundController();
+					}
+
 					game = new Game(this, nonDefaultMap, newMapName);
 				}
 
@@ -1096,7 +1121,7 @@ public class Display extends Canvas implements Runnable {
 							} else {
 								ServerPlayer sP = new ServerPlayer();
 
-								currentSection = sections[1];
+								currentSection = sections[0];
 								entitiesOfType = currentSection.split(";");
 
 								sP.x = Double.parseDouble(attributes[1]);
@@ -1340,7 +1365,7 @@ public class Display extends Canvas implements Runnable {
 						requestFocus();
 					}
 
-					Entity.checkSight = true;
+					EntityParent.checkSight = true;
 
 					if (smoothFPS) {
 						tick();
@@ -1640,7 +1665,7 @@ public class Display extends Canvas implements Runnable {
 					requestFocus();
 				}
 
-				Entity.checkSight = true;
+				EntityParent.checkSight = true;
 
 				if (smoothFPS) {
 					tick();
@@ -1941,6 +1966,11 @@ public class Display extends Canvas implements Runnable {
 				}
 			}
 
+			// If player is frozen
+			if (Player.frozen > 0) {
+				face = frozenFace;
+			}
+
 			// Update facePhase (direction face looks etc...)
 			facePhase++;
 
@@ -1982,6 +2012,16 @@ public class Display extends Canvas implements Runnable {
 					gun = pistolRight1;
 				}
 
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = pistolRight3;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = pistolRight4;
+					} else if (playerWeapon.reloading > 0) {
+						gun = pistolRight5;
+					}
+				}
+
 				// If dual wielding show second pistol
 				if (playerWeapon.dualWield == true) {
 					BufferedImage gun2 = pistolLeft1;
@@ -1996,6 +2036,16 @@ public class Display extends Canvas implements Runnable {
 						gun2 = pistolLeft5;
 					} else {
 						gun2 = pistolLeft1;
+					}
+
+					if (playerWeapon.reloading > 0) {
+						if (playerWeapon.reloading >= 20) {
+							gun2 = pistolLeft3;
+						} else if (playerWeapon.reloading >= 10) {
+							gun2 = pistolLeft4;
+						} else if (playerWeapon.reloading > 0) {
+							gun2 = pistolLeft5;
+						}
 					}
 
 					// Only draw gun if player is alive
@@ -2020,6 +2070,17 @@ public class Display extends Canvas implements Runnable {
 				} else {
 					gun = gunNormal;
 				}
+
+				// If the weapon is reloading, draw different graphics
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = gunShot3;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = gunShot4;
+					} else if (playerWeapon.reloading > 0) {
+						gun = gunShot3;
+					}
+				}
 			}
 			// Phase Cannon
 			else if (playerWeapon.weaponID == 2) {
@@ -2031,6 +2092,17 @@ public class Display extends Canvas implements Runnable {
 					gun = phaseCannon4;
 				} else {
 					gun = phaseCannon1;
+				}
+
+				// If the weapon is reloading, draw different graphics
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = phaseCannon3;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = phaseCannon2;
+					} else if (playerWeapon.reloading > 0) {
+						gun = phaseCannon1;
+					}
 				}
 			}
 			// Rocket Launcher
@@ -2045,6 +2117,42 @@ public class Display extends Canvas implements Runnable {
 					gun = rocketLauncher4;
 				} else {
 					gun = rocketLauncher;
+				}
+
+				// If the weapon is reloading, draw different graphics
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = rocketLauncher;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = rocketLauncher4;
+					} else if (playerWeapon.reloading > 0) {
+						gun = rocketLauncher;
+					}
+				}
+			}
+			// Scepter of Deciet
+			else if (playerWeapon.weaponID == 4) {
+				if (playerWeapon.weaponPhase == 1) {
+					gun = decietScepter1;
+				} else if (playerWeapon.weaponPhase == 2) {
+					gun = decietScepter2;
+				} else if (playerWeapon.weaponPhase == 3) {
+					gun = decietScepter3;
+				} else if (playerWeapon.weaponPhase == 4) {
+					gun = decietScepter4;
+				} else {
+					gun = decietScepter;
+				}
+
+				// If the weapon is reloading, draw different graphics
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = decietScepter1;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = decietScepter4;
+					} else if (playerWeapon.reloading > 0) {
+						gun = decietScepter;
+					}
 				}
 			}
 
@@ -2074,6 +2182,29 @@ public class Display extends Canvas implements Runnable {
 		if (Player.hasYellowKey) {
 			g.drawImage(yellowKey, (WIDTH / 2) + 135, HEIGHT - gC + 23, 10, 20, null);
 		}
+
+		// For the weapon Upgrade points
+		// TODO make look correct
+		if (hudMovementTick <= 8) {
+			g.drawImage(weaponUpgradePoint1, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+		} else if (hudMovementTick <= 16) {
+			g.drawImage(weaponUpgradePoint2, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+		} else if (hudMovementTick <= 24) {
+			g.drawImage(weaponUpgradePoint3, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+		} else if (hudMovementTick <= 32) {
+			g.drawImage(weaponUpgradePoint4, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+		} else {
+			g.drawImage(weaponUpgradePoint1, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+			hudMovementTick = 0;
+		}
+
+		g.drawString(" " + Player.upgradePoints, (WIDTH / 2) + 100, HEIGHT - gC + 85);
+		g.drawString("Upgrade weapon (" + Player.weapons[Player.weaponEquipped].upgradePointsNeeded + " points)",
+				(WIDTH / 2) + 150, HEIGHT - gC + 65);
+		g.drawString("Current weapon damage: " + Player.weapons[Player.weaponEquipped].damage + "hp", (WIDTH / 2) + 150,
+				HEIGHT - gC + 85);
+
+		hudMovementTick++;
 
 		// Shows the FPS on the screen if it is activated to show
 		if (Controller.showFPS) {
@@ -2130,11 +2261,16 @@ public class Display extends Canvas implements Runnable {
 					g.drawString("Peace Cells: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390, HEIGHT - gC + 43);
 
 					g.drawString("Peace Charges: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
-				} else {
+				} else if (playerWeapon.weaponID == 3) {
 					g.drawString("Teddy Bear Casings: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
 							HEIGHT - gC + 43);
 
 					g.drawString("Teddy Bears: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+				} else if (playerWeapon.weaponID == 4) {
+					g.drawString("Happiness Cores: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
+							HEIGHT - gC + 43);
+
+					g.drawString("Happy Blasts: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
 				}
 
 				/*
@@ -2151,8 +2287,11 @@ public class Display extends Canvas implements Runnable {
 					} else if (playerWeapon.weaponID == 2) {
 						g.drawString("Peace in Cell: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
 								HEIGHT - gC + 18);
-					} else {
+					} else if (playerWeapon.weaponID == 3) {
 						g.drawString("Teddy Bears in Casing: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
+								HEIGHT - gC + 18);
+					} else if (playerWeapon.weaponID == 4) {
+						g.drawString("Happy Blasts in Core: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
 								HEIGHT - gC + 18);
 					}
 				} else {
@@ -2162,8 +2301,10 @@ public class Display extends Canvas implements Runnable {
 						g.drawString("Joy in Casing: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 2) {
 						g.drawString("Peace in Cell: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
-					} else {
+					} else if (playerWeapon.weaponID == 3) {
 						g.drawString("Teddy Bears in Casing: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+					} else if (playerWeapon.weaponID == 4) {
+						g.drawString("Happy Blasts in Core: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
 					}
 				}
 			} else {
@@ -2185,11 +2326,16 @@ public class Display extends Canvas implements Runnable {
 					g.drawString("Phase Cells: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390, HEIGHT - gC + 43);
 
 					g.drawString("Phase Charges: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
-				} else {
+				} else if (playerWeapon.weaponID == 3) {
 					g.drawString("Rocket Casings: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
 							HEIGHT - gC + 43);
 
 					g.drawString("Rockets: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+				} else if (playerWeapon.weaponID == 4) {
+					g.drawString("Scepter Cores: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
+							HEIGHT - gC + 43);
+
+					g.drawString("Scepter Blasts: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
 				}
 
 				/*
@@ -2206,8 +2352,11 @@ public class Display extends Canvas implements Runnable {
 					} else if (playerWeapon.weaponID == 2) {
 						g.drawString("Charges in Cell: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
 								HEIGHT - gC + 18);
-					} else {
+					} else if (playerWeapon.weaponID == 3) {
 						g.drawString("Rockets in Casing: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
+								HEIGHT - gC + 18);
+					} else if (playerWeapon.weaponID == 4) {
+						g.drawString("Power Blasts in Core: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
 								HEIGHT - gC + 18);
 					}
 				} else {
@@ -2217,8 +2366,10 @@ public class Display extends Canvas implements Runnable {
 						g.drawString("Shells in Casing: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 2) {
 						g.drawString("Charges in Cell: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
-					} else {
+					} else if (playerWeapon.weaponID == 3) {
 						g.drawString("Rockets in Casing: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+					} else if (playerWeapon.weaponID == 4) {
+						g.drawString("Power Blasts in Core: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
 					}
 				}
 			}
@@ -2268,11 +2419,11 @@ public class Display extends Canvas implements Runnable {
 			g.drawString("Survival Map", (WIDTH / 2) - 390, HEIGHT - gC + 93);
 
 			if (smileMode) {
-				g.drawString("Unhappy Faces: " + Game.enemies.size(), (WIDTH / 2) + 200, HEIGHT - gC + 43);
+				g.drawString("Unhappy Faces: " + Game.entities.size(), (WIDTH / 2) + 200, HEIGHT - gC + 43);
 
 				g.drawString("Days Made: " + Player.kills, (WIDTH / 2) + 200, HEIGHT - gC + 18);
 			} else {
-				g.drawString("Enemies: " + Game.enemies.size(), (WIDTH / 2) + 200, HEIGHT - gC + 43);
+				g.drawString("Enemies: " + Game.entities.size(), (WIDTH / 2) + 200, HEIGHT - gC + 43);
 
 				g.drawString("Kills: " + Player.kills, (WIDTH / 2) + 200, HEIGHT - gC + 18);
 			}
@@ -2529,6 +2680,231 @@ public class Display extends Canvas implements Runnable {
 			// correctly, then the exception is thrown and the game doesn't display
 			// any texture letting you know something is wrong.
 			blueKey = ImageIO.read(new File("resources/default/textures/hud/blueKey.png"));
+		}
+
+		try {
+			decietScepter = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/decietScepter.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			decietScepter = ImageIO.read(new File("resources/default/textures/hud/decietScepter.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < decietScepter.getWidth(); ++x) {
+			for (int y = 0; y < decietScepter.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((decietScepter.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					decietScepter.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			decietScepter1 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/decietScepter1.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			decietScepter1 = ImageIO.read(new File("resources/default/textures/hud/decietScepter1.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < decietScepter1.getWidth(); ++x) {
+			for (int y = 0; y < decietScepter1.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((decietScepter1.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					decietScepter1.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			decietScepter2 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/decietScepter2.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			decietScepter2 = ImageIO.read(new File("resources/default/textures/hud/decietScepter2.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < decietScepter2.getWidth(); ++x) {
+			for (int y = 0; y < decietScepter2.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((decietScepter2.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					decietScepter2.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			decietScepter3 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/decietScepter3.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			decietScepter3 = ImageIO.read(new File("resources/default/textures/hud/decietScepter3.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < decietScepter3.getWidth(); ++x) {
+			for (int y = 0; y < decietScepter3.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((decietScepter3.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					decietScepter3.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			decietScepter4 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/decietScepter4.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			decietScepter4 = ImageIO.read(new File("resources/default/textures/hud/decietScepter4.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < decietScepter4.getWidth(); ++x) {
+			for (int y = 0; y < decietScepter4.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((decietScepter4.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					decietScepter4.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			weaponUpgradePoint1 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/items/weaponUpgrade1.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			weaponUpgradePoint1 = ImageIO.read(new File("resources/default/textures/hud/weaponUpgrade1.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < weaponUpgradePoint1.getWidth(); ++x) {
+			for (int y = 0; y < weaponUpgradePoint1.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((weaponUpgradePoint1.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					weaponUpgradePoint1.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			weaponUpgradePoint2 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/items/weaponUpgrade2.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			weaponUpgradePoint2 = ImageIO.read(new File("resources/default/textures/hud/weaponUpgrade2.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < weaponUpgradePoint2.getWidth(); ++x) {
+			for (int y = 0; y < weaponUpgradePoint2.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((weaponUpgradePoint2.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					weaponUpgradePoint2.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			weaponUpgradePoint3 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/items/weaponUpgrade3.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			weaponUpgradePoint3 = ImageIO.read(new File("resources/default/textures/hud/weaponUpgrade3.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < weaponUpgradePoint3.getWidth(); ++x) {
+			for (int y = 0; y < weaponUpgradePoint3.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((weaponUpgradePoint3.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					weaponUpgradePoint3.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			weaponUpgradePoint4 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/items/weaponUpgrade4.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			weaponUpgradePoint4 = ImageIO.read(new File("resources/default/textures/hud/weaponUpgrade4.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < weaponUpgradePoint4.getWidth(); ++x) {
+			for (int y = 0; y < weaponUpgradePoint4.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((weaponUpgradePoint4.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					weaponUpgradePoint4.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			frozenFace = ImageIO.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/frozen.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			frozenFace = ImageIO.read(new File("resources/default/textures/hud/frozen.png"));
+		}
+
+		try {
+			frozenFace = ImageIO.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/frozen.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			frozenFace = ImageIO.read(new File("resources/default/textures/hud/frozen.png"));
 		}
 
 		try {

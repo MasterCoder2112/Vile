@@ -8,7 +8,7 @@ import com.vile.entities.Button;
 import com.vile.entities.Corpse;
 import com.vile.entities.Door;
 import com.vile.entities.Elevator;
-import com.vile.entities.Enemy;
+import com.vile.entities.Entity;
 import com.vile.entities.Explosion;
 import com.vile.entities.ExplosiveCanister;
 import com.vile.entities.HurtingBlock;
@@ -151,7 +151,9 @@ public class Level {
 							|| itemID == ItemNames.SHOTGUN.getID() || itemID == ItemNames.BREAKABLEWALL.getID()
 							|| itemID == ItemNames.SECRET.getID() || itemID > 23 && itemID < 44
 							|| itemID >= 47 && itemID != ItemNames.BUTTON.getID() && itemID != 58 && itemID != 59
-									&& itemID != ItemNames.EXPLOSION.getID()) {
+									&& itemID != ItemNames.TURRET.getID() && itemID != ItemNames.EXPLOSION.getID()
+									&& itemID != ItemNames.TOILET.getID() && itemID != 110 && itemID != 111
+									&& itemID != 124) {
 						// Item to be added to the map and block
 						Item temp = null;
 
@@ -282,9 +284,9 @@ public class Level {
 							yValue = 0;
 						}
 
-						Enemy temp = new Enemy(i + 0.5, yValue, j + 0.5, 1, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 1, rotation, itemActID);
 
-						Game.enemies.add(temp);
+						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
 					}
 					// Adds Sentinel enemy
@@ -296,9 +298,9 @@ public class Level {
 							yValue = 0;
 						}
 
-						Enemy temp = new Enemy(i + 0.5, yValue, j + 0.5, 2, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 2, rotation, itemActID);
 
-						Game.enemies.add(temp);
+						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
 					}
 					// Adds Mutated Commando
@@ -310,9 +312,9 @@ public class Level {
 							yValue = 0;
 						}
 
-						Enemy temp = new Enemy(i + 0.5, yValue, j + 0.5, 3, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 3, rotation, itemActID);
 
-						Game.enemies.add(temp);
+						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
 					}
 					// Adds a Reaper
@@ -324,9 +326,9 @@ public class Level {
 							yValue = 0;
 						}
 
-						Enemy temp = new Enemy(i + 0.5, yValue, j + 0.5, 4, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 4, rotation, itemActID);
 
-						Game.enemies.add(temp);
+						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
 					}
 					// Adds Vile Warrior at this location
@@ -338,9 +340,9 @@ public class Level {
 							yValue = 0;
 						}
 
-						Enemy temp = new Enemy(i + 0.5, yValue, j + 0.5, 7, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 7, rotation, itemActID);
 
-						Game.enemies.add(temp);
+						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
 					}
 					// Belegoth is added
@@ -352,9 +354,9 @@ public class Level {
 							yValue = 0;
 						}
 
-						Enemy temp = new Enemy(i + 0.5, yValue, j + 0.5, 8, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 8, rotation, itemActID);
 
-						Game.enemies.add(temp);
+						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
 					}
 					// Adds Magistrate at this location
@@ -366,9 +368,9 @@ public class Level {
 							yValue = 0;
 						}
 
-						Enemy temp = new Enemy(i + 0.5, yValue, j + 0.5, 5, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 5, rotation, itemActID);
 
-						Game.enemies.add(temp);
+						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
 					}
 					// The boss MORGOTH
@@ -380,9 +382,82 @@ public class Level {
 							yValue = 0;
 						}
 
-						Enemy temp = new Enemy(i + 0.5, yValue, j + 0.5, 6, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 6, rotation, itemActID);
 
-						Game.enemies.add(temp);
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Watcher enemy
+					else if (itemID == 111) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 9, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Marine entity
+					else if (itemID == 124) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Random random = new Random();
+						int marineType = random.nextInt(5) + 10;
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, marineType, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Chair entity
+					else if (itemID == ItemNames.CHAIR.getID()) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 15, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Toilet entity
+					else if (itemID == ItemNames.TOILET.getID()) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 16, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Turret entity
+					else if (itemID == ItemNames.TURRET.getID()) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 17, rotation, itemActID);
+
+						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
 					}
 					// Default Corpse
@@ -394,7 +469,7 @@ public class Level {
 							yValue = 0;
 						}
 
-						Game.corpses.add(new Corpse(i + 0.5, j + 0.5, yValue, 0, 0, 0, 0));
+						Game.corpses.add(new Corpse(i + 0.5, j + 0.5, yValue, 0, 0, 0, 0, false));
 					}
 					// Explosion. Just create an instant explosion. For effects
 					else if (itemID == ItemNames.EXPLOSION.getID()) {
@@ -405,7 +480,7 @@ public class Level {
 		}
 
 		// Sets the amount of enemies in the map
-		Game.enemiesInMap = Game.enemies.size();
+		Game.enemiesInMap = Game.entities.size();
 	}
 
 	/**

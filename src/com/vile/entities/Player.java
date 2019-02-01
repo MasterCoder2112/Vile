@@ -42,6 +42,9 @@ public class Player {
 	// How long since player was last hurt
 	public static int playerHurt = 0;
 
+	// How long has player been frozen in place.
+	public static int frozen = 0;
+
 	// Max number of kills in survival
 	public static int maxKills;
 
@@ -114,7 +117,7 @@ public class Player {
 	public static double drunkLevels = 0;
 
 	// Array of weapons player has
-	public static Weapon[] weapons = new Weapon[4];
+	public static Weapon[] weapons = new Weapon[5];
 
 	// ID of the player in case he/she is on a server
 	public static int ID = 0;
@@ -149,6 +152,9 @@ public class Player {
 		environProtectionTime = 0;
 		immortality = 0;
 		vision = 0;
+		drunkLevels = 0;
+		frozen = 0;
+		upgradePoints = 0;
 
 		forceCrouch = false;
 
@@ -156,6 +162,7 @@ public class Player {
 		weapons[1] = new Shotgun();
 		weapons[2] = new PhaseCannon();
 		weapons[3] = new RocketLauncher();
+		weapons[4] = new Scepter();
 		weaponEquipped = 0;
 
 		// TODO for now, always make pistols equippable.
@@ -201,6 +208,13 @@ public class Player {
 		 */
 		if (invisibility > 0) {
 			invisibility--;
+		}
+
+		/*
+		 * Each tick, if player is frozen, take that down by a tick
+		 */
+		if (frozen > 0) {
+			frozen--;
 		}
 
 		// Each tick the player becomes less drunk

@@ -49,8 +49,8 @@ import com.vile.entities.Button;
 import com.vile.entities.Corpse;
 import com.vile.entities.Door;
 import com.vile.entities.Elevator;
-import com.vile.entities.Enemy;
 import com.vile.entities.EnemyFire;
+import com.vile.entities.Entity;
 import com.vile.entities.Explosion;
 import com.vile.entities.Item;
 import com.vile.entities.Player;
@@ -768,7 +768,8 @@ public class FPSLauncher extends JFrame {
 						Weapon w = Player.weapons[i];
 						int size = w.cartridges.size();
 
-						rewrite.write(w.weaponID + ":" + w.canBeEquipped + ":" + w.dualWield + ":" + w.ammo);
+						rewrite.write(w.weaponID + ":" + w.canBeEquipped + ":" + w.dualWield + ":" + w.ammo + ":"
+								+ w.damage + ":" + w.criticalHitChances + ":" + w.upgradePointsNeeded);
 
 						for (int j = 0; j < size; j++) {
 							int cartSize = w.cartridges.get(j).ammo;
@@ -792,14 +793,14 @@ public class FPSLauncher extends JFrame {
 					rewrite.write("Enemies:");
 					rewrite.newLine();
 
-					for (int i = 0; i < Game.enemies.size(); i++) {
-						Enemy en = Game.enemies.get(i);
+					for (int i = 0; i < Game.entities.size(); i++) {
+						Entity en = Game.entities.get(i);
 						rewrite.write(en.health + ":" + en.xPos + ":" + en.yPos + ":" + en.zPos + ":" + en.ID + ":"
 								+ en.itemActivationID + ":" + en.maxHeight + ":" + en.newTarget + ":" + en.targetX + ":"
 								+ en.targetY + ":" + en.targetZ + ":" + en.activated + ":" + en.rotation + ":"
 								+ en.isAttacking + ":" + en.isFiring + ":" + en.isABoss + ":" + en.xEffects + ":"
 								+ en.yEffects + ":" + en.zEffects + ":" + en.tick + ":" + en.tickRound + ":"
-								+ en.tickAmount + ";");
+								+ en.tickAmount + ":" + en.isFriendly + ";");
 					}
 
 					rewrite.newLine();
@@ -807,7 +808,7 @@ public class FPSLauncher extends JFrame {
 					rewrite.newLine();
 
 					for (int i = 0; i < Game.bosses.size(); i++) {
-						Enemy en = Game.bosses.get(i);
+						Entity en = Game.bosses.get(i);
 						rewrite.write(en.health + ":" + en.xPos + ":" + en.yPos + ":" + en.zPos + ":" + en.ID + ":"
 								+ en.itemActivationID + ":" + en.maxHeight + ":" + en.newTarget + ":" + en.targetX + ":"
 								+ en.targetY + ":" + en.targetZ + ":" + en.activated + ":" + en.rotation + ":"

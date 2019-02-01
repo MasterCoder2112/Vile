@@ -4,6 +4,7 @@ import java.util.Random;
 
 import com.vile.Display;
 import com.vile.Game;
+import com.vile.SoundController;
 import com.vile.graphics.Render;
 import com.vile.graphics.Textures;
 import com.vile.launcher.FPSLauncher;
@@ -24,7 +25,7 @@ import com.vile.levelGenerator.Level;
  *         blast, the force still acts on its corpse, so this keeps track of
  *         that.
  */
-public class Corpse extends Entity {
+public class Corpse extends EntityParent {
 	// The usual values
 	// public double x = 0;
 	// public double z = 0;
@@ -54,6 +55,8 @@ public class Corpse extends Entity {
 	// Type of default corpse it is if it is one
 	private int corpseType = 0;
 
+	private boolean repeatAnimation = false;
+
 	/**
 	 * Constructs a new Corpse of a certain x, y, and z value, and the ID of the
 	 * enemy it was before it was killed, or if it was never alive, then use 0.
@@ -63,7 +66,8 @@ public class Corpse extends Entity {
 	 * @param y
 	 * @param enemyID
 	 */
-	public Corpse(double x, double z, double y, int enemyID, double xEffects, double zEffects, double yEffects) {
+	public Corpse(double x, double z, double y, int enemyID, double xEffects, double zEffects, double yEffects,
+			boolean repeatAnimation) {
 		super(100, 0, 0, 0, 1.0 / 21.0, x, y, z, 100, 0, 0);
 		// Set values
 		this.xPos = x;
@@ -73,6 +77,7 @@ public class Corpse extends Entity {
 		this.zEffects = zEffects;
 		this.yEffects = yEffects;
 		this.enemyID = enemyID;
+		this.repeatAnimation = repeatAnimation;
 
 		activated = true;
 		searchMode = false;
@@ -98,6 +103,19 @@ public class Corpse extends Entity {
 	public void tick() {
 		time++;
 
+		distanceFromPlayer = Math.sqrt(((Math.abs(this.getX() - Player.x)) * (Math.abs(this.getX() - Player.x)))
+				+ ((Math.abs(this.getZ() - Player.z)) * (Math.abs(this.getZ() - Player.z))));
+
+		// Reset animation if it is to be repeated
+		if (repeatAnimation && phaseTime == 0) {
+			phaseTime = 24;
+		}
+
+		// Toilet continues to have water rushing
+		if (this.enemyID == 16 && time % 40 == 0) {
+			SoundController.waterSpray.playAudioFile(this.distanceFromPlayer * 4);
+		}
+
 		// Keeps track of corpse image in case resource pack changes
 		if (corpseType == 0) {
 			corpseImage = Textures.defaultCorpse1;
@@ -115,12 +133,12 @@ public class Corpse extends Entity {
 
 		// Don't let the time ticker go too high. Especially
 		// if in smileMode or as a host of a multiplayer game.
-		if (time > 10000 || (time > 1000 && Display.smileMode) || (Display.gameType == 2 && time > 1000)) {
+		if (time > 10000 || (time > 1000 && Display.smileMode) || (Display.gameType == 0 && time > 1000)) {
 			time = 0;
 
 			// If in survival, corpses disappear after a bit
 			// to make the game faster.
-			if (FPSLauncher.gameMode == 1 || Display.smileMode || Display.gameType == 2) {
+			if (FPSLauncher.gameMode == 1 || Display.smileMode || Display.gameType == 0) {
 				Game.corpses.remove(this);
 				return;
 			}

@@ -331,7 +331,7 @@ public class Explosion {
 			 * distance from the explosion.
 			 */
 			for (int j = 0; j < block.entitiesOnBlock.size(); j++) {
-				Entity enemy = block.entitiesOnBlock.get(j);
+				EntityParent enemy = block.entitiesOnBlock.get(j);
 
 				// Self explainatory by now I hope
 				distance = Math.sqrt(((Math.abs(this.x - enemy.xPos)) * (Math.abs(this.x - enemy.xPos)))
@@ -390,29 +390,23 @@ public class Explosion {
 					}
 
 					// If explosion is above the enemy
-					if (-yCorrect > enemy.yPos) {
-						double yForce = Math.abs(yCorrect - (enemy.yPos));
-
-						// A temporary fix
-						// TODO fix this to be realistic
-						yForce = 0.01;
-
-						enemy.yEffects = ((-1 / yForce) * (force / 8));// / enemy.weightLevel;
-					}
-					// If explosion is below the enemy
-					else {
-						double yForce = Math.abs((enemy.yPos) - yCorrect) / 500;
-
-						// A temporary fix
-						// TODO Fix this to be realistic
-						yForce = 0.01;
-
-						enemy.yEffects = ((1 / yForce) * (force / 8));// / enemy.weightLevel;
-					}
-
-					if (enemy.yEffects > 30) {
-						enemy.yEffects = 30;
-					}
+					/*
+					 * if (-yCorrect > enemy.yPos) { double yForce = Math.abs(yCorrect -
+					 * (enemy.yPos));
+					 * 
+					 * // A temporary fix // TODO FIX ALL THIS EVENTUALLY. IT'S KIND OF BROKEN
+					 * yForce = 0.01;
+					 * 
+					 * enemy.yEffects = ((-1 / yForce) * (force / 8));// / enemy.weightLevel; } //
+					 * If explosion is below the enemy else { double yForce = Math.abs((enemy.yPos)
+					 * - yCorrect) / 500;
+					 * 
+					 * // A temporary fix // TODO Fix this to be realistic yForce = 0.01;
+					 * 
+					 * enemy.yEffects = ((1 / yForce) * (force / 8));// / enemy.weightLevel; }
+					 * 
+					 * if (enemy.yEffects > 30) { enemy.yEffects = 30; }
+					 */
 
 					// Hurt the enemy, and activate the enemy
 					enemy.hurt((int) damage, false);
@@ -464,7 +458,7 @@ public class Explosion {
 
 							// Keep track of the enemies on the block before
 							// the block changes
-							ArrayList<Entity> temp = block.entitiesOnBlock;
+							ArrayList<EntityParent> temp = block.entitiesOnBlock;
 							block.wallItems.remove(item);
 							ArrayList<Item> temp2 = block.wallItems;
 
@@ -502,7 +496,7 @@ public class Explosion {
 						if (block.health <= 0) {
 							// Keep track of enemies on block before the
 							// block changes
-							ArrayList<Entity> temp = block.entitiesOnBlock;
+							ArrayList<EntityParent> temp = block.entitiesOnBlock;
 
 							// New non electrified block
 							block = new Block(block.height, 19, block.y * 4, block.x, block.z);
@@ -575,7 +569,7 @@ public class Explosion {
 		// Bosses have a larger hit range so they have to be checked
 		// separate.
 		for (int i = 0; i < Game.bosses.size(); i++) {
-			Enemy boss = Game.bosses.get(i);
+			Entity boss = Game.bosses.get(i);
 
 			// Self explainatory by now I hope
 			distance = Math.sqrt(((Math.abs(this.x - boss.xPos)) * (Math.abs(this.x - boss.xPos)))

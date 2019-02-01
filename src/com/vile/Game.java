@@ -14,9 +14,9 @@ import com.vile.entities.Cartridge;
 import com.vile.entities.Corpse;
 import com.vile.entities.Door;
 import com.vile.entities.Elevator;
-import com.vile.entities.Enemy;
 import com.vile.entities.EnemyFire;
 import com.vile.entities.Entity;
+import com.vile.entities.EntityParent;
 import com.vile.entities.Explosion;
 import com.vile.entities.ExplosiveCanister;
 import com.vile.entities.HitSprite;
@@ -29,6 +29,7 @@ import com.vile.entities.Player;
 import com.vile.entities.Position;
 import com.vile.entities.Projectile;
 import com.vile.entities.RocketLauncher;
+import com.vile.entities.Scepter;
 import com.vile.entities.ServerPlayer;
 import com.vile.entities.Shotgun;
 import com.vile.entities.Weapon;
@@ -96,8 +97,8 @@ public class Game implements Runnable {
 	public static int secretsFound = 0;
 
 	// Keeps track of all different types of items and entities in the map
-	public static ArrayList<Enemy> enemies = new ArrayList<Enemy>();
-	public static ArrayList<Enemy> bosses = new ArrayList<Enemy>();
+	public static ArrayList<Entity> entities = new ArrayList<Entity>();
+	public static ArrayList<Entity> bosses = new ArrayList<Entity>();
 	public static ArrayList<Item> items = new ArrayList<Item>();
 	public static ArrayList<Bullet> bullets = new ArrayList<Bullet>();
 	public static ArrayList<EnemyFire> enemyProjectiles = new ArrayList<EnemyFire>();
@@ -164,8 +165,10 @@ public class Game implements Runnable {
 	public static boolean weaponSlot1;
 	public static boolean weaponSlot2;
 	public static boolean weaponSlot3;
+	public static boolean weaponSlot4;
 	public static boolean unlimAmmo;
 	public static boolean clearDistance;
+	public static boolean upgradeWeapon;
 	/* End Game Actions ***********************************************/
 
 	/**
@@ -207,6 +210,7 @@ public class Game implements Runnable {
 	 * 
 	 * @param key2
 	 */
+	@SuppressWarnings("unchecked")
 	public void tick(boolean key2[]) {
 		// Keeps track of how many ticks the game has gone on for
 		time++;
@@ -246,8 +250,10 @@ public class Game implements Runnable {
 		weaponSlot1 = key[KeyEvent.VK_2];
 		weaponSlot2 = key[KeyEvent.VK_3];
 		weaponSlot3 = key[KeyEvent.VK_4];
+		weaponSlot4 = key[KeyEvent.VK_5];
 		unlimAmmo = key[KeyEvent.VK_K];
 		clearDistance = key[KeyEvent.VK_I];
+		upgradeWeapon = key[KeyEvent.VK_U];
 
 		// TODO For Multiplayer, do not check for items unless you are hosting the game.
 		// All clients need to do is send their positional data to the server and then
@@ -261,7 +267,9 @@ public class Game implements Runnable {
 			Display.messages.add(new PopUp("Blacked Out! Please sober up..."));
 		}
 
-		// TODO Get server information here.
+		Collections.sort(entities);
+
+		// TODO Make sure above works.
 
 		/*
 		 * Keeps player within the first 2 PI of rotation so that the Players rotation
@@ -303,7 +311,7 @@ public class Game implements Runnable {
 					}
 
 					playerCorpse = new Corpse(Player.x, Player.z, Player.y, 0, Player.xEffects, Player.zEffects,
-							Player.yEffects);
+							Player.yEffects, false);
 
 					playerCorpse.clientID = Player.ID;
 
@@ -348,8 +356,10 @@ public class Game implements Runnable {
 			((Shotgun) (Player.weapons[1])).updateValues();
 		} else if (Player.weaponEquipped == 2) {
 			((PhaseCannon) (Player.weapons[2])).updateValues();
-		} else {
+		} else if (Player.weaponEquipped == 3) {
 			((RocketLauncher) (Player.weapons[3])).updateValues();
+		} else if (Player.weaponEquipped == 4) {
+			((Scepter) (Player.weapons[4])).updateValues();
 		}
 
 		// Run Single Player game events only if this is a single player game.
@@ -973,7 +983,7 @@ public class Game implements Runnable {
 		// Sort enemies according to their distance to you but only if
 		// not in survival
 		if (FPSLauncher.gameMode == 1) {
-			Collections.sort(enemies);
+			Collections.sort(entities);
 		}
 
 		/*
@@ -1142,8 +1152,8 @@ public class Game implements Runnable {
 		}
 
 		// Tick through all the enemies
-		for (int i = 0; i < enemies.size(); i++) {
-			Enemy enemy = Game.enemies.get(i);
+		for (int i = 0; i < entities.size(); i++) {
+			Entity enemy = Game.entities.get(i);
 
 			// Deactivate the enemies if the player is dead and they have
 			// no other target
@@ -1188,7 +1198,7 @@ public class Game implements Runnable {
 		}
 
 		// All entities are done checking if player is in their sight
-		Entity.checkSight = false;
+		EntityParent.checkSight = false;
 
 		// Items to delete
 		ArrayList<Item> tempItems = new ArrayList<Item>();
@@ -1479,18 +1489,19 @@ public class Game implements Runnable {
 			if (FPSLauncher.modeChoice == 4) {
 				// If 10000 ticks have passed with correction for the fps
 				// and the corpse is not just a default corpse
-				if (corpse.time > (10000 / ((Display.fps / 30) + 1)) && corpse.enemyID != 0) {
+				if (corpse.time > (10000 / ((Display.fps / 30) + 1)) && corpse.enemyID != 0 && corpse.enemyID != 15
+						&& corpse.enemyID != 16) {
 					/*
 					 * Reconstruct enemy depending on the ID the corpse was before it died. Also
 					 * activate the new resurrected enemy.
 					 */
-					Enemy newEnemy = new Enemy(corpse.xPos, 0, corpse.zPos, corpse.enemyID, 0, 0);
+					Entity newEnemy = new Entity(corpse.xPos, 0, corpse.zPos, corpse.enemyID, 0, 0);
 
 					// Activate this new enemy
 					newEnemy.activated = true;
 
 					// Add enemy to the game
-					Game.enemies.add(newEnemy);
+					Game.entities.add(newEnemy);
 
 					// Remove the corpse
 					Game.corpses.remove(corpse);
@@ -1598,33 +1609,54 @@ public class Game implements Runnable {
 		 * Spawns a random type of enemy of the 4 types
 		 */
 		// Brainomorph
-		if (randomNum <= 20) {
+		if (randomNum <= 10) {
 			ID = 1;
 		}
 		// Sentinel
-		else if (randomNum <= 40) {
+		else if (randomNum <= 20) {
 			yPos = -1;
 			ID = 2;
 		}
 		// Mutated Commando
-		else if (randomNum <= 50) {
+		else if (randomNum <= 30) {
 			ID = 3;
 		}
 		// Night Reaper
-		else if (randomNum <= 70) {
+		else if (randomNum <= 40) {
 			ID = 4;
 		}
 		// Vile Warrior
-		else if (randomNum <= 98) {
+		else if (randomNum <= 60) {
 			ID = 7;
 		}
+		// The Watcher
+		else if (randomNum <= 65) {
+			ID = 9;
+		}
 		// Mage enemy
-		else {
+		else if (randomNum <= 70) {
 			ID = 5;
+		} // Evil Marines
+		else if (randomNum <= 72) {
+			ID = 10;
+		} else if (randomNum <= 74) {
+			ID = 11;
+		} else if (randomNum <= 76) {
+			ID = 12;
+		} else if (randomNum <= 78) {
+			ID = 13;
+		} else if (randomNum <= 80) {
+			ID = 14;
+		} else if (randomNum <= 85) {
+			ID = 17;
+		} else if (randomNum <= 90) {
+			ID = 1;
+		} else if (randomNum <= 100) {
+			ID = 7;
 		}
 
 		// Add new enemy to game
-		enemies.add(new Enemy(0.5 + rand.nextInt(Level.width), yPos, 0.5 + rand.nextInt(Level.height), ID, 0, 0));
+		entities.add(new Entity(0.5 + rand.nextInt(Level.width), yPos, 0.5 + rand.nextInt(Level.height), ID, 0, -1));
 	}
 
 	/**
@@ -1665,10 +1697,10 @@ public class Game implements Runnable {
 			ID = 5;
 		}
 
-		Enemy enemy = new Enemy(x, yPos, z, ID, rotation, 0);
+		Entity enemy = new Entity(x, yPos, z, ID, rotation, 0);
 
 		// Add new enemy to game with correct values
-		enemies.add(enemy);
+		entities.add(enemy);
 		block.entitiesOnBlock.add(enemy);
 
 		SoundController.teleportation.playAudioFile(enemy.distanceFromPlayer);
@@ -1812,9 +1844,12 @@ public class Game implements Runnable {
 				w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
 				w.dualWield = Boolean.parseBoolean(weaponStats[2]);
 				w.ammo = Integer.parseInt(weaponStats[3]);
+				w.damage = Integer.parseInt(weaponStats[4]);
+				w.criticalHitChances = Integer.parseInt(weaponStats[5]);
+				w.upgradePointsNeeded = Integer.parseInt(weaponStats[6]);
 
 				for (int j = 0; j < size; j++) {
-					w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[4 + j])));
+					w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[7 + j])));
 				}
 			}
 
@@ -1901,7 +1936,7 @@ public class Game implements Runnable {
 				String[] enAt = otherStuff.split(":");
 
 				// Create enemy with its needed values
-				Enemy en = new Enemy(Double.parseDouble(enAt[1]), Double.parseDouble(enAt[2]),
+				Entity en = new Entity(Double.parseDouble(enAt[1]), Double.parseDouble(enAt[2]),
 						Double.parseDouble(enAt[3]), Integer.parseInt(enAt[4]), Double.parseDouble(enAt[12]),
 						Integer.parseInt(enAt[5]));
 
@@ -1920,8 +1955,9 @@ public class Game implements Runnable {
 				en.tick = Integer.parseInt(enAt[19]);
 				en.tickRound = Integer.parseInt(enAt[20]);
 				en.tickAmount = Integer.parseInt(enAt[21]);
+				en.isFriendly = Boolean.parseBoolean(enAt[22]);
 
-				Game.enemies.add(en);
+				Game.entities.add(en);
 
 				Block blockOn = Level.getBlock((int) en.xPos, (int) en.zPos);
 
@@ -1964,7 +2000,7 @@ public class Game implements Runnable {
 				String[] enAt = otherStuff.split(":");
 
 				// Create enemy with its needed values
-				Enemy en = new Enemy(Double.parseDouble(enAt[1]), Double.parseDouble(enAt[2]),
+				Entity en = new Entity(Double.parseDouble(enAt[1]), Double.parseDouble(enAt[2]),
 						Double.parseDouble(enAt[3]), Integer.parseInt(enAt[4]), Double.parseDouble(enAt[12]),
 						Integer.parseInt(enAt[5]));
 
@@ -2386,7 +2422,7 @@ public class Game implements Runnable {
 
 				c = new Corpse(Double.parseDouble(cAtt[2]), Double.parseDouble(cAtt[4]), Double.parseDouble(cAtt[3]),
 						Integer.parseInt(cAtt[0]), Double.parseDouble(cAtt[6]), Double.parseDouble(cAtt[8]),
-						Double.parseDouble(cAtt[7]));
+						Double.parseDouble(cAtt[7]), false);
 
 				c.time = Integer.parseInt(cAtt[5]);
 				c.phaseTime = Integer.parseInt(cAtt[1]);
@@ -2454,16 +2490,16 @@ public class Game implements Runnable {
 			}
 
 			// Item adds itself when instantiated
-			new Item(2, rand.nextInt(calculatedSize), 0, rand.nextInt(calculatedSize), ammoType, 0, 0, "");
+			new Item(5, rand.nextInt(calculatedSize), 0, rand.nextInt(calculatedSize), ammoType, 0, 0, "");
 		}
 
 		/*
 		 * Add 500 random ammo types to the map
 		 */
-		for (int i = 0; i < 500; i++) {
+		for (int i = 0; i < 750; i++) {
 			Random rand = new Random();
 
-			int ammoType = rand.nextInt(4);
+			int ammoType = rand.nextInt(5);
 
 			// Place random ammo type in map
 			if (ammoType == 0) {
@@ -2472,12 +2508,14 @@ public class Game implements Runnable {
 				ammoType = 50;
 			} else if (ammoType == 2) {
 				ammoType = 56;
-			} else {
+			} else if (ammoType == 3) {
 				ammoType = 61;
+			} else if (ammoType == 4) {
+				ammoType = 123;
 			}
 
 			// Item adds itself when instantiated
-			new Item(2, rand.nextInt(calculatedSize), 0, rand.nextInt(calculatedSize), ammoType, 0, 0, "");
+			new Item(5, rand.nextInt(calculatedSize), 0, rand.nextInt(calculatedSize), ammoType, 0, 0, "");
 		}
 
 		// Player has all weapons for survival mode
@@ -2485,6 +2523,7 @@ public class Game implements Runnable {
 		Player.weapons[1].canBeEquipped = true;
 		Player.weapons[2].canBeEquipped = true;
 		Player.weapons[3].canBeEquipped = true;
+		Player.weapons[4].canBeEquipped = true;
 	}
 
 	/**
@@ -2845,8 +2884,8 @@ public class Game implements Runnable {
 	 */
 	public void resetLists() {
 		// Reset all entities in game
-		enemies = new ArrayList<Enemy>();
-		bosses = new ArrayList<Enemy>();
+		entities = new ArrayList<Entity>();
+		bosses = new ArrayList<Entity>();
 		items = new ArrayList<Item>();
 		bullets = new ArrayList<Bullet>();
 		buttons = new ArrayList<Button>();

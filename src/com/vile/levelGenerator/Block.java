@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import com.vile.entities.Enemy;
 import com.vile.entities.Entity;
+import com.vile.entities.EntityParent;
 import com.vile.entities.Item;
 import com.vile.graphics.Render;
 import com.vile.graphics.Sprite;
@@ -70,7 +70,7 @@ public class Block implements Comparable
 	public ArrayList<Item> wallItems = new ArrayList<Item>();
 	
 	//Stores all the enemies on the block at the time
-	public ArrayList<Entity> entitiesOnBlock = new ArrayList<Entity>();
+	public ArrayList<EntityParent> entitiesOnBlock = new ArrayList<EntityParent>();
 	
    /*
     * Not technically a "Entity" but an item that has an effect on the

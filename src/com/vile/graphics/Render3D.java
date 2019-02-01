@@ -8,8 +8,8 @@ import com.vile.Sound;
 import com.vile.SoundController;
 import com.vile.entities.Bullet;
 import com.vile.entities.Corpse;
-import com.vile.entities.Enemy;
 import com.vile.entities.EnemyFire;
+import com.vile.entities.Entity;
 import com.vile.entities.Explosion;
 import com.vile.entities.HitSprite;
 import com.vile.entities.Item;
@@ -217,8 +217,8 @@ public class Render3D extends Render {
 		 * increasing the fps and optimizing the game even more, especially on very slow
 		 * computers and with huge amounts of enemies.
 		 */
-		for (int i = 0; i < Game.enemies.size(); ++i) {
-			Enemy enemy = Game.enemies.get(i);
+		for (int i = 0; i < Game.entities.size(); ++i) {
+			Entity enemy = Game.entities.get(i);
 
 			// Correct the enemies y so it appears correct graphically
 			double yCorrect = enemy.getY();
@@ -297,6 +297,11 @@ public class Render3D extends Render {
 			// Larger sprites
 			else if (item.size == 720) {
 				extra -= 1.1;
+			}
+
+			// Larger sprites
+			else if (item.size == 840) {
+				extra -= 1.3;
 			}
 
 			// If Large objects
@@ -527,6 +532,12 @@ public class Render3D extends Render {
 					// For survival in smile
 					if (Display.smileMode && FPSLauncher.gameMode == 1) {
 						Game.mapCeiling = 4;
+						Game.mapFloor = 9;
+					}
+
+					// For survival in default
+					if (FPSLauncher.gameMode == 1) {
+						Game.mapCeiling = 5;
 						Game.mapFloor = 9;
 					}
 
@@ -921,7 +932,7 @@ public class Render3D extends Render {
 	 * for the players movement so that it does not move (other than its own
 	 * movement) in correlation to the players movement.
 	 */
-	public void renderEnemy(double x, double y, double z, double hOffSet, int ID, Enemy enemy) {
+	public void renderEnemy(double x, double y, double z, double hOffSet, int ID, Entity enemy) {
 		/*
 		 * The change in x, y, and z coordinates in correlation to the player to correct
 		 * them in accordance to the players position so that they don't seem to move.
@@ -934,6 +945,12 @@ public class Render3D extends Render {
 
 		// Size of sprite in terms of pixels. 512 x 512 is typical
 		int spriteSize = 512;
+
+		// Marines are adjusted to be the size of the player about.
+		if (enemy.ID >= 10 && enemy.ID <= 15) {
+			spriteSize = 460;
+			yC += 0.3;
+		}
 
 		// If a boss, have a bigger sprite size
 		if (enemy.isABoss) {
@@ -951,6 +968,7 @@ public class Render3D extends Render {
 		// If enemy is behind player, and not in sight, then don't even try
 		// to render. This should speed things up immensely.
 		if (rotZ <= 0) {
+			enemy.playerStareTime = 0;
 			return;
 		}
 
@@ -1027,6 +1045,7 @@ public class Render3D extends Render {
 
 		// If the image is not on the screen. Return and do not render.
 		if (Math.abs(xPixL - xPixR) == 0) {
+			enemy.playerStareTime = 0;
 			return;
 		}
 
@@ -1112,6 +1131,17 @@ public class Render3D extends Render {
 							 */
 							if (color != 0xffffffff) {
 								try {
+									// TODO if entity is friendly, change color to distinguish it unless its a
+									// marine
+									if (enemy.isFriendly && (enemy.ID < 10 || enemy.ID > 17)) {
+										color = changeColor(255, 255, 255, color, 8, 0, 16);
+									}
+
+									// If entity is evil when it is normally freindly
+									if (!enemy.isFriendly && (enemy.ID >= 10 && enemy.ID <= 17)) {
+										color = changeColor(255, 255, 255, color, 16, 16, 0);
+									}
+
 									// Sets pixel in 2D array to that color
 									PIXELS[xx + yy * WIDTH] = color;
 
@@ -1140,7 +1170,7 @@ public class Render3D extends Render {
 
 								// Reapers are translucent because theyre ghost
 								// technically
-								if (ID == 4 && !Display.smileMode) {
+								if (enemy.isGhost && !Display.smileMode) {
 									// Adds to the pixels on screen this takes up
 									// Reapers still take up the same amount of space
 									// Though they are translucent
@@ -1217,6 +1247,16 @@ public class Render3D extends Render {
 							 */
 							if (color != 0xffffffff) {
 								try {
+									// TODO if enemy is friendly, change color to distinguish it unless its a marine
+									if (enemy.isFriendly && (enemy.ID < 10 || enemy.ID > 17)) {
+										color = changeColor(255, 255, 255, color, 8, 0, 16);
+									}
+
+									// If entity is evil when it is normally freindly
+									if (!enemy.isFriendly && (enemy.ID >= 10 && enemy.ID <= 17)) {
+										color = changeColor(255, 255, 255, color, 16, 16, 0);
+									}
+
 									// This is now the nearest pixel to the
 									// player, at this coordinate so create
 									// the new buffer here.
@@ -1234,7 +1274,7 @@ public class Render3D extends Render {
 
 								// Reapers are translucent because theyre ghost
 								// technically
-								if (ID == 4 && !Display.smileMode) {
+								if (enemy.isGhost && !Display.smileMode) {
 									// Adds to the pixels on screen this takes up
 									// enemy.pixelsOnScreen.set((xx + 1) + yy * WIDTH, true);
 
@@ -1249,7 +1289,19 @@ public class Render3D extends Render {
 			return;
 		}
 
-		// TODO FIX
+		// If a watcher is seen, then tick the amount of time it has been stared at.
+		if (enemy.canBeSeen && enemy.ID == 9) {
+			enemy.playerStareTime++;
+
+			// TODO maybe change time later
+			if (enemy.playerStareTime > 200) {
+				enemy.playerStareTime = 0;
+			}
+		} else {
+			enemy.playerStareTime = 0;
+		}
+
+		// TODO maybe re-add in future
 		/*
 		 * If off screen, still save the pixels of the enemy in a crude way so that
 		 * projectiles can still hit the enemies if you look away from them. Of course
@@ -1813,40 +1865,34 @@ public class Render3D extends Render {
 			item.itemImage = Textures.darkBook;
 			break;
 
-		// Turret
-		case 72:
-			item.phaseTime = 0;
-			item.itemImage = Textures.turret;
-			break;
-
-		// Marine 1
+		// blueOrbPillar
 		case 73:
 			item.phaseTime = 0;
-			item.itemImage = Textures.marine1;
+			item.itemImage = Textures.blueOrbPillar;
 			break;
 
-		// Marine 2
+		// greenOrbPillar
 		case 74:
 			item.phaseTime = 0;
-			item.itemImage = Textures.marine2;
+			item.itemImage = Textures.greenOrbPillar;
 			break;
 
-		// Marine 3
+		// redOrbPillar
 		case 75:
 			item.phaseTime = 0;
-			item.itemImage = Textures.marine3;
+			item.itemImage = Textures.redOrbPillar;
 			break;
 
-		// Marine 4
+		// yellowOrbPillar
 		case 76:
 			item.phaseTime = 0;
-			item.itemImage = Textures.marine4;
+			item.itemImage = Textures.yellowOrbPillar;
 			break;
 
-		// Marine 5
+		// Hell Tree
 		case 77:
 			item.phaseTime = 0;
-			item.itemImage = Textures.marine5;
+			item.itemImage = Textures.hellTree;
 			break;
 
 		// Tech Barrel
@@ -1871,12 +1917,6 @@ public class Render3D extends Render {
 		case 81:
 			item.phaseTime = 0;
 			item.itemImage = Textures.techPillar3;
-			break;
-
-		// Toilet
-		case 82:
-			item.phaseTime = 0;
-			item.itemImage = Textures.toilet;
 			break;
 
 		// Trash can 1
@@ -2041,18 +2081,6 @@ public class Render3D extends Render {
 			item.itemImage = Textures.ceilingLamp;
 			break;
 
-		// Chair
-		case 110:
-			item.phaseTime = 0;
-			item.itemImage = Textures.chair;
-			break;
-
-		// Place Holder
-		case 111:
-			item.phaseTime = 0;
-			item.itemImage = Textures.placeHolder;
-			break;
-
 		// Corpse Pile
 		case 112:
 			item.phaseTime = 0;
@@ -2117,6 +2145,28 @@ public class Render3D extends Render {
 		case 122:
 			item.phaseTime = 0;
 			item.itemImage = Textures.carcass;
+			break;
+
+		// Deciet Orb
+		case 123:
+			if (item.phaseTime <= 4 * fpsCheck) {
+				item.itemImage = Textures.decietOrb1;
+			} else if (item.phaseTime <= 8 * fpsCheck) {
+				item.itemImage = Textures.decietOrb2;
+			} else if (item.phaseTime <= 12 * fpsCheck) {
+				item.itemImage = Textures.decietOrb3;
+			} else if (item.phaseTime <= 16 * fpsCheck) {
+				item.itemImage = Textures.decietOrb4;
+			} else if (item.phaseTime <= 20 * fpsCheck) {
+				item.itemImage = Textures.decietOrb3;
+			} else if (item.phaseTime <= 24 * fpsCheck) {
+				item.itemImage = Textures.decietOrb2;
+			}
+
+			if (item.phaseTime > 23 * fpsCheck) {
+				item.phaseTime = 0;
+			}
+
 			break;
 		}
 
@@ -2735,6 +2785,46 @@ public class Render3D extends Render {
 
 			break;
 
+		// Stun Phase Hit
+		case 7:
+			if (hitSprite.phaseTime <= 4) {
+				hitSprite.spriteImage = Textures.stunPhaseHit1;
+			} else if (hitSprite.phaseTime <= 8) {
+				hitSprite.spriteImage = Textures.stunPhaseHit2;
+			} else if (hitSprite.phaseTime <= 12) {
+				hitSprite.spriteImage = Textures.stunPhaseHit3;
+			} else if (hitSprite.phaseTime <= 15) {
+				hitSprite.spriteImage = Textures.stunPhaseHit4;
+			} else if (hitSprite.phaseTime <= 18) {
+				hitSprite.spriteImage = Textures.stunPhaseHit5;
+			} else if (hitSprite.phaseTime <= 20) {
+				hitSprite.spriteImage = Textures.stunPhaseHit6;
+			} else {
+				return;
+			}
+
+			break;
+
+		// Deciet Phase Hit
+		case 8:
+			if (hitSprite.phaseTime <= 4) {
+				hitSprite.spriteImage = Textures.decietHit1;
+			} else if (hitSprite.phaseTime <= 8) {
+				hitSprite.spriteImage = Textures.decietHit1;
+			} else if (hitSprite.phaseTime <= 12) {
+				hitSprite.spriteImage = Textures.decietHit2;
+			} else if (hitSprite.phaseTime <= 15) {
+				hitSprite.spriteImage = Textures.decietHit2;
+			} else if (hitSprite.phaseTime <= 18) {
+				hitSprite.spriteImage = Textures.decietHit3;
+			} else if (hitSprite.phaseTime <= 20) {
+				hitSprite.spriteImage = Textures.decietHit3;
+			} else {
+				return;
+			}
+
+			break;
+
 		// Default bullet disappears
 		default:
 			if (hitSprite.phaseTime <= 4) {
@@ -2996,6 +3086,24 @@ public class Render3D extends Render {
 				corpseGraphics = Textures.enemy5corpse;
 			} else if (corpse.enemyID == 8) {
 				corpseGraphics = Textures.belegothCorpse;
+			} else if (corpse.enemyID == 9) {
+				corpseGraphics = Textures.enemy8corpse;
+			} else if (corpse.enemyID == 10) {
+				corpseGraphics = Textures.defaultCorpse1;
+			} else if (corpse.enemyID == 11) {
+				corpseGraphics = Textures.defaultCorpse2;
+			} else if (corpse.enemyID == 12) {
+				corpseGraphics = Textures.defaultCorpse3;
+			} else if (corpse.enemyID == 13) {
+				corpseGraphics = Textures.defaultCorpse5;
+			} else if (corpse.enemyID == 14) {
+				corpseGraphics = Textures.defaultCorpse6;
+			} else if (corpse.enemyID == 15) {
+				corpseGraphics = Textures.chairBroken;
+			} else if (corpse.enemyID == 16) {
+				corpseGraphics = Textures.toiletBroken1;
+			} else if (corpse.enemyID == 17) {
+				corpseGraphics = Textures.turretDown;
 			} else {
 				corpseGraphics = corpse.corpseImage;
 			}
@@ -3120,6 +3228,50 @@ public class Render3D extends Render {
 				} else if (corpse.phaseTime >= 0) {
 					corpseGraphics = Textures.belegothCorpse13;
 				}
+			} else if (corpse.enemyID == 9) {
+				if (corpse.phaseTime >= 21) {
+					corpseGraphics = Textures.enemy8corpse1;
+				} else if (corpse.phaseTime >= 18) {
+					corpseGraphics = Textures.enemy8corpse2;
+				} else if (corpse.phaseTime >= 15) {
+					corpseGraphics = Textures.enemy8corpse3;
+				} else if (corpse.phaseTime >= 12) {
+					corpseGraphics = Textures.enemy8corpse4;
+				} else if (corpse.phaseTime >= 9) {
+					corpseGraphics = Textures.enemy8corpse5;
+				} else if (corpse.phaseTime >= 6) {
+					corpseGraphics = Textures.enemy8corpse6;
+				} else if (corpse.phaseTime >= 3) {
+					corpseGraphics = Textures.enemy8corpse8;
+				} else {
+					corpseGraphics = Textures.enemy8corpse9;
+				}
+			}
+			// TODO add more animation to these
+			else if (corpse.enemyID == 10) {
+				corpseGraphics = Textures.defaultCorpse1;
+			} else if (corpse.enemyID == 11) {
+				corpseGraphics = Textures.defaultCorpse2;
+			} else if (corpse.enemyID == 12) {
+				corpseGraphics = Textures.defaultCorpse3;
+			} else if (corpse.enemyID == 13) {
+				corpseGraphics = Textures.defaultCorpse5;
+			} else if (corpse.enemyID == 14) {
+				corpseGraphics = Textures.defaultCorpse6;
+			} else if (corpse.enemyID == 15) {
+				corpseGraphics = Textures.chairBroken;
+			} else if (corpse.enemyID == 16) {
+				if (corpse.phaseTime >= 18) {
+					corpseGraphics = Textures.toiletBroken1;
+				} else if (corpse.phaseTime >= 12) {
+					corpseGraphics = Textures.toiletBroken2;
+				} else if (corpse.phaseTime >= 6) {
+					corpseGraphics = Textures.toiletBroken3;
+				} else if (corpse.phaseTime >= 0) {
+					corpseGraphics = Textures.toiletBroken4;
+				}
+			} else if (corpse.enemyID == 17) {
+				corpseGraphics = Textures.turretDown;
 			} else {
 				if (corpse.phaseTime >= 21) {
 					corpseGraphics = Textures.corpse1;
@@ -3333,26 +3485,86 @@ public class Render3D extends Render {
 			correction = 2;
 		}
 
+		proj.projectilePhase++;
+
 		// The image being rendered in the form of a render object
-		Render type;
+		Render type = null;
 
 		// Different image for different projectile types
 		if (ID == 0) {
 			type = Textures.bullet;
+			proj.projectilePhase = 0;
 		} else if (ID == 1) {
 			type = Textures.bullet;
+			proj.projectilePhase = 0;
 		} else if (ID == 2) {
 			type = Textures.phaser;
+			proj.projectilePhase = 0;
 		} else if (ID == 3) {
 			type = Textures.rocket;
+			proj.projectilePhase = 0;
 		} else if (ID == 4) {
-			type = Textures.defaultFireball;
+			if (proj.projectilePhase < 2) {
+				type = Textures.defaultFireball;
+			} else if (proj.projectilePhase < 5) {
+				type = Textures.defaultFireball2;
+			} else {
+				proj.projectilePhase = 0;
+				type = Textures.defaultFireball;
+			}
 		} else if (ID == 5) {
-			type = Textures.electroBall;
+			if (proj.projectilePhase < 2) {
+				type = Textures.electroBall;
+			} else if (proj.projectilePhase < 5) {
+				type = Textures.electroBall2;
+			} else {
+				proj.projectilePhase = 0;
+				type = Textures.electroBall;
+			}
 		} else if (ID == 6) {
-			type = Textures.giantFireball;
-		} else {
-			type = Textures.electricShock;
+			if (proj.projectilePhase < 2) {
+				type = Textures.giantFireball;
+			} else if (proj.projectilePhase < 5) {
+				type = Textures.giantFireball2;
+			} else if (proj.projectilePhase < 8) {
+				type = Textures.giantFireball3;
+			} else if (proj.projectilePhase < 11) {
+				type = Textures.giantFireball4;
+			} else {
+				proj.projectilePhase = 0;
+				type = Textures.giantFireball;
+			}
+		} else if (ID == 7) {
+			if (proj.projectilePhase < 2) {
+				type = Textures.electricShock;
+			} else if (proj.projectilePhase < 5) {
+				type = Textures.electricShock2;
+			} else if (proj.projectilePhase < 8) {
+				type = Textures.electricShock3;
+			} else if (proj.projectilePhase < 11) {
+				type = Textures.electricShock4;
+			} else {
+				proj.projectilePhase = 0;
+				type = Textures.electricShock;
+			}
+		} else if (ID == 8) {
+			if (proj.projectilePhase < 2) {
+				type = Textures.stunPhase1;
+			} else if (proj.projectilePhase < 5) {
+				type = Textures.stunPhase2;
+			} else {
+				proj.projectilePhase = 0;
+				type = Textures.stunPhase1;
+			}
+		} else if (ID == 9) {
+			if (proj.projectilePhase < 2) {
+				type = Textures.decietShot1;
+			} else if (proj.projectilePhase < 5) {
+				type = Textures.decietShot2;
+			} else {
+				proj.projectilePhase = 0;
+				type = Textures.decietShot1;
+			}
 		}
 
 		// proj.pixelsOnScreen = new ArrayList<Integer>();
@@ -3418,6 +3630,12 @@ public class Render3D extends Render {
 					if (color != 0xffffffff) {
 						// Try to render
 						try {
+							// Change color is sourceEnemy is freindly so you can differentiate the
+							// projectile types.
+							if (proj.sourceEnemy != null && proj.sourceEnemy.isFriendly) {
+								color = changeColor(255, 255, 255, color, 8, 0, 16);
+							}
+
 							PIXELS[xx + yy * WIDTH] = color;
 							zBuffer[(xx) + (yy) * WIDTH] = rotZ;
 
@@ -4447,6 +4665,19 @@ public class Render3D extends Render {
 
 							// Try to render
 							try {
+								// TODO if enemy is friendly, change color to distinguish it unless its a marine
+								if (block.wallID == 4) {
+
+									for (int i = 0; i < block.wallItems.size(); i++) {
+										Item item = block.wallItems.get(i);
+
+										// Change color to show that the wall is breakable. Only do for glass though.
+										// This was added due to popular demand. It was too confusing before.
+										if (item.itemID == ItemNames.BREAKABLEWALL.getID()) {
+											color = changeColor(255, 255, 255, color, 8, 0, 16);
+										}
+									}
+								}
 								PIXELS[x + y * WIDTH] = color;
 								zBuffer[(x) + (y) * WIDTH] = rotZ;
 							} catch (Exception e) {

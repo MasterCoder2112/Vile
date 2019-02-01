@@ -98,6 +98,37 @@ public class SoundController {
 	public static Sound uplink;
 	public static Sound criticalHit;
 	public static Sound crushed;
+	public static Sound shockHit;
+	public static Sound scepterShot;
+	public static Sound boxBreak1;
+	public static Sound boxBreak2;
+
+	public static Sound chairBreak;
+	public static Sound toiletBreak;
+	public static Sound waterSpray;
+	public static Sound dieVileScum;
+	public static Sound eatLead;
+	public static Sound marineDeathMale1;
+	public static Sound marineDeathMale2;
+	public static Sound marineDeathMale3;
+	public static Sound marineDeathMale4;
+	public static Sound marineGreetingStandard;
+	public static Sound marineHurtMale1;
+	public static Sound marineHurtMale2;
+	public static Sound marineHurtMale3;
+	public static Sound marineHurtMale4;
+	public static Sound marineHurtMale5;
+	public static Sound psychoGreeting;
+	public static Sound psychoLaugh1;
+	public static Sound psychoLaugh2;
+	public static Sound rockAndRoll;
+	public static Sound scaredGreeting;
+	public static Sound scaredMarineKill;
+	public static Sound scaredMarineShoot;
+	public static Sound standardMarineKill1;
+	public static Sound standardMarineKill2;
+	public static Sound youLikeMyCannon;
+	public static Sound sentryBeep;
 
 	// Stores all the sounds so that all the sounds can be
 	// set to certain settings at once
@@ -179,6 +210,36 @@ public class SoundController {
 		uplink = addSound(uplink, "uplink");
 		criticalHit = addSound(criticalHit, "criticalHit");
 		crushed = addSound(crushed, "crushed");
+		shockHit = addSound(shockHit, "shockHit");
+		scepterShot = addSound(scepterShot, "scepterShot");
+		boxBreak1 = addSound(boxBreak1, "boxBreak1");
+		boxBreak2 = addSound(boxBreak2, "boxBreak2");
+		chairBreak = addSound(chairBreak, "chairBreak");
+		toiletBreak = addSound(toiletBreak, "toiletBreak");
+		waterSpray = addSound(waterSpray, "waterSpray");
+		dieVileScum = addSound(dieVileScum, "dieVileScum");
+		eatLead = addSound(eatLead, "eatLead");
+		marineDeathMale1 = addSound(marineDeathMale1, "marineDeathMale1");
+		marineDeathMale2 = addSound(marineDeathMale2, "marineDeathMale2");
+		marineDeathMale3 = addSound(marineDeathMale3, "marineDeathMale3");
+		marineDeathMale4 = addSound(marineDeathMale4, "marineDeathMale4");
+		marineGreetingStandard = addSound(marineGreetingStandard, "marineGreetingStandard");
+		marineHurtMale1 = addSound(marineHurtMale1, "marineHurtMale1");
+		marineHurtMale2 = addSound(marineHurtMale2, "marineHurtMale2");
+		marineHurtMale3 = addSound(marineHurtMale3, "marineHurtMale3");
+		marineHurtMale4 = addSound(marineHurtMale4, "marineHurtMale4");
+		marineHurtMale5 = addSound(marineHurtMale5, "marineHurtMale5");
+		psychoGreeting = addSound(psychoGreeting, "psychoGreeting");
+		psychoLaugh1 = addSound(psychoLaugh1, "psychoLaugh1");
+		psychoLaugh2 = addSound(psychoLaugh2, "psychoLaugh2");
+		rockAndRoll = addSound(rockAndRoll, "rockAndRoll");
+		scaredGreeting = addSound(scaredGreeting, "scaredGreeting");
+		scaredMarineKill = addSound(scaredMarineKill, "scaredMarineKill");
+		scaredMarineShoot = addSound(scaredMarineShoot, "scaredMarineShoot");
+		standardMarineKill1 = addSound(standardMarineKill1, "standardMarineKill1");
+		standardMarineKill2 = addSound(standardMarineKill2, "standardMarineKill2");
+		youLikeMyCannon = addSound(youLikeMyCannon, "youLikeMyCannon");
+		sentryBeep = addSound(sentryBeep, "sentryBeep");
 	}
 
 	/**

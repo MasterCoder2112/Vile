@@ -166,6 +166,18 @@ public class Item {
 			hasAmmo = true;
 		}
 
+		// If Deciet Scepter Weapon
+		else if (itemID == ItemNames.DECIETSCEPTER.getID()) {
+			itemValue = ItemNames.DECIETSCEPTER.getValue();
+			hasAmmo = true;
+		}
+
+		// If Deciet Orb
+		else if (itemID == ItemNames.DECIETORB.getID()) {
+			itemValue = ItemNames.DECIETORB.getValue();
+			hasAmmo = true;
+		}
+
 		/*
 		 * Any solid objects treat differently
 		 */
@@ -176,7 +188,8 @@ public class Item {
 				|| itemID >= ItemNames.TECHBARREL.getID() && itemID <= ItemNames.ROCK3.getID()
 				|| itemID == ItemNames.REDBANNER.getID() || itemID == ItemNames.REDPILLAR.getID()
 				|| itemID == ItemNames.BLUEPILLAR.getID() || itemID == ItemNames.BLUEBANNER.getID()
-				|| itemID >= ItemNames.BURNINGMAN.getID() && itemID < ItemNames.STRIPCORPSE.getID()) {
+				|| itemID >= ItemNames.BURNINGMAN.getID() && itemID < ItemNames.STRIPCORPSE.getID()
+				|| (ID >= 73 && ID <= 77)) {
 			// Have a lower height so player can jump on them
 			if (itemID == ItemNames.HOLYWATER.getID() || itemID == ItemNames.TABLE.getID()
 					|| itemID == ItemNames.LAMPTABLE.getID() || itemID == ItemNames.DARKBOOK.getID()
@@ -242,6 +255,10 @@ public class Item {
 			size = 420;
 		}
 
+		if (ID == ItemNames.DECIETORB.getID()) {
+			size = 160;
+		}
+
 		if (ID == ItemNames.SHOTGUN.getID() || ID == ItemNames.BIOSUIT.getID()) {
 			size = 480;
 		}
@@ -250,12 +267,16 @@ public class Item {
 				|| ID == ItemNames.TELEPORTERENTER.getID() || ID == ItemNames.TELEPORTEREXIT.getID()
 				|| ID == ItemNames.REDBANNER.getID() || ID == ItemNames.BLUEBANNER.getID()
 				|| ID == ItemNames.BURNINGMAN.getID() || ID == ItemNames.TECHLAMP1.getID()
-				|| ID == ItemNames.TECHLAMP2.getID() || ID == ItemNames.BUSH1.getID()
-				|| ID == ItemNames.BUSH2.getID()) {
+				|| ID == ItemNames.TECHLAMP2.getID() || ID == ItemNames.BUSH1.getID() || ID == ItemNames.BUSH2.getID()
+				|| (ID >= 73 && ID <= 76)) {
 			size = 600;
 		}
 
-		// If Satillite
+		if (ID == ItemNames.HELLTREE.getID()) {
+			size = 840;
+		}
+
+		// Super big items
 		if (ID == ItemNames.RADAR.getID() || ID == ItemNames.GREENPILLAR.getID() || ID == ItemNames.BLUEPILLAR.getID()
 				|| ID == ItemNames.REDPILLAR.getID() || ID == ItemNames.TREEALIVE.getID()
 				|| ID == ItemNames.STALAG1.getID() || ID == ItemNames.STALAG2.getID()
@@ -369,8 +390,12 @@ public class Item {
 				itemUsed = Player.weapons[2].addAmmo(itemValue);
 			}
 			// Rocket Launcher stuff
-			else {
+			else if (itemID == ItemNames.ROCKETLAUNCHER.getID() || itemID == ItemNames.ROCKETS.getID()
+					|| itemID == ItemNames.ROCKETCRATE.getID()) {
 				itemUsed = Player.weapons[3].addAmmo(itemValue);
+			} // Scepter of Deciet stuff
+			else if (itemID == ItemNames.DECIETSCEPTER.getID() || itemID == ItemNames.DECIETORB.getID()) {
+				itemUsed = Player.weapons[4].addAmmo(itemValue);
 			}
 
 			/*
@@ -382,7 +407,8 @@ public class Item {
 				if (itemID == ItemNames.PHASECANNON.getID() && !Player.weapons[2].canBeEquipped
 						|| itemID == ItemNames.SHOTGUN.getID() && !Player.weapons[1].canBeEquipped
 						|| itemID == ItemNames.PISTOL.getID() && !Player.weapons[0].dualWield
-						|| itemID == ItemNames.ROCKETLAUNCHER.getID() && !Player.weapons[3].canBeEquipped) {
+						|| itemID == ItemNames.ROCKETLAUNCHER.getID() && !Player.weapons[3].canBeEquipped
+						|| itemID == ItemNames.DECIETSCEPTER.getID() && !Player.weapons[4].canBeEquipped) {
 
 				} else {
 					return false;
@@ -556,6 +582,36 @@ public class Item {
 				// Play ammo pick up sound effect
 				SoundController.clip.playAudioFile(distanceFromPlayer);
 			}
+			// Scepter of Deciet
+			else if (itemID == ItemNames.DECIETSCEPTER.getID()) {
+				itemUsed = true;
+				if (Display.smileMode) {
+					Display.messages.add(new PopUp("Make those sad faces love for you!"));
+					Display.messages.add(new PopUp("You hold the Scepter of Love!"));
+				} else {
+					Display.messages.add(new PopUp("Power surges from the Scepter of Deciet!"));
+				}
+
+				// Play creepy pick up sound for this item
+				SoundController.creepySound.playAudioFile(distanceFromPlayer);
+
+				// If weapon can't already be equipped, make it so that
+				// it can be, and equip it
+				if (!Player.weapons[4].canBeEquipped) {
+					Player.weapons[4].canBeEquipped = true;
+					Player.weaponEquipped = 4;
+				}
+			} else if (itemID == ItemNames.DECIETORB.getID()) {
+				if (Display.smileMode) {
+					Display.messages.add(new PopUp("They only want to love you"));
+					Display.messages.add(new PopUp("Give them the chance!"));
+				} else {
+					Display.messages.add(new PopUp("The staff trembles with the orbs power!"));
+				}
+
+				// Play ammo pick up sound effect
+				SoundController.megaPickUp.playAudioFile(distanceFromPlayer);
+			}
 		}
 
 		/*
@@ -621,6 +677,27 @@ public class Item {
 
 			// Creepy sound is played
 			SoundController.creepySound.playAudioFile(distanceFromPlayer);
+		}
+
+		/*
+		 * If MegaHealth, then heal the player completely.
+		 */
+		if (itemID == ItemNames.MEGAHEALTH.getID()) {
+			if (Player.health < Player.maxHealth) {
+				Player.health = Player.maxHealth;
+
+				// Displays that the player picked up the megahealth
+				if (Display.smileMode) {
+					Display.messages.add(new PopUp("Picked up the MEGAHAPPINESS!"));
+				} else {
+					Display.messages.add(new PopUp("Picked up the MEGAHEALTH!"));
+				}
+
+				// Mega Item pick up sound
+				SoundController.megaPickUp.playAudioFile(distanceFromPlayer);
+
+				itemUsed = true;
+			}
 		}
 		// Environment Suit
 		else if (itemID == ItemNames.BIOSUIT.getID()) {
@@ -827,19 +904,6 @@ public class Item {
 
 			// Becomes just a normal table
 			itemID = 42;
-		}
-		// Scepter of Deciet
-		else if (itemID == ItemNames.DECIETSCEPTER.getID()) {
-			itemUsed = true;
-			if (Display.smileMode) {
-				Display.messages.add(new PopUp("Make those sad faces love for you!"));
-				Display.messages.add(new PopUp("You hold the Scepter of Love!"));
-			} else {
-				Display.messages.add(new PopUp("Power surges from the Scepter of Deciet!"));
-			}
-
-			// Play creepy pick up sound for this item
-			SoundController.creepySound.playAudioFile(distanceFromPlayer);
 		}
 		// Invisibility Emerald
 		else if (itemID == ItemNames.INVISEMERALD.getID()) {

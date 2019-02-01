@@ -77,6 +77,11 @@ public class Pistol extends Weapon implements WeaponInterface {
 		// IF not being fired, it is in a dormant phase.
 		else {
 			weaponPhase = 0;
+
+			// If reloading, then tick away from the time its been reloading.
+			if (reloading > 0) {
+				reloading--;
+			}
 		}
 
 		// IF second weapon is being fired

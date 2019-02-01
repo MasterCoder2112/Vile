@@ -134,21 +134,31 @@ public class InputHandler
 				Controller.switch1 = false;
 				Controller.switch2 = false;
 				Controller.switch3 = false;
+				Controller.switch4 = false;
 			} else if (weaponPick == 1) {
 				Controller.switch1 = true;
 				Controller.switch0 = false;
 				Controller.switch2 = false;
 				Controller.switch3 = false;
+				Controller.switch4 = false;
 			} else if (weaponPick == 2) {
 				Controller.switch2 = true;
 				Controller.switch1 = false;
 				Controller.switch0 = false;
 				Controller.switch3 = false;
+				Controller.switch4 = false;
 			} else if (weaponPick == 3) {
 				Controller.switch3 = true;
 				Controller.switch1 = false;
 				Controller.switch2 = false;
 				Controller.switch0 = false;
+				Controller.switch4 = false;
+			} else if (weaponPick == 4) {
+				Controller.switch3 = false;
+				Controller.switch1 = false;
+				Controller.switch2 = false;
+				Controller.switch0 = false;
+				Controller.switch4 = true;
 			}
 		}
 	}

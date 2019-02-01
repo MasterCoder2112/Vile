@@ -19,7 +19,7 @@ public enum ItemNames {
 	TORCH("Torch", 0, 29), LAMP("Lamp", 0, 30), TREE("Tree", 0, 31), CANISTER("Explosive Canister", 0, 32),
 	CHAINMEAL("Chainmeal Armor", 50, 33), COMBAT("Combat Armor", 100, 34), ARGENT("Argent Armor", 200, 35),
 	SHARD("Armor Shard", 3, 36), VIAL("Health Vial", 3, 37), UPGRADE("Weapon Upgrade Point", 0, 38),
-	HOLYWATER("Holy Water", 0, 39), DECIETSCEPTER("Scepter of Deciet", 0, 40),
+	HOLYWATER("Holy Water", 0, 39), DECIETSCEPTER("Scepter of Deciet", 1, 40),
 	INVISEMERALD("Invisibility Emerald", 0, 41), TABLE("Table", 0, 42), LAMPTABLE("Lamp Table", 0, 43),
 	CORPSE("Default corpse", 0, 44), SHELLBOX("Box of Shells", 20, 47), LINEDEF("Line def", 0, 48),
 	PHASECANNON("Phase Cannon", 3, 49), SMALLCHARGE("Small Charge Pack", 3, 50),
@@ -29,8 +29,9 @@ public enum ItemNames {
 	ROCKETCRATE("Rocket Crate", 10, 62), EXPLOSION("Explosion", 10, 63), ACTIVATEEXP("Activate Explosion", 10, 64),
 	WALLBEGONE("Erasable wall", 10, 65), TELEPORTERENTER("Teleporter enterance", 0, 66),
 	TELEPORTEREXIT("Teleporter exit", 0, 67), AUDIOQUEUE("Audio Queue", 0, 68), BONEPILE("Bone Pile", 0, 69),
-	WATER("Water", 0, 70), DARKBOOK("Dark Spellbook", 0, 71), TURRET("Turret", 0, 72), MARINE1("Marine 1", 0, 73),
-	MARINE2("Marine 2", 0, 74), MARINE3("Marine 3", 0, 75), MARINE4("Marine 4", 0, 76), MARINE5("Marine 5", 0, 77),
+	WATER("Water", 0, 70), DARKBOOK("Dark Spellbook", 0, 71), TURRET("Turret", 0, 72),
+	BLUEORBPILLAR("Blue Orb Pillar", 0, 73), GREENORBPILLAR("Green Orb Pillar", 0, 74),
+	REDORBPILLAR("Red Orb Pillar", 0, 75), YELLOWORBPILLAR("Yellow Orb Pillar", 0, 76), HELLTREE("Hell Tree", 0, 77),
 	TECHBARREL("Technical Barrel", 0, 78), TECHPILLAR1("Technical Pillar 1", 0, 79),
 	TECHPILLAR2("Technical Pillar 2", 0, 80), TECHPILLAR3("Technical Pillar 3", 0, 81), TOILET("Toilet", 0, 82),
 	TRASH1("Trash Can 1", 0, 83), TRASH2("Trash Can 2", 0, 84), TRASH3("Trash Can 3", 0, 85),
@@ -45,7 +46,7 @@ public enum ItemNames {
 	CANDEL1("Candelabra 1", 0, 114), CANDEL2("Candelabra 2", 0, 115), CANDEL3("Candelabra 3", 0, 116),
 	CANDEL4("Candelabra 4", 0, 117), BLOODTHORNS("Blood Thorns", 0, 118), GREENPILLAR("Green Pillar", 0, 119),
 	TECHLAMP1("Technical Lamp 1", 0, 120), TECHLAMP2("Technical Lamp 2", 0, 121),
-	STRIPCORPSE("Stripped Corpse", 0, 122);
+	STRIPCORPSE("Stripped Corpse", 0, 122), DECIETORB("Deciet orb", 1, 123);
 
 	public String itemName = "";
 	public int itemID = 0;

@@ -6,7 +6,7 @@ import com.vile.SoundController;
 import com.vile.levelGenerator.Block;
 import com.vile.levelGenerator.Level;
 
-public class Elevator extends Entity {
+public class Elevator extends EntityParent {
 	// Defaultly goes up 4 block heights
 	public double upHeight = 48;
 

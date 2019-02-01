@@ -10,7 +10,7 @@ import com.vile.SoundController;
 import com.vile.entities.Button;
 import com.vile.entities.Door;
 import com.vile.entities.Elevator;
-import com.vile.entities.Entity;
+import com.vile.entities.EntityParent;
 import com.vile.entities.Explosion;
 import com.vile.entities.HurtingBlock;
 import com.vile.entities.Item;
@@ -57,6 +57,7 @@ public class Controller {
 	public static boolean switch1 = false;
 	public static boolean switch2 = false;
 	public static boolean switch3 = false;
+	public static boolean switch4 = false;
 
 	/*
 	 * Handles time between when you can activate certain events
@@ -150,27 +151,27 @@ public class Controller {
 			}
 
 			// If turning left
-			if (Game.turnLeft) {
+			if (Game.turnLeft && Player.frozen == 0) {
 				rotationa -= rotationSpeed;
 			}
 
 			// If turning right
-			if (Game.turnRight) {
+			if (Game.turnRight && Player.frozen == 0) {
 				rotationa += rotationSpeed;
 			}
 
 			// If looking up
-			if (Game.turnUp) {
+			if (Game.turnUp && Player.frozen == 0) {
 				upRotationa -= rotationUpSpeed;
 			}
 
 			// If looking down
-			if (Game.turnDown) {
+			if (Game.turnDown && Player.frozen == 0) {
 				upRotationa += rotationUpSpeed;
 			}
 
 			// If mouse goes left
-			if (mouseLeft) {
+			if (mouseLeft && Player.frozen == 0) {
 				rotationa += horizontalMouseSpeed;
 
 				// if(rotationa < -0.6)
@@ -182,7 +183,7 @@ public class Controller {
 			}
 
 			// If mouse moves right
-			if (mouseRight) {
+			if (mouseRight && Player.frozen == 0) {
 				rotationa += horizontalMouseSpeed;
 
 				// if(rotationa > 0.6)
@@ -194,7 +195,7 @@ public class Controller {
 			}
 
 			// If mouse moves up
-			if (mouseUp) {
+			if (mouseUp && Player.frozen == 0) {
 				upRotationa += verticalMouseSpeed;
 
 				// if(upRotationa < -0.1)
@@ -206,7 +207,7 @@ public class Controller {
 			}
 
 			// If mouse moves down
-			if (mouseDown) {
+			if (mouseDown && Player.frozen == 0) {
 				upRotationa += verticalMouseSpeed;
 
 				// if(upRotationa > 0.1)
@@ -227,7 +228,7 @@ public class Controller {
 			 * moveSpeed, set crouching = true, and keep performing a given operation while
 			 * you are crouching.
 			 */
-			if ((Game.crouch || Player.forceCrouch) && !inJump) {
+			if ((Game.crouch || Player.forceCrouch) && !inJump && Player.frozen == 0) {
 				// If still not as low as you can go
 				if (Player.yCorrect > -6.0 + Player.y) {
 					// If flying, just fly down until the player reaches the ground
@@ -309,8 +310,9 @@ public class Controller {
 			if (!Player.flyOn) {
 				/*
 				 * If the Player is trying to jump, and the player is on the ground, then jump.
+				 * Also player can't be frozen.
 				 */
-				if (Game.jump && Player.y - (Player.maxHeight + Player.extraHeight) <= 0.2) {
+				if (Game.jump && Player.y - (Player.maxHeight + Player.extraHeight) <= 0.2 && Player.frozen == 0) {
 					inJump = true;
 					Player.jumpHeight = Player.totalJump + Player.maxHeight + Player.extraHeight;
 				}
@@ -635,6 +637,61 @@ public class Controller {
 			}
 
 			/*
+			 * If weapon can be equipped, and another weapon isn't being fired, then switch
+			 * to this weapon
+			 */
+			if (Game.weaponSlot4 && Player.weapons[Player.weaponEquipped].weaponShootTime == 0
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime2 == 0) {
+				if (Player.weapons[4].canBeEquipped) {
+					Player.weaponEquipped = 4;
+				} else {
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+
+					// Only display the message if its not on screen yet
+					boolean exists = false;
+
+					for (PopUp p : Display.messages) {
+						if (temp.text == p.text) {
+							exists = true;
+							break;
+						}
+					}
+
+					// If Message does not exist yet
+					if (!exists) {
+						Display.messages.add(temp);
+					}
+				}
+			}
+			// Switch to this weapon once current weapon is done firing
+			else if (Game.weaponSlot4) {
+				if (Player.weapons[4].canBeEquipped) {
+					switch3 = false;
+					switch0 = false;
+					switch1 = false;
+					switch2 = false;
+					switch4 = true;
+				} else {
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+
+					// Only display the message if its not on screen yet
+					boolean exists = false;
+
+					for (PopUp p : Display.messages) {
+						if (temp.text == p.text) {
+							exists = true;
+							break;
+						}
+					}
+
+					// If Message does not exist yet
+					if (!exists) {
+						Display.messages.add(temp);
+					}
+				}
+			}
+
+			/*
 			 * If current weapon is finally able to be switched out, then switch to weapon
 			 * you wanted to switch to
 			 */
@@ -652,6 +709,9 @@ public class Controller {
 				} else if (switch3) {
 					Player.weaponEquipped = 3;
 					switch3 = false;
+				} else if (switch4) {
+					Player.weaponEquipped = 4;
+					switch4 = false;
 				}
 			}
 
@@ -664,6 +724,25 @@ public class Controller {
 					time++;
 
 					SoundController.reload.playAudioFile(0);
+				}
+			}
+
+			// If Player is upgrading weapon, make sure he/she can, then upgrade it and
+			// update values. Otherwise tell the player they can't do it right now.
+			if (Game.upgradeWeapon && time == 0) {
+				time++;
+
+				if (Player.weapons[Player.weaponEquipped].upgradePointsNeeded <= Player.upgradePoints) {
+					Player.upgradePoints -= Player.weapons[Player.weaponEquipped].upgradePointsNeeded;
+					Player.weapons[Player.weaponEquipped].upgradePointsNeeded *= 2;
+					Player.weapons[Player.weaponEquipped].damage *= 1.5;
+
+					// Makes it more likely hit will be critical
+					Player.weapons[Player.weaponEquipped].criticalHitChances--;
+
+					SoundController.phaseCannonHit.playAudioFile(0);
+				} else {
+					Display.messages.add(new PopUp("You do not have enough points to upgrade this weapon!"));
 				}
 			}
 		} else {
@@ -1090,9 +1169,13 @@ public class Controller {
 			Player.weapons[2].canBeEquipped = true;
 			Player.weapons[3].ammo = Player.weapons[3].ammoLimit;
 			Player.weapons[3].canBeEquipped = true;
+			Player.weapons[4].ammo = Player.weapons[4].ammoLimit;
+			Player.weapons[4].canBeEquipped = true;
+
+			Player.upgradePoints += 100;
 
 			// Display that weapons were given
-			PopUp temp = new PopUp("All weapons given!");
+			PopUp temp = new PopUp("All weapons and points given!");
 
 			boolean exists = false;
 
@@ -1194,26 +1277,29 @@ public class Controller {
 
 		Player.y += (yEffects);
 
-		/*
-		 * These determine if the space to the side of the player is a solid block or
-		 * not. If its not then move the player, if it is then don't execute movement in
-		 * that direction.
-		 * 
-		 * If noclip is on, you can clip through walls, so you can do this anyway.
-		 */
-		if (isFree(Player.x + xa + (xEffects), Player.z) || Player.noClipOn) {
-			Player.x += xa + (xEffects);
-		}
+		// Only if player is not frozen.
+		if (Player.frozen == 0) {
+			/*
+			 * These determine if the space to the side of the player is a solid block or
+			 * not. If its not then move the player, if it is then don't execute movement in
+			 * that direction.
+			 * 
+			 * If noclip is on, you can clip through walls, so you can do this anyway.
+			 */
+			if (isFree(Player.x + xa + (xEffects), Player.z) || Player.noClipOn) {
+				Player.x += xa + (xEffects);
+			}
 
-		/*
-		 * These determine if the space in front or back of the player is a solid block
-		 * or not. If its not then move the player, if it is then don't execute movement
-		 * in that direction.
-		 * 
-		 * If noclip is on, you can clip through walls, so you can do this anyway.
-		 */
-		if (isFree(Player.x, Player.z + za + (zEffects)) || Player.noClipOn) {
-			Player.z += za + (zEffects);
+			/*
+			 * These determine if the space in front or back of the player is a solid block
+			 * or not. If its not then move the player, if it is then don't execute movement
+			 * in that direction.
+			 * 
+			 * If noclip is on, you can clip through walls, so you can do this anyway.
+			 */
+			if (isFree(Player.x, Player.z + za + (zEffects)) || Player.noClipOn) {
+				Player.z += za + (zEffects);
+			}
 		}
 
 		// Update player buffs (invincibility, etc...)
@@ -1543,7 +1629,7 @@ public class Controller {
 		}
 
 		// Number used for how far away from block, block detects
-		double z = 0.25;
+		double z = 0.3;
 
 		/*
 		 * Determine the block the Player is about to move into given the direction that
@@ -1607,40 +1693,75 @@ public class Controller {
 
 		}
 
-		// Go through all the enemies in the game to make sure they are not
+		// Go through all the entities in the game to make sure they are not
 		// too close to you
-		for (int i = 0; i < block.entitiesOnBlock.size(); i++) {
-			Entity temp = block.entitiesOnBlock.get(i);
+		// TODO fix this up a bit for chairs and stuff
+		for (int i = 0; i < Game.entities.size(); i++) {
+			EntityParent temp = Game.entities.get(i);
 
-			// Distance between enemy and player
-			double distance = temp.distanceFromPlayer;
+			// Find the distance between the entity and player
+			double distanceFromPlayer = Math.sqrt(((Math.abs(nextX - temp.xPos)) * (Math.abs(nextX - temp.xPos)))
+					+ ((Math.abs(nextZ - temp.zPos)) * (Math.abs(nextZ - temp.zPos))));
 
 			// Difference between enemy and player
 			double yDifference = Math.abs(Player.y - Math.abs(temp.yPos * 11));
 
-			// If this enemy was removed from the game but not the block for
-			// some reason, remove it now and allow the player to move.
-			if (!Game.enemies.contains(temp)) {
-				block.entitiesOnBlock.remove(i);
-				return true;
-			}
+			// If close enough, don't allow the player to move into it unless its friendly.
+			if (distanceFromPlayer <= 0.5 && (temp.isSolid || !temp.isFriendly) && !temp.isABoss) {
+				// If not above or below it enough, don't let the player
+				// move into it
+				if ((yDifference <= temp.height + Player.height)) {
+					if (temp.moveable) {
+						double xMove = nextX - Player.x;
+						double zMove = nextZ - Player.z;
 
-			// If close enough, don't allow the player to move into it.
-			if (distance <= 0.3) {
-				if (yDifference <= 8) {
+						Block blockOn = Level.getBlock((int) (temp.xPos), (int) (temp.zPos));
+
+						if (temp.isFree(temp.xPos + xMove, temp.zPos)) {
+							temp.xPos += xMove;
+						}
+
+						if (temp.isFree(temp.xPos, temp.zPos + zMove)) {
+							temp.zPos += zMove;
+						}
+
+						// Block entity is now on
+						Block blockOnNew = Level.getBlock((int) (temp.xPos), (int) (temp.zPos));
+
+						/*
+						 * If the entity is on a new block, then remove the entity from the last block
+						 * it was on and add it to the new block its on.
+						 */
+						if (!blockOnNew.equals(blockOn)) {
+							blockOn.entitiesOnBlock.remove(temp);
+							blockOnNew.entitiesOnBlock.add(temp);
+
+							temp.setHeight();
+						}
+
+						// Allows entities to ride lifts/elevators
+						// Basically set entities position to the position of the current
+						// block.
+						if (!temp.canFly && Math.abs(blockOnNew.height + temp.yPos) <= 2) {
+							temp.yPos = -(blockOnNew.height + (blockOnNew.y * 4) + blockOnNew.baseCorrect) / 11;
+						}
+					}
+
 					return false;
-				} else if (Player.y > Math.abs(temp.yPos * 11)) {
+				}
+				// Otherwise reset the players height to being the items
+				// height
+				else {
 					// Only if on or above the block the player is on.
-					// Then reset the players additional height
 					if (temp.yPos >= Player.blockOn.y) {
 						Player.extraHeight = temp.height + 5;
 					}
 				}
-			}
 
+			}
 			// If a boss, have the distance be farther the hitbox expands
 			// out of
-			if (distance <= 1 && temp.isABoss) {
+			else if (distanceFromPlayer <= 3 && temp.isABoss) {
 				return false;
 			}
 		}

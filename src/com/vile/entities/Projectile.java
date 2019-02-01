@@ -1,6 +1,7 @@
 package com.vile.entities;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import com.vile.Display;
 import com.vile.Game;
@@ -45,7 +46,7 @@ public abstract class Projectile {
 
 	// The enemy that fired the projectile.
 	// Remains null if it was the player who shot it
-	public Enemy sourceEnemy = null;
+	public Entity sourceEnemy = null;
 
 	// Its position
 	public double x = 0;
@@ -67,6 +68,8 @@ public abstract class Projectile {
 	// Change in x and z values.
 	public double xa = 0;
 	public double za = 0;
+
+	public int projectilePhase = 0;
 
 	// Pixels that the projectile occupies on screen when rendered
 	// public ArrayList<Integer> pixelsOnScreen = new ArrayList<Integer>();
@@ -104,7 +107,12 @@ public abstract class Projectile {
 	 */
 	public boolean isFree(double nextX, double nextZ) {
 		// Distance from object the projectile can hit
-		double z = 0;
+		double z = 0.05;
+
+		// If shot by player, there is no error added in to the projectiles
+		if (this.sourceEnemy != null) {
+			z = 0;
+		}
 
 		// The projectiles distance from the player. Updated every tick
 		distanceFromPlayer = Math.sqrt(((Math.abs(x - Player.x)) * (Math.abs(x - Player.x)))
@@ -125,11 +133,6 @@ public abstract class Projectile {
 				y = 1;
 			}
 
-			// Add HitSprite to the game
-			HitSprite hS = new HitSprite(this.x, this.z, this.y, this.ID);
-
-			Game.sprites.add(hS);
-
 			projectileHit(true);
 
 			return false;
@@ -137,10 +140,6 @@ public abstract class Projectile {
 
 		// Don't let projectile leave map
 		if (x < 0 || this.z < 0 || x > Level.width || this.z > Level.height) {
-			// Add HitSprite to the game
-			HitSprite hS = new HitSprite(this.x, this.z, this.y, this.ID);
-
-			Game.sprites.add(hS);
 
 			projectileHit(true);
 			return false;
@@ -223,7 +222,7 @@ public abstract class Projectile {
 		// Cycle through all bosses because they have a bigger hit
 		// range you have to check for.
 		for (int i = 0; i < Game.bosses.size(); i++) {
-			Enemy boss = Game.bosses.get(i);
+			Entity boss = Game.bosses.get(i);
 
 			// Distance between projectile and other enemy
 			double distance = Math.sqrt(((Math.abs(boss.xPos - nextX)) * (Math.abs(boss.xPos - nextX)))
@@ -346,7 +345,7 @@ public abstract class Projectile {
 		{
 			// Go through all the enemies on the block
 			for (int i = 0; i < block.entitiesOnBlock.size(); i++) {
-				Entity enemy = block.entitiesOnBlock.get(i);
+				EntityParent enemy = block.entitiesOnBlock.get(i);
 
 				// Distance between projectile and other enemy
 				double distance = Math.sqrt(((Math.abs(enemy.xPos - nextX)) * (Math.abs(enemy.xPos - nextX)))
@@ -362,8 +361,14 @@ public abstract class Projectile {
 					// So that even though reapers are faster, the
 					// projectile will still hit them and not miss if
 					// they are running towards or away from you.
-					if (enemy.ID == 4) {
+					// Also increases hitbox range for phase shots though.
+					if ((enemy.ID == 4 && enemy.activated) || ID == 2) {
 						distanceCheck = 0.7;
+					}
+
+					// Marines are smaller, so smaller hitbox
+					if (enemy.ID >= 10 && enemy.ID <= 14) {
+						distanceCheck = 0.15;
 					}
 
 					// If close enough, hit enemy. If faster enemy then
@@ -373,14 +378,26 @@ public abstract class Projectile {
 						// IF PIXELS ON SCREEN CODE IS EVER ADDED BACK IN AGAIN, TAKE FROM 1.6 DEV 3
 						// The old method of checking collision
 						if (((Math.abs((this.y) - ((enemy.getY()))) <= 0.6)) && enemy.ID != 100) {
+
+							if (this.sourceEnemy != null && this.sourceEnemy.isFriendly && enemy.isFriendly) {
+
+								projectileHit(false);
+
+								return false;
+							} else if (this.sourceEnemy != null && this.sourceEnemy.isFriendly && !enemy.isFriendly) {
+								enemy.targetEnemy = this.sourceEnemy;
+							}
+
 							enemy.searchMode = false;
 
 							/*
 							 * If enemy that shot projectile is still alive Then reset target to that unless
 							 * that target is the same type of enemy as the enemy that fired it because they
-							 * are immune to their own attack.
+							 * are immune to their own attack. Watchers will not be effected by other
+							 * enemies.
 							 */
-							if (this.sourceEnemy != null && this.sourceEnemy.ID != enemy.ID) {
+							if (this.sourceEnemy != null && ((this.sourceEnemy.ID != enemy.ID)
+									|| (!enemy.isFriendly && this.sourceEnemy.isFriendly)) && enemy.ID != 9) {
 								enemy.targetEnemy = this.sourceEnemy;
 
 								// Hurt enemy, and activate
@@ -436,8 +453,10 @@ public abstract class Projectile {
 									SoundController.criticalHit.playAudioFile(0);
 								}
 
-								// Hurt enemy
-								enemy.hurt(damage, enemyHit);
+								// Hurt enemy. Watchers can only be hurt by rockets.
+								if (enemy.ID != 9 || (enemy.ID == 9 && ID == 3)) {
+									enemy.hurt(damage, enemyHit);
+								}
 
 								// Activate the enemy if not already.
 								enemy.activated = true;
@@ -510,7 +529,7 @@ public abstract class Projectile {
 										// TODO fix this to be realistic
 										yForce = 0.01;
 
-										enemy.yEffects = ((-1 / yForce) * (force / 8));// / enemy.weightLevel;
+										enemy.yEffects = ((-1 / yForce) * (force / 8)) / enemy.weightLevel;
 									}
 									// If explosion is below the enemy
 									else {
@@ -520,7 +539,7 @@ public abstract class Projectile {
 										// TODO Fix this to be realistic
 										yForce = 0.01;
 
-										enemy.yEffects = ((1 / yForce) * (force / 8));// / enemy.weightLevel;
+										enemy.yEffects = ((1 / yForce) * (force / 8)) / enemy.weightLevel;
 									}
 
 									if (enemy.yEffects > 30) {
@@ -539,10 +558,23 @@ public abstract class Projectile {
 							HitSprite hS;
 
 							// Add HitSprite to the game
-							if (criticalHit) {
+							if (criticalHit && enemy.ID != 9 && enemy.hasMovement) {
 								hS = new HitSprite(this.x, this.z, this.y, 6);
 							} else {
-								hS = new HitSprite(this.x, this.z, this.y, 3);
+								if (enemy.ID != 9 && enemy.hasMovement) {
+									hS = new HitSprite(this.x, this.z, this.y, 3);
+								} else {
+									if (ID <= 1) {
+										hS = new HitSprite(this.x, this.z, this.y, 1);
+									}
+								}
+							}
+
+							// IF this is a shot from the Scepter of Deciet
+							// TODO check to make sure this works correctly.
+							if (ID == 9) {
+								enemy.isFriendly = true;
+								Game.enemiesInMap--;
 							}
 
 							// Bullet texture does not stay in mid-air
@@ -566,14 +598,20 @@ public abstract class Projectile {
 						+ ((Math.abs(this.z - Player.z)) * (Math.abs(this.z - Player.z))));
 
 				// If it hits the player, and player is alive and not
-				// invincible.
-				if (distance <= 0.3 && Math.abs((Player.y) + ((this.y * 10) / 1.2)) <= 8 && Player.alive) {
+				// invincible and the enemy is not friendly. No friendly fire.
+				if (distance <= 0.3 && Math.abs((Player.y) + ((this.y * 10) / 1.2)) <= 8 && Player.alive
+						&& !sourceEnemy.isFriendly) {
 					double damage = this.damage;
 
 					// If critical hit
 					if (criticalHit) {
 						damage *= 2;
 						Display.messages.add(new PopUp("OWW! That was a critical!"));
+					}
+
+					// If a watcher projectile, add to how long the player is frozen.
+					if (this.ID == 8) {
+						Player.frozen = 150;
 					}
 
 					Player.hurtPlayer(damage);
@@ -613,6 +651,24 @@ public abstract class Projectile {
 							case (9):
 								Display.messages.add(new PopUp("The Watcher saw you..."));
 								break;
+							case (10):
+								Display.messages.add(new PopUp("Turned against you she was..."));
+								break;
+							case (11):
+								Display.messages.add(new PopUp("You were shotgunned by an evil marine!"));
+								break;
+							case (12):
+								Display.messages.add(new PopUp("You were shotgunned by an evil marine!"));
+								break;
+							case (13):
+								Display.messages.add(new PopUp("You were phased into oblivion!"));
+								break;
+							case (14):
+								Display.messages.add(new PopUp("You were killed by the wussy marine! Wow!"));
+								break;
+							case (17):
+								Display.messages.add(new PopUp("Those Turrets are sure dangerous!"));
+								break;
 							default:
 								Display.messages.add(new PopUp("You were killed by the enemy!"));
 								break;
@@ -645,6 +701,24 @@ public abstract class Projectile {
 								break;
 							case (9):
 								Display.messages.add(new PopUp("Paranoia has seen you..."));
+								break;
+							case (10):
+								Display.messages.add(new PopUp("They were just trying to help... right?"));
+								break;
+							case (11):
+								Display.messages.add(new PopUp("They were just trying to help... right?"));
+								break;
+							case (12):
+								Display.messages.add(new PopUp("They were just trying to help... right?"));
+								break;
+							case (13):
+								Display.messages.add(new PopUp("They were just trying to help... right?"));
+								break;
+							case (14):
+								Display.messages.add(new PopUp("They were just trying to help... right?"));
+								break;
+							case (17):
+								Display.messages.add(new PopUp("That turret wasn't shooting love!"));
 								break;
 							default:
 								Display.messages.add(new PopUp("You were made depressed by the enemy!"));
@@ -712,7 +786,7 @@ public abstract class Projectile {
 		/*
 		 * Check to see if bullet hit a block, and return whether it did or not.
 		 */
-		if (block.isSolid || block2.isSolid) {
+		if (block.isSolid && block2.isSolid) {
 			return collisionChecks(block) && collisionChecks(block2);
 		}
 
@@ -756,8 +830,22 @@ public abstract class Projectile {
 					if (item != null && item.itemID == ItemNames.BREAKABLEWALL.getID() && !hit) {
 						block.health -= damage;
 
-						// Glass hit/break sound
-						SoundController.glassBreak.playAudioFile(distanceFromPlayer);
+						if (block.wallID == 4) {
+							// Glass hit/break sound
+							SoundController.glassBreak.playAudioFile(distanceFromPlayer);
+						} else if (block.wallID == 21) {
+							// Box break sound effect. Randomizes each time
+							Random rand = new Random();
+							int boxHitSound = rand.nextInt(2);
+
+							if (boxHitSound == 0) {
+								SoundController.boxBreak1.playAudioFile(distanceFromPlayer);
+							} else {
+								SoundController.boxBreak2.playAudioFile(distanceFromPlayer);
+							}
+						} else {
+							SoundController.explosion.playAudioFile(distanceFromPlayer);
+						}
 
 						if (block.health <= 0) {
 							// Remove breakable wall item
@@ -765,7 +853,7 @@ public abstract class Projectile {
 
 							// Keep track of the enemies on the block before
 							// the block changes
-							ArrayList<Entity> temp = block.entitiesOnBlock;
+							ArrayList<EntityParent> temp = block.entitiesOnBlock;
 							block.wallItems.remove(item);
 							ArrayList<Item> temp2 = block.wallItems;
 
@@ -845,7 +933,7 @@ public abstract class Projectile {
 			 * For doors and elevators, bullet holes disappear quicker as well so that if
 			 * the door or elevator moves there won't be "floating" bullet holes.
 			 */
-			if (block.isADoor) {
+			if (block.isADoor && ID <= 1) {
 				// Add HitSprite to the game
 				HitSprite hS = new HitSprite(this.x, this.z, this.y, 5);
 
@@ -936,15 +1024,45 @@ public abstract class Projectile {
 			Game.explosions.add(temp);
 		}
 		// If an enemy projectile
-		else if (ID >= 4) {
+		else if (ID >= 4 && ID < 9) {
 			try {
 				SoundController.enemyFireHit.playAudioFile(distanceFromPlayer);
 			} catch (Exception e) {
 
 			}
 
-			// Add HitSprite to the game
-			HitSprite hS = new HitSprite(this.x, this.z, this.y, 4);
+			HitSprite hS = null;
+
+			if (ID == 5 || ID == 7 || ID == 8) {
+
+				try {
+					SoundController.shockHit.playAudioFile(distanceFromPlayer);
+				} catch (Exception e) {
+
+				}
+
+				hS = new HitSprite(this.x, this.z, this.y, 7);
+
+			} else {
+				// Add HitSprite to the game
+				hS = new HitSprite(this.x, this.z, this.y, 4);
+			}
+
+			Game.sprites.add(hS);
+		}
+
+		// If a Deciet Scepter shot hit
+		else if (ID == 9) {
+			try {
+				SoundController.enemyFireHit.playAudioFile(distanceFromPlayer);
+				SoundController.shockHit.playAudioFile(distanceFromPlayer);
+			} catch (Exception e) {
+
+			}
+
+			HitSprite hS = null;
+
+			hS = new HitSprite(this.x, this.z, this.y, 8);
 
 			Game.sprites.add(hS);
 		}

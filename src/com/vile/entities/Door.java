@@ -17,7 +17,7 @@ import com.vile.levelGenerator.Level;
  *         bit, then let it fall again. This will allow the player to move
  *         through the door and onto the next part of the level.
  */
-public class Door extends Entity {
+public class Door extends EntityParent {
 	// Wall that door correlates to position on map
 	public int doorX;
 	public int doorZ;
@@ -261,7 +261,7 @@ public class Door extends Entity {
 				return;
 			} else {
 				for (int i = 0; i < thisBlock.entitiesOnBlock.size(); i++) {
-					Entity e = thisBlock.entitiesOnBlock.get(i);
+					EntityParent e = thisBlock.entitiesOnBlock.get(i);
 
 					// Only stop moving down if there is an entity under the
 					// block.
@@ -432,7 +432,7 @@ public class Door extends Entity {
 				}
 			} else {
 				for (int i = 0; i < thisBlock.entitiesOnBlock.size(); i++) {
-					Entity e = thisBlock.entitiesOnBlock.get(i);
+					EntityParent e = thisBlock.entitiesOnBlock.get(i);
 
 					// Only stop moving down if there is an entity under the
 					// block.

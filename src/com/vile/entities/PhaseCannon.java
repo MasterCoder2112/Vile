@@ -124,6 +124,11 @@ public class PhaseCannon extends Weapon implements WeaponInterface {
 		// If not being fired, set phase to its dormant phase
 		else {
 			weaponPhase = 0;
+
+			// If reloading, then tick away from the time its been reloading.
+			if (reloading > 0) {
+				reloading--;
+			}
 		}
 	}
 }
