@@ -129,6 +129,10 @@ public class SoundController {
 	public static Sound standardMarineKill2;
 	public static Sound youLikeMyCannon;
 	public static Sound sentryBeep;
+	public static Sound swordSwing;
+	public static Sound swordHit;
+	public static Sound swordWall1;
+	public static Sound swordWall2;
 
 	// Stores all the sounds so that all the sounds can be
 	// set to certain settings at once
@@ -240,6 +244,10 @@ public class SoundController {
 		standardMarineKill2 = addSound(standardMarineKill2, "standardMarineKill2");
 		youLikeMyCannon = addSound(youLikeMyCannon, "youLikeMyCannon");
 		sentryBeep = addSound(sentryBeep, "sentryBeep");
+		swordSwing = addSound(swordSwing, "swordSwing");
+		swordHit = addSound(swordHit, "swordHit");
+		swordWall1 = addSound(swordWall1, "swordWall1");
+		swordWall2 = addSound(swordWall2, "swordWall2");
 	}
 
 	/**

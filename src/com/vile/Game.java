@@ -18,7 +18,6 @@ import com.vile.entities.EnemyFire;
 import com.vile.entities.Entity;
 import com.vile.entities.EntityParent;
 import com.vile.entities.Explosion;
-import com.vile.entities.ExplosiveCanister;
 import com.vile.entities.HitSprite;
 import com.vile.entities.HurtingBlock;
 import com.vile.entities.Item;
@@ -32,6 +31,7 @@ import com.vile.entities.RocketLauncher;
 import com.vile.entities.Scepter;
 import com.vile.entities.ServerPlayer;
 import com.vile.entities.Shotgun;
+import com.vile.entities.Sword;
 import com.vile.entities.Weapon;
 import com.vile.graphics.Render3D;
 import com.vile.input.Controller;
@@ -98,7 +98,6 @@ public class Game implements Runnable {
 
 	// Keeps track of all different types of items and entities in the map
 	public static ArrayList<Entity> entities = new ArrayList<Entity>();
-	public static ArrayList<Entity> bosses = new ArrayList<Entity>();
 	public static ArrayList<Item> items = new ArrayList<Item>();
 	public static ArrayList<Bullet> bullets = new ArrayList<Bullet>();
 	public static ArrayList<EnemyFire> enemyProjectiles = new ArrayList<EnemyFire>();
@@ -108,7 +107,6 @@ public class Game implements Runnable {
 	public static ArrayList<HurtingBlock> hurtingBlocks = new ArrayList<HurtingBlock>();
 	public static ArrayList<Corpse> corpses = new ArrayList<Corpse>();
 	public static ArrayList<Explosion> explosions = new ArrayList<Explosion>();
-	public static ArrayList<ExplosiveCanister> canisters = new ArrayList<ExplosiveCanister>();
 	public static ArrayList<Item> solidItems = new ArrayList<Item>();
 	public static ArrayList<Item> activatable = new ArrayList<Item>();
 	public static ArrayList<Item> teleporters = new ArrayList<Item>();
@@ -136,6 +134,9 @@ public class Game implements Runnable {
 	// Calculated Size of map to render
 	private int calculatedSize;
 
+	// Is freeze mode on or not
+	public static boolean freezeMode = false;
+
 	// Holds the display class you're using
 	public Display display;
 
@@ -155,21 +156,46 @@ public class Game implements Runnable {
 	public static boolean jump;
 	public static boolean fpsShow;
 	public static boolean reloading;
-	public static boolean noClip;
-	public static boolean superSpeed;
-	public static boolean fly;
-	public static boolean godMode;
-	public static boolean restock;
 	public static boolean use;
 	public static boolean weaponSlot0;
 	public static boolean weaponSlot1;
 	public static boolean weaponSlot2;
 	public static boolean weaponSlot3;
 	public static boolean weaponSlot4;
-	public static boolean unlimAmmo;
-	public static boolean clearDistance;
+	public static boolean weaponSlot5;
 	public static boolean upgradeWeapon;
+	public static boolean recallFriendlies;
+	public static boolean consoleOpen;
 	/* End Game Actions ***********************************************/
+
+	/* Game Action Keys ***********************************************/
+	public static int fowardKey = KeyEvent.VK_W;
+	public static int backKey = KeyEvent.VK_S;
+	public static int leftKey = KeyEvent.VK_A;
+	public static int rightKey = KeyEvent.VK_D;
+	public static int turnLeftKey = KeyEvent.VK_LEFT;
+	public static int turnRightKey = KeyEvent.VK_RIGHT;
+	public static int turnUpKey = KeyEvent.VK_UP;
+	public static int turnDownKey = KeyEvent.VK_DOWN;
+	public static int shootKey = KeyEvent.VK_V;
+	public static int pauseKey = KeyEvent.VK_ESCAPE;
+	public static int runKey = KeyEvent.VK_SHIFT;
+	public static int crouchKey = KeyEvent.VK_C;
+	public static int jumpKey = KeyEvent.VK_SPACE;
+	public static int fpsShowKey = KeyEvent.VK_F;
+	public static int reloadingKey = KeyEvent.VK_R;
+	public static int useKey = KeyEvent.VK_E;
+	public static int upgradeWeaponKey = KeyEvent.VK_U;
+	public static int recallFriendliesKey = KeyEvent.VK_Q;
+	public static int weaponSlot0Key = KeyEvent.VK_1;
+	public static int weaponSlot1Key = KeyEvent.VK_2;
+	public static int weaponSlot2Key = KeyEvent.VK_3;
+	public static int weaponSlot3Key = KeyEvent.VK_4;
+	public static int weaponSlot4Key = KeyEvent.VK_5;
+	public static int weaponSlot5Key = KeyEvent.VK_6;
+	public static int weaponSlot6Key = KeyEvent.VK_7;
+	public static int consoleOpenKey = 192; // Key ` ID Num
+	/* End Game Action Keys *******************************************/
 
 	/**
 	 * Sets up the level and the Controller object. The level size is determined by
@@ -225,35 +251,33 @@ public class Game implements Runnable {
 		key = key2;
 
 		// Keeps track of what keys switch what booleans
-		foward = key[KeyEvent.VK_W];
-		back = key[KeyEvent.VK_S];
-		left = key[KeyEvent.VK_A];
-		right = key[KeyEvent.VK_D];
-		turnLeft = key[KeyEvent.VK_LEFT];
-		turnRight = key[KeyEvent.VK_RIGHT];
-		pause = key[KeyEvent.VK_ESCAPE];
-		run = key[KeyEvent.VK_SHIFT];
-		crouch = key[KeyEvent.VK_C];
-		jump = key[KeyEvent.VK_SPACE];
-		fpsShow = key[KeyEvent.VK_F];
-		turnUp = key[KeyEvent.VK_UP];
-		turnDown = key[KeyEvent.VK_DOWN];
-		reloading = key[KeyEvent.VK_R];
-		noClip = key[KeyEvent.VK_N];
-		superSpeed = key[KeyEvent.VK_P];
-		fly = key[KeyEvent.VK_O];
-		godMode = key[KeyEvent.VK_G];
-		shoot = key[KeyEvent.VK_V];
-		restock = key[KeyEvent.VK_L];
-		use = key[KeyEvent.VK_E];
-		weaponSlot0 = key[KeyEvent.VK_1];
-		weaponSlot1 = key[KeyEvent.VK_2];
-		weaponSlot2 = key[KeyEvent.VK_3];
-		weaponSlot3 = key[KeyEvent.VK_4];
-		weaponSlot4 = key[KeyEvent.VK_5];
-		unlimAmmo = key[KeyEvent.VK_K];
-		clearDistance = key[KeyEvent.VK_I];
-		upgradeWeapon = key[KeyEvent.VK_U];
+		foward = key[fowardKey];
+		back = key[backKey];
+		left = key[leftKey];
+		right = key[rightKey];
+		turnLeft = key[turnLeftKey];
+		turnRight = key[turnRightKey];
+		pause = key[pauseKey];
+		run = key[runKey];
+		crouch = key[crouchKey];
+		jump = key[jumpKey];
+		fpsShow = key[fpsShowKey];
+		turnUp = key[turnUpKey];
+		turnDown = key[turnDownKey];
+		reloading = key[reloadingKey];
+		shoot = key[shootKey];
+		use = key[useKey];
+		weaponSlot0 = key[weaponSlot0Key];
+		weaponSlot1 = key[weaponSlot1Key];
+		weaponSlot2 = key[weaponSlot2Key];
+		weaponSlot3 = key[weaponSlot3Key];
+		weaponSlot4 = key[weaponSlot4Key];
+		weaponSlot5 = key[weaponSlot5Key];
+		upgradeWeapon = key[upgradeWeaponKey];
+		recallFriendlies = key[recallFriendliesKey];
+		consoleOpen = key[consoleOpenKey];
+
+		// System.out.println(Display.consoleOpen);
 
 		// TODO For Multiplayer, do not check for items unless you are hosting the game.
 		// All clients need to do is send their positional data to the server and then
@@ -262,6 +286,54 @@ public class Game implements Runnable {
 
 		// Always request focus
 		display.requestFocus();
+
+		if (Display.clearedLevel) {
+			// If time is not 0, add to it
+			if (Controller.time != 0) {
+				Controller.time++;
+			}
+
+			// If 25 ticks have passed, set time to 0
+			if (Controller.time == 25) {
+				Controller.time = 0;
+			}
+
+			if (Controller.time == 0) {
+				// If any key is pressed when the clear level screen is up
+				// then load the next map instead.
+				for (int i = 0; i < key.length; i++) {
+					if (key[i] == true) {
+						loadNextMap(false, "");
+						break;
+					}
+				}
+			}
+
+			return;
+		}
+
+		// If console is open, any keys pressed will automatically be converted
+		// to letters in the console except for the escape key and the console
+		// open key to close the console.
+		if (Display.consoleOpen) {
+
+			// If time is not 0, add to it
+			if (Controller.time != 0) {
+				Controller.time++;
+			}
+
+			// If 25 ticks have passed, set time to 0
+			if (Controller.time == 25) {
+				Controller.time = 0;
+			}
+
+			if ((pause || consoleOpen) && Controller.time == 0) {
+				Controller.time++;
+				Display.consoleOpen = false;
+			}
+
+			return;
+		}
 
 		if (Player.drunkLevels > 4000) {
 			Display.messages.add(new PopUp("Blacked Out! Please sober up..."));
@@ -351,15 +423,17 @@ public class Game implements Runnable {
 
 		// Update players current weapon
 		if (Player.weaponEquipped == 0) {
-			((Pistol) (Player.weapons[0])).updateValues();
+			((Sword) (Player.weapons[0])).updateValues();
 		} else if (Player.weaponEquipped == 1) {
-			((Shotgun) (Player.weapons[1])).updateValues();
+			((Pistol) (Player.weapons[1])).updateValues();
 		} else if (Player.weaponEquipped == 2) {
-			((PhaseCannon) (Player.weapons[2])).updateValues();
+			((Shotgun) (Player.weapons[2])).updateValues();
 		} else if (Player.weaponEquipped == 3) {
-			((RocketLauncher) (Player.weapons[3])).updateValues();
+			((PhaseCannon) (Player.weapons[3])).updateValues();
 		} else if (Player.weaponEquipped == 4) {
-			((Scepter) (Player.weapons[4])).updateValues();
+			((RocketLauncher) (Player.weapons[4])).updateValues();
+		} else if (Player.weaponEquipped == 5) {
+			((Scepter) (Player.weapons[5])).updateValues();
 		}
 
 		// Run Single Player game events only if this is a single player game.
@@ -402,7 +476,8 @@ public class Game implements Runnable {
 			// If an end button, load the next map
 			if (temp.itemActivationID == 0 && temp.activated) {
 				mapNum++;
-				loadNextMap(false, "");
+				Controller.time++;
+				Display.clearedLevel = true;
 			}
 			// If a normal button
 			else if (temp.itemActivationID > 0 && temp.activated) {
@@ -414,7 +489,7 @@ public class Game implements Runnable {
 				// Change the wall texture to show the button has been activated
 				// Only if the original wall it was on is a button
 				if (button.wallID == 26) {
-					button.wallID = 43;
+					button.wallID = -1;
 				}
 
 				// If special ID, turn on lights to make map brighter
@@ -996,7 +1071,8 @@ public class Game implements Runnable {
 			// If an end button, load the next map
 			if (temp.itemActivationID == 0 && temp.activated) {
 				mapNum++;
-				loadNextMap(false, "");
+				Controller.time++;
+				Display.clearedLevel = true;
 			}
 			// If a normal button
 			else if (temp.itemActivationID > 0 && temp.activated) {
@@ -1008,7 +1084,7 @@ public class Game implements Runnable {
 				// Change the wall texture to show the button has been activated
 				// Only if the original wall it was on is a button
 				if (button.wallID == 26) {
-					button.wallID = 43;
+					button.wallID = -1;
 				}
 
 				// If special ID, turn on lights to make map brighter
@@ -1213,48 +1289,57 @@ public class Game implements Runnable {
 			// Difference between the item and the top of the block
 			double difference = item.y - (temp.height + (temp.y * 4) + temp.baseCorrect);
 
-			// Is this item on top of another solid item
-			boolean onItem = false;
+			if (!item.hanging) {
+				// Is this item on top of another solid item
+				boolean onItem = false;
 
-			for (Item it : temp.wallItems) {
-				// If on a solid object, place it on top, and only if it has hit
-				// the top of the item as well.
-				if (it.isSolid && !item.equals(it) && item.y - (it.y + it.height) < 6) {
-					item.y = it.y + it.height + 2;
-					onItem = true;
+				for (Item it : temp.wallItems) {
+					// If on a solid object, place it on top, and only if it has hit
+					// the top of the item as well.
+					if (it.isSolid && !item.equals(it) && item.y - (it.y + it.height) < 6) {
+						item.y = it.y + it.height + 2;
+						onItem = true;
 
-					/*
-					 * If item is above the block, then set its height from the top of the block to
-					 * be the height of the solid item it is on greater than the top of the block.
-					 * If not though, it is below the block and there should be no difference in
-					 * height as it will not be falling.
-					 */
-					if (item.aboveBlock) {
-						difference += (item.y - it.height);
-					} else {
-						difference = 0;
+						/*
+						 * If item is above the block, then set its height from the top of the block to
+						 * be the height of the solid item it is on greater than the top of the block.
+						 * If not though, it is below the block and there should be no difference in
+						 * height as it will not be falling.
+						 */
+						if (item.aboveBlock) {
+							difference += (item.y - it.height);
+						} else {
+							difference = 0;
+						}
 					}
 				}
-			}
 
-			/*
-			 * If the items y is greater than the blocks height plus its y value, then
-			 * decrease the items y until it reaches the ground.
-			 */
-			if (difference > 1) {
-				item.y -= 1;
-			} else {
 				/*
-				 * If the item is within the block, and not on top of the block, and the item is
-				 * not a door, then set the height to being the top of the block.
+				 * If the items y is greater than the blocks height plus its y value, then
+				 * decrease the items y until it reaches the ground.
 				 */
-				if (item.y >= (temp.y * 4) && difference > (-1 - temp.baseCorrect) && item.aboveBlock) {
-					item.y = temp.height + (temp.y * 4) + temp.baseCorrect;
+				if (difference > 1) {
+					item.y -= 1;
 				} else {
-					// If landed on flat ground and not on top of a solid item
-					if (!onItem) {
-						item.y = 0;
+					/*
+					 * If the item is within the block, and not on top of the block, and the item is
+					 * not a door, then set the height to being the top of the block.
+					 */
+					if (item.y >= (temp.y * 4) && difference > (-1 - temp.baseCorrect) && item.aboveBlock) {
+						item.y = temp.height + (temp.y * 4) + temp.baseCorrect;
+					} else {
+						// If landed on flat ground and not on top of a solid item
+						if (!onItem) {
+							item.y = 0;
+						}
 					}
+				}
+			} else {
+				// If item is a hanging item, it is attached to the ceiling.
+				if (temp.y == 0) {
+					item.y = Render3D.ceilingDefaultHeight;
+				} else {
+					item.y = temp.y - 1;
 				}
 			}
 
@@ -1603,55 +1688,69 @@ public class Game implements Runnable {
 		int yPos = 0;
 		int ID = 0;
 
-		int randomNum = rand.nextInt(100);
+		int randomNum = rand.nextInt(160);
 
 		/*
 		 * Spawns a random type of enemy of the 4 types
 		 */
 		// Brainomorph
-		if (randomNum <= 10) {
+		if (randomNum <= 7) {
 			ID = 1;
 		}
 		// Sentinel
-		else if (randomNum <= 20) {
+		else if (randomNum <= 14) {
 			yPos = -1;
 			ID = 2;
 		}
 		// Mutated Commando
-		else if (randomNum <= 30) {
+		else if (randomNum <= 21) {
 			ID = 3;
 		}
 		// Night Reaper
-		else if (randomNum <= 40) {
+		else if (randomNum <= 28) {
 			ID = 4;
 		}
 		// Vile Warrior
-		else if (randomNum <= 60) {
+		else if (randomNum <= 40) {
 			ID = 7;
 		}
 		// The Watcher
-		else if (randomNum <= 65) {
+		else if (randomNum <= 47) {
 			ID = 9;
 		}
 		// Mage enemy
-		else if (randomNum <= 70) {
+		else if (randomNum <= 54) {
 			ID = 5;
 		} // Evil Marines
-		else if (randomNum <= 72) {
+		else if (randomNum <= 61) {
 			ID = 10;
-		} else if (randomNum <= 74) {
+		} else if (randomNum <= 68) {
 			ID = 11;
-		} else if (randomNum <= 76) {
+		} else if (randomNum <= 75) {
 			ID = 12;
-		} else if (randomNum <= 78) {
+		} else if (randomNum <= 82) {
 			ID = 13;
-		} else if (randomNum <= 80) {
+		} else if (randomNum <= 89) {
 			ID = 14;
-		} else if (randomNum <= 85) {
-			ID = 17;
-		} else if (randomNum <= 90) {
-			ID = 1;
-		} else if (randomNum <= 100) {
+		} else if (randomNum <= 96) {
+			ID = 18;
+		} else if (randomNum <= 103) {
+			ID = 19;
+		} else if (randomNum <= 110) {
+			ID = 20;
+		} else if (randomNum <= 117) {
+			ID = 21;
+		} else if (randomNum <= 124) {
+			ID = 22;
+		} else if (randomNum <= 131) {
+			ID = 23;
+		} else if (randomNum <= 138) {
+			ID = 24;
+		} else if (randomNum <= 145) {
+			ID = 25;
+		} else if (randomNum <= 152) {
+			ID = 26;
+		} else {
 			ID = 7;
 		}
 
@@ -1670,34 +1769,83 @@ public class Game implements Runnable {
 		int yPos = 0;
 		int ID = 0;
 
-		int randomNum = rand.nextInt(100);
+		int choices = 160;
+
+		// In earlier levels, the entities randomly spawned have to be
+		// less dangerous than later levels
+		if (Game.mapNum <= 2) {
+			choices = 25;
+		} else if (Game.mapNum <= 4) {
+			choices = 41;
+		}
+
+		int randomNum = rand.nextInt(choices);
 
 		/*
 		 * Spawns a random type of enemy of the 4 types
 		 */
 		// Brainomorph
-		if (randomNum <= 24) {
+		if (randomNum <= 7) {
 			ID = 1;
 		}
+		// Night Reaper
+		else if (randomNum <= 14) {
+			ID = 4;
+		}
+		// Vile Warrior
+		else if (randomNum <= 24) {
+			ID = 7;
+		}
+		// Mutated Commando
+		else if (randomNum <= 31) {
+			ID = 3;
+		}
 		// Sentinel
-		else if (randomNum <= 49) {
+		else if (randomNum <= 38) {
 			yPos = -1;
 			ID = 2;
 		}
-		// Mutated Commando
-		else if (randomNum <= 74) {
-			ID = 3;
+		// The Watcher
+		else if (randomNum <= 45) {
+			ID = 9;
 		}
-		// Night Reaper
-		else if (randomNum <= 98) {
-			ID = 4;
-		}
-		// Resurrector enemy
-		else {
+		// Mage enemy
+		else if (randomNum <= 52) {
 			ID = 5;
+		} // Evil Marines
+		else if (randomNum <= 59) {
+			ID = 10;
+		} else if (randomNum <= 66) {
+			ID = 11;
+		} else if (randomNum <= 73) {
+			ID = 12;
+		} else if (randomNum <= 80) {
+			ID = 13;
+		} else if (randomNum <= 87) {
+			ID = 14;
+		} else if (randomNum <= 94) {
+			ID = 4;
+		} else if (randomNum <= 103) {
+			ID = 19;
+		} else if (randomNum <= 110) {
+			ID = 20;
+		} else if (randomNum <= 117) {
+			ID = 21;
+		} else if (randomNum <= 124) {
+			ID = 22;
+		} else if (randomNum <= 131) {
+			ID = 23;
+		} else if (randomNum <= 138) {
+			ID = 24;
+		} else if (randomNum <= 145) {
+			ID = 25;
+		} else if (randomNum <= 152) {
+			ID = 26;
+		} else {
+			ID = 7;
 		}
 
-		Entity enemy = new Entity(x, yPos, z, ID, rotation, 0);
+		Entity enemy = new Entity(x, yPos, z, ID, rotation, -1);
 
 		// Add new enemy to game with correct values
 		entities.add(enemy);
@@ -1788,7 +1936,7 @@ public class Game implements Runnable {
 			Player.godModeOn = Boolean.parseBoolean(elements[20]);
 			Player.noClipOn = Boolean.parseBoolean(elements[21]);
 			Player.flyOn = Boolean.parseBoolean(elements[22]);
-			Player.superSpeedOn = Boolean.parseBoolean(elements[23]);
+			Player.speedMultiplier = Integer.parseInt(elements[23]);
 			Player.unlimitedAmmoOn = Boolean.parseBoolean(elements[24]);
 			Player.upgradePoints = Integer.parseInt(elements[25]);
 			Level.width = Integer.parseInt(elements[26]);
@@ -1810,6 +1958,8 @@ public class Game implements Runnable {
 				// does not include the colon
 				mapName = elements[34];
 			}
+
+			// System.out.println("Map and Player successully loaded");
 
 			// Set up new level with this size
 			level = new Level(Level.width, Level.height);
@@ -1838,20 +1988,23 @@ public class Game implements Runnable {
 
 				String[] weaponStats = elements[i].split(":");
 
-				int size = weaponStats.length - 4;
+				int size = weaponStats.length - 8;
 
 				w.weaponID = Integer.parseInt(weaponStats[0]);
 				w.canBeEquipped = Boolean.parseBoolean(weaponStats[1]);
 				w.dualWield = Boolean.parseBoolean(weaponStats[2]);
 				w.ammo = Integer.parseInt(weaponStats[3]);
 				w.damage = Integer.parseInt(weaponStats[4]);
-				w.criticalHitChances = Integer.parseInt(weaponStats[5]);
-				w.upgradePointsNeeded = Integer.parseInt(weaponStats[6]);
+				w.baseDamage = Integer.parseInt(weaponStats[5]);
+				w.criticalHitChances = Integer.parseInt(weaponStats[6]);
+				w.upgradePointsNeeded = Integer.parseInt(weaponStats[7]);
 
 				for (int j = 0; j < size; j++) {
-					w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[7 + j])));
+					w.cartridges.add(new Cartridge(Integer.parseInt(weaponStats[8 + j])));
 				}
 			}
+
+			// System.out.println("Weapons successully loaded");
 
 			////////////////// Walls
 			sc.nextLine();
@@ -1902,15 +2055,17 @@ public class Game implements Runnable {
 				Level.blocks[b.x + b.z * Level.width] = b;
 			}
 
+			// System.out.println("Blocks successully loaded");
+
 			////////////////// Enemies
 			thisLine = "";
 
 			currentLine = sc.nextLine();
 
-			while (!thisLine.equals("Bosses:")) {
+			while (!thisLine.equals("Items:")) {
 				thisLine = sc.nextLine();
 
-				if (thisLine.equals("Bosses:")) {
+				if (thisLine.equals("Items:")) {
 					break;
 				}
 
@@ -1971,62 +2126,6 @@ public class Game implements Runnable {
 
 			currentLine = sc.nextLine();
 
-			while (!thisLine.equals("Items:")) {
-				thisLine = sc.nextLine();
-
-				if (thisLine.equals("Items:")) {
-					break;
-				}
-
-				currentLine += thisLine;
-			}
-
-			elements = currentLine.split(";");
-
-			// Length is set to the amount of elements
-			length = elements.length;
-
-			/*
-			 * If there is one element, and it is just blank space, then set the array to
-			 * being null again.
-			 */
-			if (elements.length == 1 && elements[0].trim().equals("")) {
-				elements = null;
-				length = 0;
-			}
-
-			for (int i = 0; i < length; i++) {
-				otherStuff = elements[i];
-				String[] enAt = otherStuff.split(":");
-
-				// Create enemy with its needed values
-				Entity en = new Entity(Double.parseDouble(enAt[1]), Double.parseDouble(enAt[2]),
-						Double.parseDouble(enAt[3]), Integer.parseInt(enAt[4]), Double.parseDouble(enAt[12]),
-						Integer.parseInt(enAt[5]));
-
-				en.maxHeight = Double.parseDouble(enAt[6]);
-				en.newTarget = Boolean.parseBoolean(enAt[7]);
-				en.targetX = Double.parseDouble(enAt[8]);
-				en.targetY = Double.parseDouble(enAt[9]);
-				en.targetZ = Double.parseDouble(enAt[10]);
-				en.activated = Boolean.parseBoolean(enAt[11]);
-				en.isAttacking = Boolean.parseBoolean(enAt[13]);
-				en.isFiring = Boolean.parseBoolean(enAt[14]);
-				en.isABoss = Boolean.parseBoolean(enAt[15]);
-				en.xEffects = Double.parseDouble(enAt[16]);
-				en.yEffects = Double.parseDouble(enAt[17]);
-				en.zEffects = Double.parseDouble(enAt[18]);
-				en.tick = Integer.parseInt(enAt[19]);
-				en.tickRound = Integer.parseInt(enAt[20]);
-				en.tickAmount = Integer.parseInt(enAt[21]);
-
-				Game.bosses.add(en);
-			}
-
-			thisLine = "";
-
-			currentLine = sc.nextLine();
-
 			while (!thisLine.equals("Bullets:")) {
 				thisLine = sc.nextLine();
 
@@ -2065,15 +2164,9 @@ public class Game implements Runnable {
 				 * If its not an explosive canister, add it as a normal item. Otherwise add it
 				 * as an explosive canister
 				 */
-				if (itemID != ItemNames.CANISTER.getID()) {
-					temp = new Item(10, Double.parseDouble(itemAtt[2]), Double.parseDouble(itemAtt[3]),
-							Double.parseDouble(itemAtt[4]), itemID, Integer.parseInt(itemAtt[5]),
-							Integer.parseInt(itemAtt[0]), itemAtt[6]);
-				} else {
-					temp = new ExplosiveCanister(10, Double.parseDouble(itemAtt[2]), Double.parseDouble(itemAtt[3]),
-							Double.parseDouble(itemAtt[4]), itemID, Integer.parseInt(itemAtt[5]),
-							Integer.parseInt(itemAtt[0]));
-				}
+				temp = new Item(10, Double.parseDouble(itemAtt[2]), Double.parseDouble(itemAtt[3]),
+						Double.parseDouble(itemAtt[4]), itemID, Integer.parseInt(itemAtt[5]),
+						Integer.parseInt(itemAtt[0]), itemAtt[6]);
 
 				Block itemBlock = Level.getBlock((int) temp.x, (int) temp.z);
 
@@ -2100,6 +2193,8 @@ public class Game implements Runnable {
 					itemBlock.wallEntities.add(temp);
 				}
 			}
+
+			// System.out.println("Items successully loaded");
 
 			//////////////////////// Bullets
 			thisLine = "";
@@ -2144,6 +2239,8 @@ public class Game implements Runnable {
 
 				Game.bullets.add(b);
 			}
+
+			// System.out.println("Bullets successully loaded");
 
 			/////////////////////////// Enemy Fire
 			thisLine = "";
@@ -2192,6 +2289,8 @@ public class Game implements Runnable {
 				Game.enemyProjectiles.add(b);
 			}
 
+			// System.out.println("Enemy Fire successully loaded");
+
 			/////////////////////////////////// Explosions
 			thisLine = "";
 
@@ -2235,6 +2334,8 @@ public class Game implements Runnable {
 				Game.explosions.add(exp);
 			}
 
+			// System.out.println("Explosions successully loaded");
+
 			//////////////////////////// Buttons
 			thisLine = "";
 
@@ -2276,6 +2377,8 @@ public class Game implements Runnable {
 
 				Game.buttons.add(b);
 			}
+
+			// System.out.println("Buttons successully loaded");
 
 			//////////////////////////// Doors
 			thisLine = "";
@@ -2331,6 +2434,8 @@ public class Game implements Runnable {
 				Game.doors.add(d);
 			}
 
+			// System.out.println("Doors successully loaded");
+
 			//////////////////////////// Elevators
 			thisLine = "";
 
@@ -2385,6 +2490,8 @@ public class Game implements Runnable {
 				thisBlock.height = e.height;
 			}
 
+			// System.out.println("Elevators successully loaded");
+
 			/////////////////////////////// Corpses
 			thisLine = "";
 
@@ -2429,6 +2536,8 @@ public class Game implements Runnable {
 
 				Game.corpses.add(c);
 			}
+
+			// System.out.println("Corpses successully loaded");
 
 			sc.close();
 		} catch (Exception e) {
@@ -2519,11 +2628,13 @@ public class Game implements Runnable {
 		}
 
 		// Player has all weapons for survival mode
-		Player.weapons[0].dualWield = true;
+		Player.weapons[0].canBeEquipped = true;
 		Player.weapons[1].canBeEquipped = true;
+		Player.weapons[1].dualWield = true;
 		Player.weapons[2].canBeEquipped = true;
 		Player.weapons[3].canBeEquipped = true;
 		Player.weapons[4].canBeEquipped = true;
+		Player.weapons[5].canBeEquipped = true;
 	}
 
 	/**
@@ -2531,6 +2642,7 @@ public class Game implements Runnable {
 	 * positions of the entities.
 	 */
 	public void loadNextMap(boolean newMap, String mapNameNew) {
+		Display.clearedLevel = false;
 		/*
 		 * The player does not keep keys from level to level. Nor does he/she keep
 		 * his/her effects
@@ -2543,6 +2655,7 @@ public class Game implements Runnable {
 		Player.invisibility = 0;
 		Player.environProtectionTime = 0;
 		Player.vision = 0;
+		Player.meleeMultiplier = 1;
 
 		try {
 			Display.soundController.stopSounds();
@@ -2885,7 +2998,6 @@ public class Game implements Runnable {
 	public void resetLists() {
 		// Reset all entities in game
 		entities = new ArrayList<Entity>();
-		bosses = new ArrayList<Entity>();
 		items = new ArrayList<Item>();
 		bullets = new ArrayList<Bullet>();
 		buttons = new ArrayList<Button>();
@@ -2893,7 +3005,6 @@ public class Game implements Runnable {
 		doors = new ArrayList<Door>();
 		elevators = new ArrayList<Elevator>();
 		corpses = new ArrayList<Corpse>();
-		canisters = new ArrayList<ExplosiveCanister>();
 		explosions = new ArrayList<Explosion>();
 		solidItems = new ArrayList<Item>();
 		enemyProjectiles = new ArrayList<EnemyFire>();

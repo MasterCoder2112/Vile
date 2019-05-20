@@ -20,7 +20,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 	 * Creates a new Weapon of ID 0
 	 */
 	public Shotgun() {
-		super(1);
+		super(2);
 	}
 
 	/**
@@ -67,7 +67,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 				}
 
 				// Create the bullet
-				Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation,
+				Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
@@ -85,7 +85,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.06,
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation + 0.06,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
@@ -103,7 +103,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.06,
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation - 0.06,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
@@ -121,7 +121,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.04,
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation + 0.04,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
@@ -139,7 +139,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.04,
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation - 0.04,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
@@ -157,7 +157,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.08,
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation + 0.08,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
@@ -175,7 +175,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.08,
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation - 0.08,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
@@ -193,7 +193,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation + 0.015,
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation + 0.015,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it
@@ -211,7 +211,7 @@ public class Shotgun extends Weapon implements WeaponInterface {
 					// Do nothing, just call the move method
 				}
 
-				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation - 0.015,
+				bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation - 0.015,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it

@@ -47,7 +47,7 @@ public class Controller {
 	 * if another one is activated. For instance, if your in a jump you cannot jump
 	 * again, and etc...
 	 */
-	private boolean inJump = false;
+	public static boolean inJump = false;
 	private boolean crouching = false;
 
 	// Whether certain weapons are to be switched to or not
@@ -58,11 +58,12 @@ public class Controller {
 	public static boolean switch2 = false;
 	public static boolean switch3 = false;
 	public static boolean switch4 = false;
+	public static boolean switch5 = false;
 
 	/*
 	 * Handles time between when you can activate certain events
 	 */
-	private int time;
+	public static int time;
 	private int time2;
 
 	// How much time have you been drunk
@@ -71,8 +72,8 @@ public class Controller {
 	/*
 	 * Variables used in falling acceleration (gravity)
 	 */
-	private double fallSpeed = 0.4;
-	private double fallAmount = 0;
+	public static double fallSpeed = 0.4;
+	public static double fallAmount = 0;
 
 	// Public and static because it can be changed when accessing a
 	// new custom resource pack. (In case on the moon or other planet)
@@ -332,7 +333,8 @@ public class Controller {
 				// If you are above the ceiling, put Player back to the maxHeight
 				// he or she can be at.
 				if (Player.y + Player.height >= Render3D.ceilingDefaultHeight) {
-					Player.y = Render3D.ceilingDefaultHeight - 0.1 - Player.height;
+					inJump = false;
+					Player.y = Render3D.ceilingDefaultHeight - 0.3 - Player.height;
 				}
 
 				// If you're falling, accelerate down
@@ -372,7 +374,7 @@ public class Controller {
 			}
 
 			// Reset fallAmount each tick so that falling off of things works as well.
-			if (fallAmount < Player.y - Player.maxHeight && firstCheck) {
+			if (fallAmount < Player.y - Player.maxHeight && !firstCheck) {
 				fallAmount = Player.y - Player.maxHeight;
 			}
 
@@ -392,18 +394,6 @@ public class Controller {
 
 				fallAmount = 0;
 			}
-
-			// Turns unlimited ammo on or off
-			if (Game.unlimAmmo && time == 0) {
-				if (Player.unlimitedAmmoOn) {
-					Player.unlimitedAmmoOn = false;
-				} else {
-					Player.unlimitedAmmoOn = true;
-				}
-
-				time++;
-			}
-
 			// If gun shot
 			if (shot) {
 				// If shot by using the keyboard, shut it off here
@@ -414,7 +404,8 @@ public class Controller {
 				// See if weapon can fire
 				if (!Player.weapons[Player.weaponEquipped].shoot()) {
 					// Only play sound if weapon can't fire and its out of ammo
-					if (Player.weapons[Player.weaponEquipped].ammo <= 0) {
+					if (Player.weapons[Player.weaponEquipped].ammo <= 0
+							&& !Player.weapons[Player.weaponEquipped].melee) {
 						SoundController.ammoOut.playAudioFile(0);
 					}
 				}
@@ -454,6 +445,8 @@ public class Controller {
 					switch3 = false;
 					switch1 = false;
 					switch2 = false;
+					switch4 = false;
+					switch5 = false;
 				} else {
 					PopUp temp = new PopUp("You don't have this weapon yet!");
 
@@ -508,6 +501,8 @@ public class Controller {
 					switch0 = false;
 					switch3 = false;
 					switch2 = false;
+					switch4 = false;
+					switch5 = false;
 				} else {
 					PopUp temp = new PopUp("You don't have this weapon yet!");
 
@@ -562,6 +557,8 @@ public class Controller {
 					switch0 = false;
 					switch1 = false;
 					switch3 = false;
+					switch4 = false;
+					switch5 = false;
 				} else {
 					PopUp temp = new PopUp("You don't have this weapon yet!");
 
@@ -616,6 +613,8 @@ public class Controller {
 					switch0 = false;
 					switch1 = false;
 					switch2 = false;
+					switch4 = false;
+					switch5 = false;
 				} else {
 					PopUp temp = new PopUp("You don't have this weapon yet!");
 
@@ -671,6 +670,63 @@ public class Controller {
 					switch1 = false;
 					switch2 = false;
 					switch4 = true;
+					switch5 = false;
+				} else {
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+
+					// Only display the message if its not on screen yet
+					boolean exists = false;
+
+					for (PopUp p : Display.messages) {
+						if (temp.text == p.text) {
+							exists = true;
+							break;
+						}
+					}
+
+					// If Message does not exist yet
+					if (!exists) {
+						Display.messages.add(temp);
+					}
+				}
+			}
+
+			/*
+			 * If weapon can be equipped, and another weapon isn't being fired, then switch
+			 * to this weapon
+			 */
+			if (Game.weaponSlot5 && Player.weapons[Player.weaponEquipped].weaponShootTime == 0
+					&& Player.weapons[Player.weaponEquipped].weaponShootTime2 == 0) {
+				if (Player.weapons[5].canBeEquipped) {
+					Player.weaponEquipped = 5;
+				} else {
+					PopUp temp = new PopUp("You don't have this weapon yet!");
+
+					// Only display the message if its not on screen yet
+					boolean exists = false;
+
+					for (PopUp p : Display.messages) {
+						if (temp.text == p.text) {
+							exists = true;
+							break;
+						}
+					}
+
+					// If Message does not exist yet
+					if (!exists) {
+						Display.messages.add(temp);
+					}
+				}
+			}
+			// Switch to this weapon once current weapon is done firing
+			else if (Game.weaponSlot5) {
+				if (Player.weapons[5].canBeEquipped) {
+					switch3 = false;
+					switch0 = false;
+					switch1 = false;
+					switch2 = false;
+					switch4 = false;
+					switch5 = true;
 				} else {
 					PopUp temp = new PopUp("You don't have this weapon yet!");
 
@@ -712,15 +768,19 @@ public class Controller {
 				} else if (switch4) {
 					Player.weaponEquipped = 4;
 					switch4 = false;
+				} else if (switch5) {
+					Player.weaponEquipped = 5;
+					switch5 = false;
 				}
 			}
 
 			/*
 			 * If you try to reload, and there are still cartridges with ammo in them, and
-			 * some time has passed since the last reload, then reload.
+			 * some time has passed since the last reload, then reload. Also cannot be a
+			 * melee weapon
 			 */
 			if (Game.reloading && time == 0) {
-				if (Player.weapons[Player.weaponEquipped].reload()) {
+				if (Player.weapons[Player.weaponEquipped].reload() && !Player.weapons[Player.weaponEquipped].melee) {
 					time++;
 
 					SoundController.reload.playAudioFile(0);
@@ -732,17 +792,22 @@ public class Controller {
 			if (Game.upgradeWeapon && time == 0) {
 				time++;
 
-				if (Player.weapons[Player.weaponEquipped].upgradePointsNeeded <= Player.upgradePoints) {
-					Player.upgradePoints -= Player.weapons[Player.weaponEquipped].upgradePointsNeeded;
-					Player.weapons[Player.weaponEquipped].upgradePointsNeeded *= 2;
-					Player.weapons[Player.weaponEquipped].damage *= 1.5;
+				if (Player.weapons[Player.weaponEquipped].upgradePointsNeeded != -1) {
+					if (Player.weapons[Player.weaponEquipped].upgradePointsNeeded <= Player.upgradePoints) {
+						Player.upgradePoints -= Player.weapons[Player.weaponEquipped].upgradePointsNeeded;
+						Player.weapons[Player.weaponEquipped].upgradePointsNeeded *= 2;
+						Player.weapons[Player.weaponEquipped].baseDamage *= 1.25;
+						Player.weapons[Player.weaponEquipped].damage *= 1.25;
 
-					// Makes it more likely hit will be critical
-					Player.weapons[Player.weaponEquipped].criticalHitChances--;
+						// Makes it more likely hit will be critical
+						Player.weapons[Player.weaponEquipped].criticalHitChances--;
 
-					SoundController.phaseCannonHit.playAudioFile(0);
+						SoundController.phaseCannonHit.playAudioFile(0);
+					} else {
+						Display.messages.add(new PopUp("You do not have enough points to upgrade this weapon!"));
+					}
 				} else {
-					Display.messages.add(new PopUp("You do not have enough points to upgrade this weapon!"));
+					Display.messages.add(new PopUp("This weapon cannot be upgraded!"));
 				}
 			}
 		} else {
@@ -788,13 +853,15 @@ public class Controller {
 		}
 
 		// If you want to quit the game, set quitGame to true
-		if (Game.pause) {
+		if (Game.pause && time == 0) {
 			// Game is paused
 			Display.pauseGame = true;
 
 			// It will quit the "game" in terms of all the events the game
 			// ticks through, not the app itself.
 			quitGame = true;
+
+			time++;
 		}
 
 		/*
@@ -1082,113 +1149,30 @@ public class Controller {
 		 * action, then flip the status of noClip, and then start the ticks again since
 		 * this action was last performed.
 		 */
-		if (Game.noClip && time == 0) {
+		if (Game.consoleOpen && time == 0) {
 			time++;
 
-			if (!Player.noClipOn) {
-				Player.noClipOn = true;
+			if (!Display.consoleOpen) {
+				Display.consoleOpen = true;
 			} else {
-				Player.noClipOn = false;
+				Display.consoleOpen = false;
 			}
 		}
 
-		// Same as above just for godMode
-		if (Game.godMode && time == 0) {
-			time++;
+		// Multiply players speed by certain amount
+		moveSpeed *= Player.speedMultiplier;
 
-			if (!Player.godModeOn) {
-				Player.godModeOn = true;
-			} else {
-				Player.godModeOn = false;
-			}
-		}
+		// Recall's friendly entities and tells them to stop trying to pursue an
+		// enemy
+		if (Game.recallFriendlies && time == 0) {
+			for (int i = 0; i < Game.entities.size(); i++) {
+				EntityParent temp = Game.entities.get(i);
 
-		/*
-		 * Same as above, except for this time if flyMode is off reset the fallSpeed,
-		 * and turn inJump (meaning you are currently jumping), and up (Means your going
-		 * up in the jump) off, while also turning flyMode on.
-		 * 
-		 * If flyMode is on, then turn it off, but then set the fallHeight to your
-		 * current height indicated by Player.y to start your decent through the air. If
-		 * you are on the moon, in order to decrease the damage you recieve when hitting
-		 * the ground, it decreases the fallHeight you are at (even though technically
-		 * you are at the same height).
-		 */
-		if (Game.fly && time == 0) {
-			if (!Player.flyOn) {
-				fallSpeed = 0.4;
-				Player.flyOn = true;
+				SoundController.rockAndRoll.playAudioFile(0);
 
-				// No longer in a jump
-				inJump = false;
-			} else {
-				Player.flyOn = false;
-				fallAmount = Player.y - Player.maxHeight;
-			}
-
-			time++;
-		}
-
-		/*
-		 * Same as other debug modes.
-		 */
-		if (Game.superSpeed && time == 0) {
-			if (!Player.superSpeedOn) {
-				Player.superSpeedOn = true;
-			} else {
-				Player.superSpeedOn = false;
-			}
-
-			time++;
-		}
-
-		// If super speed is on, multiply players speed by 4
-		if (Player.superSpeedOn) {
-			moveSpeed *= 4;
-		}
-
-		// Clears the render distance, or resets it back to normal
-		if (Game.clearDistance && time == 0) {
-			if (Render3D.renderDistanceDefault > Level.renderDistance) {
-				Render3D.renderDistanceDefault = Level.renderDistance;
-			} else {
-				Render3D.renderDistanceDefault = 10000000;
-			}
-
-			time++;
-		}
-
-		// Give player all weapons and ammo limits
-		if (Game.restock) {
-			Player.weapons[0].ammo = Player.weapons[0].ammoLimit;
-			Player.weapons[0].canBeEquipped = true;
-			Player.weapons[0].dualWield = true;
-			Player.weapons[1].ammo = Player.weapons[1].ammoLimit;
-			Player.weapons[1].canBeEquipped = true;
-			Player.weapons[2].ammo = Player.weapons[2].ammoLimit;
-			Player.weapons[2].canBeEquipped = true;
-			Player.weapons[3].ammo = Player.weapons[3].ammoLimit;
-			Player.weapons[3].canBeEquipped = true;
-			Player.weapons[4].ammo = Player.weapons[4].ammoLimit;
-			Player.weapons[4].canBeEquipped = true;
-
-			Player.upgradePoints += 100;
-
-			// Display that weapons were given
-			PopUp temp = new PopUp("All weapons and points given!");
-
-			boolean exists = false;
-
-			for (PopUp p : Display.messages) {
-				if (temp.text == p.text) {
-					exists = true;
-					break;
+				if (temp.isFriendly) {
+					temp.targetEnemy = null;
 				}
-			}
-
-			// If Message does not exist yet
-			if (!exists) {
-				Display.messages.add(temp);
 			}
 		}
 
@@ -1200,6 +1184,30 @@ public class Controller {
 		 */
 		xa += ((moveX * Math.cos(Player.rotation)) + (moveZ * Math.sin(Player.rotation))) * moveSpeed;
 		za += ((moveZ * Math.cos(Player.rotation)) - (moveX * Math.sin(Player.rotation))) * moveSpeed;
+
+		int speedMultiplier = 1;
+
+		if (Game.run) {
+			speedMultiplier = 2;
+		}
+
+		if (Math.abs(za) + Math.abs(xa) >= (1 / 21.3)) {
+			if (Player.moveDirect == 1) {
+				Player.movementTick += 2 * speedMultiplier;
+
+				if (Player.movementTick >= 45) {
+					Player.moveDirect = -1;
+				}
+			} else {
+				Player.movementTick -= 2 * speedMultiplier;
+
+				if (Player.movementTick <= -45) {
+					Player.moveDirect = 1;
+				}
+			}
+		} else {
+			Player.movementTick = 0;
+		}
 
 		/*
 		 * If player is drunk enough he/she will sway in random directions more and
@@ -1365,16 +1373,27 @@ public class Controller {
 					// If End Level Line Def
 					if (item.itemActivationID == 0) {
 						Game.mapNum++;
-						game.loadNextMap(false, "");
+						time++;
+						Display.clearedLevel = true;
 					} else {
-						// Remove other linedefs of the same activation ids
-						int size = Game.items.size();
-						for (int s = 0; s < size; s++) {
-							Item it = Game.items.get(s);
-							if (it.itemID == ItemNames.LINEDEF.itemID && it.itemActivationID == item.itemActivationID) {
-								size--;
-								s--;
-								it.removeItem();
+
+						// TODO change in future
+						if (item.itemActivationID == -1) {
+							Player.frozen = 1000;
+						} else if (item.itemActivationID == -2) {
+							Player.frozen = 100;
+						} else {
+
+							// Remove other linedefs of the same activation ids
+							int size = Game.items.size();
+							for (int s = 0; s < size; s++) {
+								Item it = Game.items.get(s);
+								if (it.itemID == ItemNames.LINEDEF.itemID
+										&& it.itemActivationID == item.itemActivationID) {
+									size--;
+									s--;
+									it.removeItem();
+								}
 							}
 						}
 
@@ -1658,6 +1677,31 @@ public class Controller {
 			block2 = Level.getBlock((int) (nextX + z), (int) (nextZ - z));
 		}
 
+		/*
+		 * Fixes bug where you could fall behind items in corners. Now it basically says
+		 * if you are on top of the item, then keep your position on top of the item as
+		 * long as you are still on the block that the item is on, and you are above the
+		 * item.
+		 */
+		try {
+			for (int i = 0; i < Player.blockOn.wallItems.size(); i++) {
+				Item temp = Player.blockOn.wallItems.get(i);
+
+				// If walking into block with a solid object on it
+				if (temp.isSolid) {
+
+					// Difference in y
+					double yDifference = Math.abs(Player.y - Math.abs(temp.y));
+
+					if (yDifference > temp.height + Player.height && temp.y >= Player.blockOn.y && !temp.hanging) {
+						Player.extraHeight = temp.height + 5;
+					}
+				}
+			}
+		} catch (Exception e) {
+
+		}
+
 		try {
 			for (int i = 0; i < block.wallItems.size(); i++) {
 				Item temp = block.wallItems.get(i);
@@ -1681,12 +1725,13 @@ public class Controller {
 						// Otherwise reset the players height to being the items
 						// height
 						else {
-							// Only if on or above the block the player is on.
-							if (temp.y >= Player.blockOn.y) {
+							// Only if on or above the block the player is on and it is not hanging
+							if (temp.y >= Player.blockOn.y && !temp.hanging) {
 								Player.extraHeight = temp.height + 5;
 							}
 						}
 					}
+
 				}
 			}
 		} catch (Exception e) {
@@ -1745,6 +1790,7 @@ public class Controller {
 						if (!temp.canFly && Math.abs(blockOnNew.height + temp.yPos) <= 2) {
 							temp.yPos = -(blockOnNew.height + (blockOnNew.y * 4) + blockOnNew.baseCorrect) / 11;
 						}
+
 					}
 
 					return false;

@@ -4,6 +4,7 @@ package com.vile.graphics;
 import com.vile.Display;
 import com.vile.Game;
 import com.vile.entities.Player;
+import com.vile.launcher.FPSLauncher;
 
 /**
  * Title: Screen
@@ -29,11 +30,21 @@ public class Screen implements Runnable {
 	 * @param width
 	 * @param height
 	 */
-	public Screen(int width, int height) {
+	public Screen() {
 		// New random that randomizes pixel colors
 		// Random random = new Random();
 
-		render3D = new Render3D(Display.WIDTH, Display.HEIGHT);
+		// How much graphics are cut off from bottom of screen
+		int gC = 100;
+
+		// If Not full screen, its raised up more for the frame border
+		if (FPSLauncher.resolutionChoice < 2) {
+			gC = 0;
+		} else if (FPSLauncher.resolutionChoice < 4) {
+			gC = 128;
+		}
+
+		render3D = new Render3D(Display.WIDTH, Display.HEIGHT - gC);
 
 		// Test is a new render with width and height 256
 		// test = new Render(256, 256);

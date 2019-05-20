@@ -71,6 +71,19 @@ public abstract class Projectile {
 
 	public int projectilePhase = 0;
 
+	// If a projectile is shot by a friendly, and it didn't hit the target, then
+	// tell that entity to relocate and try again.
+	private boolean hitTargetEnemy = false;
+
+	// Is this a command bullet that will destroy anything
+	public boolean itemKiller = false;
+
+	// If this was a melee attack, play different sounds
+	public boolean melee = false;
+
+	// Melee hit sound to play
+	private int meleeHitSound = 0;
+
 	// Pixels that the projectile occupies on screen when rendered
 	// public ArrayList<Integer> pixelsOnScreen = new ArrayList<Integer>();
 
@@ -93,6 +106,15 @@ public abstract class Projectile {
 		this.ID = ID;
 		this.criticalHit = criticalHit;
 		initialSpeed = speed;
+
+		if (this.ID == -1) {
+			melee = true;
+
+			Random rand = new Random();
+			int sound = rand.nextInt(2);
+
+			meleeHitSound = sound;
+		}
 	}
 
 	/**
@@ -106,6 +128,10 @@ public abstract class Projectile {
 	 * @return
 	 */
 	public boolean isFree(double nextX, double nextZ) {
+
+		// Target enemy was not hit by default.
+		hitTargetEnemy = false;
+
 		// Distance from object the projectile can hit
 		double z = 0.05;
 
@@ -171,175 +197,6 @@ public abstract class Projectile {
 			block2 = Level.getBlock((int) (nextX + z), (int) (nextZ - z));
 		}
 
-		try {
-			for (int i = 0; i < block.wallItems.size(); i++) {
-				Item temp = block.wallItems.get(i);
-
-				// Distance between item and player
-				double distance = Math.sqrt(((Math.abs(temp.x - nextX)) * (Math.abs(temp.x - nextX)))
-						+ ((Math.abs(temp.z - nextZ)) * (Math.abs(temp.z - nextZ))));
-
-				// Difference in y
-				// double yDifference = Math.abs((-y * 13) - Math.abs(temp.y));
-
-				// If explosive canister
-				if (temp.itemID == ItemNames.CANISTER.getID()) {
-					// If close enough, don't allow bullet to pass
-					if (distance <= 0.3) {
-						// IF PIXELS ON SCREEN CODE IS ADDED BACK IN REFER TO 1.6 DEV 3 CODE TO READD.
-						if (((Math.abs(this.y + (temp.y / 10)) <= 1))) {
-							// System.out.println(this.y+" : "+temp.y+" : "+Math.abs(this.y + temp.y));
-							// Cast the item type as being an ExplosiveCanister
-							ExplosiveCanister can = (ExplosiveCanister) temp;
-
-							// Damage canister the amount the projectile has
-							can.health -= damage;
-
-							// If canister is damaged enough, blow it up
-							if (can.health <= 0) {
-								Game.explosions.add(new Explosion(can.x, -can.y / 10, can.z, 1, 0));
-								temp = null;
-								can.removeCanister();
-
-								// Add HitSprite to the game
-								HitSprite hS = new HitSprite(this.x, this.z, this.y, 3);
-
-								Game.sprites.add(hS);
-
-								disappear = true;
-
-								projectileHit(true);
-								return false;
-							}
-						}
-					}
-				}
-			}
-		} catch (Exception e) {
-
-		}
-
-		// Cycle through all bosses because they have a bigger hit
-		// range you have to check for.
-		for (int i = 0; i < Game.bosses.size(); i++) {
-			Entity boss = Game.bosses.get(i);
-
-			// Distance between projectile and other enemy
-			double distance = Math.sqrt(((Math.abs(boss.xPos - nextX)) * (Math.abs(boss.xPos - nextX)))
-					+ ((Math.abs(boss.zPos - nextZ)) * (Math.abs(boss.zPos - nextZ))));
-
-			// If this projectile was fired by the same enemy, skip
-			// everything below
-			if (this.sourceEnemy != null && this.sourceEnemy.equals(boss)) {
-				// Nothing right now
-			} else {
-				// If close enough, hit boss.
-				if (distance <= 2) {
-					// IF PIXELS ON SCREEN CODE IS ADDED BACK IN, TAKE CODE BACK FROM 1.6 DEV 3.
-					boss.searchMode = false;
-
-					/*
-					 * If enemy that shot projectile is still alive Then reset target to that unless
-					 * that target is the same type of enemy as the enemy that fired it because they
-					 * are immune to their own attack.
-					 */
-					if (this.sourceEnemy != null && this.sourceEnemy.ID != boss.ID) {
-						boss.targetEnemy = this.sourceEnemy;
-
-						// Hurt enemy, and activate
-						// the enemy if not already.
-						boss.hurt(this.damage, bossHit);
-						boss.activated = true;
-					} else {
-						double damage = this.damage;
-
-						// If a critical hit
-						if (criticalHit) {
-							damage *= 2;
-							Display.messages.add(new PopUp("CRITICAL HIT"));
-
-							// Force of hit on enemy
-							double force = 2;
-
-							// Heavier enemies don't move as far
-							force /= boss.weightLevel;
-
-							// Angle that the enemy is in accordance to the explosion for
-							// throwing back calculations
-							double rotFromTarget = Math.atan(((boss.xPos - x)) / ((boss.zPos - z)));
-
-							/*
-							 * If the target is in the 3rd or 4th quadrant of the map then add PI to
-							 * rotation so that the enemy will be thrown back into the correct quadrant of
-							 * the map
-							 */
-							if (boss.zPos < z) {
-								rotFromTarget += Math.PI;
-							}
-
-							/*
-							 * Corrects rotation so that the vector is centered correctly in the direction
-							 * its facing. It doesn't do that automatically for some reason
-							 */
-							double correction = 44.765;
-
-							/*
-							 * Depending on the targets angle in the x z plane from the explosion, the enemy
-							 * will move back from that explosion a certain amount.
-							 */
-							boss.xEffects = ((Math.cos(rotFromTarget - correction))
-									+ (Math.sin(rotFromTarget - correction))) * force;
-							boss.zEffects = ((Math.cos(rotFromTarget - correction))
-									- (Math.sin(rotFromTarget - correction))) * force;
-
-							// Play critical hit sound
-							SoundController.criticalHit.playAudioFile(0);
-						}
-
-						// Hurt enemy
-						boss.hurt(damage, bossHit);
-
-						// Activate the enemy if not already.
-						boss.activated = true;
-
-						// Enemies target is now you
-						boss.targetEnemy = null;
-
-						// Not searching for you anymore, it will just come
-						// right towards your position
-						boss.searchMode = false;
-					}
-
-					/*
-					 * If an enemy is made happy, then remove that enemy from the game, and call the
-					 * death function to drop any items or add to the made happy count of the game
-					 * as needed.
-					 */
-					if (boss.health <= 0) {
-						boss.enemyDeath();
-					}
-
-					// If shotgun spread bullet
-					if (ID == 1) {
-						bossHit = true;
-					}
-
-					// Add HitSprite to the game
-					HitSprite hS = new HitSprite(this.x, this.z, this.y, 3);
-
-					Game.sprites.add(hS);
-
-					// Bullet texture does not stay in mid-air
-					disappear = true;
-
-					projectileHit(false);
-
-					return false;
-
-				}
-			}
-		}
-
 		try
 
 		{
@@ -371,20 +228,37 @@ public abstract class Projectile {
 						distanceCheck = 0.15;
 					}
 
+					// Due to uncertainty of enemy movements, this makes it easier for
+					// enemies to hit other enemies because often it looks like it should
+					// hit but it doesn't
+					if (this.sourceEnemy != null) {
+						distanceCheck = 0.5;
+					}
+
+					if (enemy.isABoss) {
+						distanceCheck = 2;
+					}
+
 					// If close enough, hit enemy. If faster enemy then
 					// have a greater hit distance as the enemy may be
 					// speeding toward you or away from you.
 					if (distance <= distanceCheck) {
 						// IF PIXELS ON SCREEN CODE IS EVER ADDED BACK IN AGAIN, TAKE FROM 1.6 DEV 3
 						// The old method of checking collision
-						if (((Math.abs((this.y) - ((enemy.getY()))) <= 0.6)) && enemy.ID != 100) {
+						if ((((Math.abs((this.y) - ((enemy.getY()))) <= 0.6)) && enemy.ID != 100) || enemy.isABoss) {
+
+							// If melee, play sword hitting flesh sound.
+							if (melee) {
+								SoundController.swordHit.playAudioFile(0);
+							}
 
 							if (this.sourceEnemy != null && this.sourceEnemy.isFriendly && enemy.isFriendly) {
 
 								projectileHit(false);
 
 								return false;
-							} else if (this.sourceEnemy != null && this.sourceEnemy.isFriendly && !enemy.isFriendly) {
+							} else if (this.sourceEnemy != null && this.sourceEnemy.isFriendly && !enemy.isFriendly
+									&& !(this.sourceEnemy.ID == 18 && this.sourceEnemy.itemActivationID == -2)) {
 								enemy.targetEnemy = this.sourceEnemy;
 							}
 
@@ -400,12 +274,59 @@ public abstract class Projectile {
 									|| (!enemy.isFriendly && this.sourceEnemy.isFriendly)) && enemy.ID != 9) {
 								enemy.targetEnemy = this.sourceEnemy;
 
+								double damage = this.damage;
+
+								// If a critical hit
+								if (criticalHit) {
+									damage *= 2;
+									Display.messages.add(new PopUp("CRITICAL HIT"));
+
+									// Force of hit on enemy
+									double force = 2;
+
+									// Heavier enemies don't move as far
+									force /= enemy.weightLevel;
+
+									// Angle that the enemy is in accordance to the explosion for
+									// throwing back calculations
+									double rotFromTarget = Math.atan(((enemy.xPos - x)) / ((enemy.zPos - z)));
+
+									/*
+									 * If the target is in the 3rd or 4th quadrant of the map then add PI to
+									 * rotation so that the enemy will be thrown back into the correct quadrant of
+									 * the map
+									 */
+									if (enemy.zPos < z) {
+										rotFromTarget += Math.PI;
+									}
+
+									/*
+									 * Corrects rotation so that the vector is centered correctly in the direction
+									 * its facing. It doesn't do that automatically for some reason
+									 */
+									double correction = 44.765;
+
+									/*
+									 * Depending on the targets angle in the x z plane from the explosion, the enemy
+									 * will move back from that explosion a certain amount.
+									 */
+									enemy.xEffects = ((Math.cos(rotFromTarget - correction))
+											+ (Math.sin(rotFromTarget - correction))) * force;
+									enemy.zEffects = ((Math.cos(rotFromTarget - correction))
+											- (Math.sin(rotFromTarget - correction))) * force;
+
+									// Play critical hit sound
+									SoundController.criticalHit.playAudioFile(0);
+								}
+
 								// Hurt enemy, and activate
 								// the enemy if not already.
-								enemy.hurt(this.damage, enemyHit);
+								enemy.hurt(damage, enemyHit);
 
 								enemy.activated = true;
 								enemy.searchMode = false;
+
+								hitTargetEnemy = true;
 							} else {
 								// TODO check
 								double damage = this.damage;
@@ -558,10 +479,10 @@ public abstract class Projectile {
 							HitSprite hS;
 
 							// Add HitSprite to the game
-							if (criticalHit && enemy.ID != 9 && enemy.hasMovement) {
+							if ((criticalHit || melee) && enemy.ID != 9 && enemy.hasMovement) {
 								hS = new HitSprite(this.x, this.z, this.y, 6);
 							} else {
-								if (enemy.ID != 9 && enemy.hasMovement) {
+								if (enemy.ID != 9 && enemy.isHuman) {
 									hS = new HitSprite(this.x, this.z, this.y, 3);
 								} else {
 									if (ID <= 1) {
@@ -572,7 +493,8 @@ public abstract class Projectile {
 
 							// IF this is a shot from the Scepter of Deciet
 							// TODO check to make sure this works correctly.
-							if (ID == 9) {
+							if (ID == 9 && !enemy.isABoss && !(enemy.ID == 18 && enemy.itemActivationID == -2)
+									&& (enemy.ID == 18 || !enemy.moveable)) {
 								enemy.isFriendly = true;
 								Game.enemiesInMap--;
 							}
@@ -580,7 +502,9 @@ public abstract class Projectile {
 							// Bullet texture does not stay in mid-air
 							disappear = true;
 
-							projectileHit(false);
+							if (!melee) {
+								projectileHit(false);
+							}
 
 							return false;
 						}
@@ -599,7 +523,7 @@ public abstract class Projectile {
 
 				// If it hits the player, and player is alive and not
 				// invincible and the enemy is not friendly. No friendly fire.
-				if (distance <= 0.3 && Math.abs((Player.y) + ((this.y * 10) / 1.2)) <= 8 && Player.alive
+				if (distance <= 0.3 && Math.abs((Player.yCorrect) + ((this.y * 11))) <= 8 && Player.alive
 						&& !sourceEnemy.isFriendly) {
 					double damage = this.damage;
 
@@ -666,8 +590,37 @@ public abstract class Projectile {
 							case (14):
 								Display.messages.add(new PopUp("You were killed by the wussy marine! Wow!"));
 								break;
-							case (17):
+							case (15):
+								Display.messages.add(new PopUp("You were pistoled by an evil marine!"));
+								break;
+							case (18):
 								Display.messages.add(new PopUp("Those Turrets are sure dangerous!"));
+								break;
+							case (19):
+								Display.messages.add(new PopUp("You got smashed by an Armored Menace!"));
+								break;
+							case (20):
+								Display.messages.add(new PopUp(
+										"Just because the blind can't see doesn't mean they can't kill you!"));
+								break;
+							case (21):
+								Display.messages.add(new PopUp("Your soul was damned by the Damned Soul!"));
+								break;
+							case (22):
+								Display.messages.add(new PopUp("You got disintigrated by a Dark Strider!"));
+								break;
+							case (23):
+								Display.messages.add(new PopUp("You have been turned by a Deceptor!"));
+								break;
+							case (24):
+								Display.messages.add(new PopUp("You were gunned down by a Heavy Zombie!"));
+								break;
+							case (25):
+								Display.messages.add(new PopUp("You were dragged to the ground by a Moss Springer!"));
+								break;
+							case (26):
+								Display.messages
+										.add(new PopUp("The Tetra Destructor see's all, and it also destroys all!"));
 								break;
 							default:
 								Display.messages.add(new PopUp("You were killed by the enemy!"));
@@ -783,6 +736,33 @@ public abstract class Projectile {
 			}
 		}
 
+		// If this is a command bullet that will destroy anything in front of it
+		if (itemKiller) {
+			for (int i = 0; i < block.wallItems.size(); i++) {
+				Item item = block.wallItems.get(i);
+
+				double distanceFromItem = Math.sqrt(((Math.abs(x - item.x)) * (Math.abs(x - item.x)))
+						+ ((Math.abs(this.z - item.z)) * (Math.abs(this.z - item.z))));
+
+				if (distanceFromItem <= 0.1 && Math.abs((item.y) + ((this.y * 10) / 1.2)) <= 8) {
+					item.removeItem();
+					return false;
+				}
+			}
+
+			for (int i = 0; i < block2.wallItems.size(); i++) {
+				Item item = block2.wallItems.get(i);
+
+				double distanceFromItem = Math.sqrt(((Math.abs(x - item.x)) * (Math.abs(x - item.x)))
+						+ ((Math.abs(this.z - item.z)) * (Math.abs(this.z - item.z))));
+
+				if (distanceFromItem <= 0.1 && Math.abs((item.y) + ((this.y * 10) / 1.2)) <= 8) {
+					item.removeItem();
+					return false;
+				}
+			}
+		}
+
 		/*
 		 * Check to see if bullet hit a block, and return whether it did or not.
 		 */
@@ -819,21 +799,58 @@ public abstract class Projectile {
 		 * this.sourceEnemy != null))))
 		 */
 		{
-			/*
-			 * If a glass wall that is also labeled as a breakable wall, it is breakable by
-			 * bullets or rockets. Then it turns into an air block when it is broken.
-			 */
 			try {
+				// If this is a command bullet (destroys anything) then the wall will be
+				// destroyed no matter what.
+				if (itemKiller) {
+					block.health -= damage;
+
+					SoundController.explosion.playAudioFile(distanceFromPlayer);
+
+					if (block.health <= 0) {
+						// Keep track of the enemies on the block before
+						// the block changes
+						ArrayList<EntityParent> temp = block.entitiesOnBlock;
+						ArrayList<Item> temp2 = block.wallItems;
+
+						// New air block
+						block = new Block(0, 0, 0, block.x, block.z);
+
+						// Same enemies are on this block as the one that
+						// it changed from
+						block.entitiesOnBlock = temp;
+						block.wallItems = temp2;
+
+						// Re-add to level
+						Level.blocks[block.x + block.z * Level.width] = block;
+					}
+
+					// Add HitSprite to the game
+					HitSprite hS = new HitSprite(this.x, this.z, this.y, 5);
+
+					Game.sprites.add(hS);
+
+					// Makes sure alternate bullet hit sprites aren't rendered
+					disappear = true;
+				}
+
+				/*
+				 * Go through all items on the block, and if one of them labels the wall as
+				 * breakable, then make it so the projectile damages the wall.
+				 */
 				for (int i = 0; i < block.wallItems.size(); i++) {
 					Item item = block.wallItems.get(i);
 
 					if (item != null && item.itemID == ItemNames.BREAKABLEWALL.getID() && !hit) {
 						block.health -= damage;
 
+						// This is a glass wall
 						if (block.wallID == 4) {
 							// Glass hit/break sound
 							SoundController.glassBreak.playAudioFile(distanceFromPlayer);
-						} else if (block.wallID == 21) {
+						}
+						// If it is a box block
+						else if (block.wallID == 21) {
 							// Box break sound effect. Randomizes each time
 							Random rand = new Random();
 							int boxHitSound = rand.nextInt(2);
@@ -903,29 +920,27 @@ public abstract class Projectile {
 
 			}
 
-			// Only for rockets
-			if (ID == 3) {
-				// Loop through this bringing the projectile closer and closer to
-				// the wall until it hits the wall. This makes it so that rockets
-				// will explode right next to the wall instead of farther out like
-				// they used to.
-				while ((int) this.x != block.x || (int) this.z != block.z) {
-					// Move at tenth the speed it was originally for
-					// smaller more precise increments
-					this.x += xa / 10;
-					this.z += za / 10;
+			// Loop through this bringing the projectile closer and closer to
+			// the wall until it hits the wall. This makes it so that rockets
+			// will explode right next to the wall instead of farther out like
+			// they used to. It also fixes hit sprites going into walls for all
+			// projectiles
+			while ((int) this.x != block.x || (int) this.z != block.z) {
+				// Move at tenth the speed it was originally for
+				// smaller more precise increments
+				this.x += xa / 10;
+				this.z += za / 10;
 
-					// Makes it so an infinite loop does not occur if the
-					// projectile goes through the corner of a wall and misses
-					// its chance to check collision or not.
-					if ((xa > 0 && this.x + xa > block.x) || (xa < 0 && this.x + xa < block.x)) {
-						break;
-					}
+				// Makes it so an infinite loop does not occur if the
+				// projectile goes through the corner of a wall and misses
+				// its chance to check collision or not.
+				if ((xa > 0 && this.x + xa > block.x) || (xa < 0 && this.x + xa < block.x)) {
+					break;
+				}
 
-					// Same as above but for the z
-					if ((za > 0 && this.z + za > block.z) || (za < 0 && this.z + za < block.z)) {
-						break;
-					}
+				// Same as above but for the z
+				if ((za > 0 && this.z + za > block.z) || (za < 0 && this.z + za < block.z)) {
+					break;
 				}
 			}
 
@@ -964,6 +979,12 @@ public abstract class Projectile {
 	 * Takes care of rockets, and sets hit to being true for projectiles
 	 */
 	public void projectileHit(boolean playSound) {
+
+		// Tell entity to relocate if they didn't hit the target
+		if (!hitTargetEnemy && this.sourceEnemy != null) {
+			this.sourceEnemy.relocating = true;
+		}
+
 		// If already hit, don't replay sound like it does for some
 		// weird reason. Just return.
 		if (hit) {
@@ -973,7 +994,7 @@ public abstract class Projectile {
 		hit = true;
 
 		// Normal bullet, not rocket
-		if (ID <= 1 && !disappear) {
+		if (ID <= 1 && !disappear && ID > -1) {
 			if (playSound) {
 				try {
 					SoundController.wallHit.playAudioFile(distanceFromPlayer);
@@ -991,6 +1012,18 @@ public abstract class Projectile {
 			SoundController.phaseCannonHit.playAudioFile(distanceFromPlayer);
 
 			HitSprite hS = new HitSprite(this.x, this.z, this.y, this.ID);
+
+			Game.sprites.add(hS);
+		}
+		// Sword Hit
+		else if (ID == -1) {
+			if (meleeHitSound == 0) {
+				SoundController.swordWall1.playAudioFile(distanceFromPlayer);
+			} else {
+				SoundController.swordWall2.playAudioFile(distanceFromPlayer);
+			}
+
+			HitSprite hS = new HitSprite(this.x, this.z, this.y, 0);
 
 			Game.sprites.add(hS);
 		}

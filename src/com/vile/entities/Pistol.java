@@ -5,7 +5,6 @@ import java.util.Random;
 import com.vile.Display;
 import com.vile.Game;
 import com.vile.SoundController;
-import com.vile.launcher.FPSLauncher;
 
 /**
  * Title: Pistol
@@ -20,7 +19,7 @@ public class Pistol extends Weapon implements WeaponInterface {
 	 * Creates a new Weapon of ID 2
 	 */
 	public Pistol() {
-		super(0);
+		super(1);
 	}
 
 	/**
@@ -135,7 +134,7 @@ public class Pistol extends Weapon implements WeaponInterface {
 			bullY = 0.8;
 		}
 		// Create the bullet
-		Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation, criticalHit);
+		Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation, criticalHit);
 
 		// If this is a client, add this bullet to the bulletsAdded arraylist so that it
 		// may be added to the server and ticked there.
@@ -143,21 +142,17 @@ public class Pistol extends Weapon implements WeaponInterface {
 			Game.bulletsAdded.add(bullet);
 		}
 
-		int crossWidth = Display.WIDTH;
-		int crossHeight = Display.HEIGHT;
-
-		// Corrects bullet depending on resolution
-		if (FPSLauncher.resolutionChoice <= 1) {
-			crossHeight -= 125;
-		} else if (FPSLauncher.resolutionChoice <= 3) {
-			crossHeight -= 125;
-		}
-
-		// bullet.pixelsOnScreen.add((crossWidth / 2) +
-		// (crossHeight / 2) * crossWidth);
-
 		/*
-		 * Instead of rendering the bullet and all that, just check its movement
+		 * int crossWidth = Display.WIDTH; int crossHeight = Display.HEIGHT;
+		 * 
+		 * // Corrects bullet depending on resolution if (FPSLauncher.resolutionChoice
+		 * <= 1) { crossHeight -= 125; } else if (FPSLauncher.resolutionChoice <= 3) {
+		 * crossHeight -= 125; }
+		 * 
+		 * // bullet.pixelsOnScreen.add((crossWidth / 2) + // (crossHeight / 2) *
+		 * crossWidth);
+		 * 
+		 * /* Instead of rendering the bullet and all that, just check its movement
 		 * instantaneously in small increments to make it look like it hits the enemy
 		 * instantaneously and also makes it more precise.
 		 */

@@ -14,13 +14,13 @@ import com.vile.launcher.FPSLauncher;
  */
 public class EnemyFire extends Projectile {
 	// Its angle on the x and z plane from the 0 direction
-	private double rotation = 0;
+	public double rotation = 0;
 
 	// Angle it is fired upward or downward
 	private double upRotation = 0;
 
 	// How much it moves up each movement
-	private double upMovement = 0;
+	public double upMovement = 0;
 
 	/**
 	 * Creates a new Projectile object that is an enemy projectile
@@ -82,10 +82,14 @@ public class EnemyFire extends Projectile {
 		double angleChanger = 2;
 
 		// None of this makes sense as it will not work as intended.
-		// Have to do this to make it work.
+		// Have to do this to make it work. Only for player
 		if (this.sourceEnemy.targetEnemy == null) {
 			targetY = -targetY;
+		} else {
+			targetY *= 11;
 		}
+
+		// System.out.println(Player.y + " : " + y);
 
 		double yCorrect = y / 11;
 
@@ -103,25 +107,15 @@ public class EnemyFire extends Projectile {
 		}
 
 		// Find the angle upward that is needed
-		upRotation = Math.atan(((Math.abs(targetY) + yCorrect)) / (hypot));
+		upRotation = Math.atan(((Math.abs(targetY) - Math.abs(y))) / (hypot));
 
-		// If target is above, shoot up, if below, shoot down
-		// or if directly in line, have no up movement.
-		if (Math.abs(yCorrect) < Math.abs(targetY)) {
-
-			angleChanger = 20 + Math.abs((int) (yCorrect) * 3);
-
-			upMovement = -(0.3 * Math.tan(upRotation)) / angleChanger;
-
-			System.out.println("Here1: " + this.sourceEnemy.isFriendly);
-		} else if (Math.abs(yCorrect) == Math.abs(targetY)) {
+		if (Math.abs(y + 3.0) == Math.abs(targetY)) {
 			upMovement = 0;
 		} else {
-			upMovement = -(0.3 * Math.tan(upRotation)) / angleChanger;
-			System.out.println("Here2: " + this.sourceEnemy.isFriendly);
-		}
+			angleChanger = 20;
 
-		System.out.println("Y: " + yCorrect + " TargetY: " + targetY + " upMovement: " + upMovement);
+			upMovement = -(0.3 * Math.tan(upRotation)) / angleChanger;
+		}
 
 		// Angle that the player is in accordance to the enemy that
 		// fired the projectile so that the projectile can be fired
@@ -139,6 +133,72 @@ public class EnemyFire extends Projectile {
 
 		// Change in rotation sent in if applicable
 		rotation += rotChange;
+
+		/*
+		 * Corrects rotation so that the projectile is centered correctly in the map
+		 * graph. Idk why its so specific but this is what it takes.
+		 */
+		double correction = 44.768;
+
+		// Sets rotation so the projectile will continue to move in
+		// a certain direction
+		rotation = rotation - correction;
+
+		// Calculates the change in x and z needed each movement
+		xa = ((Math.cos(rotation)) + (Math.sin(rotation))) * speed;
+		za = ((Math.cos(rotation)) - (Math.sin(rotation))) * speed;
+	}
+
+	/**
+	 * Creates a new Projectile object that is an enemy projectile, but this already
+	 * has set rotations.
+	 * 
+	 * @param damage
+	 * @param speed
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @param ID
+	 * @param targetX
+	 * @param targetZ
+	 * @param targetY
+	 */
+	public EnemyFire(int damage, double speed, double x, double y, double z, int ID, double rotation, double upRotation,
+			Entity source, boolean criticalHit) {
+		// Creates the projectile object
+		super(damage, speed, x, (y / 10), z, ID, criticalHit);
+
+		// If easy mode
+		if (FPSLauncher.modeChoice == 1) {
+			speed *= 0.5;
+			damage *= 0.5;
+		}
+		// If Bring it on mode
+		else if (FPSLauncher.modeChoice == 3) {
+			speed *= 2;
+			damage *= 2;
+		}
+		// Death cannot hurt me mode.
+		else if (FPSLauncher.modeChoice == 4) {
+			speed *= 3;
+			damage *= 3;
+		}
+		// If peaceful mode
+		else if (FPSLauncher.modeChoice == 0) {
+			speed = 0;
+			damage = 0;
+		}
+
+		// The enemy that was the source of the Projectile
+		sourceEnemy = source;
+
+		if (upRotation == 0) {
+			upMovement = 0;
+		} else {
+			int angleChanger = 20;
+
+			upMovement = -(0.3 * Math.tan(upRotation)) / angleChanger;
+		}
 
 		/*
 		 * Corrects rotation so that the projectile is centered correctly in the map

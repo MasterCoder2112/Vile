@@ -116,6 +116,24 @@ public class Textures {
 	public static Render wall42b = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/wall42-2.png");
 	public static Render wall42c = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/wall42-3.png");
 	public static Render wall42d = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/wall42-4.png");
+	public static Render wall43 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/baseWall1.png");
+	public static Render wall44 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/baseWall2.png");
+	public static Render wall45 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/baseWall3.png");
+	public static Render wall46 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/baseWall4.png");
+	public static Render wall47 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/chamberWall.png");
+	public static Render wall48 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/grateWall.png");
+	public static Render wall49 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/pipeWall.png");
+	public static Render wall50 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/techWall1.png");
+	public static Render wall51 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/techWall2.png");
+	public static Render wall52 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/techWall3.png");
+	public static Render wall53 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/ventWall.png");
+	public static Render wall54 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/glowingWall.png");
+	public static Render wall55 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/gratedWall.png");
+	public static Render wall56 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/hellWall1.png");
+	public static Render wall57 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/hellWall2.png");
+	public static Render wall58 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/hellWall3.png");
+	public static Render wall59 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/hellWall4.png");
+	public static Render wall60 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/litHallway.png");
 
 	//////////////////////////////////////////////// ITEMS
 	public static Render health = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/health.png");
@@ -334,6 +352,10 @@ public class Textures {
 	public static Render toiletBroken4 = loadBitMap(
 			"resources" + FPSLauncher.themeName + "/textures/entities/toiletBroken4.png");
 	public static Render trash1 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/trashcan.png");
+	public static Render trashBreak = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/items/trashBreak1.png");
+	public static Render trashBroken = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/items/trashBroken.png");
 	public static Render trash2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/trashcan2.png");
 	public static Render trash3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/trashcan3.png");
 	public static Render treeAlive = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/treeAlive.png");
@@ -988,10 +1010,6 @@ public class Textures {
 			"resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse2.png");
 	public static Render defaultCorpse3 = loadBitMap(
 			"resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse3.png");
-	public static Render defaultCorpse4 = loadBitMap(
-			"resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse4.png");
-	public static Render defaultCorpse5 = loadBitMap(
-			"resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse5.png");
 	public static Render defaultCorpse6 = loadBitMap(
 			"resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse6.png");
 	public static Render enemy8 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy8.png");
@@ -1094,8 +1112,201 @@ public class Textures {
 	public static Render marine1 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine1.png");
 	public static Render marine2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine2.png");
 	public static Render marine3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine3.png");
-	public static Render marine4 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4.png");
+	public static Render marine4a = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1.png");
+	public static Render marine4b = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2.png");
+	public static Render marine4c = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3.png");
+	public static Render marine4d = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4.png");
+	public static Render marine4hurt = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt.png");
+	public static Render marine4fire1 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1.png");
+	public static Render marine4fire2 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2.png");
+	public static Render marine4aleft45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(45 left).png");
+	public static Render marine4bleft45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(45 left).png");
+	public static Render marine4cleft45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(45 left).png");
+	public static Render marine4dleft45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(45 left).png");
+	public static Render marine4hurtleft45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(45 left).png");
+	public static Render marine4fire1left45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(45 left).png");
+	public static Render marine4fire2left45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(45 left).png");
+	public static Render marine4aleft = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(left).png");
+	public static Render marine4bleft = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(left).png");
+	public static Render marine4cleft = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(left).png");
+	public static Render marine4dleft = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(left).png");
+	public static Render marine4hurtleft = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(left).png");
+	public static Render marine4fire1left = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(left).png");
+	public static Render marine4fire2left = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(left).png");
+	public static Render marine4aleft135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(135 left).png");
+	public static Render marine4bleft135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(135 left).png");
+	public static Render marine4cleft135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(135 left).png");
+	public static Render marine4dleft135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(135 left).png");
+	public static Render marine4hurtleft135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(135 left).png");
+	public static Render marine4fire1left135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(135 left).png");
+	public static Render marine4fire2left135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(135 left).png");
+	public static Render marine4aright45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(45 right).png");
+	public static Render marine4bright45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(45 right).png");
+	public static Render marine4cright45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(45 right).png");
+	public static Render marine4dright45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(45 right).png");
+	public static Render marine4hurtright45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(45 right).png");
+	public static Render marine4fire1right45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(45 right).png");
+	public static Render marine4fire2right45 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(45 right).png");
+	public static Render marine4aright = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(right).png");
+	public static Render marine4bright = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(right).png");
+	public static Render marine4cright = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(right).png");
+	public static Render marine4dright = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(right).png");
+	public static Render marine4hurtright = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(right).png");
+	public static Render marine4fire1right = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(right).png");
+	public static Render marine4fire2right = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(right).png");
+	public static Render marine4aright135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(135 right).png");
+	public static Render marine4bright135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(135 right).png");
+	public static Render marine4cright135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(135 right).png");
+	public static Render marine4dright135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(135 right).png");
+	public static Render marine4hurtright135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(135 right).png");
+	public static Render marine4fire1right135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(135 right).png");
+	public static Render marine4fire2right135 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(135 right).png");
+	public static Render marine4aback = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(back).png");
+	public static Render marine4bback = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(back).png");
+	public static Render marine4cback = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(back).png");
+	public static Render marine4dback = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(back).png");
+	public static Render marine4hurtback = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(back).png");
+	public static Render marine4fire1back = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(back).png");
+	public static Render marine4fire2back = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(back).png");
+	public static Render marine4corpse1 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1.png");
+	public static Render marine4corpse2 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2.png");
+	public static Render marine4corpse1a = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1-1.png");
+	public static Render marine4corpse1b = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1-2.png");
+	public static Render marine4corpse1c = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1-3.png");
+	public static Render marine4corpse1d = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1-4.png");
+	public static Render marine4corpse2a = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2-1.png");
+	public static Render marine4corpse2b = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2-2.png");
+	public static Render marine4corpse2c = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2-3.png");
+	public static Render marine4corpse2d = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2-4.png");
 	public static Render marine5 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine5.png");
+	public static Render marine6 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine6.png");
+	public static Render marine6corpse = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/marine6corpse.png");
+	public static Render armoredMenace = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/armoredMenace.png");
+	public static Render armoredMenaceAttack = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/armoredMenaceAttack.png");
+	public static Render armoredMenaceHurt = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/armoredMenaceHurt.png");
+	public static Render armoredMenaceCorpse = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/armoredMenaceCorpse.png");
+	public static Render blindCharger = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/blindCharger.png");
+	public static Render blindChargerAttack = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/blindChargerAttack.png");
+	public static Render blindChargerHurt = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/blindChargerHurt.png");
+	public static Render blindChargerCorpse = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/blindChargerCorpse.png");
+	public static Render damnedSoul = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/damnedSoul.png");
+	public static Render damnedSoulAttack = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/damnedSoulAttack.png");
+	public static Render darkStrider = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/darkStrider.png");
+	public static Render darkStriderFire = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/darkStriderFire.png");
+	public static Render darkStriderHurt = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/darkStriderHurt.png");
+	public static Render darkStriderCorpse = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/darkStriderCorpse.png");
+	public static Render deceptor = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/deceptor.png");
+	public static Render deceptorFire = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/deceptorFire.png");
+	public static Render deceptorHurt = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/deceptorHurt.png");
+	public static Render deceptorCorpse = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/deceptorCorpse.png");
+	public static Render heavyZombie = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/heavyZombie.png");
+	public static Render heavyZombieFire = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/heavyZombieFire.png");
+	public static Render heavyZombieHurt = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/heavyZombieHurt.png");
+	public static Render heavyZombieCorpse = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/heavyZombieCorpse.png");
+	public static Render mossSpringer = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/mossSpringer.png");
+	public static Render mossSpringerAttack = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/mossSpringerAttack.png");
+	public static Render mossSpringerHurt = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/mossSpringerHurt.png");
+	public static Render mossSpringerCorpse = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/mossSpringerCorpse.png");
+	public static Render tetraDestructor = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/tetraDestructor.png");
+	public static Render tetraDestructorFire = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/tetraDestructorFire.png");
+	public static Render tetraDestructorHurt = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/tetraDestructorHurt.png");
+	public static Render tetraDestructorCorpse = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/entities/tetraCorpse.png");
 
 	///////////////////////////////////////////// PROJECTILES
 	public static Render phaser = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/phaser.png");
@@ -1108,6 +1319,8 @@ public class Textures {
 			"resources" + FPSLauncher.themeName + "/textures/projectiles/canExplode3.png");
 	public static Render canExplode4 = loadBitMap(
 			"resources" + FPSLauncher.themeName + "/textures/projectiles/canExplode4.png");
+	public static Render canExploded = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/projectiles/canExploded.png");
 	public static Render defaultFireball = loadBitMap(
 			"resources" + FPSLauncher.themeName + "/textures/projectiles/fireball.png");
 	public static Render defaultFireball2 = loadBitMap(
@@ -1175,6 +1388,8 @@ public class Textures {
 			"resources" + FPSLauncher.themeName + "/textures/projectiles/bulletHit3.png");
 	public static Render bulletHit4 = loadBitMap(
 			"resources" + FPSLauncher.themeName + "/textures/projectiles/bulletHit4.png");
+	public static Render bulletHit5 = loadBitMap(
+			"resources" + FPSLauncher.themeName + "/textures/projectiles/bulletHit5.png");
 	public static Render bloodSpray1 = loadBitMap(
 			"resources" + FPSLauncher.themeName + "/textures/projectiles/bloodSpray1.png");
 	public static Render bloodSpray2 = loadBitMap(
@@ -1388,6 +1603,24 @@ public class Textures {
 		wall42b = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/wall42-2.png");
 		wall42c = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/wall42-3.png");
 		wall42d = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/wall42-4.png");
+		wall43 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/baseWall1.png");
+		wall44 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/baseWall2.png");
+		wall45 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/baseWall3.png");
+		wall46 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/baseWall4.png");
+		wall47 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/chamberWall.png");
+		wall48 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/grateWall.png");
+		wall49 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/pipeWall.png");
+		wall50 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/techWall1.png");
+		wall51 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/techWall2.png");
+		wall52 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/techWall3.png");
+		wall53 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/ventWall.png");
+		wall54 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/glowingWall.png");
+		wall55 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/gratedWall.png");
+		wall56 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/hellWall1.png");
+		wall57 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/hellWall2.png");
+		wall58 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/hellWall3.png");
+		wall59 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/hellWall4.png");
+		wall60 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/walls/litHallway.png");
 
 		//////////////////////////////////////////////// ITEMS
 		health = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/health.png");
@@ -1485,7 +1718,101 @@ public class Textures {
 		marine1 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine1.png");
 		marine2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine2.png");
 		marine3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine3.png");
-		marine4 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4.png");
+		marine4a = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-1.png");
+		marine4b = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-2.png");
+		marine4c = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-3.png");
+		marine4d = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-4.png");
+		marine4hurt = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt.png");
+		marine4fire1 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1.png");
+		marine4fire2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2.png");
+		marine4aleft45 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(45 left).png");
+		marine4bleft45 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(45 left).png");
+		marine4cleft45 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(45 left).png");
+		marine4dleft45 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(45 left).png");
+		marine4hurtleft45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(45 left).png");
+		marine4fire1left45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(45 left).png");
+		marine4fire2left45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(45 left).png");
+		marine4aleft = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(left).png");
+		marine4bleft = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(left).png");
+		marine4cleft = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(left).png");
+		marine4dleft = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(left).png");
+		marine4hurtleft = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(left).png");
+		marine4fire1left = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(left).png");
+		marine4fire2left = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(left).png");
+		marine4aleft135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(135 left).png");
+		marine4bleft135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(135 left).png");
+		marine4cleft135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(135 left).png");
+		marine4dleft135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(135 left).png");
+		marine4hurtleft135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(135 left).png");
+		marine4fire1left135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(135 left).png");
+		marine4fire2left135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(135 left).png");
+		marine4aright45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(45 right).png");
+		marine4bright45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(45 right).png");
+		marine4cright45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(45 right).png");
+		marine4dright45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(45 right).png");
+		marine4hurtright45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(45 right).png");
+		marine4fire1right45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(45 right).png");
+		marine4fire2right45 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(45 right).png");
+		marine4aright = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(right).png");
+		marine4bright = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(right).png");
+		marine4cright = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(right).png");
+		marine4dright = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(right).png");
+		marine4hurtright = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(right).png");
+		marine4fire1right = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(right).png");
+		marine4fire2right = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(right).png");
+		marine4aright135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(135 right).png");
+		marine4bright135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(135 right).png");
+		marine4cright135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(135 right).png");
+		marine4dright135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(135 right).png");
+		marine4hurtright135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(135 right).png");
+		marine4fire1right135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(135 right).png");
+		marine4fire2right135 = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(135 right).png");
+		marine4aback = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-1(back).png");
+		marine4bback = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-2(back).png");
+		marine4cback = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-3(back).png");
+		marine4dback = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4-4(back).png");
+		marine4hurtback = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4hurt(back).png");
+		marine4fire1back = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire1(back).png");
+		marine4fire2back = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/marine4fire2(back).png");
+		marine4corpse1a = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1-1.png");
+		marine4corpse1b = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1-2.png");
+		marine4corpse1c = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1-3.png");
+		marine4corpse1d = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1-4.png");
+		marine4corpse2a = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2-1.png");
+		marine4corpse2b = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2-2.png");
+		marine4corpse2c = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2-3.png");
+		marine4corpse2d = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2-4.png");
 		marine5 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine5.png");
 		burningCorpse = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/burningCorpse.png");
 		carcass = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/carcass.png");
@@ -1541,6 +1868,8 @@ public class Textures {
 		toiletBroken3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/toiletBroken3.png");
 		toiletBroken4 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/toiletBroken4.png");
 		trash1 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/trashcan.png");
+		trashBreak = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/trashBreak1.png");
+		trashBroken = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/trashBroken.png");
 		trash2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/trashcan2.png");
 		trash3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/trashcan3.png");
 		treeAlive = loadBitMap("resources" + FPSLauncher.themeName + "/textures/items/treeAlive.png");
@@ -1989,8 +2318,6 @@ public class Textures {
 		defaultCorpse1 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse1.png");
 		defaultCorpse2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse2.png");
 		defaultCorpse3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse3.png");
-		defaultCorpse4 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse4.png");
-		defaultCorpse5 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse5.png");
 		defaultCorpse6 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/defaultCorpse6.png");
 		enemy8 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy8.png");
 		enemy8left45 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy8(45 left).png");
@@ -2058,6 +2385,51 @@ public class Textures {
 		enemy8corpse7 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy8corpse7.png");
 		enemy8corpse8 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy8corpse8.png");
 		enemy8corpse9 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/enemy8corpse9.png");
+		marine4corpse1 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse1.png");
+		marine4corpse2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine4corpse2.png");
+		marine6 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine6.png");
+		marine6corpse = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/marine6corpse.png");
+		armoredMenace = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/armoredMenace.png");
+		armoredMenaceAttack = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/armoredMenaceAttack.png");
+		armoredMenaceHurt = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/armoredMenaceHurt.png");
+		armoredMenaceCorpse = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/armoredMenaceCorpse.png");
+		blindCharger = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/blindCharger.png");
+		blindChargerAttack = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/blindChargerAttack.png");
+		blindChargerHurt = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/blindChargerHurt.png");
+		blindChargerCorpse = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/blindChargerCorpse.png");
+		damnedSoul = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/damnedSoul.png");
+		damnedSoulAttack = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/damnedSoulAttack.png");
+		darkStrider = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/darkStrider.png");
+		darkStriderFire = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/darkStriderFire.png");
+		darkStriderHurt = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/darkStriderHurt.png");
+		darkStriderCorpse = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/darkStriderCorpse.png");
+		deceptor = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/deceptor.png");
+		deceptorFire = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/deceptorFire.png");
+		deceptorHurt = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/deceptorHurt.png");
+		deceptorCorpse = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/deceptorCorpse.png");
+		heavyZombie = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/heavyZombie.png");
+		heavyZombieFire = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/heavyZombieFire.png");
+		heavyZombieHurt = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/heavyZombieHurt.png");
+		heavyZombieCorpse = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/heavyZombieCorpse.png");
+		mossSpringer = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/mossSpringer.png");
+		mossSpringerAttack = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/mossSpringerAttack.png");
+		mossSpringerHurt = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/mossSpringerHurt.png");
+		mossSpringerCorpse = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/mossSpringerCorpse.png");
+		tetraDestructor = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/tetraDestructor.png");
+		tetraDestructorFire = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/tetraDestructorFire.png");
+		tetraDestructorHurt = loadBitMap(
+				"resources" + FPSLauncher.themeName + "/textures/entities/tetraDestructorHurt.png");
+		tetraDestructorCorpse = loadBitMap("resources" + FPSLauncher.themeName + "/textures/entities/tetraCorpse.png");
 
 		///////////////////////////////////////////// PROJECTILES
 		phaser = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/phaser.png");
@@ -2066,6 +2438,7 @@ public class Textures {
 		canExplode2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/canExplode2.png");
 		canExplode3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/canExplode3.png");
 		canExplode4 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/canExplode4.png");
+		canExploded = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/canExploded.png");
 		defaultFireball = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/fireball.png");
 		giantFireball = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/giantFireball.png");
 		electricShock = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/electricShock.png");
@@ -2092,6 +2465,7 @@ public class Textures {
 		bulletHit2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/bulletHit2.png");
 		bulletHit3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/bulletHit3.png");
 		bulletHit4 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/bulletHit4.png");
+		bulletHit5 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/bulletHit5.png");
 		bloodSpray1 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/bloodSpray1.png");
 		bloodSpray2 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/bloodSpray2.png");
 		bloodSpray3 = loadBitMap("resources" + FPSLauncher.themeName + "/textures/projectiles/bloodSpray3.png");
@@ -2197,6 +2571,24 @@ public class Textures {
 		wall42b = null;
 		wall42c = null;
 		wall42d = null;
+		wall43 = null;
+		wall44 = null;
+		wall45 = null;
+		wall46 = null;
+		wall47 = null;
+		wall48 = null;
+		wall49 = null;
+		wall50 = null;
+		wall51 = null;
+		wall52 = null;
+		wall53 = null;
+		wall54 = null;
+		wall55 = null;
+		wall56 = null;
+		wall57 = null;
+		wall58 = null;
+		wall59 = null;
+		wall60 = null;
 
 		//////////////////////////////////////////////// ITEMS
 		health = null;
@@ -2288,7 +2680,70 @@ public class Textures {
 		marine1 = null;
 		marine2 = null;
 		marine3 = null;
-		marine4 = null;
+		marine4a = null;
+		marine4b = null;
+		marine4c = null;
+		marine4d = null;
+		marine4hurt = null;
+		marine4fire1 = null;
+		marine4fire2 = null;
+		marine4aleft45 = null;
+		marine4bleft45 = null;
+		marine4cleft45 = null;
+		marine4dleft45 = null;
+		marine4hurtleft45 = null;
+		marine4fire1left45 = null;
+		marine4fire2left45 = null;
+		marine4aleft = null;
+		marine4bleft = null;
+		marine4cleft = null;
+		marine4dleft = null;
+		marine4hurtleft = null;
+		marine4fire1left = null;
+		marine4fire2left = null;
+		marine4aleft135 = null;
+		marine4bleft135 = null;
+		marine4cleft135 = null;
+		marine4dleft135 = null;
+		marine4hurtleft135 = null;
+		marine4fire1left135 = null;
+		marine4fire2left135 = null;
+		marine4aright45 = null;
+		marine4bright45 = null;
+		marine4cright45 = null;
+		marine4dright45 = null;
+		marine4hurtright45 = null;
+		marine4fire1right45 = null;
+		marine4fire2right45 = null;
+		marine4aright = null;
+		marine4bright = null;
+		marine4cright = null;
+		marine4dright = null;
+		marine4hurtright = null;
+		marine4fire1right = null;
+		marine4fire2right = null;
+		marine4aright135 = null;
+		marine4bright135 = null;
+		marine4cright135 = null;
+		marine4dright135 = null;
+		marine4hurtright135 = null;
+		marine4fire1right135 = null;
+		marine4fire2right135 = null;
+		marine4aback = null;
+		marine4bback = null;
+		marine4cback = null;
+		marine4dback = null;
+		marine4hurtback = null;
+		marine4fire1back = null;
+		marine4fire2back = null;
+		marine4corpse1a = null;
+		marine4corpse1b = null;
+		marine4corpse1c = null;
+		marine4corpse1d = null;
+		marine4corpse2a = null;
+		marine4corpse2b = null;
+		marine4corpse2c = null;
+		marine4corpse2d = null;
 		marine5 = null;
 		burningCorpse = null;
 		carcass = null;
@@ -2344,6 +2799,8 @@ public class Textures {
 		toiletBroken3 = null;
 		toiletBroken4 = null;
 		trash1 = null;
+		trashBreak = null;
+		trashBroken = null;
 		trash2 = null;
 		trash3 = null;
 		treeAlive = null;
@@ -2686,8 +3143,6 @@ public class Textures {
 		defaultCorpse1 = null;
 		defaultCorpse2 = null;
 		defaultCorpse3 = null;
-		defaultCorpse4 = null;
-		defaultCorpse5 = null;
 		defaultCorpse6 = null;
 		enemy8 = null;
 		enemy8left45 = null;
@@ -2738,6 +3193,40 @@ public class Textures {
 		enemy8corpse7 = null;
 		enemy8corpse8 = null;
 		enemy8corpse9 = null;
+		marine4corpse1 = null;
+		marine4corpse2 = null;
+		marine6 = null;
+		marine6corpse = null;
+		armoredMenace = null;
+		armoredMenaceAttack = null;
+		armoredMenaceHurt = null;
+		armoredMenaceCorpse = null;
+		blindCharger = null;
+		blindChargerAttack = null;
+		blindChargerHurt = null;
+		blindChargerCorpse = null;
+		damnedSoul = null;
+		damnedSoulAttack = null;
+		darkStrider = null;
+		darkStriderFire = null;
+		darkStriderHurt = null;
+		darkStriderCorpse = null;
+		deceptor = null;
+		deceptorFire = null;
+		deceptorHurt = null;
+		deceptorCorpse = null;
+		heavyZombie = null;
+		heavyZombieFire = null;
+		heavyZombieHurt = null;
+		heavyZombieCorpse = null;
+		mossSpringer = null;
+		mossSpringerAttack = null;
+		mossSpringerHurt = null;
+		mossSpringerCorpse = null;
+		tetraDestructor = null;
+		tetraDestructorFire = null;
+		tetraDestructorHurt = null;
+		tetraDestructorCorpse = null;
 
 		///////////////////////////////////////////// PROJECTILES
 		phaser = null;
@@ -2746,6 +3235,7 @@ public class Textures {
 		canExplode2 = null;
 		canExplode3 = null;
 		canExplode4 = null;
+		canExploded = null;
 		defaultFireball = null;
 		giantFireball = null;
 		electricShock = null;
@@ -2772,6 +3262,7 @@ public class Textures {
 		bulletHit2 = null;
 		bulletHit3 = null;
 		bulletHit4 = null;
+		bulletHit5 = null;
 		bloodSpray1 = null;
 		bloodSpray2 = null;
 		bloodSpray3 = null;

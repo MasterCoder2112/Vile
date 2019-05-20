@@ -5,12 +5,17 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -33,9 +38,10 @@ import javax.swing.JFrame;
 
 import com.vile.entities.Bullet;
 import com.vile.entities.Cartridge;
+import com.vile.entities.Corpse;
+import com.vile.entities.Entity;
 import com.vile.entities.EntityParent;
 import com.vile.entities.Explosion;
-import com.vile.entities.ExplosiveCanister;
 import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
 import com.vile.entities.Player;
@@ -62,6 +68,734 @@ import com.vile.server.ServerClient;
  *         track of all events and such.
  */
 public class Display extends Canvas implements Runnable {
+
+	/**
+	 * Listens for keys pressed, and if the console is open appends any keys pressed
+	 * to the console output in the form of a string.
+	 */
+	private class MyDispatcher implements KeyEventDispatcher {
+		@Override
+		public boolean dispatchKeyEvent(KeyEvent e) {
+			if (e.getID() == KeyEvent.KEY_PRESSED) {
+				int keyCode = e.getKeyCode();
+
+				switch (keyCode) {
+				case KeyEvent.VK_BACK_SPACE:
+					try {
+						// Gets rid of one character at a time in the console output
+						String temp = consoleOutput.substring(0, consoleOutput.length() - 1);
+						consoleOutput = temp;
+					} catch (Exception ex) {
+						// Will Only break if there is no more console output
+					}
+					break;
+				case KeyEvent.VK_SHIFT:
+					// TODO Eventually will capitalize letters
+					// String temp = consoleOutput.substring(0, consoleOutput.length() - 1);
+					// consoleOutput = temp;
+					break;
+				case KeyEvent.VK_SPACE:
+					// Space just adds a space
+					consoleOutput += " ";
+					break;
+				case KeyEvent.VK_UP:
+					// Can't cycle out of the range of commands available
+					if (commandIterator <= commands.size() - 2) {
+						commandIterator++;
+					}
+
+					// When you use the up arrow, it should cycle throught the commands
+					// that were previously used for efficiency.
+					consoleOutput = commands.get(commandIterator);
+
+					break;
+				case KeyEvent.VK_DOWN:
+					/*
+					 * Decrement the commandIterator to go backwards through the commands.
+					 */
+					if (commandIterator > -1) {
+						commandIterator--;
+					}
+
+					if (commandIterator != -1) {
+						// When you use the down arrow, it should cycle throught the commands
+						// that were previously used but in reverse.
+						consoleOutput = commands.get(commandIterator);
+					} else {
+						consoleOutput = "";
+					}
+
+					break;
+				case KeyEvent.VK_ENTER:
+					consoleOutput = consoleOutput.toLowerCase();
+					consoleMessage = "";
+
+					String[] parameters = consoleOutput.split(" ");
+
+					// Give player all weapons and ammo limits
+					if (parameters[0].equals("give")) {
+						if (parameters.length == 2 && parameters[1].equals("all")) {
+
+							// Go through all weapons and addAmmo until full
+							for (int i = 0; i < Player.weapons.length; i++) {
+								Player.weapons[i].ammo = Player.weapons[i].ammoLimit;
+								Player.weapons[i].canBeEquipped = true;
+								Player.weapons[1].dualWield = true;
+
+								// For some reason an infinite loop is caused sometimes, so
+								// this will be the fallback to fix that issue.
+								int fallBack = 0;
+
+								while (Player.weapons[i].addAmmo(20) && fallBack <= 200) {
+									fallBack++;
+								}
+							}
+
+							Player.hasBlueKey = true;
+							Player.hasGreenKey = true;
+							Player.hasRedKey = true;
+							Player.hasYellowKey = true;
+
+							consoleMessage = "Everything is given!";
+						} else if (parameters.length == 2 && parameters[1].equals("weapons")) {
+							Player.weapons[1].dualWield = true;
+
+							// Go through all weapons and addAmmo until full
+							for (int i = 0; i < Player.weapons.length; i++) {
+								Player.weapons[i].canBeEquipped = true;
+							}
+
+							consoleMessage = "All weapons are now available";
+						} else if (parameters.length == 2 && parameters[1].equals("ammo")) {
+
+							// Go through all weapons and addAmmo until full
+							for (int i = 0; i < Player.weapons.length; i++) {
+								Player.weapons[i].ammo = Player.weapons[i].ammoLimit;
+
+								// For some reason an infinite loop is caused sometimes, so
+								// this will be the fallback to fix that issue.
+								int fallBack = 0;
+
+								while (Player.weapons[i].addAmmo(20) && fallBack <= 200) {
+									fallBack++;
+								}
+							}
+
+							consoleMessage = "All ammo is now completely restored!";
+						} else if (parameters.length == 2 && parameters[1].equals("keys")) {
+							Player.hasBlueKey = true;
+							Player.hasGreenKey = true;
+							Player.hasRedKey = true;
+							Player.hasYellowKey = true;
+
+							consoleMessage = "All Keys are now given!";
+						} else if (parameters.length == 3 && parameters[1].equals("upgradepoints")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of upgrade points needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.upgradePoints += amountToAdd;
+
+							consoleMessage = "You have been given " + amountToAdd + " upgrade points";
+						} else if (parameters.length == 3 && parameters[1].equals("resurrections")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of resurrections needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.resurrections += amountToAdd;
+
+							consoleMessage = "You have been given " + amountToAdd + " resurrect skulls";
+						} else if (parameters.length == 3 && parameters[1].equals("health")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of health needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.health += amountToAdd;
+
+							if (Player.health > Player.maxHealth) {
+								Player.health = Player.maxHealth;
+							}
+
+							consoleMessage = "You have been given " + amountToAdd + " health";
+						} else if (parameters.length == 3 && parameters[1].equals("maxhealth")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of max health needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.maxHealth += amountToAdd;
+
+							consoleMessage = "You have added " + amountToAdd + " to your max health";
+						} else if (parameters.length == 3 && parameters[1].equals("armor")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of armor needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.armor += amountToAdd;
+
+							consoleMessage = "You have been given " + amountToAdd + " armor";
+						} else if (parameters.length == 2 && parameters[1].equals("berserk")) {
+							if (Player.meleeMultiplier != 4) {
+								Player.meleeMultiplier = 4;
+
+								consoleMessage = "You are now in beserk mode. Try slashing something!";
+							} else {
+								Player.meleeMultiplier = 1;
+
+								consoleMessage = "You are now back to normal melee damage.";
+							}
+						} else if (parameters.length == 3 && parameters[1].equals("invisibility")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of invisibility needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.invisibility += amountToAdd;
+
+							consoleMessage = "You have " + amountToAdd + " milliseconds of invisibility";
+						} else if (parameters.length == 3 && parameters[1].equals("protection")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of environment protection needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.environProtectionTime += amountToAdd;
+
+							consoleMessage = "You have " + amountToAdd + " milliseconds of environment protection";
+						} else if (parameters.length == 3 && parameters[1].equals("vision")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of enhanced vision needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.vision += amountToAdd;
+
+							consoleMessage = "You have " + amountToAdd + " milliseconds of enhanced vision";
+						} else if (parameters.length == 3 && parameters[1].equals("immortality")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of immortality needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.immortality += amountToAdd;
+
+							consoleMessage = "You have " + amountToAdd + " milliseconds of immortality";
+						} else if (parameters.length == 3 && parameters[1].equals("drunk")) {
+							int amountToAdd = 0;
+
+							// Try to parse to int the amount of drunk needed
+							try {
+								amountToAdd = Integer.parseInt(parameters[2]);
+							} catch (Exception ex) {
+
+							}
+
+							Player.drunkLevels += amountToAdd;
+
+							consoleMessage = "You are " + amountToAdd + " more drunk";
+						} else {
+							consoleMessage = "More parameters needed: give <parameter> <amount: optional>";
+						}
+					} else if (consoleOutput.equals("noclip")
+							|| (parameters.length == 2 && parameters[0].equals("noclip"))) {
+						/*
+						 * There are two ways to turn on or off a command. You can either just type the
+						 * command to auto switch it, or you can give it a specific parameter like on or
+						 * off to turn it on or off. This takes care of both cases.
+						 */
+						if ((!Player.noClipOn && parameters.length == 1)
+								|| (parameters.length == 2 && parameters[1].equals("on"))) {
+							Player.noClipOn = true;
+							consoleMessage = "NoClip turned on";
+						} else {
+							Player.noClipOn = false;
+							consoleMessage = "NoClip turned off";
+						}
+					} else if (consoleOutput.equals("exit")) {
+						System.exit(0);
+					} else if (consoleOutput.equals("position")) {
+						consoleMessage = "X: " + Player.x + " Y: " + Player.y + " Z: " + Player.z;
+					} else if (consoleOutput.equals("height")) {
+						consoleMessage = "Player Height: " + Player.height;
+					} else if (consoleOutput.equals("maxheight")) {
+						consoleMessage = "Player Max Height: " + Player.maxHeight;
+					} else if (consoleOutput.equals("resurrections")) {
+						consoleMessage = "Resurrect skulls: " + Player.resurrections;
+					} else if (consoleOutput.equals("drunkedness")) {
+						consoleMessage = "Player drunk level: " + Player.drunkLevels;
+					} else if (consoleOutput.equals("immortality")) {
+						consoleMessage = "Player Immortality: " + Player.immortality;
+					} else if (consoleOutput.equals("invisibility")) {
+						consoleMessage = "Player Invisibility: " + Player.invisibility;
+					} else if (consoleOutput.equals("vision")) {
+						consoleMessage = "Player Vision: " + Player.vision;
+					} else if (consoleOutput.equals("protection")) {
+						consoleMessage = "Player Environment Protection: " + Player.environProtectionTime;
+					} else if (consoleOutput.equals("maxHealth")) {
+						consoleMessage = "Player Max Health: " + Player.maxHealth;
+					} else if (parameters.length == 4 && parameters[0].equals("warp")) {
+						double warpX = 0;
+						double warpY = 0;
+						double warpZ = 0;
+						// Try to parse to int the amount of invisibility needed
+						try {
+							warpX = Double.parseDouble(parameters[1]);
+							warpY = Double.parseDouble(parameters[2]);
+							warpZ = Double.parseDouble(parameters[3]);
+
+							Player.x = warpX;
+							Player.y = warpY;
+							Player.z = warpZ;
+
+							SoundController.teleportation.playAudioFile(0);
+							consoleMessage = "Player has teleported successfully";
+						} catch (Exception ex) {
+							consoleMessage = "Error, try: warp <x:decimal> <y:decimal> <z:decimal>";
+						}
+					} else if (parameters.length == 3 && parameters[0].equals("set")) {
+						if (parameters[1].equals("jump")) {
+
+							int jumpAmount = 8;
+							// Try to parse to int the amount of jump height needed
+							try {
+								jumpAmount = Integer.parseInt(parameters[2]);
+
+								Player.totalJump = jumpAmount;
+								consoleMessage = "You can now jump " + jumpAmount + " units in the air";
+							} catch (Exception ex) {
+								consoleMessage = "Error, try: set jump <value:integer>";
+							}
+						}
+					} else if (parameters.length == 2 && parameters[0].equals("clear")) {
+						// Clear corpses from map if need be
+						if (parameters[1].equals("corpses")) {
+							Game.corpses = new ArrayList<Corpse>();
+							consoleMessage = "All corpses are now cleared!";
+						}
+					} else if (parameters.length == 2 && parameters[0].equals("kill")) {
+						// Kill all entities in map if this is called.
+						if (parameters[1].equals("entities")) {
+							int originalSize = Game.entities.size() - 1;
+
+							// Has to go in reverse as the size of Game.entities changes with each death.
+							for (int i = originalSize; i >= 0; i--) {
+								Entity temp = Game.entities.get(i);
+
+								temp.enemyDeath();
+							}
+
+							consoleMessage = "All entities have died!";
+						} else if (parameters[1].equals("ahead")) {
+							double bullY = -(Player.y * 0.085);
+
+							// Bullet will be lower if player is crouching
+							if (Player.yCorrect + 1 < Player.y) {
+								bullY = 0.8;
+							}
+							// Create the bullet
+							Bullet bullet = new Bullet(100000, 0.03, Player.x, bullY, Player.z, 0, Player.rotation,
+									true);
+
+							bullet.itemKiller = true;
+
+							// If this is a client, add this bullet to the bulletsAdded arraylist so that it
+							// may be added to the server and ticked there.
+							if (Display.gameType == 1) {
+								Game.bulletsAdded.add(bullet);
+							}
+
+							/*
+							 * Instead of rendering the bullet and all that, just check its movement
+							 * instantaneously in small increments to make it look like it hits the enemy
+							 * instantaneously and also makes it more precise.
+							 */
+							while (bullet.move() && Display.gameType != 1) {
+								// System.out.println(bullet.y);
+								// Do nothing, just call the move method
+							}
+
+							consoleMessage = "Death hath cometh to those ahead of you!";
+						}
+					} else if (parameters.length >= 3 && parameters[0].equals("summon")) {
+						if (parameters[1].equals("item")) {
+
+							int ID = 0;
+							// Try to parse to int the amount of jump height needed
+							try {
+								ID = Integer.parseInt(parameters[2]);
+
+								if (ID > ItemNames.AIR.getID() && ID <= ItemNames.YELLOWKEY.getID()
+										|| ID == ItemNames.SHOTGUN.getID() || ID == ItemNames.BREAKABLEWALL.getID()
+										|| ID == ItemNames.SECRET.getID() || ID > 23 && ID < 44
+										|| ID >= 47 && ID != ItemNames.BUTTON.getID() && ID != 58 && ID != 59
+												&& ID != ItemNames.TURRET.getID() && ID != ItemNames.EXPLOSION.getID()
+												&& ID != ItemNames.TOILET.getID() && ID != 110 && ID != 111
+												&& ID < 124) {
+									double xa = (0 * (Math.cos(Player.rotation)) + (Math.sin(Player.rotation))) * 1;
+									double za = ((Math.cos(Player.rotation)) - (0 * Math.sin(Player.rotation))) * 1;
+
+									// Item to be added to the map and block
+									Item temp = null;
+									double xPos = Player.x + xa;
+									double zPos = Player.z + za;
+
+									Block blockOn = Level.getBlock((int) xPos, (int) zPos);
+
+									// Default y Value of an item
+									double yValue = (blockOn.y * 4) + blockOn.height;
+
+									/*
+									 * If its not an explosive canister, add it as a normal item. Otherwise add it
+									 * as an explosive canister
+									 */
+									temp = new Item(10, xPos, yValue, zPos, ID, 0, 0, "");
+
+									for (int i = 0; i < ItemNames.values().length; i++) {
+										if (ItemNames.values()[i].getID() == ID) {
+											consoleMessage = "Successfully summoned item "
+													+ ItemNames.values()[i].getName();
+											break;
+										}
+									}
+
+									// If the item is solid or another interactable block
+									if (temp.isSolid || ID == ItemNames.BREAKABLEWALL.getID()
+											|| ID == ItemNames.SECRET.getID() || ID == ItemNames.LINEDEF.getID()) {
+										// Set item to being the item that is within this
+										// block only if it is solid
+										blockOn.wallItems.add(temp);
+									}
+
+									// If satellite dish, add to activatable list as well
+									if (ID == ItemNames.RADAR.getID()) {
+										Game.activatable.add(temp);
+									}
+									// If item supposed to be activated by button
+									else if (ID == ItemNames.ACTIVATEEXP.getID() || ID == ItemNames.ENEMYSPAWN.getID()
+											|| ID == ItemNames.WALLBEGONE.getID() || ID == ItemNames.RADAR.getID()) {
+										Game.activatable.add(temp);
+									} else if (ID == ItemNames.TELEPORTEREXIT.getID()
+											|| ID == ItemNames.TELEPORTERENTER.getID()) {
+										Game.teleporters.add(temp);
+
+										blockOn.wallEntities.add(temp);
+									}
+								} else {
+									consoleMessage = "Invalid Item ID. It could be an entity.";
+								}
+							} catch (Exception ex) {
+								consoleMessage = "Error, try: summon item <ID:integer>";
+							}
+						} else if (parameters[1].equals("entity")) {
+							int ID = 0;
+							// Try to parse to int of the entity ID to summon
+							try {
+								ID = Integer.parseInt(parameters[2]);
+
+								double xa = (0 * (Math.cos(Player.rotation)) + (Math.sin(Player.rotation))) * 2;
+								double za = ((Math.cos(Player.rotation)) - (0 * Math.sin(Player.rotation))) * 2;
+
+								// Position that the entity should be added to within the map
+								double xPos = Player.x + xa;
+								double zPos = Player.z + za;
+
+								Block blockOn = Level.getBlock((int) xPos, (int) zPos);
+
+								// Sets the y value based on the aboveBlock boolean
+								double yValue = -((blockOn.y * 4) + blockOn.height);
+
+								int entityActivationID = 0;
+								double rotation = 0;
+								boolean aboveBlock = true;
+
+								// For the optional parameters of having a activation ID and rotation
+								if (parameters.length > 3) {
+									try {
+										entityActivationID = Integer.parseInt(parameters[3]);
+									} catch (Exception exc) {
+										entityActivationID = 0;
+									}
+
+									try {
+										rotation = Double.parseDouble(parameters[4]);
+									} catch (Exception exc) {
+										rotation = 0;
+									}
+
+									try {
+										aboveBlock = Boolean.parseBoolean(parameters[5]);
+									} catch (Exception exc) {
+										aboveBlock = true;
+									}
+								}
+
+								// If entity is supposed to be summoned below the block.
+								if (!aboveBlock) {
+									yValue = 0;
+								}
+
+								// Add this new entity to the map
+								Entity temp = new Entity(xPos, yValue, zPos, ID, rotation, entityActivationID);
+
+								Game.entities.add(temp);
+								blockOn.entitiesOnBlock.add(temp);
+
+								consoleMessage = "Entity successfully summoned!";
+							} catch (Exception ex) {
+								consoleMessage = "Error, try: summon entity <ID:integer>";
+							}
+						} else if (parameters[1].equals("block")) {
+							int ID = 0;
+							// Try to parse to int of the wall ID to summon
+							try {
+								ID = Integer.parseInt(parameters[2]);
+
+								double xa = (0 * (Math.cos(Player.rotation)) + (Math.sin(Player.rotation))) * 1;
+								double za = ((Math.cos(Player.rotation)) - (0 * Math.sin(Player.rotation))) * 1;
+
+								// Position of the block to select
+								double xPos = Player.x + xa;
+								double zPos = Player.z + za;
+
+								// Select block at that position
+								Block block = Level.getBlock((int) xPos, (int) zPos);
+
+								// default values before optional parameters. Breakable by default
+								// in case it was a mistake.
+								int yValue = 0;
+								int height = 12;
+								boolean breakable = true;
+
+								// For the optional parameters for the walls yValue, height, and whether it can
+								// be broken.
+								if (parameters.length > 3) {
+									try {
+										yValue = Integer.parseInt(parameters[3]);
+									} catch (Exception exc) {
+										yValue = 0;
+									}
+
+									try {
+										height = Integer.parseInt(parameters[4]);
+									} catch (Exception exc) {
+										height = 12;
+									}
+
+									try {
+										breakable = Boolean.parseBoolean(parameters[5]);
+									} catch (Exception exc) {
+										breakable = true;
+									}
+								}
+
+								Block newBlock = new Block(height, ID, yValue, block.x, block.z);
+
+								// Add ability to break wall if it is breakable
+								if (breakable) {
+									Item temp = new Item(10, (block.x), 0, (block.z), ItemNames.BREAKABLEWALL.getID(),
+											0, 0, "");
+
+									newBlock.wallItems.add(temp);
+								}
+
+								// Add this new block to the map
+								Level.blocks[block.x + block.z * Level.width] = newBlock;
+
+								consoleMessage = "Block successfully built!";
+							} catch (Exception ex) {
+								consoleMessage = "Try: summon block <ID:int> <yValue:int> <height:int> <breakable:bool>";
+							}
+						}
+					} else if (parameters[0].equals("gamemode")) {
+
+						int ID = 0;
+						// Try to parse to int for the gamemode type
+						try {
+							ID = Integer.parseInt(parameters[1]);
+
+							if (ID <= 4 && ID >= 0) {
+								FPSLauncher.modeChoice = ID;
+								Game.skillMode = ID;
+
+								consoleMessage = "Difficulty changed to " + ID;
+							}
+						} catch (Exception ex) {
+							consoleMessage = "Error, Try: gamemode <Type:int>";
+						}
+					} else if (consoleOutput.equals("god") || (parameters.length == 2 && parameters[0].equals("god"))) {
+						if ((!Player.godModeOn && parameters.length == 1)
+								|| (parameters.length == 2 && parameters[1].equals("on"))) {
+							Player.godModeOn = true;
+							consoleMessage = "You decide to play God";
+						} else {
+							Player.godModeOn = false;
+							consoleMessage = "Now you're just a silly mortal again";
+						}
+					} else if (consoleOutput.equals("freeze")
+							|| (parameters.length == 2 && parameters[0].equals("freeze"))) {
+						if ((!Game.freezeMode && parameters.length == 1)
+								|| (parameters.length == 2 && parameters[1].equals("on"))) {
+							Game.freezeMode = true;
+
+							// Freeze all the entities by replacing the current entities
+							// with counterparts that are rotated and look the same but are frozen
+							// and can't attack.
+							for (int i = 0; i < Game.entities.size(); i++) {
+								Entity current = Game.entities.get(i);
+								current.damage = 0;
+								current.speed = 0;
+								current.initialSpeed = 0;
+								current.hasSpecial = false;
+								current.hasMovement = false;
+								current.isSolid = true;
+								current.moveable = true;
+								current.canTurn = false;
+							}
+
+							consoleMessage = "The entities have all frozen over!";
+						} else {
+							Game.freezeMode = false;
+
+							// Reset all entities to being able to move again
+							for (int i = 0; i < Game.entities.size(); i++) {
+								Entity current = Game.entities.get(i);
+								Entity temp = new Entity(current.xPos, current.yPos, current.zPos, current.ID,
+										current.rotation, current.itemActivationID);
+								Game.entities.set(i, temp);
+							}
+
+							consoleMessage = "The entities have thawed and begin to move again!";
+						}
+					} else if (consoleOutput.equals("suicide")) {
+						Player.health = 0;
+						consoleMessage = "You have killed yourself... that ain't right man";
+					} else if (consoleOutput.equals("resurrect")) {
+						Player.health = 100;
+						Player.alive = true;
+						consoleMessage = "Like Jesus, you come back from the dead!";
+					} else if (consoleOutput.equals("fly") || (parameters.length == 2 && parameters[0].equals("fly"))) {
+						if ((!Player.flyOn && parameters.length == 1)
+								|| (parameters.length == 2 && parameters[1].equals("on"))) {
+							Controller.fallSpeed = 0.4;
+							Player.flyOn = true;
+
+							// No longer in a jump
+							Controller.inJump = false;
+							consoleMessage = "You feel a bit lighter";
+						} else {
+							Player.flyOn = false;
+							Controller.fallAmount = Player.y - Player.maxHeight;
+							consoleMessage = "Oof... looks like gravity is back";
+						}
+					} else if (consoleOutput.equals("infammo")
+							|| (parameters.length == 2 && parameters[0].equals("infammo"))) {
+						if ((Player.unlimitedAmmoOn && parameters.length == 1)
+								|| (parameters.length == 2 && parameters[1].equals("off"))) {
+							Player.unlimitedAmmoOn = false;
+							consoleMessage = "Bullets mean something again";
+						} else {
+							Player.unlimitedAmmoOn = true;
+							consoleMessage = "Ammo means nothing to you anymore";
+						}
+					} else if (parameters.length == 2 && parameters[0].equals("superspeed")) {
+						// Sets players speed to the second parameter. If it not an integer as it should
+						// be
+						// then just by default set it to a multiplier of 1.
+						try {
+							Player.speedMultiplier = Integer.parseInt(parameters[1]);
+						} catch (Exception ex) {
+							Player.speedMultiplier = 1;
+						}
+						consoleMessage = "Your speed has changed";
+					} else if (consoleOutput.equals("clearfog")
+							|| (parameters.length == 2 && parameters[0].equals("clearfog"))) {
+						if ((Render3D.renderDistanceDefault > Level.renderDistance && parameters.length == 1)
+								|| (parameters.length == 2 && parameters[1].equals("on"))) {
+							Render3D.renderDistanceDefault = Level.renderDistance;
+							consoleMessage = "The fog returns, and with it new horrors";
+						} else {
+							Render3D.renderDistanceDefault = 10000000;
+							consoleMessage = "The way is cleared!";
+						}
+					} else {
+						consoleMessage = "That command does not exist. Try another.";
+					}
+
+					commands.add(0, consoleOutput);
+
+					// Only allow 50 commands to be saved in memory
+					if (commands.size() > 50) {
+						commands.remove(50);
+					}
+
+					commandIterator = -1;
+					consoleOutput = "";
+					break;
+
+				default:
+					String toAdd = FPSLauncher.keyCodeToString(keyCode);
+
+					// Only adds single characters or numbers to the command line
+					// and not things like Esc, Up, etc...
+					if (toAdd.length() > 1) {
+						break;
+					}
+
+					consoleOutput += toAdd;
+					break;
+				}
+			} else if (e.getID() == KeyEvent.KEY_RELEASED)
+
+			{
+				// System.out.println("2test2");
+			} else if (e.getID() == KeyEvent.KEY_TYPED) {
+				// System.out.println("3test3");
+			}
+
+			return false;
+		}
+	}
+
 	// Don't worry about this, java recommends this for some reason
 	private static final long serialVersionUID = 1L;
 
@@ -91,8 +825,8 @@ public class Display extends Canvas implements Runnable {
 
 	// Thread of events
 	private static Thread thread;
-	private static Thread thread2;
-	private static Thread thread3;
+	// private static Thread thread2;
+	// private static Thread thread3;
 
 	// Determines if program is running
 	public static boolean isRunning = false;
@@ -197,6 +931,21 @@ public class Display extends Canvas implements Runnable {
 	private BufferedImage weaponUpgradePoint2;
 	private BufferedImage weaponUpgradePoint3;
 	private BufferedImage weaponUpgradePoint4;
+	private BufferedImage protectionIcon;
+	private BufferedImage visionIcon;
+	private BufferedImage immortalityIcon;
+	private BufferedImage invisibilityIcon;
+	private BufferedImage frozenIcon;
+	private BufferedImage drunkIcon;
+	private BufferedImage sword1;
+	private BufferedImage sword2;
+	private BufferedImage sword3;
+	private BufferedImage swordAttack1;
+	private BufferedImage swordAttack2;
+	private BufferedImage swordAttack3;
+	private BufferedImage swordAttack4;
+	private BufferedImage swordAttack5;
+	private BufferedImage clearLevelBackground;
 
 	/*
 	 * Sets up a string that can change and disappears after 100 ticks about the
@@ -233,11 +982,27 @@ public class Display extends Canvas implements Runnable {
 	// Items will respawn if this is turned on.
 	public static boolean itemsRespawn = false;
 
+	// Is the cleared level screen being shown?
+	public static boolean clearedLevel = false;
+
+	// Is the command console. If so pause the game and pull down the console for
+	// typing.
+	public static boolean consoleOpen = false;
+
+	// Output generated by user in console
+	public static String consoleOutput = "";
+
 	// Used so the inputStream can be closed for music after you pause or
 	// start a new game
 	public static AudioInputStream inputStream;
 
 	private int hudMovementTick = 0;
+
+	private static MyDispatcher keyDispatcher = null;
+	private ArrayList<String> commands = new ArrayList<String>();
+	private int commandIterator = -1;
+	private static String consoleMessage = "";
+	private int swordTick = 0;
 
 	/**
 	 * Creates a new display by setting up the screen and its dimensions, sets up
@@ -253,17 +1018,15 @@ public class Display extends Canvas implements Runnable {
 			} catch (Exception e) {
 			}
 
-			try {
-				thread2.join();
-			} catch (Exception e) {
-
-			}
-
-			try {
-				thread3.join();
-			} catch (Exception e) {
-
-			}
+			/*
+			 * try { thread2.join(); } catch (Exception e) {
+			 * 
+			 * }
+			 * 
+			 * try { thread3.join(); } catch (Exception e) {
+			 * 
+			 * }
+			 */
 
 			try {
 				inputStream.close();
@@ -282,8 +1045,8 @@ public class Display extends Canvas implements Runnable {
 			music = null;
 
 			thread = null;
-			thread2 = null;
-			thread3 = null;
+			// thread2 = null;
+			// thread3 = null;
 
 			messages = null;
 			messages = new ArrayList<PopUp>();
@@ -306,6 +1069,8 @@ public class Display extends Canvas implements Runnable {
 
 			// New Game and map. Sets up music for that map too
 			game = new Game(this, nonDefaultMap, newMapName);
+
+			Game.freezeMode = false;
 
 			// If themes aren't the same, then reset the sounds. Otherwise it won't
 			if (!currentTheme.equals(FPSLauncher.themeName))
@@ -455,6 +1220,17 @@ public class Display extends Canvas implements Runnable {
 			if (!FPSLauncher.returning) {
 				loading.setTitle("Setting up game entities... 35% Loaded");
 
+				KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+
+				try {
+					manager.removeKeyEventDispatcher(keyDispatcher);
+				} catch (Exception e) {
+
+				}
+
+				keyDispatcher = new MyDispatcher();
+				manager.addKeyEventDispatcher(keyDispatcher);
+
 				// If new game, reset the gameMode
 				Game.skillMode = FPSLauncher.modeChoice;
 
@@ -500,9 +1276,10 @@ public class Display extends Canvas implements Runnable {
 				if (!FPSLauncher.loadingGame) {
 					Player.flyOn = false;
 					Player.noClipOn = false;
-					Player.superSpeedOn = false;
+					Player.speedMultiplier = 1;
 					Player.godModeOn = false;
 					Player.unlimitedAmmoOn = false;
+					Game.freezeMode = false;
 				} else {
 					// Set to no longer loading in a game if it got to here.
 					FPSLauncher.loadingGame = false;
@@ -653,7 +1430,7 @@ public class Display extends Canvas implements Runnable {
 
 			// Sets up the new screen used (2D array of int values (pixels)
 			// basically.
-			screen = new Screen(WIDTH, HEIGHT);
+			screen = new Screen();
 
 			// Sets up the BufferedImage size, and type (ints = color info)
 			img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -663,6 +1440,8 @@ public class Display extends Canvas implements Runnable {
 			Screen.render3D.PIXELS = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
 
 			loading.setTitle("Setting up input handling listeners... 90% Loaded");
+
+			consoleMessage = "";
 
 			/*
 			 * Sets up all the input stuff and listeners
@@ -761,10 +1540,9 @@ public class Display extends Canvas implements Runnable {
 
 			// Starts a new thread to handle all the events
 			thread = new Thread(this);
-			thread2 = new Thread(this);
 			// thread3 = new Thread(this);
 			thread.start();
-			thread2.start();
+			// thread2.start();
 			// thread3.start();
 		}
 	}
@@ -814,11 +1592,8 @@ public class Display extends Canvas implements Runnable {
 				// While the game is running, keep ticking and rendering
 				// while (isRunning == true) {
 				while ((fromServer = in.readLine()) != null) {
-					// TODO during the first time there is extra data to load in
 					if (firstTime) {
 						String[] sections = fromServer.split("\\?");
-
-						// TODO This is to keep this as a checkpoint. STARTING COORDINATES
 						String currentSection = sections[0];
 						String[] attributes = currentSection.split(":");
 
@@ -828,7 +1603,6 @@ public class Display extends Canvas implements Runnable {
 						game = new Game(this, true, attributes[3].trim());
 						firstTime = false;
 
-						// TODO ALL CLIENT INFORMATION
 						currentSection = sections[1];
 						String[] entitiesOfType = currentSection.split(";");
 
@@ -997,8 +1771,6 @@ public class Display extends Canvas implements Runnable {
 							}
 						}
 
-						// TODO Set up blocks on the level now
-
 						// currentSection = sections[2];
 						// entitiesOfType = currentSection.split(";");
 
@@ -1025,7 +1797,6 @@ public class Display extends Canvas implements Runnable {
 						 */
 
 					} else {
-						// TODO for every time other than first time
 						game.resetLists();
 
 						// System.out.println(fromServer);
@@ -1033,8 +1804,6 @@ public class Display extends Canvas implements Runnable {
 						String[] sections = fromServer.split("\\?");
 
 						String[] attributes;
-
-						// TODO ALL CLIENT INFORMATION
 						String currentSection = sections[0];
 						String[] entitiesOfType = currentSection.split(";");
 
@@ -1202,7 +1971,6 @@ public class Display extends Canvas implements Runnable {
 							// Player.yEffects + " : "
 							// + Player.zEffects);
 
-							// TODO Items
 							currentSection = sections[1];
 							entitiesOfType = currentSection.split(";");
 
@@ -1215,23 +1983,14 @@ public class Display extends Canvas implements Runnable {
 
 									Item temp = null;
 
-									// TODO update item loading stuff maybe
-
 									/*
 									 * If its not an explosive canister, add it as a normal item. Otherwise add it
 									 * as an explosive canister
 									 */
-									if (itemID != ItemNames.CANISTER.getID()) {
-										temp = new Item(10, Double.parseDouble(attributes[1]),
-												Double.parseDouble(attributes[2]), Double.parseDouble(attributes[3]),
-												itemID, Integer.parseInt(attributes[4]),
-												Integer.parseInt(attributes[5]), "");
-									} else {
-										temp = new ExplosiveCanister(10, Double.parseDouble(attributes[1]),
-												Double.parseDouble(attributes[2]), Double.parseDouble(attributes[3]),
-												itemID, Integer.parseInt(attributes[4]),
-												Integer.parseInt(attributes[5]));
-									}
+									temp = new Item(10, Double.parseDouble(attributes[1]),
+											Double.parseDouble(attributes[2]), Double.parseDouble(attributes[3]),
+											itemID, Integer.parseInt(attributes[4]), Integer.parseInt(attributes[5]),
+											"");
 
 									temp.pickedUp = Boolean.parseBoolean(attributes[6]);
 									temp.phaseTime = Integer.parseInt(attributes[7]);
@@ -1268,7 +2027,6 @@ public class Display extends Canvas implements Runnable {
 								}
 							}
 
-							// TODO Bullets loading in
 							currentSection = sections[2];
 							entitiesOfType = currentSection.split(";");
 
@@ -1838,29 +2596,34 @@ public class Display extends Canvas implements Runnable {
 		 * disposes of the graphics object after it is drawn to the screen. bs.show();
 		 * shows it on the screen.
 		 */
-		Graphics g = bs.getDrawGraphics();
+		Graphics g2 = bs.getDrawGraphics();
+		Graphics2D g = (Graphics2D) g2;
+
+		// Sets font of any text drawn on the screen
+
+		/*
+		 * Depending on how low the players health is, change the player move speed.
+		 * TAKEN OUT FOR BETTER PLAYABILITY.
+		 */
+		Controller.moveSpeed = 1.0;
+
+		if (clearedLevel) {
+			g.drawImage(clearLevelBackground, 0, 0, WIDTH, HEIGHT, null);
+			g.setColor(Color.RED);
+			g.drawString("Cleared " + Game.mapName + "! Entering next level!", WIDTH / 2, 100);
+			g.dispose();
+			bs.show();
+			return;
+		}
 
 		// Draws image with offsets, and given WIDTH and HEIGHT
 		g.drawImage(img, 0, 0, WIDTH, HEIGHT, null);
 
-		// Sets font of any text drawn on the screen
-		g.setFont(new Font("Nasalization", 1, 15));
-
 		/*
-		 * Depending on how low the players health is, set the text to different colors
-		 * on the screen.
+		 * if (Player.health > 100) { Controller.moveSpeed = 1.5; } else if
+		 * (Player.health > 60) { Controller.moveSpeed = 1.0; } else if (Player.health >
+		 * 20) { Controller.moveSpeed = 0.75; } else { Controller.moveSpeed = 0.5; }
 		 */
-		if (Player.health > 100) {
-			Controller.moveSpeed = 1.5;
-		} else if (Player.health > 60) {
-			Controller.moveSpeed = 1.0;
-		} else if (Player.health > 20) {
-			Controller.moveSpeed = 0.75;
-		} else {
-			Controller.moveSpeed = 0.5;
-		}
-
-		g.setColor(Color.RED);
 
 		// How much GUI is off from bottom of screen
 		int gC = 100;
@@ -1870,15 +2633,330 @@ public class Display extends Canvas implements Runnable {
 			gC = 128;
 		}
 
+		g.setFont(new Font("Nasalization", 1, 15));
+
+		g.setColor(Color.RED);
+
+		/*
+		 * Display the weapon in front of the player and how it looks depending on what
+		 * phase of firing the weapon is, and whether the player is dead or not
+		 */
+		try {
+			// Image of weapon shown
+			BufferedImage gun = gunNormal;
+
+			// Coordinates weapon is rendered on screen
+			int x = (WIDTH / 2) - 150;
+			int y = HEIGHT - gC - 229;
+			int height = 250;
+			int width = 300;
+
+			// Get the Weapon the player currently has Equipped
+			Weapon playerWeapon = Player.weapons[Player.weaponEquipped];
+
+			// Sword
+			if (playerWeapon.weaponID == 0) {
+				// Image is a little off, so this helps
+				x -= 5;
+				y = HEIGHT - gC - 224;
+				swordTick++;
+
+				if (playerWeapon.weaponPhase == 1) {
+					x = WIDTH - 275;
+					gun = swordAttack1;
+				} else if (playerWeapon.weaponPhase == 2) {
+					x = WIDTH - 400;
+					height += 100;
+					width += 100;
+					y -= 100;
+					gun = swordAttack2;
+				} else if (playerWeapon.weaponPhase == 3) {
+					height += 100;
+					width += 100;
+					y -= 100;
+					gun = swordAttack3;
+				} else if (playerWeapon.weaponPhase == 4) {
+					height += 100;
+					width += 100;
+					y -= 100;
+					gun = swordAttack4;
+				} else if (playerWeapon.weaponPhase == 4) {
+					height += 100;
+					width += 100;
+					y -= 100;
+					gun = swordAttack5;
+				} else {
+					// Sword has a moving animation
+					if (swordTick <= 10) {
+						gun = sword1;
+					} else if (swordTick <= 20) {
+						gun = sword2;
+					} else if (swordTick <= 30) {
+						gun = sword3;
+					}
+				}
+
+				if (swordTick > 29) {
+					swordTick = 0;
+				}
+			}
+			// Pistol
+			else if (playerWeapon.weaponID == 1) {
+				x = (WIDTH / 2);
+
+				if (playerWeapon.weaponPhase == 1) {
+					gun = pistolRight2;
+				} else if (playerWeapon.weaponPhase == 2) {
+					gun = pistolRight3;
+				} else if (playerWeapon.weaponPhase == 3) {
+					gun = pistolRight4;
+				} else if (playerWeapon.weaponPhase == 4) {
+					gun = pistolRight5;
+				} else {
+					gun = pistolRight1;
+				}
+
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = pistolRight3;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = pistolRight4;
+					} else if (playerWeapon.reloading > 0) {
+						gun = pistolRight5;
+					}
+				}
+
+				// If dual wielding show second pistol
+				if (playerWeapon.dualWield == true) {
+					BufferedImage gun2 = pistolLeft1;
+
+					if (playerWeapon.weaponPhase2 == 1) {
+						gun2 = pistolLeft2;
+					} else if (playerWeapon.weaponPhase2 == 2) {
+						gun2 = pistolLeft3;
+					} else if (playerWeapon.weaponPhase2 == 3) {
+						gun2 = pistolLeft4;
+					} else if (playerWeapon.weaponPhase2 == 4) {
+						gun2 = pistolLeft5;
+					} else {
+						gun2 = pistolLeft1;
+					}
+
+					if (playerWeapon.reloading > 0) {
+						if (playerWeapon.reloading >= 20) {
+							gun2 = pistolLeft3;
+						} else if (playerWeapon.reloading >= 10) {
+							gun2 = pistolLeft4;
+						} else if (playerWeapon.reloading > 0) {
+							gun2 = pistolLeft5;
+						}
+					}
+
+					// Only draw gun if player is alive
+					if (Player.alive) {
+						double moveValue = (Player.movementTick / 180.0) * Math.PI;
+
+						if (Player.movementTick > 0) {
+							g.drawImage(gun2, (int) ((WIDTH / 2) - 300 + (Math.sin(moveValue) * 30)),
+									(int) (y - ((Math.sin(moveValue) * 30))), 300, 250, null);
+						} else {
+							g.drawImage(gun2, (int) ((WIDTH / 2) - 300 + (Math.sin(moveValue) * 30)),
+									(int) (y + ((Math.sin(moveValue) * 30))), 300, 250, null);
+						}
+					}
+				}
+			}
+			// Shotgun
+			else if (playerWeapon.weaponID == 2) {
+				// Image is a little off, so this helps
+				x -= 5;
+
+				if (playerWeapon.weaponPhase == 1) {
+					gun = gunShot;
+				} else if (playerWeapon.weaponPhase == 2) {
+					gun = gunShot2;
+				} else if (playerWeapon.weaponPhase == 3) {
+					gun = gunShot3;
+				} else if (playerWeapon.weaponPhase == 4) {
+					gun = gunShot4;
+				} else {
+					gun = gunNormal;
+				}
+
+				// If the weapon is reloading, draw different graphics
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = gunShot3;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = gunShot4;
+					} else if (playerWeapon.reloading > 0) {
+						gun = gunShot3;
+					}
+				}
+			}
+			// Phase Cannon
+			else if (playerWeapon.weaponID == 3) {
+				if (playerWeapon.weaponPhase == 1) {
+					gun = phaseCannon2;
+				} else if (playerWeapon.weaponPhase == 2) {
+					gun = phaseCannon3;
+				} else if (playerWeapon.weaponPhase == 3) {
+					gun = phaseCannon4;
+				} else {
+					gun = phaseCannon1;
+				}
+
+				// If the weapon is reloading, draw different graphics
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = phaseCannon3;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = phaseCannon2;
+					} else if (playerWeapon.reloading > 0) {
+						gun = phaseCannon1;
+					}
+				}
+			}
+			// Rocket Launcher
+			else if (playerWeapon.weaponID == 4) {
+				if (playerWeapon.weaponPhase == 1) {
+					gun = rocketLauncher1;
+				} else if (playerWeapon.weaponPhase == 2) {
+					gun = rocketLauncher2;
+				} else if (playerWeapon.weaponPhase == 3) {
+					gun = rocketLauncher3;
+				} else if (playerWeapon.weaponPhase == 3) {
+					gun = rocketLauncher4;
+				} else {
+					gun = rocketLauncher;
+				}
+
+				// If the weapon is reloading, draw different graphics
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = rocketLauncher;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = rocketLauncher4;
+					} else if (playerWeapon.reloading > 0) {
+						gun = rocketLauncher;
+					}
+				}
+			}
+			// Scepter of Deciet
+			else if (playerWeapon.weaponID == 5) {
+				if (playerWeapon.weaponPhase == 1) {
+					gun = decietScepter1;
+				} else if (playerWeapon.weaponPhase == 2) {
+					gun = decietScepter2;
+				} else if (playerWeapon.weaponPhase == 3) {
+					gun = decietScepter3;
+				} else if (playerWeapon.weaponPhase == 4) {
+					gun = decietScepter4;
+				} else {
+					gun = decietScepter;
+				}
+
+				// If the weapon is reloading, draw different graphics
+				if (playerWeapon.reloading > 0) {
+					if (playerWeapon.reloading >= 20) {
+						gun = decietScepter1;
+					} else if (playerWeapon.reloading >= 10) {
+						gun = decietScepter4;
+					} else if (playerWeapon.reloading > 0) {
+						gun = decietScepter;
+					}
+				}
+			}
+
+			// Weapons is only drawn if player is alive.
+			if (Player.alive) {
+				double moveValue = (Player.movementTick / 180.0) * Math.PI;
+
+				if (Player.movementTick > 0) {
+					g.drawImage(gun, (int) (x + (Math.sin(moveValue) * 30)), (int) (y - ((Math.sin(moveValue) * 30))),
+							width, height, null);
+				} else {
+					g.drawImage(gun, (int) (x + (Math.sin(moveValue) * 30)), (int) (y + ((Math.sin(moveValue) * 30))),
+							width, height, null);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+
+		// TODO
+		// Only do if the console is open
+		if (Display.consoleOpen) {
+			g.setColor(Color.GRAY);
+
+			g.fill3DRect(0, 0, 500, 500, true);
+
+			g.setColor(Color.WHITE);
+			g.setFont(new Font("Lucida Console", 1, 15));
+
+			g.drawString("Command Console:", 10, 20);
+
+			g.setFont(new Font("Lucida Console", 1, 10));
+			// Shows if fly mode is on
+			if (Player.flyOn) {
+				g.drawString("FlyMode: On", 10, 40);
+			} else {
+				g.drawString("FlyMode: Off", 10, 40);
+			}
+
+			// Shows up if noClip is on
+			if (Player.noClipOn) {
+				g.drawString("NoClip: On", 10, 55);
+			} else {
+				g.drawString("NoClip: Off", 10, 55);
+			}
+
+			g.drawString("Speed Multiplier: " + Player.speedMultiplier, 10, 70);
+
+			// If GodMode is activated
+			if (Player.godModeOn) {
+				g.drawString("God Mode: On", 10, 85);
+			} else {
+				g.drawString("God Mode: Off", 10, 85);
+			}
+
+			// If Unlimited ammo is activated
+			if (Player.unlimitedAmmoOn) {
+				g.drawString("Infinite Ammo: On", 10, 100);
+			} else {
+				g.drawString("Infinite Ammo: Off", 10, 100);
+			}
+
+			// Display map name in console now
+			if (FPSLauncher.gameMode == 1) {
+				g.drawString("Survival Map", 10, 115);
+			} else {
+				g.drawString(Game.mapName, 10, 115);
+			}
+
+			g.setFont(new Font("Lucida Console", 1, 12));
+
+			g.setColor(Color.WHITE);
+
+			g.drawString(consoleMessage, 10, 420);
+			g.drawString(consoleOutput.toLowerCase() + "_", 10, 450);
+		} else {
+			consoleOutput = "";
+		}
+
+		g.setFont(new Font("Nasalization", 1, 15));
+
+		g.setColor(Color.RED);
+
 		/*
 		 * Tries to load up the GUI image for the HUD. If it can't, it will just pass
 		 * through this and render the text only.
 		 * 
 		 * The GUI is the weapon picture, player face, and gray box outline.
 		 */
-		g.drawImage(HUD, (WIDTH / 2) - 400, HEIGHT - gC, 800, 100, null);
+		g.drawImage(HUD, 0, HEIGHT - gC, WIDTH, 100, null);
+		// TODO temp
 
-		// Get the Weapon the player currently has Equipped
 		Weapon playerWeapon = Player.weapons[Player.weaponEquipped];
 
 		/*
@@ -1985,255 +3063,55 @@ public class Display extends Canvas implements Runnable {
 		}
 
 		/*
-		 * Display the weapon in front of the player and how it looks depending on what
-		 * phase of firing the weapon is, and whether the player is dead or not
-		 */
-		try {
-			// Image of weapon shown
-			BufferedImage gun = gunNormal;
-
-			// Coordinates weapon is rendered on screen
-			int x = (WIDTH / 2) - 150;
-			int y = HEIGHT - gC - 250;
-
-			// Pistol
-			if (playerWeapon.weaponID == 0) {
-				x = (WIDTH / 2);
-
-				if (playerWeapon.weaponPhase == 1) {
-					gun = pistolRight2;
-				} else if (playerWeapon.weaponPhase == 2) {
-					gun = pistolRight3;
-				} else if (playerWeapon.weaponPhase == 3) {
-					gun = pistolRight4;
-				} else if (playerWeapon.weaponPhase == 4) {
-					gun = pistolRight5;
-				} else {
-					gun = pistolRight1;
-				}
-
-				if (playerWeapon.reloading > 0) {
-					if (playerWeapon.reloading >= 20) {
-						gun = pistolRight3;
-					} else if (playerWeapon.reloading >= 10) {
-						gun = pistolRight4;
-					} else if (playerWeapon.reloading > 0) {
-						gun = pistolRight5;
-					}
-				}
-
-				// If dual wielding show second pistol
-				if (playerWeapon.dualWield == true) {
-					BufferedImage gun2 = pistolLeft1;
-
-					if (playerWeapon.weaponPhase2 == 1) {
-						gun2 = pistolLeft2;
-					} else if (playerWeapon.weaponPhase2 == 2) {
-						gun2 = pistolLeft3;
-					} else if (playerWeapon.weaponPhase2 == 3) {
-						gun2 = pistolLeft4;
-					} else if (playerWeapon.weaponPhase2 == 4) {
-						gun2 = pistolLeft5;
-					} else {
-						gun2 = pistolLeft1;
-					}
-
-					if (playerWeapon.reloading > 0) {
-						if (playerWeapon.reloading >= 20) {
-							gun2 = pistolLeft3;
-						} else if (playerWeapon.reloading >= 10) {
-							gun2 = pistolLeft4;
-						} else if (playerWeapon.reloading > 0) {
-							gun2 = pistolLeft5;
-						}
-					}
-
-					// Only draw gun if player is alive
-					if (Player.alive) {
-						g.drawImage(gun2, (WIDTH / 2) - 300, y, 300, 250, null);
-					}
-				}
-			}
-			// Shotgun
-			else if (playerWeapon.weaponID == 1) {
-				// Image is a little off, so this helps
-				x -= 5;
-
-				if (playerWeapon.weaponPhase == 1) {
-					gun = gunShot;
-				} else if (playerWeapon.weaponPhase == 2) {
-					gun = gunShot2;
-				} else if (playerWeapon.weaponPhase == 3) {
-					gun = gunShot3;
-				} else if (playerWeapon.weaponPhase == 4) {
-					gun = gunShot4;
-				} else {
-					gun = gunNormal;
-				}
-
-				// If the weapon is reloading, draw different graphics
-				if (playerWeapon.reloading > 0) {
-					if (playerWeapon.reloading >= 20) {
-						gun = gunShot3;
-					} else if (playerWeapon.reloading >= 10) {
-						gun = gunShot4;
-					} else if (playerWeapon.reloading > 0) {
-						gun = gunShot3;
-					}
-				}
-			}
-			// Phase Cannon
-			else if (playerWeapon.weaponID == 2) {
-				if (playerWeapon.weaponPhase == 1) {
-					gun = phaseCannon2;
-				} else if (playerWeapon.weaponPhase == 2) {
-					gun = phaseCannon3;
-				} else if (playerWeapon.weaponPhase == 3) {
-					gun = phaseCannon4;
-				} else {
-					gun = phaseCannon1;
-				}
-
-				// If the weapon is reloading, draw different graphics
-				if (playerWeapon.reloading > 0) {
-					if (playerWeapon.reloading >= 20) {
-						gun = phaseCannon3;
-					} else if (playerWeapon.reloading >= 10) {
-						gun = phaseCannon2;
-					} else if (playerWeapon.reloading > 0) {
-						gun = phaseCannon1;
-					}
-				}
-			}
-			// Rocket Launcher
-			else if (playerWeapon.weaponID == 3) {
-				if (playerWeapon.weaponPhase == 1) {
-					gun = rocketLauncher1;
-				} else if (playerWeapon.weaponPhase == 2) {
-					gun = rocketLauncher2;
-				} else if (playerWeapon.weaponPhase == 3) {
-					gun = rocketLauncher3;
-				} else if (playerWeapon.weaponPhase == 3) {
-					gun = rocketLauncher4;
-				} else {
-					gun = rocketLauncher;
-				}
-
-				// If the weapon is reloading, draw different graphics
-				if (playerWeapon.reloading > 0) {
-					if (playerWeapon.reloading >= 20) {
-						gun = rocketLauncher;
-					} else if (playerWeapon.reloading >= 10) {
-						gun = rocketLauncher4;
-					} else if (playerWeapon.reloading > 0) {
-						gun = rocketLauncher;
-					}
-				}
-			}
-			// Scepter of Deciet
-			else if (playerWeapon.weaponID == 4) {
-				if (playerWeapon.weaponPhase == 1) {
-					gun = decietScepter1;
-				} else if (playerWeapon.weaponPhase == 2) {
-					gun = decietScepter2;
-				} else if (playerWeapon.weaponPhase == 3) {
-					gun = decietScepter3;
-				} else if (playerWeapon.weaponPhase == 4) {
-					gun = decietScepter4;
-				} else {
-					gun = decietScepter;
-				}
-
-				// If the weapon is reloading, draw different graphics
-				if (playerWeapon.reloading > 0) {
-					if (playerWeapon.reloading >= 20) {
-						gun = decietScepter1;
-					} else if (playerWeapon.reloading >= 10) {
-						gun = decietScepter4;
-					} else if (playerWeapon.reloading > 0) {
-						gun = decietScepter;
-					}
-				}
-			}
-
-			// Weapons is only drawn if player is alive.
-			if (Player.alive) {
-				g.drawImage(gun, x, y, 300, 250, null);
-			}
-		} catch (Exception e) {
-			System.out.println(e);
-		}
-
-		/*
 		 * Try to render the keys now depending on whether the player has them or not.
 		 */
 		if (Player.hasRedKey) {
-			g.drawImage(redKey, (WIDTH / 2) + 75, HEIGHT - gC + 23, 10, 20, null);
+			g.drawImage(redKey, (WIDTH / 2) + (WIDTH / 12), HEIGHT - gC + 23, 10, 20, null);
 		}
 
 		if (Player.hasBlueKey) {
-			g.drawImage(blueKey, (WIDTH / 2) + 95, HEIGHT - gC + 23, 10, 20, null);
+			g.drawImage(blueKey, (WIDTH / 2) + (WIDTH / 12) + 20, HEIGHT - gC + 23, 10, 20, null);
 		}
 
 		if (Player.hasGreenKey) {
-			g.drawImage(greenKey, (WIDTH / 2) + 115, HEIGHT - gC + 23, 10, 20, null);
+			g.drawImage(greenKey, (WIDTH / 2) + (WIDTH / 12) + 40, HEIGHT - gC + 23, 10, 20, null);
 		}
 
 		if (Player.hasYellowKey) {
-			g.drawImage(yellowKey, (WIDTH / 2) + 135, HEIGHT - gC + 23, 10, 20, null);
+			g.drawImage(yellowKey, (WIDTH / 2) + (WIDTH / 12) + 60, HEIGHT - gC + 23, 10, 20, null);
 		}
 
 		// For the weapon Upgrade points
 		// TODO make look correct
 		if (hudMovementTick <= 8) {
-			g.drawImage(weaponUpgradePoint1, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+			g.drawImage(weaponUpgradePoint1, (WIDTH / 2) + (WIDTH / 12) - 10, HEIGHT - gC + 45, 50, 50, null);
 		} else if (hudMovementTick <= 16) {
-			g.drawImage(weaponUpgradePoint2, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+			g.drawImage(weaponUpgradePoint2, (WIDTH / 2) + (WIDTH / 12) - 10, HEIGHT - gC + 45, 50, 50, null);
 		} else if (hudMovementTick <= 24) {
-			g.drawImage(weaponUpgradePoint3, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+			g.drawImage(weaponUpgradePoint3, (WIDTH / 2) + (WIDTH / 12) - 10, HEIGHT - gC + 45, 50, 50, null);
 		} else if (hudMovementTick <= 32) {
-			g.drawImage(weaponUpgradePoint4, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+			g.drawImage(weaponUpgradePoint4, (WIDTH / 2) + (WIDTH / 12) - 10, HEIGHT - gC + 45, 50, 50, null);
 		} else {
-			g.drawImage(weaponUpgradePoint1, (WIDTH / 2) + 60, HEIGHT - gC + 45, 50, 50, null);
+			g.drawImage(weaponUpgradePoint1, (WIDTH / 2) + (WIDTH / 12) - 10, HEIGHT - gC + 45, 50, 50, null);
 			hudMovementTick = 0;
 		}
 
-		g.drawString(" " + Player.upgradePoints, (WIDTH / 2) + 100, HEIGHT - gC + 85);
-		g.drawString("Upgrade weapon (" + Player.weapons[Player.weaponEquipped].upgradePointsNeeded + " points)",
-				(WIDTH / 2) + 150, HEIGHT - gC + 65);
-		g.drawString("Current weapon damage: " + Player.weapons[Player.weaponEquipped].damage + "hp", (WIDTH / 2) + 150,
+		g.drawString(" " + Player.upgradePoints, (WIDTH / 2) + (WIDTH / 12) + 30, HEIGHT - gC + 85);
+
+		// If the weapon can be upgraded.
+		if (Player.weapons[Player.weaponEquipped].upgradePointsNeeded != -1) {
+			g.drawString("Upgrade weapon (" + Player.weapons[Player.weaponEquipped].upgradePointsNeeded + " points)",
+					WIDTH - 250, HEIGHT - gC + 65);
+		}
+
+		g.drawString("Current weapon damage: " + Player.weapons[Player.weaponEquipped].damage + "hp", WIDTH - 250,
 				HEIGHT - gC + 85);
 
 		hudMovementTick++;
 
 		// Shows the FPS on the screen if it is activated to show
 		if (Controller.showFPS) {
-			g.drawString("FPS: " + fps, 20, 50);
-		}
-
-		// Shows if fly mode is on
-		if (Player.flyOn) {
-			g.drawString("FlyMode on", 400, 50);
-		}
-
-		// Shows up if noClip is on
-		if (Player.noClipOn) {
-			g.drawString("noClip On", 200, 50);
-		}
-
-		// If SuperSpeed is activated
-		if (Player.superSpeedOn) {
-			g.drawString("Super Speed On", 200, 100);
-		}
-
-		// If GodMode is activated
-		if (Player.godModeOn) {
-			g.drawString("God Mode On", 400, 100);
-		}
-
-		// If Unlimited ammo is activated
-		if (Player.unlimitedAmmoOn) {
-			g.drawString("Infinite Ammo On", 600, 50);
+			g.drawString("FPS: " + fps, 20, 17);
 		}
 
 		/*
@@ -2243,34 +3121,90 @@ public class Display extends Canvas implements Runnable {
 		 */
 		if (Player.alive) {
 			if (smileMode) {
-				g.drawString("Happiness: " + Player.health, (WIDTH / 2) - 190, HEIGHT - gC + 18);
+				if (!Display.consoleOpen) {
+					int rValue = 0;
+					int gValue = 0;
+					int bValue = 0;
 
-				g.drawString("Positivity: " + Player.armor, (WIDTH / 2) - 190, HEIGHT - gC + 43);
+					if (Player.health > 100) {
+						bValue = 255;
+						rValue = 255;
+					} else if (Player.health > 80) {
+						bValue = 128;
+						rValue = 255;
+					} else if (Player.health > 60) {
+						rValue = 128;
+						bValue = 64;
+					} else if (Player.health > 20) {
+						rValue = 64;
+						bValue = 64;
+					} else {
+						bValue = 128;
+					}
+
+					g.setColor(new Color(rValue, gValue, bValue, 96));
+					g.fillRect(10, 30, Player.maxHealth, 25);
+
+					g.setColor(new Color(rValue, gValue, bValue, 192));
+					g.fillRect(11, 31, Player.health, 24);
+
+					g.setColor(Color.RED);
+
+					g.drawString("Happiness: " + Player.health, 11 + (Player.maxHealth / 4), 48);
+
+					rValue = 0;
+					gValue = 0;
+					bValue = 0;
+
+					if (Player.armor > 100) {
+						bValue = 255;
+						rValue = 255;
+					} else if (Player.armor > 80) {
+						bValue = 128;
+						rValue = 255;
+					} else if (Player.armor > 60) {
+						rValue = 128;
+						bValue = 64;
+					} else if (Player.armor > 20) {
+						rValue = 64;
+						bValue = 64;
+					} else {
+						bValue = 128;
+					}
+
+					g.setColor(new Color(rValue, gValue, bValue, 96));
+					g.fillRect(10, 60, 200, 25);
+
+					g.setColor(new Color(rValue, gValue, bValue, 192));
+					g.fillRect(11, 61, Player.armor, 24);
+
+					g.setColor(Color.RED);
+
+					g.drawString("Positivity: " + Player.armor, 11 + (200 / 4), 78);
+				}
 
 				if (playerWeapon.weaponID == 0) {
-					g.drawString("Arrow Quivers: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
-							HEIGHT - gC + 43);
-
-					g.drawString("Arrows: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Sword", 20, HEIGHT - gC + 43);
 				} else if (playerWeapon.weaponID == 1) {
-					g.drawString("Joy Cartridges: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
-							HEIGHT - gC + 43);
+					g.drawString("Arrow Quivers: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
 
-					g.drawString("Joy: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Arrows: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
 				} else if (playerWeapon.weaponID == 2) {
-					g.drawString("Peace Cells: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390, HEIGHT - gC + 43);
+					g.drawString("Joy Cartridges: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
 
-					g.drawString("Peace Charges: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Joy: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
 				} else if (playerWeapon.weaponID == 3) {
-					g.drawString("Teddy Bear Casings: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
-							HEIGHT - gC + 43);
+					g.drawString("Peace Cells: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
 
-					g.drawString("Teddy Bears: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Peace Charges: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
 				} else if (playerWeapon.weaponID == 4) {
-					g.drawString("Happiness Cores: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
-							HEIGHT - gC + 43);
+					g.drawString("Teddy Bear Casings: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
 
-					g.drawString("Happy Blasts: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Teddy Bears: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
+				} else if (playerWeapon.weaponID == 5) {
+					g.drawString("Happiness Cores: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
+
+					g.drawString("Happy Blasts: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
 				}
 
 				/*
@@ -2278,64 +3212,242 @@ public class Display extends Canvas implements Runnable {
 				 * not just display that there is 0 available.
 				 */
 				if (playerWeapon.cartridges.size() != 0) {
-					if (playerWeapon.weaponID == 0) {
-						g.drawString("Arrows in Quiver: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
-								HEIGHT - gC + 18);
-					} else if (playerWeapon.weaponID == 1) {
-						g.drawString("Joy in Casing: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
-								HEIGHT - gC + 18);
+					if (playerWeapon.weaponID == 1) {
+						g.drawString("Arrows in Quiver: " + playerWeapon.cartridges.get(0).ammo, 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 2) {
-						g.drawString("Peace in Cell: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
-								HEIGHT - gC + 18);
+						g.drawString("Joy in Casing: " + playerWeapon.cartridges.get(0).ammo, 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 3) {
-						g.drawString("Teddy Bears in Casing: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
-								HEIGHT - gC + 18);
+						g.drawString("Peace in Cell: " + playerWeapon.cartridges.get(0).ammo, 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 4) {
-						g.drawString("Happy Blasts in Core: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
+						g.drawString("Teddy Bears in Casing: " + playerWeapon.cartridges.get(0).ammo, 20,
+								HEIGHT - gC + 18);
+					} else if (playerWeapon.weaponID == 5) {
+						g.drawString("Happy Blasts in Core: " + playerWeapon.cartridges.get(0).ammo, 20,
 								HEIGHT - gC + 18);
 					}
 				} else {
-					if (playerWeapon.weaponID == 0) {
-						g.drawString("Arrows in Quiver: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
-					} else if (playerWeapon.weaponID == 1) {
-						g.drawString("Joy in Casing: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+					if (playerWeapon.weaponID == 1) {
+						g.drawString("Arrows in Quiver: 0", 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 2) {
-						g.drawString("Peace in Cell: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+						g.drawString("Joy in Casing: 0", 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 3) {
-						g.drawString("Teddy Bears in Casing: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+						g.drawString("Peace in Cell: 0", 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 4) {
-						g.drawString("Happy Blasts in Core: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+						g.drawString("Teddy Bears in Casing: 0", 20, HEIGHT - gC + 18);
+					} else if (playerWeapon.weaponID == 5) {
+						g.drawString("Happy Blasts in Core: 0", 20, HEIGHT - gC + 18);
 					}
 				}
 			} else {
-				g.drawString("Health: " + Player.health, (WIDTH / 2) - 190, HEIGHT - gC + 18);
+				if (!Display.consoleOpen) {
+					int rValue = 0;
+					int gValue = 0;
+					int bValue = 0;
 
-				g.drawString("Armor: " + Player.armor, (WIDTH / 2) - 190, HEIGHT - gC + 43);
+					if (Player.health > 100) {
+						bValue = 255;
+						gValue = 255;
+					} else if (Player.health > 80) {
+						gValue = 255;
+					} else if (Player.health > 60) {
+						rValue = 255;
+						gValue = 255;
+					} else if (Player.health > 20) {
+						rValue = 255;
+						gValue = 128;
+					} else {
+						rValue = 255;
+					}
+
+					g.setColor(new Color(rValue, gValue, bValue, 96));
+					g.fillRect(10, 30, Player.maxHealth, 25);
+
+					g.setColor(new Color(rValue, gValue, bValue, 192));
+					g.fillRect(11, 31, Player.health, 24);
+
+					g.setColor(Color.RED);
+
+					g.drawString("Health: " + Player.health, 11 + (Player.maxHealth / 3), 48);
+
+					rValue = 0;
+					gValue = 0;
+					bValue = 0;
+
+					if (Player.armor > 100) {
+						bValue = 255;
+						gValue = 255;
+					} else if (Player.armor > 80) {
+						gValue = 255;
+					} else if (Player.armor > 60) {
+						rValue = 255;
+						gValue = 255;
+					} else if (Player.armor > 20) {
+						rValue = 255;
+						gValue = 128;
+					} else {
+						rValue = 255;
+					}
+
+					g.setColor(new Color(rValue, gValue, bValue, 96));
+					g.fillRect(10, 60, 200, 25);
+
+					g.setColor(new Color(rValue, gValue, bValue, 192));
+					g.fillRect(11, 61, Player.armor, 24);
+
+					g.setColor(Color.RED);
+
+					g.drawString("Armor: " + Player.armor, 11 + (200 / 3), 78);
+
+					ArrayList<String> effects = new ArrayList<String>();
+
+					if (Player.environProtectionTime > 0) {
+						effects.add("protection");
+					}
+
+					if (Player.immortality > 0) {
+						effects.add("immortality");
+					}
+
+					if (Player.vision > 0) {
+						effects.add("vision");
+					}
+
+					if (Player.invisibility > 0) {
+						effects.add("invisibility");
+					}
+
+					if (Player.frozen > 0) {
+						effects.add("frozen");
+					}
+
+					if (Player.drunkLevels > 0) {
+						effects.add("drunk");
+					}
+
+					int yStart = 90;
+
+					for (int i = 0; i < effects.size(); i++) {
+						String currentEffect = effects.get(i);
+
+						if (currentEffect.equals("protection")) {
+							int barToShow = 200;
+							double percentage = Player.environProtectionTime / 1000.0;
+
+							if (percentage > 1) {
+								barToShow = 200;
+							} else {
+								barToShow = (int) (200.0 * percentage);
+							}
+
+							GradientPaint gradient = new GradientPaint(10, 90, Color.GREEN, 200, 100, Color.BLACK);
+							g.setPaint(gradient);
+							g.fillRect(10, yStart, barToShow, 12);
+							g.drawImage(protectionIcon, 210, yStart, 12, 12, null);
+							yStart += 17;
+						} else if (currentEffect.equals("immortality")) {
+							int barToShow = 200;
+							double percentage = Player.immortality / 1000.0;
+
+							if (percentage > 1) {
+								barToShow = 200;
+							} else {
+								barToShow = (int) (200.0 * percentage);
+							}
+
+							GradientPaint gradient = new GradientPaint(10, 90, Color.WHITE, 200, 100, Color.YELLOW);
+							g.setPaint(gradient);
+							g.fillRect(10, yStart, barToShow, 12);
+							g.drawImage(immortalityIcon, 210, yStart, 12, 12, null);
+							yStart += 17;
+						} else if (currentEffect.equals("vision")) {
+							int barToShow = 200;
+							double percentage = Player.vision / 1000.0;
+
+							if (percentage > 1) {
+								barToShow = 200;
+							} else {
+								barToShow = (int) (200.0 * percentage);
+							}
+
+							GradientPaint gradient = new GradientPaint(10, 90, Color.RED, 200, 100, Color.BLUE);
+							g.setPaint(gradient);
+							g.fillRect(10, yStart, barToShow, 12);
+							g.drawImage(visionIcon, 210, yStart, 12, 12, null);
+							yStart += 17;
+						} else if (currentEffect.equals("invisibility")) {
+							int barToShow = 200;
+							double percentage = Player.invisibility / 1000.0;
+
+							if (percentage > 1) {
+								barToShow = 200;
+							} else {
+								barToShow = (int) (200.0 * percentage);
+							}
+
+							GradientPaint gradient = new GradientPaint(10, 90, Color.MAGENTA, 200, 100, Color.BLACK);
+							g.setPaint(gradient);
+							g.fillRect(10, yStart, barToShow, 12);
+							g.drawImage(invisibilityIcon, 210, yStart, 12, 12, null);
+							yStart += 17;
+						} else if (currentEffect.equals("frozen")) {
+							int barToShow = 200;
+							double percentage = Player.frozen / 1000.0;
+
+							if (percentage > 1) {
+								barToShow = 200;
+							} else {
+								barToShow = (int) (200.0 * percentage);
+							}
+
+							GradientPaint gradient = new GradientPaint(10, 90, Color.CYAN, 200, 100, Color.BLUE);
+							g.setPaint(gradient);
+							g.fillRect(10, yStart, barToShow, 12);
+							g.drawImage(frozenIcon, 210, yStart, 12, 12, null);
+							yStart += 17;
+						} else if (currentEffect.equals("drunk")) {
+							int barToShow = 200;
+							double percentage = Player.drunkLevels / 5000.0;
+
+							if (percentage > 1) {
+								barToShow = 200;
+							} else {
+								barToShow = (int) (200.0 * percentage);
+							}
+
+							GradientPaint gradient = new GradientPaint(10, 90, new Color(74, 37, 0), 200, 100,
+									new Color(0, 150, 0));
+							g.setPaint(gradient);
+							g.fillRect(10, yStart, barToShow, 12);
+							g.drawImage(drunkIcon, 210, yStart, 12, 12, null);
+							yStart += 17;
+						}
+					}
+
+					g.setColor(Color.RED);
+				}
 
 				if (playerWeapon.weaponID == 0) {
-					g.drawString("Bullet Cartridges: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
-							HEIGHT - gC + 43);
-
-					g.drawString("Bullets: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Sword", 20, HEIGHT - gC + 43);
 				} else if (playerWeapon.weaponID == 1) {
-					g.drawString("Shell Cartridges: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
-							HEIGHT - gC + 43);
+					g.drawString("Bullet Cartridges: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
 
-					g.drawString("Shells: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Bullets: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
 				} else if (playerWeapon.weaponID == 2) {
-					g.drawString("Phase Cells: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390, HEIGHT - gC + 43);
+					g.drawString("Shell Cartridges: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
 
-					g.drawString("Phase Charges: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Shells: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
 				} else if (playerWeapon.weaponID == 3) {
-					g.drawString("Rocket Casings: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
-							HEIGHT - gC + 43);
+					g.drawString("Phase Cells: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
 
-					g.drawString("Rockets: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Phase Charges: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
 				} else if (playerWeapon.weaponID == 4) {
-					g.drawString("Scepter Cores: " + playerWeapon.cartridges.size(), (WIDTH / 2) - 390,
-							HEIGHT - gC + 43);
+					g.drawString("Rocket Casings: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
 
-					g.drawString("Scepter Blasts: " + playerWeapon.ammo, (WIDTH / 2) - 390, HEIGHT - gC + 68);
+					g.drawString("Rockets: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
+				} else if (playerWeapon.weaponID == 5) {
+					g.drawString("Scepter Cores: " + playerWeapon.cartridges.size(), 20, HEIGHT - gC + 43);
+
+					g.drawString("Scepter Blasts: " + playerWeapon.ammo, 20, HEIGHT - gC + 68);
 				}
 
 				/*
@@ -2343,33 +3455,30 @@ public class Display extends Canvas implements Runnable {
 				 * not just display that there is 0 available.
 				 */
 				if (playerWeapon.cartridges.size() != 0) {
-					if (playerWeapon.weaponID == 0) {
-						g.drawString("Bullets in Cartridge: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
-								HEIGHT - gC + 18);
-					} else if (playerWeapon.weaponID == 1) {
-						g.drawString("Shells in Casing: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
+					if (playerWeapon.weaponID == 1) {
+						g.drawString("Bullets in Cartridge: " + playerWeapon.cartridges.get(0).ammo, 20,
 								HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 2) {
-						g.drawString("Charges in Cell: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
-								HEIGHT - gC + 18);
+						g.drawString("Shells in Casing: " + playerWeapon.cartridges.get(0).ammo, 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 3) {
-						g.drawString("Rockets in Casing: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
-								HEIGHT - gC + 18);
+						g.drawString("Charges in Cell: " + playerWeapon.cartridges.get(0).ammo, 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 4) {
-						g.drawString("Power Blasts in Core: " + playerWeapon.cartridges.get(0).ammo, (WIDTH / 2) - 390,
+						g.drawString("Rockets in Casing: " + playerWeapon.cartridges.get(0).ammo, 20, HEIGHT - gC + 18);
+					} else if (playerWeapon.weaponID == 5) {
+						g.drawString("Power Blasts in Core: " + playerWeapon.cartridges.get(0).ammo, 20,
 								HEIGHT - gC + 18);
 					}
 				} else {
-					if (playerWeapon.weaponID == 0) {
-						g.drawString("Bullets in Cartridge: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
-					} else if (playerWeapon.weaponID == 1) {
-						g.drawString("Shells in Casing: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+					if (playerWeapon.weaponID == 1) {
+						g.drawString("Bullets in Cartridge: 0", 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 2) {
-						g.drawString("Charges in Cell: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+						g.drawString("Shells in Casing: 0", 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 3) {
-						g.drawString("Rockets in Casing: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+						g.drawString("Charges in Cell: 0", 20, HEIGHT - gC + 18);
 					} else if (playerWeapon.weaponID == 4) {
-						g.drawString("Power Blasts in Core: 0", (WIDTH / 2) - 390, HEIGHT - gC + 18);
+						g.drawString("Rockets in Casing: 0", 20, HEIGHT - gC + 18);
+					} else if (playerWeapon.weaponID == 5) {
+						g.drawString("Power Blasts in Core: 0", 20, HEIGHT - gC + 18);
 					}
 				}
 			}
@@ -2416,36 +3525,31 @@ public class Display extends Canvas implements Runnable {
 		 * Otherwise show secrets found, and the actual map name.
 		 */
 		if (FPSLauncher.gameMode == 1) {
-			g.drawString("Survival Map", (WIDTH / 2) - 390, HEIGHT - gC + 93);
-
 			if (smileMode) {
-				g.drawString("Unhappy Faces: " + Game.entities.size(), (WIDTH / 2) + 200, HEIGHT - gC + 43);
+				g.drawString("Unhappy Faces: " + Game.entities.size(), WIDTH - 250, HEIGHT - gC + 43);
 
-				g.drawString("Days Made: " + Player.kills, (WIDTH / 2) + 200, HEIGHT - gC + 18);
+				g.drawString("Days Made: " + Player.kills, WIDTH - 250, HEIGHT - gC + 18);
 			} else {
-				g.drawString("Enemies: " + Game.entities.size(), (WIDTH / 2) + 200, HEIGHT - gC + 43);
+				g.drawString("Enemies: " + Game.entities.size(), WIDTH - 250, HEIGHT - gC + 43);
 
-				g.drawString("Kills: " + Player.kills, (WIDTH / 2) + 200, HEIGHT - gC + 18);
+				g.drawString("Kills: " + Player.kills, WIDTH - 250, HEIGHT - gC + 18);
 			}
 		} else {
-			g.drawString("Secrets found: " + Game.secretsFound + " / " + Game.secretsInMap, (WIDTH / 2) + 200,
+			g.drawString("Secrets found: " + Game.secretsFound + " / " + Game.secretsInMap, WIDTH - 250,
 					HEIGHT - gC + 18);
 
-			g.drawString(Game.mapName, (WIDTH / 2) - 390, HEIGHT - gC + 93);
-
 			if (smileMode) {
-				g.drawString("Made Happy: " + Player.kills + " / " + Game.enemiesInMap, (WIDTH / 2) + 200,
-						HEIGHT - gC + 43);
+				g.drawString("Made Happy: " + Player.kills + " / " + Game.enemiesInMap, WIDTH - 250, HEIGHT - gC + 43);
 			} else {
-				g.drawString("Kills: " + Player.kills + " / " + Game.enemiesInMap, (WIDTH / 2) + 200, HEIGHT - gC + 43);
+				g.drawString("Kills: " + Player.kills + " / " + Game.enemiesInMap, WIDTH - 250, HEIGHT - gC + 43);
 			}
 
 			// Only show deaths if in multiplayer deathmatch mode
 			if (gameType == 1) {
 				if (smileMode) {
-					g.drawString("Got sad: " + Player.deaths, (WIDTH / 2) + 200, HEIGHT - gC + 68);
+					g.drawString("Got sad: " + Player.deaths, WIDTH - 250, HEIGHT - gC + 68);
 				} else {
-					g.drawString("Deaths: " + Player.deaths, (WIDTH / 2) + 200, HEIGHT - gC + 68);
+					g.drawString("Deaths: " + Player.deaths, WIDTH - 250, HEIGHT - gC + 68);
 				}
 			}
 		}
@@ -2483,11 +3587,12 @@ public class Display extends Canvas implements Runnable {
 		 * Draw other needed texts
 		 */
 		if (FPSLauncher.gameMode == 0) {
-			g.drawString("Keys:", (WIDTH / 2) + 75, HEIGHT - gC + 18);
+			g.drawString("Keys:", (WIDTH / 2) + (WIDTH / 12), HEIGHT - gC + 18);
 		} else {
-			g.drawString("High Score:", (WIDTH / 2) + 75, HEIGHT - gC + 18);
-			g.drawString("" + Player.maxKills, (WIDTH / 2) + 75, HEIGHT - gC + 36);
+			g.drawString("High Score:", (WIDTH / 2) + (WIDTH / 12), HEIGHT - gC + 18);
+			g.drawString("" + Player.maxKills, (WIDTH / 2) + (WIDTH / 12), HEIGHT - gC + 36);
 		}
+		// TODO fix spacing
 
 		/*
 		 * Disposes of this graphics object, and show what it was on the screen
@@ -2680,6 +3785,16 @@ public class Display extends Canvas implements Runnable {
 			// correctly, then the exception is thrown and the game doesn't display
 			// any texture letting you know something is wrong.
 			blueKey = ImageIO.read(new File("resources/default/textures/hud/blueKey.png"));
+		}
+
+		try {
+			clearLevelBackground = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/clearLevel.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			clearLevelBackground = ImageIO.read(new File("resources/default/textures/hud/clearLevel.png"));
 		}
 
 		try {
@@ -3108,6 +4223,323 @@ public class Display extends Canvas implements Runnable {
 			// correctly, then the exception is thrown and the game doesn't display
 			// any texture letting you know something is wrong.
 			invisGodmode = ImageIO.read(new File("resources/default/textures/hud/invisibleGodmode.png"));
+		}
+
+		try {
+			protectionIcon = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/protection.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			protectionIcon = ImageIO.read(new File("resources/default/textures/hud/protection.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < protectionIcon.getWidth(); ++x) {
+			for (int y = 0; y < protectionIcon.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((protectionIcon.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					protectionIcon.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			visionIcon = ImageIO.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/vision.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			visionIcon = ImageIO.read(new File("resources/default/textures/hud/vision.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < visionIcon.getWidth(); ++x) {
+			for (int y = 0; y < visionIcon.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((visionIcon.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					visionIcon.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			immortalityIcon = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/immortality.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			immortalityIcon = ImageIO.read(new File("resources/default/textures/hud/immortality.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < immortalityIcon.getWidth(); ++x) {
+			for (int y = 0; y < immortalityIcon.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((immortalityIcon.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					immortalityIcon.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			invisibilityIcon = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/invisibility.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			invisibilityIcon = ImageIO.read(new File("resources/default/textures/hud/invisibility.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < invisibilityIcon.getWidth(); ++x) {
+			for (int y = 0; y < invisibilityIcon.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((invisibilityIcon.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					invisibilityIcon.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			frozenIcon = ImageIO.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/froze.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			frozenIcon = ImageIO.read(new File("resources/default/textures/hud/froze.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < frozenIcon.getWidth(); ++x) {
+			for (int y = 0; y < frozenIcon.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((frozenIcon.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					frozenIcon.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			drunkIcon = ImageIO.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/drunk.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			drunkIcon = ImageIO.read(new File("resources/default/textures/hud/drunk.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < drunkIcon.getWidth(); ++x) {
+			for (int y = 0; y < drunkIcon.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((drunkIcon.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					drunkIcon.setRGB(x, y, 0x00FFFFFF);
+				}
+			}
+		}
+		// TODO BufferedImage stuff
+
+		try {
+			swordAttack5 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/swordattack5.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			swordAttack5 = ImageIO.read(new File("resources/default/textures/hud/swordattack5.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < swordAttack5.getWidth(); ++x) {
+			for (int y = 0; y < swordAttack5.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((swordAttack5.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					swordAttack5.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			swordAttack4 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/swordattack4.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			swordAttack4 = ImageIO.read(new File("resources/default/textures/hud/swordattack4.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < swordAttack4.getWidth(); ++x) {
+			for (int y = 0; y < swordAttack4.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((swordAttack4.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					swordAttack4.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			swordAttack3 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/swordattack3.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			swordAttack3 = ImageIO.read(new File("resources/default/textures/hud/swordattack3.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < swordAttack3.getWidth(); ++x) {
+			for (int y = 0; y < swordAttack3.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((swordAttack3.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					swordAttack3.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			swordAttack2 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/swordattack2.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			swordAttack2 = ImageIO.read(new File("resources/default/textures/hud/swordattack2.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < swordAttack2.getWidth(); ++x) {
+			for (int y = 0; y < swordAttack2.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((swordAttack2.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					swordAttack2.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			swordAttack1 = ImageIO
+					.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/swordattack1.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			swordAttack1 = ImageIO.read(new File("resources/default/textures/hud/swordattack1.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < swordAttack1.getWidth(); ++x) {
+			for (int y = 0; y < swordAttack1.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((swordAttack1.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					swordAttack1.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			sword3 = ImageIO.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/sword3.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			sword3 = ImageIO.read(new File("resources/default/textures/hud/sword3.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < sword3.getWidth(); ++x) {
+			for (int y = 0; y < sword3.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((sword3.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					sword3.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			sword2 = ImageIO.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/sword2.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			sword2 = ImageIO.read(new File("resources/default/textures/hud/sword2.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < sword2.getWidth(); ++x) {
+			for (int y = 0; y < sword2.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((sword2.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					sword2.setRGB(x, y, 0);
+				}
+			}
+		}
+
+		try {
+			sword1 = ImageIO.read(new File("resources" + FPSLauncher.themeName + "/textures/hud/sword1.png"));
+		} catch (Exception e) {
+			// If no file is found, use the default. If the default cannot be loaded
+			// correctly, then the exception is thrown and the game doesn't display
+			// any texture letting you know something is wrong.
+			sword1 = ImageIO.read(new File("resources/default/textures/hud/sword1.png"));
+		}
+
+		/*
+		 * Goes through an entire image, and for any white pixels found on the image,
+		 * make them translucent.
+		 */
+		for (int x = 0; x < sword1.getWidth(); ++x) {
+			for (int y = 0; y < sword1.getHeight(); ++y) {
+				// Finds white pixels and makes them translucent
+				if ((sword1.getRGB(x, y) & 0x00FFFFFF) == 0xFFFFFF) {
+					sword1.setRGB(x, y, 0);
+				}
+			}
 		}
 
 		try {

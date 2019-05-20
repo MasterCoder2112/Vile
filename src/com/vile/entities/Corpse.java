@@ -53,7 +53,7 @@ public class Corpse extends EntityParent {
 	public Render corpseImage = null;
 
 	// Type of default corpse it is if it is one
-	private int corpseType = 0;
+	public int corpseType = 0;
 
 	private boolean repeatAnimation = false;
 
@@ -94,6 +94,12 @@ public class Corpse extends EntityParent {
 
 		Random rand = new Random();
 		corpseType = rand.nextInt(6);
+
+		// Marine 4 has two death animations.
+		if (enemyID == 13) {
+			rand = new Random();
+			corpseType = rand.nextInt(2);
+		}
 	}
 
 	/**
@@ -112,7 +118,7 @@ public class Corpse extends EntityParent {
 		}
 
 		// Toilet continues to have water rushing
-		if (this.enemyID == 16 && time % 40 == 0) {
+		if (this.enemyID == 17 && time % 40 == 0) {
 			SoundController.waterSpray.playAudioFile(this.distanceFromPlayer * 4);
 		}
 
@@ -124,9 +130,9 @@ public class Corpse extends EntityParent {
 		} else if (corpseType == 2) {
 			corpseImage = Textures.defaultCorpse3;
 		} else if (corpseType == 3) {
-			corpseImage = Textures.defaultCorpse4;
+			corpseImage = Textures.marine4corpse1;
 		} else if (corpseType == 4) {
-			corpseImage = Textures.defaultCorpse5;
+			corpseImage = Textures.marine4corpse2;
 		} else {
 			corpseImage = Textures.defaultCorpse6;
 		}

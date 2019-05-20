@@ -21,7 +21,7 @@ public class PhaseCannon extends Weapon implements WeaponInterface {
 	 * Creates new Weapon of ID 1
 	 */
 	public PhaseCannon() {
-		super(2);
+		super(3);
 	}
 
 	/**
@@ -80,7 +80,7 @@ public class PhaseCannon extends Weapon implements WeaponInterface {
 				}
 
 				// Create the bullet
-				Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID, Player.rotation,
+				Bullet bullet = new Bullet(damage, 0.03, Player.x, bullY, Player.z, weaponID - 1, Player.rotation,
 						criticalHit);
 
 				// If this is a client, add this bullet to the bulletsAdded arraylist so that it

@@ -46,6 +46,7 @@ public class Entity extends EntityParent implements Comparable {
 		isSolid = false;
 		killable = true;
 		canTurn = true;
+		isHuman = true;
 
 		// Brainomorph
 		if (ID == 1) {
@@ -60,7 +61,6 @@ public class Entity extends EntityParent implements Comparable {
 			hasSpecial = true;
 			canFly = true;
 			weightLevel = 2;
-			yPos = yPos - 1;
 			height = 7;
 		}
 		// Mutated Commando
@@ -100,7 +100,6 @@ public class Entity extends EntityParent implements Comparable {
 			weightLevel = 10;
 			isABoss = true;
 			hasSpecial = true;
-			Game.bosses.add(this);
 		}
 		// Vile Warrior
 		else if (ID == 7) {
@@ -118,7 +117,6 @@ public class Entity extends EntityParent implements Comparable {
 			height = 48;
 			weightLevel = 10;
 			hasSpecial = true;
-			Game.bosses.add(this);
 		}
 		// Watcher
 		else if (ID == 9) {
@@ -133,7 +131,7 @@ public class Entity extends EntityParent implements Comparable {
 			tickAmount = 24;
 		}
 		// Marines
-		else if (ID >= 10 && ID <= 14) {
+		else if (ID >= 10 && ID <= 15) {
 			damage = 20;
 			health = 150;
 			isABoss = false;
@@ -141,6 +139,7 @@ public class Entity extends EntityParent implements Comparable {
 			weightLevel = 2;
 			hasSpecial = true;
 			isFriendly = true;
+			pursuant = false;
 
 			// If itemActivationID is special, it is an evil marine.
 			// Evil marines don't do quite as much damage because the player
@@ -152,11 +151,11 @@ public class Entity extends EntityParent implements Comparable {
 			// For stationary marines
 			else if (itemActivationID == -2) {
 				hasMovement = false;
-				canTurn = true;
+				canTurn = false;
 			}
 		}
 		// This is a chair
-		else if (ID == 15) {
+		else if (ID == 16) {
 			damage = 0;
 			speed = 0;
 			initialSpeed = 0;
@@ -170,9 +169,10 @@ public class Entity extends EntityParent implements Comparable {
 			moveable = true;
 			hasItemDrops = false;
 			canTurn = false;
+			isHuman = false;
 		}
 		// This is a toilet
-		else if (ID == 16) {
+		else if (ID == 17) {
 			health = 50;
 			damage = 0;
 			speed = 0;
@@ -187,8 +187,9 @@ public class Entity extends EntityParent implements Comparable {
 			moveable = false;
 			hasItemDrops = false;
 			canTurn = false;
+			isHuman = false;
 		} // This is a turret
-		else if (ID == 17) {
+		else if (ID == 18) {
 			health = 300;
 			damage = 5;
 			speed = 0;
@@ -200,15 +201,225 @@ public class Entity extends EntityParent implements Comparable {
 			isFriendly = true;
 			hasMovement = false;
 			isSolid = true;
-			moveable = false;
+			moveable = true;
 			hasItemDrops = false;
-			tickAmount = 5;
+			tickAmount = 2;
+			isHuman = false;
 
 			// If itemActivationID is special, it is an evil turret
 			if (this.itemActivationID == -1) {
 				isFriendly = false;
-				tickAmount = 2;
+				moveable = false;
+			} else if (this.itemActivationID == -2) {
+				isFriendly = false;
+				canTurn = false;
+				keepFiring = true;
+				moveable = false;
+				health = 900000000;
+				activated = true;
 			}
+		}
+		// This is a Armored Menace
+		else if (ID == 19) {
+			health = 500;
+			damage = 20;
+			speed *= 0.2;
+			initialSpeed *= 0.2;
+			isABoss = false;
+			height = 3;
+			weightLevel = 3;
+			hasSpecial = false;
+			isFriendly = false;
+			hasMovement = true;
+			isSolid = true;
+			moveable = false;
+			hasItemDrops = true;
+			isHuman = true;
+		}
+		// This is a Blind Charger
+		else if (ID == 20) {
+			health = 150;
+			damage = 15;
+			speed *= 4;
+			initialSpeed *= 4;
+			isABoss = false;
+			height = 2;
+			weightLevel = 2;
+			hasSpecial = false;
+			isFriendly = false;
+			hasMovement = true;
+			isSolid = true;
+			moveable = false;
+			hasItemDrops = false;
+			isHuman = true;
+		}
+
+		// This is Damned soul
+		else if (ID == 21) {
+			health = 30;
+			damage = 5;
+			speed *= 6;
+			initialSpeed *= 6;
+			isABoss = false;
+			height = 1;
+			weightLevel = 1;
+			hasSpecial = false;
+			isFriendly = false;
+			hasMovement = true;
+			isSolid = true;
+			moveable = false;
+			hasItemDrops = false;
+			isHuman = true;
+			canFly = true;
+		}
+
+		// This is a Dark Strider
+		else if (ID == 22) {
+			health = 200;
+			damage = 10;
+			speed = 0.75;
+			initialSpeed = 0.75;
+			isABoss = false;
+			height = 2;
+			weightLevel = 2;
+			hasSpecial = true;
+			isFriendly = false;
+			hasMovement = true;
+			isSolid = true;
+			moveable = false;
+			hasItemDrops = true;
+			tickAmount = 5;
+			isHuman = true;
+		}
+
+		// This is a Deceptor
+		else if (ID == 23) {
+			health = 100;
+			damage = 15;
+			speed = 1;
+			initialSpeed = 1;
+			isABoss = false;
+			height = 2;
+			weightLevel = 1;
+			hasSpecial = true;
+			isFriendly = false;
+			hasMovement = true;
+			isSolid = true;
+			moveable = false;
+			hasItemDrops = true;
+			isHuman = true;
+		}
+
+		// This is a Heavy Zombie
+		else if (ID == 24) {
+			health = 125;
+			damage = 5;
+			speed = 1;
+			initialSpeed = 1;
+			isABoss = false;
+			height = 2;
+			weightLevel = 2;
+			hasSpecial = true;
+			isFriendly = false;
+			hasMovement = true;
+			isSolid = true;
+			moveable = false;
+			hasItemDrops = true;
+			isHuman = true;
+		}
+
+		// This is a Moss Springer
+		else if (ID == 25) {
+			health = 100;
+			damage = 7;
+			speed = 1.2;
+			initialSpeed = 1.2;
+			isABoss = false;
+			height = 2;
+			weightLevel = 1;
+			hasSpecial = false;
+			isFriendly = false;
+			hasMovement = true;
+			isSolid = true;
+			moveable = false;
+			hasItemDrops = false;
+			isHuman = true;
+		}
+
+		// This is a Tetra Destructor
+		else if (ID == 26) {
+			health = 250;
+			damage = 10;
+			speed = 0.5;
+			initialSpeed = 0.5;
+			isABoss = false;
+			height = 2;
+			weightLevel = 2;
+			hasSpecial = true;
+			isFriendly = false;
+			hasMovement = true;
+			isSolid = true;
+			moveable = false;
+			hasItemDrops = true;
+			isHuman = false;
+			canFly = true;
+		}
+		// This is for a explosive canister
+		else if (ID == 27) {
+			health = 15;
+			damage = 0;
+			speed = 0;
+			initialSpeed = 0;
+			isABoss = false;
+			height = 2;
+			weightLevel = 2;
+			hasSpecial = false;
+			isFriendly = false;
+			hasMovement = false;
+			isSolid = true;
+			moveable = true;
+			hasItemDrops = false;
+			isHuman = false;
+			canFly = false;
+			canTurn = false;
+		}
+		// This is for a trash can
+		else if (ID == 28) {
+			health = 30;
+			damage = 0;
+			speed = 0;
+			initialSpeed = 0;
+			isABoss = false;
+			height = 2;
+			weightLevel = 1;
+			hasSpecial = false;
+			isFriendly = false;
+			hasMovement = false;
+			isSolid = true;
+			moveable = true;
+			hasItemDrops = true;
+			isHuman = false;
+			canFly = false;
+			canTurn = false;
+		}
+		// For ID's that don't exist
+		else {
+			health = 500;
+			damage = 100;
+			speed = 0.5;
+			initialSpeed = 0.5;
+			isABoss = true;
+			height = 2;
+			weightLevel = 1;
+			hasSpecial = true;
+			isFriendly = false;
+			hasMovement = true;
+			isSolid = true;
+			moveable = true;
+			hasItemDrops = true;
+			canTurn = true;
+			isHuman = false;
+			canFly = true;
 		}
 
 		// If easy mode
@@ -336,6 +547,8 @@ public class Entity extends EntityParent implements Comparable {
 		}
 
 		super.itself = this;
+
+		Game.enemiesInMap++;
 	}
 
 	/**
@@ -369,7 +582,8 @@ public class Entity extends EntityParent implements Comparable {
 			yCorrect = -targetEnemy.yPos * 11;
 		}
 
-		if (inSight) {
+		// The entity can fire if its target is in sight, or it is told to keep firing
+		if (inSight || keepFiring) {
 			/*
 			 * Only melee attack once each tick round if within distance of 1 from the
 			 * target. The enemy must also be within height range of the target, and have
@@ -380,17 +594,20 @@ public class Entity extends EntityParent implements Comparable {
 					&& Math.abs(Math.abs(yCorrect) - (Math.abs(this.yPos * 11))) <= 12) {
 				tick = 0;
 
-				// Angle that the player is in accordance to the enemy so
-				// that enemy moves right towards its target
-				rotation = Math.atan(((targetX - xPos)) / ((targetZ - zPos)));
+				// Only change rotation if it can turn
+				if (canTurn) {
+					// Angle that the player is in accordance to the enemy so
+					// that enemy moves right towards its target
+					rotation = Math.atan(((targetX - xPos)) / ((targetZ - zPos)));
 
-				/*
-				 * If the target is in the 3rd or 4th quadrant of the map then add PI to
-				 * rotation so that the enemy will move into the correct quadrant of the map and
-				 * at the target.
-				 */
-				if (targetZ < zPos) {
-					rotation += Math.PI;
+					/*
+					 * If the target is in the 3rd or 4th quadrant of the map then add PI to
+					 * rotation so that the enemy will move into the correct quadrant of the map and
+					 * at the target.
+					 */
+					if (targetZ < zPos) {
+						rotation += Math.PI;
+					}
 				}
 
 				// Set melee attacking to true
@@ -408,17 +625,20 @@ public class Entity extends EntityParent implements Comparable {
 						// Enemy is in process of firing
 						super.isFiring = true;
 
-						// Angle that the player is in accordance to the enemy so
-						// that enemy moves right towards its target
-						rotation = Math.atan(((targetX - xPos)) / ((targetZ - zPos)));
+						// Only change rotation if it can turn
+						if (canTurn) {
+							// Angle that the player is in accordance to the enemy so
+							// that enemy moves right towards its target
+							rotation = Math.atan(((targetX - xPos)) / ((targetZ - zPos)));
 
-						/*
-						 * If the target is in the 3rd or 4th quadrant of the map then add PI to
-						 * rotation so that the enemy will move into the correct quadrant of the map and
-						 * at the target.
-						 */
-						if (targetZ < zPos) {
-							rotation += Math.PI;
+							/*
+							 * If the target is in the 3rd or 4th quadrant of the map then add PI to
+							 * rotation so that the enemy will move into the correct quadrant of the map and
+							 * at the target.
+							 */
+							if (targetZ < zPos) {
+								rotation += Math.PI;
+							}
 						}
 					}
 				}
@@ -462,9 +682,8 @@ public class Entity extends EntityParent implements Comparable {
 		// now, play the sound that corresponds to the enemy type getting
 		// hit
 		if (!soundPlayed && super.health > 0) {
-			if (ID == 1 || ID == 2 || ID == 9) {
-				SoundController.enemyHit.playAudioFile(distanceFromPlayer);
-			} else if (ID == 3) {
+
+			if (ID == 3) {
 				SoundController.tankHurt.playAudioFile(distanceFromPlayer);
 			} else if (ID == 4 || ID == 5) {
 				SoundController.reaperHurt.playAudioFile(distanceFromPlayer);
@@ -472,7 +691,7 @@ public class Entity extends EntityParent implements Comparable {
 				SoundController.vileCivHurt.playAudioFile(distanceFromPlayer);
 			} else if (ID == 6 || ID == 8) {
 				SoundController.bossHit.playAudioFile(distanceFromPlayer / 2);
-			} else if (ID >= 11 && ID <= 14) {
+			} else if (ID >= 11 && ID <= 15) {
 				Random rand = new Random();
 				int greetingType = rand.nextInt(5);
 
@@ -486,6 +705,10 @@ public class Entity extends EntityParent implements Comparable {
 					SoundController.marineHurtMale4.playAudioFile(distanceFromPlayer);
 				} else if (greetingType == 4) {
 					SoundController.marineHurtMale5.playAudioFile(distanceFromPlayer);
+				}
+			} else {
+				if (hasMovement) {
+					SoundController.enemyHit.playAudioFile(distanceFromPlayer);
 				}
 			}
 		}
@@ -525,12 +748,10 @@ public class Entity extends EntityParent implements Comparable {
 		 */
 		// Brainomorph
 		if (ID == 1) {
-			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHELLS.getID(), 0, 0, "");
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHARD.getID(), 0, 0, "");
 		}
 		// Sentinel
 		else if (ID == 2) {
-			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHELLS.getID(), 0, 0, "");
-
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHARD.getID(), 0, 0, "");
 
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.VIAL.getID(), 0, 0, "");
@@ -540,8 +761,6 @@ public class Entity extends EntityParent implements Comparable {
 			for (int z = 0; z < 5; z++) {
 				new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHARD.getID(), 0, 0, "");
 			}
-
-			new Item(2, xPos, -yPos * 10, zPos, ItemNames.ROCKETS.getID(), 0, 0, "");
 
 		}
 		// Reaper
@@ -564,7 +783,7 @@ public class Entity extends EntityParent implements Comparable {
 		}
 		// Vile Warrior
 		else if (ID == 7) {
-			new Item(2, xPos, -yPos * 10, zPos, ItemNames.VIAL.getID(), 0, 0, "");
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHARD.getID(), 0, 0, "");
 		}
 		// Belegoth
 		else if (ID == 8) {
@@ -578,14 +797,12 @@ public class Entity extends EntityParent implements Comparable {
 				new Item(2, xPos, -yPos * 10, zPos, ItemNames.VIAL.getID(), 0, 0, "");
 			}
 
-			new Item(2, xPos, -yPos * 10, zPos, ItemNames.ROCKETS.getID(), 0, 0, "");
-
-			new Item(2, xPos, -yPos * 10, zPos, ItemNames.DECIETSCEPTER.getID(), 0, 0, "");
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.DECIETORB.getID(), 0, 0, "");
 		} // Marines
 		else if (ID == 10 || ID == 12) {
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHELLS.getID(), 0, 0, "");
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHOTGUN.getID(), 0, 0, "");
-		} else if (ID == 11 || ID == 14) {
+		} else if (ID == 11 || ID == 14 || ID == 15) {
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.PISTOL.getID(), 0, 0, "");
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.BULLETS.getID(), 0, 0, "");
 		} else if (ID == 13) {
@@ -593,18 +810,46 @@ public class Entity extends EntityParent implements Comparable {
 			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SMALLCHARGE.getID(), 0, 0, "");
 		}
 		// Toilet
-		else if (ID == 16) {
+		else if (ID == 17) {
 			int toiletRand = random.nextInt(10);
 
 			if (toiletRand == 0) {
 				new Item(2, xPos, -yPos * 10, zPos, ItemNames.GOREPILE1.getID(), 0, 0, "");
 			}
-
-			new Item(2, xPos, -yPos * 10, zPos, ItemNames.VIAL.getID(), 0, 0, "");
 		}
 		// Turret
-		else if (ID == 17) {
+		else if (ID == 18) {
 			new Item(50, xPos, -yPos * 10, zPos, ItemNames.BOXOFBULLETS.getID(), 0, 0, "");
+		}
+		// Armored Menace
+		else if (ID == 19) {
+			new Item(100, xPos, -yPos * 10, zPos, ItemNames.COMBAT.getID(), 0, 0, "");
+		}
+		// Dark Strider
+		else if (ID == 22) {
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SMALLCHARGE.getID(), 0, 0, "");
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SMALLCHARGE.getID(), 0, 0, "");
+		}
+		// Deceptor
+		else if (ID == 23) {
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.DECIETSCEPTER.getID(), 0, 0, "");
+		}
+		// Heavy Zombie
+		else if (ID == 24) {
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.CHAINMEAL.getID(), 0, 0, "");
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHOTGUN.getID(), 0, 0, "");
+		}
+		// Moss Springer
+		else if (ID == 25) {
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.VIAL.getID(), 0, 0, "");
+		}
+		// Tetra Destructor
+		else if (ID == 26) {
+			new Item(2, xPos, -yPos * 10, zPos, ItemNames.ROCKETS.getID(), 0, 0, "");
+		}
+		// Canister just creates an explosion
+		else if (ID == 27) {
+			Game.explosions.add(new Explosion(this.xPos, -this.yPos / 10, this.zPos, 1, 0));
 		}
 
 		// Create random number from 0 to 99
@@ -624,24 +869,26 @@ public class Entity extends EntityParent implements Comparable {
 			} else if (temp == 50) {
 				new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHARD.getID(), 0, 0, "");
 			} else if (temp == 60) {
-				new Item(2, xPos, -yPos * 10, zPos, ItemNames.PISTOL.getID(), 0, 0, "");
+				new Item(2, xPos, -yPos * 10, zPos, ItemNames.BULLETS.getID(), 0, 0, "");
 			} else if (temp == 70) {
 				new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHELLS.getID(), 0, 0, "");
 			} else if (temp == 80) {
 				new Item(2, xPos, -yPos * 10, zPos, ItemNames.HEALTHPACK.getID(), 0, 0, "");
 			} else if (temp == 90) {
-				new Item(2, xPos, -yPos * 10, zPos, ItemNames.SHOTGUN.getID(), 0, 0, "");
+				new Item(2, xPos, -yPos * 10, zPos, ItemNames.ROCKETS.getID(), 0, 0, "");
 			} else if (temp == 100) {
 				new Item(2, xPos, -yPos * 10, zPos, ItemNames.UPGRADE.getID(), 0, 0, "");
 			}
 		}
 
 		// Toilet animation continues to play
-		if (ID == 16) {
+		if (ID == 17) {
 			Game.corpses.add(new Corpse(xPos, zPos, -yPos * 10, ID, xEffects, zEffects, yEffects, true));
 		} else {
-			// Add corpse to the map
-			Game.corpses.add(new Corpse(xPos, zPos, -yPos * 10, ID, xEffects, zEffects, yEffects, false));
+			if (ID != 21 && ID != 27) {
+				// Add corpse to the map
+				Game.corpses.add(new Corpse(xPos, zPos, -yPos * 10, ID, xEffects, zEffects, yEffects, false));
+			}
 		}
 
 		// If survival mode, add two enemies in its place
@@ -671,7 +918,7 @@ public class Entity extends EntityParent implements Comparable {
 			} else if (ID == 9) {
 				// TODO eventually change
 				SoundController.enemy2Death.playAudioFile(distanceFromPlayer);
-			} else if (ID >= 11 && ID <= 14) {
+			} else if (ID >= 11 && ID <= 15) {
 				Random rand = new Random();
 				int greetingType = rand.nextInt(4);
 
@@ -684,14 +931,18 @@ public class Entity extends EntityParent implements Comparable {
 				} else if (greetingType == 3) {
 					SoundController.marineDeathMale4.playAudioFile(distanceFromPlayer);
 				}
-			} else if (ID == 15) {
+			} else if (ID == 16 || ID == 28) {
 				SoundController.chairBreak.playAudioFile(distanceFromPlayer);
-			} else if (ID == 16) {
-				SoundController.toiletBreak.playAudioFile(distanceFromPlayer);
 			} else if (ID == 17) {
+				SoundController.toiletBreak.playAudioFile(distanceFromPlayer);
+			} else if (ID == 18) {
 				SoundController.chairBreak.playAudioFile(distanceFromPlayer);
 				SoundController.boxBreak1.playAudioFile(distanceFromPlayer);
 				SoundController.explosion.playAudioFile(distanceFromPlayer);
+			} else {
+				if (hasMovement) {
+					SoundController.enemy4Death.playAudioFile(distanceFromPlayer);
+				}
 			}
 		}
 		// Morgoth death
@@ -705,12 +956,6 @@ public class Entity extends EntityParent implements Comparable {
 
 		// Remove enemy from game
 		Game.entities.remove(this);
-
-		// If a boss remove it from the bosses array as well.
-		// And activate certain events if they are there
-		if (isABoss) {
-			Game.bosses.remove(this);
-		}
 
 		// If this has stuff to activate
 		if (this.itemActivationID > 0) {

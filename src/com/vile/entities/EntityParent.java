@@ -1,5 +1,6 @@
 package com.vile.entities;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import com.vile.Display;
@@ -125,6 +126,8 @@ public abstract class EntityParent implements Comparable {
 	public boolean canTurn = true; // Can entity turn if it can't move?
 	public boolean moveable = false; // Can Player push it around
 	public boolean isGhost = false; // Is the entity translucent and can go through object
+	public boolean isHuman = true; // Is the entity flesh and blood or other
+	public boolean keepFiring = false;
 	public boolean canActivate = false; // Are conditions met for entity to activate
 	public boolean canTeleport = false; // Can enemy teleport?
 	public boolean canFly = false; // Can enemy fly?
@@ -135,6 +138,7 @@ public abstract class EntityParent implements Comparable {
 	public boolean isAttacking = false; // Is entity melee attacking
 	public boolean canResurrect = false; // Can entity resurrect other entities
 	public boolean withinSight = false; // Is entity within the players sight
+	public boolean relocating = false; // If friendly does not hit enemy, try moving and trying again.
 	public static boolean checkSight = false; // Does entity have permission to check its sight yet?
 	public boolean isStuck = false; // Is entity stuck?
 	public boolean isABoss = false; // Is entity a boss?
@@ -145,6 +149,8 @@ public abstract class EntityParent implements Comparable {
 	public boolean tracking = false; // Is flying enemy tracking the target vertically
 	public boolean newTarget = false; // Is target not player?
 	public boolean isSolid = true; // Only used for friendly entities. Will entity always be solid or not
+	public boolean pursuant = true; // Does entity stay back and fire from distance or pursue their target?
+	public boolean moving = false;
 	private boolean doorway = false; // Is the entity going through a doorway?
 	private boolean firstTime = true; // Sets up primary settings the first tick through
 
@@ -209,14 +215,14 @@ public abstract class EntityParent implements Comparable {
 		}
 
 		// Only friendly entities that can move/turn should attack.
-		if (isFriendly && !moveable && initialActivation) {
+		if (isFriendly && (!moveable || ID == 18) && initialActivation) {
 			newTarget = true;
 
 			// if (targetEnemy == null) {
 			// Go through enemies from closest to farthest.
 			for (int i = Game.entities.size() - 1; i >= 0; i--) {
 				if (!Game.entities.get(i).isFriendly && !Game.entities.get(i).equals(currentEnemy)
-						&& (Game.entities.get(i).activated || Game.entities.get(i).canBeSeen)) {
+						&& (Game.entities.get(i).inSight || Game.entities.get(i).canBeSeen)) {
 					activated = true;
 					// Check for nearest enemy IF that enemy is not friendly already
 					targetEnemy = Game.entities.get(i);
@@ -497,15 +503,6 @@ public abstract class EntityParent implements Comparable {
 					}
 					break;
 
-				case 9:
-					// TODO For now it just plays like enemy 2
-					try {
-						SoundController.enemy2Activate.playAudioFile(0);
-					} catch (Exception ex) {
-
-					}
-					break;
-
 				case 11:
 					Random rand = new Random();
 					int greetingType = rand.nextInt(2);
@@ -517,6 +514,7 @@ public abstract class EntityParent implements Comparable {
 					}
 
 					break;
+
 				case 12:
 					Random rand2 = new Random();
 					int greetingType2 = rand2.nextInt(2);
@@ -540,6 +538,7 @@ public abstract class EntityParent implements Comparable {
 					}
 
 					break;
+
 				case 14:
 					Random rand4 = new Random();
 					int greetingType4 = rand4.nextInt(2);
@@ -551,8 +550,43 @@ public abstract class EntityParent implements Comparable {
 					}
 
 					break;
+
+				case 15:
+					Random rand5 = new Random();
+					int greetingType5 = rand5.nextInt(2);
+
+					if (greetingType5 == 0) {
+						SoundController.marineGreetingStandard.playAudioFile(distanceFromPlayer);
+					} else {
+						SoundController.rockAndRoll.playAudioFile(distanceFromPlayer);
+					}
+
+					break;
+
+				default:
+					// TODO For now it just plays like enemy 2
+					try {
+						if (hasMovement) {
+							SoundController.enemy2Activate.playAudioFile(0);
+						}
+					} catch (Exception ex) {
+
+					}
+					break;
 				}
 			}
+		}
+
+		// If entity is not activated currently, it should not be moving, so no movement
+		// animation should be playing
+		if (!activated) {
+			moving = false;
+		}
+
+		// If the turret is freindly, it can be moved. This is so if its initially evil
+		// and the player makes it freindly, it can be moved like usual.
+		if (ID == 18 && isFriendly) {
+			moveable = true;
 		}
 
 		// Every so many ticks, reset time. Depends on the games fps
@@ -622,8 +656,34 @@ public abstract class EntityParent implements Comparable {
 							case (14):
 								Display.messages.add(new PopUp("You were killed by the wussy marine! Wow!"));
 								break;
-							case (17):
+							case (18):
 								Display.messages.add(new PopUp("Those Turrets are sure dangerous!"));
+								break;
+							case (19):
+								Display.messages.add(new PopUp("You got smashed by an Armored Menace!"));
+								break;
+							case (20):
+								Display.messages.add(new PopUp(
+										"Just because the blind can't see doesn't mean they can't kill you!"));
+								break;
+							case (21):
+								Display.messages.add(new PopUp("Your soul was damned by the Damned Soul!"));
+								break;
+							case (22):
+								Display.messages.add(new PopUp("You got disintigrated by a Dark Strider!"));
+								break;
+							case (23):
+								Display.messages.add(new PopUp("You have been turned by a Deceptor!"));
+								break;
+							case (24):
+								Display.messages.add(new PopUp("You were gunned down by a Heavy Zombie!"));
+								break;
+							case (25):
+								Display.messages.add(new PopUp("You were dragged to the ground by a Moss Springer!"));
+								break;
+							case (26):
+								Display.messages
+										.add(new PopUp("The Tetra Destructor see's all, and it also destroys all!"));
 								break;
 							default:
 								Display.messages.add(new PopUp("You were killed by the enemy!"));
@@ -750,13 +810,13 @@ public abstract class EntityParent implements Comparable {
 				// If Mutated Commando shoot in 3 directions
 				else if (ID == 3) {
 					// Create new Projectile object with given parameters
-					EnemyFire temp = new EnemyFire(15, 0.1, xPos, (yPos - 0.3) * 10, zPos, 6, targetX, targetZ,
+					EnemyFire temp = new EnemyFire(15, 0.1, xPos, (yPos - 0.1) * 10, zPos, 6, targetX, targetZ,
 							-targetY, 0, (Entity) currentEnemy, criticalHit);
 
-					EnemyFire temp2 = new EnemyFire(15, 0.1, xPos, (yPos - 0.3) * 10, zPos, 6, targetX, targetZ,
+					EnemyFire temp2 = new EnemyFire(15, 0.1, xPos, (yPos - 0.1) * 10, zPos, 6, targetX, targetZ,
 							-targetY, Math.PI / 8, (Entity) currentEnemy, criticalHit);
 
-					EnemyFire temp3 = new EnemyFire(15, 0.1, xPos, (yPos - 0.3) * 10, zPos, 6, targetX, targetZ,
+					EnemyFire temp3 = new EnemyFire(15, 0.1, xPos, (yPos - 0.1) * 10, zPos, 6, targetX, targetZ,
 							-targetY, -Math.PI / 8, (Entity) currentEnemy, criticalHit);
 
 					// Add Projectiles to the Game events
@@ -853,7 +913,7 @@ public abstract class EntityParent implements Comparable {
 					Game.enemyProjectiles.add(temp5);
 					Game.enemyProjectiles.add(temp6);
 					Game.enemyProjectiles.add(temp7);
-				} else if (ID == 11 || ID == 14) {
+				} else if (ID == 11 || ID == 14 || ID == 15) {
 
 					int weaponDamage = 15;
 
@@ -931,19 +991,99 @@ public abstract class EntityParent implements Comparable {
 
 					// Add Projectiles to the Game events
 					Game.enemyProjectiles.add(temp);
-				} else if (ID == 17) {
-					EnemyFire temp = new EnemyFire(5, 0.2, xPos, (yPos - 0.3) * 10, zPos, 1, targetX, targetZ, -targetY,
-							0, (Entity) currentEnemy, criticalHit);
+				} else if (ID == 18) {
+					EnemyFire temp = null;
 
+					if (this.itemActivationID == -2) {
+						criticalHit = false;
+					}
 					SoundController.pistol.playAudioFile(distanceFromPlayer);
+
+					temp = new EnemyFire(5, 0.2, xPos, (yPos - 0.3) * 10, zPos, 1, rotation, 0, (Entity) currentEnemy,
+							criticalHit);
 
 					// Add Projectiles to the Game events
 					Game.enemyProjectiles.add(temp);
+				} else if (ID == 22) {
+					EnemyFire temp = new EnemyFire(10, 0.15, xPos, (yPos - 0.3) * 10, zPos, 2, targetX, targetZ,
+							-targetY, 0, (Entity) currentEnemy, criticalHit);
 
-					// Tick how many shots were taken. Stop shooting if enemy dies.
-					if (targetEnemy != null && targetEnemy.isAlive && inSight) {
-						isFiring = true;
+					SoundController.phaseCannonHit.playAudioFile(distanceFromPlayer);
+
+					// Add Projectiles to the Game events
+					Game.enemyProjectiles.add(temp);
+				} else if (ID == 23) {
+					Entity temp = new Entity(this.xPos + 0.5, this.yPos, this.zPos + 0.5, 21, this.rotation, -1);
+					temp.targetEnemy = this.targetEnemy;
+
+					Block tempBlock = Level.getBlock((int) temp.xPos, (int) temp.zPos);
+					Game.entities.add(temp);
+					tempBlock.entitiesOnBlock.add(temp);
+				} else if (ID == 24) {
+
+					int weaponDamage = 5;
+
+					EnemyFire temp = new EnemyFire(weaponDamage, 0.2, xPos, (yPos - 0.3) * 10, zPos, 1, targetX,
+							targetZ, -targetY, 0, (Entity) currentEnemy, criticalHit);
+
+					EnemyFire temp2 = new EnemyFire(weaponDamage, 0.2, xPos, (yPos - 0.3) * 10, zPos, 1, targetX,
+							targetZ, -targetY, Math.PI / 32, (Entity) currentEnemy, criticalHit);
+
+					EnemyFire temp3 = new EnemyFire(weaponDamage, 0.2, xPos, (yPos - 0.3) * 10, zPos, 1, targetX,
+							targetZ, -targetY, -Math.PI / 32, (Entity) currentEnemy, criticalHit);
+
+					EnemyFire temp4 = new EnemyFire(weaponDamage, 0.2, xPos, (yPos - 0.3) * 10, zPos, 1, targetX,
+							targetZ, -targetY, Math.PI / 16, (Entity) currentEnemy, criticalHit);
+
+					EnemyFire temp5 = new EnemyFire(weaponDamage, 0.2, xPos, (yPos - 0.3) * 10, zPos, 1, targetX,
+							targetZ, -targetY, -Math.PI / 16, (Entity) currentEnemy, criticalHit);
+
+					EnemyFire temp6 = new EnemyFire(weaponDamage, 0.2, xPos, (yPos - 0.3) * 10, zPos, 1, targetX,
+							targetZ, -targetY, Math.PI / 8, (Entity) currentEnemy, criticalHit);
+
+					EnemyFire temp7 = new EnemyFire(weaponDamage, 0.2, xPos, (yPos - 0.3) * 10, zPos, 1, targetX,
+							targetZ, -targetY, -Math.PI / 8, (Entity) currentEnemy, criticalHit);
+
+					SoundController.shoot.playAudioFile(distanceFromPlayer);
+
+					Random random = new Random();
+					int randomYell = random.nextInt(2);
+
+					if (randomYell == 0) {
+						SoundController.eatLead.playAudioFile(distanceFromPlayer);
+					} else if (randomYell == 1) {
+						SoundController.rockAndRoll.playAudioFile(distanceFromPlayer);
 					}
+
+					// Add Projectiles to the Game events
+					Game.enemyProjectiles.add(temp);
+					Game.enemyProjectiles.add(temp2);
+					Game.enemyProjectiles.add(temp3);
+					Game.enemyProjectiles.add(temp4);
+					Game.enemyProjectiles.add(temp5);
+					Game.enemyProjectiles.add(temp6);
+					Game.enemyProjectiles.add(temp7);
+				} else if (ID == 26) {
+
+					int weaponDamage = 15;
+
+					EnemyFire temp = new EnemyFire(weaponDamage, 0.1, xPos, (yPos - 0.3) * 10, zPos, 6, targetX,
+							targetZ, -targetY, 0, (Entity) currentEnemy, criticalHit);
+
+					EnemyFire temp2 = new EnemyFire(weaponDamage, 0.1, xPos, (yPos - 0.3) * 10, zPos, 6, targetX,
+							targetZ, -targetY, Math.PI / 2, (Entity) currentEnemy, criticalHit);
+
+					EnemyFire temp3 = new EnemyFire(weaponDamage, 0.1, xPos, (yPos - 0.3) * 10, zPos, 6, targetX,
+							targetZ, -targetY, -Math.PI / 2, (Entity) currentEnemy, criticalHit);
+
+					EnemyFire temp4 = new EnemyFire(weaponDamage, 0.1, xPos, (yPos - 0.3) * 10, zPos, 6, targetX,
+							targetZ, -targetY, Math.PI, (Entity) currentEnemy, criticalHit);
+
+					// Add Projectiles to the Game events
+					Game.enemyProjectiles.add(temp);
+					Game.enemyProjectiles.add(temp2);
+					Game.enemyProjectiles.add(temp3);
+					Game.enemyProjectiles.add(temp4);
 				} else {
 					int tempDamage = 5;
 
@@ -1019,7 +1159,7 @@ public abstract class EntityParent implements Comparable {
 				for (int i = 0; i < block.entitiesOnBlock.size(); i++) {
 					EntityParent temp = block.entitiesOnBlock.get(i);
 
-					// If enemy is not in the game, remove it from the block
+					// If entity is not in the game, remove it from the block
 					// This is due to a rocket bug.
 					if (!Game.entities.contains(temp)) {
 						block.entitiesOnBlock.remove(temp);
@@ -1029,9 +1169,9 @@ public abstract class EntityParent implements Comparable {
 					double distance = Math.sqrt(((Math.abs(temp.xPos - nextX)) * (Math.abs(temp.xPos - nextX)))
 							+ ((Math.abs(temp.zPos - nextZ)) * (Math.abs(temp.zPos - nextZ))));
 
-					// If close enough, don't allow the enemy to move into
-					// the other enemies. Enemy can still move if 8 units above
-					// The other enemy. Can move into the entity if it is a
+					// If close enough, don't allow the entity to move into
+					// the other enemies. Entity can still move if 8 units above
+					// The other entity. Can move into the entity if it is a
 					// reaper or a corpse.
 					if (distance <= 0.5 && !this.equals(temp) && Math.abs(this.yPos - temp.yPos) <= 0.8) {
 						return false;
@@ -1080,7 +1220,6 @@ public abstract class EntityParent implements Comparable {
 				// If not reaper
 				if (!isGhost) {
 					for (Item temp : block.wallItems) {
-						// TODO This may cause errors
 						double dist = Math.sqrt(((Math.abs(temp.x - nextX)) * (Math.abs(temp.x - nextX)))
 								+ ((Math.abs(temp.z - nextZ)) * (Math.abs(temp.z - nextZ))));
 
@@ -1128,7 +1267,6 @@ public abstract class EntityParent implements Comparable {
 		try {
 			if (!isGhost) {
 				for (Item temp : block.wallItems) {
-					// TODO This may cause errors
 					double dist = Math.sqrt(((Math.abs(temp.x - nextX)) * (Math.abs(temp.x - nextX)))
 							+ ((Math.abs(temp.z - nextZ)) * (Math.abs(temp.z - nextZ))));
 
@@ -1158,8 +1296,12 @@ public abstract class EntityParent implements Comparable {
 		 * more than 4 units below the entity. That is too big of a fall for the
 		 * entities. Doesn't worry about that second part though if the entity can fly.
 		 */
-		if (((topOfBlock) - (4.0 / 10.0) > -yPos && (-yPos + height + 6) >= (block.y * 4))
-				|| ((topOfBlock) + (4.0 / 10.0) < -yPos && !canFly)) {
+		if (((topOfBlock) - 0.3 > -yPos && (-yPos + height) >= (block.y * 4))
+				|| ((topOfBlock) + 0.3 < -yPos && !canFly)) {
+			// TODO Maybe revert back to old code if the above doesn't work
+			// System.out.println(-yPos + " : " + topOfBlock + " : " + height + " : " +
+			// block.y + " : " + block.height
+			// + " : " + block.baseCorrect);
 			isStuck = true;
 			return false;
 		}
@@ -1567,8 +1709,123 @@ public abstract class EntityParent implements Comparable {
 
 					enemyPhase = 0;
 				} else {
-					// Runs through movement images
-					if (enemyPhase <= 14 * Render3D.fpsCheck) {
+					// If entity is moving
+					if (moving) {
+						// Runs through movement images
+						if (enemyPhase <= 14 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.enemy3;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.enemy3a45right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.enemy3aright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.enemy3a135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.enemy3aback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.enemy3a135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.enemy3aleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.enemy3a45left;
+							}
+						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.enemy3b;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.enemy3b45right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.enemy3bright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.enemy3b135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.enemy3bback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.enemy3b135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.enemy3bleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.enemy3b45left;
+							}
+						} else if (enemyPhase <= 42 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.enemy3c;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.enemy3c45right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.enemy3cright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.enemy3c135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.enemy3cback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.enemy3c135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.enemy3cleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.enemy3c45left;
+							}
+						} else if (enemyPhase <= 56 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.enemy3d;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.enemy3d45right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.enemy3dright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.enemy3d135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.enemy3dback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.enemy3d135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.enemy3dleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.enemy3d45left;
+							}
+						} else if (enemyPhase <= 70 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.enemy3e;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.enemy3e45right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.enemy3eright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.enemy3e135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.enemy3eback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.enemy3e135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.enemy3eleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.enemy3e45left;
+							}
+						} else if (enemyPhase <= 84 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.enemy3f;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.enemy3f45right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.enemy3fright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.enemy3f135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.enemy3fback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.enemy3f135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.enemy3fleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.enemy3f45left;
+							}
+						}
+
+						if (enemyPhase >= 84 * Render3D.fpsCheck) {
+							enemyPhase = 0;
+						}
+					} else {
 						if (rot <= h / 8 || rot > (15 * h) / 8) {
 							currentPhase = Textures.enemy3;
 						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
@@ -1586,99 +1843,7 @@ public abstract class EntityParent implements Comparable {
 						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
 							currentPhase = Textures.enemy3a45left;
 						}
-					} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-						if (rot <= h / 8 || rot > (15 * h) / 8) {
-							currentPhase = Textures.enemy3b;
-						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
-							currentPhase = Textures.enemy3b45right;
-						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
-							currentPhase = Textures.enemy3bright;
-						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
-							currentPhase = Textures.enemy3b135right;
-						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
-							currentPhase = Textures.enemy3bback;
-						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
-							currentPhase = Textures.enemy3b135left;
-						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
-							currentPhase = Textures.enemy3bleft;
-						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
-							currentPhase = Textures.enemy3b45left;
-						}
-					} else if (enemyPhase <= 42 * Render3D.fpsCheck) {
-						if (rot <= h / 8 || rot > (15 * h) / 8) {
-							currentPhase = Textures.enemy3c;
-						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
-							currentPhase = Textures.enemy3c45right;
-						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
-							currentPhase = Textures.enemy3cright;
-						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
-							currentPhase = Textures.enemy3c135right;
-						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
-							currentPhase = Textures.enemy3cback;
-						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
-							currentPhase = Textures.enemy3c135left;
-						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
-							currentPhase = Textures.enemy3cleft;
-						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
-							currentPhase = Textures.enemy3c45left;
-						}
-					} else if (enemyPhase <= 56 * Render3D.fpsCheck) {
-						if (rot <= h / 8 || rot > (15 * h) / 8) {
-							currentPhase = Textures.enemy3d;
-						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
-							currentPhase = Textures.enemy3d45right;
-						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
-							currentPhase = Textures.enemy3dright;
-						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
-							currentPhase = Textures.enemy3d135right;
-						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
-							currentPhase = Textures.enemy3dback;
-						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
-							currentPhase = Textures.enemy3d135left;
-						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
-							currentPhase = Textures.enemy3dleft;
-						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
-							currentPhase = Textures.enemy3d45left;
-						}
-					} else if (enemyPhase <= 70 * Render3D.fpsCheck) {
-						if (rot <= h / 8 || rot > (15 * h) / 8) {
-							currentPhase = Textures.enemy3e;
-						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
-							currentPhase = Textures.enemy3e45right;
-						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
-							currentPhase = Textures.enemy3eright;
-						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
-							currentPhase = Textures.enemy3e135right;
-						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
-							currentPhase = Textures.enemy3eback;
-						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
-							currentPhase = Textures.enemy3e135left;
-						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
-							currentPhase = Textures.enemy3eleft;
-						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
-							currentPhase = Textures.enemy3e45left;
-						}
-					} else if (enemyPhase <= 84 * Render3D.fpsCheck) {
-						if (rot <= h / 8 || rot > (15 * h) / 8) {
-							currentPhase = Textures.enemy3f;
-						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
-							currentPhase = Textures.enemy3f45right;
-						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
-							currentPhase = Textures.enemy3fright;
-						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
-							currentPhase = Textures.enemy3f135right;
-						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
-							currentPhase = Textures.enemy3fback;
-						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
-							currentPhase = Textures.enemy3f135left;
-						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
-							currentPhase = Textures.enemy3fleft;
-						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
-							currentPhase = Textures.enemy3f45left;
-						}
-					}
 
-					if (enemyPhase >= 84 * Render3D.fpsCheck) {
 						enemyPhase = 0;
 					}
 				}
@@ -1834,97 +1999,120 @@ public abstract class EntityParent implements Comparable {
 						currentPhase = Textures.enemy5firea45left;
 					}
 				} else {
-					if (rot <= h / 8 || rot > (15 * h) / 8) {
-						// Sets currentPhase to the currentPhase int of a pixel at a
-						// given location in the image to be rendered
-						if (enemyPhase <= 7 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5;
-						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5b;
-						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5c;
-						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5d;
+					// If entity is moving
+					if (moving) {
+						if (rot <= h / 8 || rot > (15 * h) / 8) {
+							// Sets currentPhase to the currentPhase int of a pixel at a
+							// given location in the image to be rendered
+							if (enemyPhase <= 7 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5;
+							} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5b;
+							} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5c;
+							} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5d;
+							}
+						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+							// Sets currentPhase to the currentPhase int of a pixel at a
+							// given location in the image to be rendered
+							if (enemyPhase <= 7 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5a45right;
+							} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5b45right;
+							} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5c45right;
+							} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5d45right;
+							}
+						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+							// Sets currentPhase to the currentPhase int of a pixel at a
+							// given location in the image to be rendered
+							if (enemyPhase <= 7 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5aright;
+							} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5bright;
+							} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5cright;
+							} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5dright;
+							}
 						}
-					} else if (rot > h / 8 && rot <= (3 * h) / 8) {
-						// Sets currentPhase to the currentPhase int of a pixel at a
-						// given location in the image to be rendered
-						if (enemyPhase <= 7 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5a45right;
-						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5b45right;
-						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5c45right;
-						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5d45right;
+						if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+							if (enemyPhase <= 7 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5a135right;
+							} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5b135right;
+							} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5c135right;
+							} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5d135right;
+							}
+						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+							if (enemyPhase <= 7 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5aback;
+							} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5bback;
+							} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5cback;
+							} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5dback;
+							}
+						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+							if (enemyPhase <= 7 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5a135left;
+							} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5b135left;
+							} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5c135left;
+							} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5d135left;
+							}
+						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+							if (enemyPhase <= 7 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5aleft;
+							} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5bleft;
+							} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5cleft;
+							} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5dleft;
+							}
+						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+							if (enemyPhase <= 7 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5a45left;
+							} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5b45left;
+							} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5c45left;
+							} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+								currentPhase = Textures.enemy5d45left;
+							}
 						}
-					} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
-						// Sets currentPhase to the currentPhase int of a pixel at a
-						// given location in the image to be rendered
-						if (enemyPhase <= 7 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5aright;
-						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5bright;
-						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5cright;
-						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5dright;
-						}
-					}
-					if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
-						if (enemyPhase <= 7 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5a135right;
-						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5b135right;
-						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5c135right;
-						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5d135right;
-						}
-					} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
-						if (enemyPhase <= 7 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5aback;
-						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5bback;
-						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5cback;
-						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5dback;
-						}
-					} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
-						if (enemyPhase <= 7 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5a135left;
-						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5b135left;
-						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5c135left;
-						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5d135left;
-						}
-					} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
-						if (enemyPhase <= 7 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5aleft;
-						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5bleft;
-						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5cleft;
-						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5dleft;
-						}
-					} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
-						if (enemyPhase <= 7 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5a45left;
-						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5b45left;
-						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5c45left;
-						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-							currentPhase = Textures.enemy5d45left;
-						}
-					}
 
-					// If done with phases, start over again
-					if (enemyPhase >= 28 * Render3D.fpsCheck) {
+						// If done with phases, start over again
+						if (enemyPhase >= 28 * Render3D.fpsCheck) {
+							enemyPhase = 0;
+						}
+					} else {
+						if (rot <= h / 8 || rot > (15 * h) / 8) {
+							currentPhase = Textures.enemy5;
+						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+							currentPhase = Textures.enemy5a45right;
+						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+							currentPhase = Textures.enemy5aright;
+						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+							currentPhase = Textures.enemy5a135right;
+						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+							currentPhase = Textures.enemy5aback;
+						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+							currentPhase = Textures.enemy5a135left;
+						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+							currentPhase = Textures.enemy5aleft;
+						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+							currentPhase = Textures.enemy5a45left;
+						}
+
 						enemyPhase = 0;
 					}
 				}
@@ -1963,19 +2151,26 @@ public abstract class EntityParent implements Comparable {
 						currentPhase = Textures.morgoth;
 					}
 				} else {
-					// Runs through movement phases of the
-					// enemies textures.
-					if (enemyPhase <= 7 * Render3D.fpsCheck) {
-						currentPhase = Textures.morgoth;
-					} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-						currentPhase = Textures.morgoth2;
-					} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-						currentPhase = Textures.morgoth3;
-					} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-						currentPhase = Textures.morgoth4;
-					}
+					// If entity is moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						if (enemyPhase <= 7 * Render3D.fpsCheck) {
+							currentPhase = Textures.morgoth;
+						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+							currentPhase = Textures.morgoth2;
+						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+							currentPhase = Textures.morgoth3;
+						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+							currentPhase = Textures.morgoth4;
+						}
 
-					if (enemyPhase >= 28 * Render3D.fpsCheck) {
+						if (enemyPhase >= 28 * Render3D.fpsCheck) {
+							enemyPhase = 0;
+						}
+					} else {
+						currentPhase = Textures.morgoth;
+
 						enemyPhase = 0;
 					}
 				}
@@ -1985,7 +2180,7 @@ public abstract class EntityParent implements Comparable {
 
 		// Vile Civilian
 		case 7:
-			// If enemy was recently hurt
+			// If entity was recently hurt
 			if (harmed > 0 && !isFiring && !isAttacking) {
 				if (rot <= h / 8 || rot > (15 * h) / 8) {
 					currentPhase = Textures.vileCivHurt;
@@ -2051,9 +2246,88 @@ public abstract class EntityParent implements Comparable {
 
 					enemyPhase = 0;
 				} else {
-					// Runs through movement phases of the
-					// enemies textures.
-					if (enemyPhase <= 7 * Render3D.fpsCheck) {
+					// If entity is moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						if (enemyPhase <= 7 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.vileCiv1;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.vileCivilian145right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.vileCivilian1right;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.vileCivilian1135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.vileCivilian1back;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.vileCivilian1135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.vileCivilian1left;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.vileCivilian145left;
+							}
+						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.vileCiv2;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.vileCivilian245right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.vileCivilian2right;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.vileCivilian2135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.vileCivilian2back;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.vileCivilian2135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.vileCivilian2left;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.vileCivilian245left;
+							}
+						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.vileCiv3;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.vileCivilian345right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.vileCivilian3right;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.vileCivilian3135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.vileCivilian3back;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.vileCivilian3135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.vileCivilian3left;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.vileCivilian345left;
+							}
+						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.vileCiv4;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.vileCivilian445right;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.vileCivilian4right;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.vileCivilian4135right;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.vileCivilian4back;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.vileCivilian4135left;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.vileCivilian4left;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.vileCivilian445left;
+							}
+						}
+
+						if (enemyPhase >= 28 * Render3D.fpsCheck) {
+							enemyPhase = 0;
+						}
+					} else {
 						if (rot <= h / 8 || rot > (15 * h) / 8) {
 							currentPhase = Textures.vileCiv1;
 						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
@@ -2071,63 +2345,7 @@ public abstract class EntityParent implements Comparable {
 						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
 							currentPhase = Textures.vileCivilian145left;
 						}
-					} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-						if (rot <= h / 8 || rot > (15 * h) / 8) {
-							currentPhase = Textures.vileCiv2;
-						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
-							currentPhase = Textures.vileCivilian245right;
-						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
-							currentPhase = Textures.vileCivilian2right;
-						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
-							currentPhase = Textures.vileCivilian2135right;
-						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
-							currentPhase = Textures.vileCivilian2back;
-						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
-							currentPhase = Textures.vileCivilian2135left;
-						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
-							currentPhase = Textures.vileCivilian2left;
-						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
-							currentPhase = Textures.vileCivilian245left;
-						}
-					} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-						if (rot <= h / 8 || rot > (15 * h) / 8) {
-							currentPhase = Textures.vileCiv3;
-						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
-							currentPhase = Textures.vileCivilian345right;
-						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
-							currentPhase = Textures.vileCivilian3right;
-						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
-							currentPhase = Textures.vileCivilian3135right;
-						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
-							currentPhase = Textures.vileCivilian3back;
-						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
-							currentPhase = Textures.vileCivilian3135left;
-						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
-							currentPhase = Textures.vileCivilian3left;
-						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
-							currentPhase = Textures.vileCivilian345left;
-						}
-					} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-						if (rot <= h / 8 || rot > (15 * h) / 8) {
-							currentPhase = Textures.vileCiv4;
-						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
-							currentPhase = Textures.vileCivilian445right;
-						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
-							currentPhase = Textures.vileCivilian4right;
-						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
-							currentPhase = Textures.vileCivilian4135right;
-						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
-							currentPhase = Textures.vileCivilian4back;
-						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
-							currentPhase = Textures.vileCivilian4135left;
-						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
-							currentPhase = Textures.vileCivilian4left;
-						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
-							currentPhase = Textures.vileCivilian445left;
-						}
-					}
 
-					if (enemyPhase >= 28 * Render3D.fpsCheck) {
 						enemyPhase = 0;
 					}
 				}
@@ -2170,23 +2388,30 @@ public abstract class EntityParent implements Comparable {
 						currentPhase = Textures.belegoth4;
 					}
 				} else {
-					// Runs through movement phases of the
-					// enemies textures.
-					if (enemyPhase <= 7 * Render3D.fpsCheck) {
-						currentPhase = Textures.belegoth;
-					} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
-						currentPhase = Textures.belegoth2;
-					} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
-						currentPhase = Textures.belegoth3;
-					} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
-						currentPhase = Textures.belegoth4;
-					} else if (enemyPhase <= 35 * Render3D.fpsCheck) {
-						currentPhase = Textures.belegoth5;
-					} else if (enemyPhase <= 42 * Render3D.fpsCheck) {
-						currentPhase = Textures.belegoth6;
-					}
+					// Only play movement if the entity is moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						if (enemyPhase <= 7 * Render3D.fpsCheck) {
+							currentPhase = Textures.belegoth;
+						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+							currentPhase = Textures.belegoth2;
+						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+							currentPhase = Textures.belegoth3;
+						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+							currentPhase = Textures.belegoth4;
+						} else if (enemyPhase <= 35 * Render3D.fpsCheck) {
+							currentPhase = Textures.belegoth5;
+						} else if (enemyPhase <= 42 * Render3D.fpsCheck) {
+							currentPhase = Textures.belegoth6;
+						}
 
-					if (enemyPhase >= 42 * Render3D.fpsCheck) {
+						if (enemyPhase >= 42 * Render3D.fpsCheck) {
+							enemyPhase = 0;
+						}
+					} else {
+						currentPhase = Textures.belegoth;
+
 						enemyPhase = 0;
 					}
 				}
@@ -2337,7 +2562,6 @@ public abstract class EntityParent implements Comparable {
 						}
 					}
 				} else {
-					// TODO maybe change player stare time stuff.
 					if (playerStareTime <= 50 || activated) {
 						if (rot <= h / 8 || rot > (15 * h) / 8) {
 							currentPhase = Textures.enemy8;
@@ -2384,8 +2608,178 @@ public abstract class EntityParent implements Comparable {
 
 			break;
 		case 13:
-			currentPhase = Textures.marine4;
-			enemyPhase = 0;
+			// If enemy was recently hurt
+			if (harmed > 0 && !isFiring && !isAttacking) {
+				if (rot <= h / 8 || rot > (15 * h) / 8) {
+					currentPhase = Textures.marine4hurt;
+				} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+					currentPhase = Textures.marine4hurtright45;
+				} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+					currentPhase = Textures.marine4hurtright;
+				}
+				if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+					currentPhase = Textures.marine4hurtright135;
+				} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+					currentPhase = Textures.marine4hurtback;
+				} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+					currentPhase = Textures.marine4hurtleft135;
+				} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+					currentPhase = Textures.marine4hurtleft;
+				} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+					currentPhase = Textures.marine4hurtleft45;
+				}
+
+				enemyPhase = 0;
+			} else {
+				// If enemy is attacking, then show the
+				// phases of that
+				if (isAttacking || isFiring) {
+					if (tick <= 6 * Render3D.fpsCheck) {
+						if (rot <= h / 8 || rot > (15 * h) / 8) {
+							currentPhase = Textures.marine4fire1;
+						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+							currentPhase = Textures.marine4fire1right45;
+						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+							currentPhase = Textures.marine4fire1right;
+						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+							currentPhase = Textures.marine4fire1right135;
+						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+							currentPhase = Textures.marine4fire1back;
+						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+							currentPhase = Textures.marine4fire1left135;
+						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+							currentPhase = Textures.marine4fire1left;
+						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+							currentPhase = Textures.marine4fire1left45;
+						}
+					} else if (tick >= 6 * Render3D.fpsCheck) {
+						if (rot <= h / 8 || rot > (15 * h) / 8) {
+							currentPhase = Textures.marine4fire2;
+						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+							currentPhase = Textures.marine4fire2right45;
+						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+							currentPhase = Textures.marine4fire2right;
+						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+							currentPhase = Textures.marine4fire2right135;
+						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+							currentPhase = Textures.marine4fire2back;
+						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+							currentPhase = Textures.marine4fire2left135;
+						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+							currentPhase = Textures.marine4fire2left;
+						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+							currentPhase = Textures.marine4fire2left45;
+						}
+					}
+
+					enemyPhase = 0;
+				} else {
+					// If entity is currently moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						if (enemyPhase <= 7 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.marine4a;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.marine4aright45;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.marine4aright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.marine4aright135;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.marine4aback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.marine4aleft135;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.marine4aleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.marine4aleft45;
+							}
+						} else if (enemyPhase <= 14 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.marine4b;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.marine4bright45;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.marine4bright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.marine4bright135;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.marine4bback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.marine4bleft135;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.marine4bleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.marine4bleft45;
+							}
+						} else if (enemyPhase <= 21 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.marine4c;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.marine4cright45;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.marine4cright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.marine4cright135;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.marine4cback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.marine4cleft135;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.marine4cleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.marine4cleft45;
+							}
+						} else if (enemyPhase <= 28 * Render3D.fpsCheck) {
+							if (rot <= h / 8 || rot > (15 * h) / 8) {
+								currentPhase = Textures.marine4d;
+							} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+								currentPhase = Textures.marine4dright45;
+							} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+								currentPhase = Textures.marine4dright;
+							} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+								currentPhase = Textures.marine4dright135;
+							} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+								currentPhase = Textures.marine4dback;
+							} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+								currentPhase = Textures.marine4dleft135;
+							} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+								currentPhase = Textures.marine4dleft;
+							} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+								currentPhase = Textures.marine4dleft45;
+							}
+						}
+
+						if (enemyPhase >= 28 * Render3D.fpsCheck) {
+							enemyPhase = 0;
+						}
+					} else {
+						// If marine is standing still, just have the default stand
+						// still texture
+						if (rot <= h / 8 || rot > (15 * h) / 8) {
+							currentPhase = Textures.marine4a;
+						} else if (rot > h / 8 && rot <= (3 * h) / 8) {
+							currentPhase = Textures.marine4aright45;
+						} else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8) {
+							currentPhase = Textures.marine4aright;
+						} else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) {
+							currentPhase = Textures.marine4aright135;
+						} else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) {
+							currentPhase = Textures.marine4aback;
+						} else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+							currentPhase = Textures.marine4aleft135;
+						} else if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) {
+							currentPhase = Textures.marine4aleft;
+						} else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8) {
+							currentPhase = Textures.marine4aleft45;
+						}
+
+						enemyPhase = 0;
+					}
+				}
+			}
 
 			break;
 		case 14:
@@ -2394,6 +2788,11 @@ public abstract class EntityParent implements Comparable {
 
 			break;
 		case 15:
+			currentPhase = Textures.marine6;
+			enemyPhase = 0;
+
+			break;
+		case 16:
 			if (rot <= h / 8 || rot > (15 * h) / 8) {
 				currentPhase = Textures.chairFront;
 			} else if (rot > h / 8 && rot <= (3 * h) / 8) {
@@ -2415,12 +2814,12 @@ public abstract class EntityParent implements Comparable {
 			enemyPhase = 0;
 
 			break;
-		case 16:
+		case 17:
 			currentPhase = Textures.toilet;
 			enemyPhase = 0;
 
 			break;
-		case 17:
+		case 18:
 			if (isFiring) {
 				if (rot <= h / 8 || rot > (15 * h) / 8) {
 					currentPhase = Textures.turretFire;
@@ -2459,6 +2858,1082 @@ public abstract class EntityParent implements Comparable {
 				}
 			}
 
+			enemyPhase = 0;
+
+			break;
+
+		case 19:
+			// If enemy was recently hurt
+			if (harmed > 0 && !isFiring && !isAttacking) {
+				/*
+				 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+				 * Textures.marine4hurt; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+				 * currentPhase = Textures.marine4hurtright45; } else if (rot > (3 * h) / 8 &&
+				 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4hurtright; } if (rot >
+				 * (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+				 * / 8) { currentPhase = Textures.marine4hurtback; } else if (rot > (9 * h) / 8
+				 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4hurtleft135; } else
+				 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+				 * 8) { currentPhase = Textures.marine4hurtleft45; }
+				 */
+				currentPhase = Textures.armoredMenaceHurt;
+
+				enemyPhase = 0;
+			} else {
+				// If enemy is attacking, then show the
+				// phases of that
+				if (isAttacking || isFiring) {
+					/*
+					 * if (tick <= 6 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8)
+					 * { currentPhase = Textures.marine4fire1; } else if (rot > h / 8 && rot <= (3 *
+					 * h) / 8) { currentPhase = Textures.marine4fire1right45; } else if (rot > (3 *
+					 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire1right; }
+					 * else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire1back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire1left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire1left45; } } else if (tick >= 6 *
+					 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+					 * currentPhase = Textures.marine4fire2right45; } else if (rot > (3 * h) / 8 &&
+					 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire2right; } else if
+					 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire2back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire2left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire2left45; } }
+					 */
+
+					currentPhase = Textures.armoredMenaceAttack;
+
+					enemyPhase = 0;
+				} else {
+					// If entity is currently moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						/*
+						 * if (enemyPhase <= 7 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h)
+						 * / 8) { currentPhase = Textures.marine4a; } else if (rot > h / 8 && rot <= (3
+						 * * h) / 8) { currentPhase = Textures.marine4aright45; } else if (rot > (3 * h)
+						 * / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4aright; } else if
+						 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4aright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4aback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4aleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4aleft45; } } else if (enemyPhase <= 14 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4b; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4bright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4bright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4bright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4bback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4bleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4bleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4bleft45; }
+						 * } else if (enemyPhase <= 21 * Render3D.fpsCheck) { if (rot <= h / 8 || rot >
+						 * (15 * h) / 8) { currentPhase = Textures.marine4c; } else if (rot > h / 8 &&
+						 * rot <= (3 * h) / 8) { currentPhase = Textures.marine4cright45; } else if (rot
+						 * > (3 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4cright;
+						 * } else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4cright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4cback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4cleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4cleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4cleft45; } } else if (enemyPhase <= 28 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4d; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4dright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4dright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4dright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4dback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4dleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4dleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4dleft45; }
+						 * }
+						 * 
+						 * if (enemyPhase >= 28 * Render3D.fpsCheck) { enemyPhase = 0; }
+						 */
+
+						currentPhase = Textures.armoredMenace;
+
+						enemyPhase = 0;
+					} else {
+						// If marine is standing still, just have the default stand
+						// still texture
+						/*
+						 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase = Textures.marine4a; }
+						 * else if (rot > h / 8 && rot <= (3 * h) / 8) { currentPhase =
+						 * Textures.marine4aright45; } else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8)
+						 * { currentPhase = Textures.marine4aright; } else if (rot > (5 * h) / 8 && rot
+						 * <= (7 * h) / 8) { currentPhase = Textures.marine4aright135; } else if (rot >
+						 * (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase = Textures.marine4aback; }
+						 * else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft135; } else if (rot > (11 * h) / 8 && rot <= (13 * h) /
+						 * 8) { currentPhase = Textures.marine4aleft; } else if (rot > (13 * h) / 8 &&
+						 * rot <= (15 * h) / 8) { currentPhase = Textures.marine4aleft45; }
+						 */
+
+						currentPhase = Textures.armoredMenace;
+
+						enemyPhase = 0;
+					}
+				}
+			}
+
+			break;
+
+		case 20:
+			// If enemy was recently hurt
+			if (harmed > 0 && !isFiring && !isAttacking) {
+				/*
+				 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+				 * Textures.marine4hurt; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+				 * currentPhase = Textures.marine4hurtright45; } else if (rot > (3 * h) / 8 &&
+				 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4hurtright; } if (rot >
+				 * (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+				 * / 8) { currentPhase = Textures.marine4hurtback; } else if (rot > (9 * h) / 8
+				 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4hurtleft135; } else
+				 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+				 * 8) { currentPhase = Textures.marine4hurtleft45; }
+				 */
+				currentPhase = Textures.blindChargerHurt;
+
+				enemyPhase = 0;
+			} else {
+				// If enemy is attacking, then show the
+				// phases of that
+				if (isAttacking || isFiring) {
+					/*
+					 * if (tick <= 6 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8)
+					 * { currentPhase = Textures.marine4fire1; } else if (rot > h / 8 && rot <= (3 *
+					 * h) / 8) { currentPhase = Textures.marine4fire1right45; } else if (rot > (3 *
+					 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire1right; }
+					 * else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire1back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire1left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire1left45; } } else if (tick >= 6 *
+					 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+					 * currentPhase = Textures.marine4fire2right45; } else if (rot > (3 * h) / 8 &&
+					 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire2right; } else if
+					 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire2back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire2left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire2left45; } }
+					 */
+
+					currentPhase = Textures.blindChargerAttack;
+
+					enemyPhase = 0;
+				} else {
+					// If entity is currently moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						/*
+						 * if (enemyPhase <= 7 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h)
+						 * / 8) { currentPhase = Textures.marine4a; } else if (rot > h / 8 && rot <= (3
+						 * * h) / 8) { currentPhase = Textures.marine4aright45; } else if (rot > (3 * h)
+						 * / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4aright; } else if
+						 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4aright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4aback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4aleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4aleft45; } } else if (enemyPhase <= 14 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4b; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4bright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4bright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4bright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4bback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4bleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4bleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4bleft45; }
+						 * } else if (enemyPhase <= 21 * Render3D.fpsCheck) { if (rot <= h / 8 || rot >
+						 * (15 * h) / 8) { currentPhase = Textures.marine4c; } else if (rot > h / 8 &&
+						 * rot <= (3 * h) / 8) { currentPhase = Textures.marine4cright45; } else if (rot
+						 * > (3 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4cright;
+						 * } else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4cright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4cback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4cleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4cleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4cleft45; } } else if (enemyPhase <= 28 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4d; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4dright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4dright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4dright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4dback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4dleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4dleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4dleft45; }
+						 * }
+						 * 
+						 * if (enemyPhase >= 28 * Render3D.fpsCheck) { enemyPhase = 0; }
+						 */
+
+						currentPhase = Textures.blindCharger;
+
+						enemyPhase = 0;
+					} else {
+						// If marine is standing still, just have the default stand
+						// still texture
+						/*
+						 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase = Textures.marine4a; }
+						 * else if (rot > h / 8 && rot <= (3 * h) / 8) { currentPhase =
+						 * Textures.marine4aright45; } else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8)
+						 * { currentPhase = Textures.marine4aright; } else if (rot > (5 * h) / 8 && rot
+						 * <= (7 * h) / 8) { currentPhase = Textures.marine4aright135; } else if (rot >
+						 * (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase = Textures.marine4aback; }
+						 * else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft135; } else if (rot > (11 * h) / 8 && rot <= (13 * h) /
+						 * 8) { currentPhase = Textures.marine4aleft; } else if (rot > (13 * h) / 8 &&
+						 * rot <= (15 * h) / 8) { currentPhase = Textures.marine4aleft45; }
+						 */
+
+						currentPhase = Textures.blindCharger;
+
+						enemyPhase = 0;
+					}
+				}
+			}
+
+			break;
+
+		case 21:
+			// If enemy was recently hurt
+			if (harmed > 0 && !isFiring && !isAttacking) {
+				/*
+				 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+				 * Textures.marine4hurt; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+				 * currentPhase = Textures.marine4hurtright45; } else if (rot > (3 * h) / 8 &&
+				 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4hurtright; } if (rot >
+				 * (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+				 * / 8) { currentPhase = Textures.marine4hurtback; } else if (rot > (9 * h) / 8
+				 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4hurtleft135; } else
+				 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+				 * 8) { currentPhase = Textures.marine4hurtleft45; }
+				 */
+				currentPhase = Textures.damnedSoul;
+
+				enemyPhase = 0;
+			} else {
+				// If enemy is attacking, then show the
+				// phases of that
+				if (isAttacking || isFiring) {
+					/*
+					 * if (tick <= 6 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8)
+					 * { currentPhase = Textures.marine4fire1; } else if (rot > h / 8 && rot <= (3 *
+					 * h) / 8) { currentPhase = Textures.marine4fire1right45; } else if (rot > (3 *
+					 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire1right; }
+					 * else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire1back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire1left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire1left45; } } else if (tick >= 6 *
+					 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+					 * currentPhase = Textures.marine4fire2right45; } else if (rot > (3 * h) / 8 &&
+					 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire2right; } else if
+					 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire2back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire2left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire2left45; } }
+					 */
+
+					currentPhase = Textures.damnedSoulAttack;
+
+					enemyPhase = 0;
+				} else {
+					// If entity is currently moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						/*
+						 * if (enemyPhase <= 7 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h)
+						 * / 8) { currentPhase = Textures.marine4a; } else if (rot > h / 8 && rot <= (3
+						 * * h) / 8) { currentPhase = Textures.marine4aright45; } else if (rot > (3 * h)
+						 * / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4aright; } else if
+						 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4aright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4aback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4aleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4aleft45; } } else if (enemyPhase <= 14 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4b; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4bright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4bright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4bright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4bback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4bleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4bleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4bleft45; }
+						 * } else if (enemyPhase <= 21 * Render3D.fpsCheck) { if (rot <= h / 8 || rot >
+						 * (15 * h) / 8) { currentPhase = Textures.marine4c; } else if (rot > h / 8 &&
+						 * rot <= (3 * h) / 8) { currentPhase = Textures.marine4cright45; } else if (rot
+						 * > (3 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4cright;
+						 * } else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4cright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4cback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4cleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4cleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4cleft45; } } else if (enemyPhase <= 28 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4d; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4dright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4dright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4dright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4dback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4dleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4dleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4dleft45; }
+						 * }
+						 * 
+						 * if (enemyPhase >= 28 * Render3D.fpsCheck) { enemyPhase = 0; }
+						 */
+
+						currentPhase = Textures.damnedSoul;
+
+						enemyPhase = 0;
+					} else {
+						// If marine is standing still, just have the default stand
+						// still texture
+						/*
+						 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase = Textures.marine4a; }
+						 * else if (rot > h / 8 && rot <= (3 * h) / 8) { currentPhase =
+						 * Textures.marine4aright45; } else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8)
+						 * { currentPhase = Textures.marine4aright; } else if (rot > (5 * h) / 8 && rot
+						 * <= (7 * h) / 8) { currentPhase = Textures.marine4aright135; } else if (rot >
+						 * (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase = Textures.marine4aback; }
+						 * else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft135; } else if (rot > (11 * h) / 8 && rot <= (13 * h) /
+						 * 8) { currentPhase = Textures.marine4aleft; } else if (rot > (13 * h) / 8 &&
+						 * rot <= (15 * h) / 8) { currentPhase = Textures.marine4aleft45; }
+						 */
+
+						currentPhase = Textures.damnedSoul;
+
+						enemyPhase = 0;
+					}
+				}
+			}
+
+			break;
+
+		case 22:
+			// If enemy was recently hurt
+			if (harmed > 0 && !isFiring && !isAttacking) {
+				/*
+				 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+				 * Textures.marine4hurt; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+				 * currentPhase = Textures.marine4hurtright45; } else if (rot > (3 * h) / 8 &&
+				 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4hurtright; } if (rot >
+				 * (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+				 * / 8) { currentPhase = Textures.marine4hurtback; } else if (rot > (9 * h) / 8
+				 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4hurtleft135; } else
+				 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+				 * 8) { currentPhase = Textures.marine4hurtleft45; }
+				 */
+				currentPhase = Textures.darkStriderHurt;
+
+				enemyPhase = 0;
+			} else {
+				// If enemy is attacking, then show the
+				// phases of that
+				if (isAttacking || isFiring) {
+					/*
+					 * if (tick <= 6 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8)
+					 * { currentPhase = Textures.marine4fire1; } else if (rot > h / 8 && rot <= (3 *
+					 * h) / 8) { currentPhase = Textures.marine4fire1right45; } else if (rot > (3 *
+					 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire1right; }
+					 * else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire1back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire1left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire1left45; } } else if (tick >= 6 *
+					 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+					 * currentPhase = Textures.marine4fire2right45; } else if (rot > (3 * h) / 8 &&
+					 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire2right; } else if
+					 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire2back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire2left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire2left45; } }
+					 */
+
+					currentPhase = Textures.darkStriderFire;
+
+					enemyPhase = 0;
+				} else {
+					// If entity is currently moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						/*
+						 * if (enemyPhase <= 7 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h)
+						 * / 8) { currentPhase = Textures.marine4a; } else if (rot > h / 8 && rot <= (3
+						 * * h) / 8) { currentPhase = Textures.marine4aright45; } else if (rot > (3 * h)
+						 * / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4aright; } else if
+						 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4aright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4aback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4aleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4aleft45; } } else if (enemyPhase <= 14 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4b; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4bright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4bright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4bright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4bback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4bleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4bleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4bleft45; }
+						 * } else if (enemyPhase <= 21 * Render3D.fpsCheck) { if (rot <= h / 8 || rot >
+						 * (15 * h) / 8) { currentPhase = Textures.marine4c; } else if (rot > h / 8 &&
+						 * rot <= (3 * h) / 8) { currentPhase = Textures.marine4cright45; } else if (rot
+						 * > (3 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4cright;
+						 * } else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4cright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4cback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4cleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4cleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4cleft45; } } else if (enemyPhase <= 28 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4d; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4dright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4dright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4dright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4dback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4dleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4dleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4dleft45; }
+						 * }
+						 * 
+						 * if (enemyPhase >= 28 * Render3D.fpsCheck) { enemyPhase = 0; }
+						 */
+
+						currentPhase = Textures.darkStrider;
+
+						enemyPhase = 0;
+					} else {
+						// If marine is standing still, just have the default stand
+						// still texture
+						/*
+						 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase = Textures.marine4a; }
+						 * else if (rot > h / 8 && rot <= (3 * h) / 8) { currentPhase =
+						 * Textures.marine4aright45; } else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8)
+						 * { currentPhase = Textures.marine4aright; } else if (rot > (5 * h) / 8 && rot
+						 * <= (7 * h) / 8) { currentPhase = Textures.marine4aright135; } else if (rot >
+						 * (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase = Textures.marine4aback; }
+						 * else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft135; } else if (rot > (11 * h) / 8 && rot <= (13 * h) /
+						 * 8) { currentPhase = Textures.marine4aleft; } else if (rot > (13 * h) / 8 &&
+						 * rot <= (15 * h) / 8) { currentPhase = Textures.marine4aleft45; }
+						 */
+
+						currentPhase = Textures.darkStrider;
+
+						enemyPhase = 0;
+					}
+				}
+			}
+
+			break;
+
+		case 23:
+			// If enemy was recently hurt
+			if (harmed > 0 && !isFiring && !isAttacking) {
+				/*
+				 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+				 * Textures.marine4hurt; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+				 * currentPhase = Textures.marine4hurtright45; } else if (rot > (3 * h) / 8 &&
+				 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4hurtright; } if (rot >
+				 * (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+				 * / 8) { currentPhase = Textures.marine4hurtback; } else if (rot > (9 * h) / 8
+				 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4hurtleft135; } else
+				 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+				 * 8) { currentPhase = Textures.marine4hurtleft45; }
+				 */
+				currentPhase = Textures.deceptorHurt;
+
+				enemyPhase = 0;
+			} else {
+				// If enemy is attacking, then show the
+				// phases of that
+				if (isAttacking || isFiring) {
+					/*
+					 * if (tick <= 6 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8)
+					 * { currentPhase = Textures.marine4fire1; } else if (rot > h / 8 && rot <= (3 *
+					 * h) / 8) { currentPhase = Textures.marine4fire1right45; } else if (rot > (3 *
+					 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire1right; }
+					 * else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire1back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire1left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire1left45; } } else if (tick >= 6 *
+					 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+					 * currentPhase = Textures.marine4fire2right45; } else if (rot > (3 * h) / 8 &&
+					 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire2right; } else if
+					 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire2back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire2left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire2left45; } }
+					 */
+
+					currentPhase = Textures.deceptorFire;
+
+					enemyPhase = 0;
+				} else {
+					// If entity is currently moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						/*
+						 * if (enemyPhase <= 7 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h)
+						 * / 8) { currentPhase = Textures.marine4a; } else if (rot > h / 8 && rot <= (3
+						 * * h) / 8) { currentPhase = Textures.marine4aright45; } else if (rot > (3 * h)
+						 * / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4aright; } else if
+						 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4aright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4aback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4aleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4aleft45; } } else if (enemyPhase <= 14 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4b; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4bright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4bright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4bright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4bback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4bleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4bleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4bleft45; }
+						 * } else if (enemyPhase <= 21 * Render3D.fpsCheck) { if (rot <= h / 8 || rot >
+						 * (15 * h) / 8) { currentPhase = Textures.marine4c; } else if (rot > h / 8 &&
+						 * rot <= (3 * h) / 8) { currentPhase = Textures.marine4cright45; } else if (rot
+						 * > (3 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4cright;
+						 * } else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4cright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4cback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4cleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4cleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4cleft45; } } else if (enemyPhase <= 28 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4d; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4dright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4dright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4dright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4dback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4dleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4dleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4dleft45; }
+						 * }
+						 * 
+						 * if (enemyPhase >= 28 * Render3D.fpsCheck) { enemyPhase = 0; }
+						 */
+
+						currentPhase = Textures.deceptor;
+
+						enemyPhase = 0;
+					} else {
+						// If marine is standing still, just have the default stand
+						// still texture
+						/*
+						 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase = Textures.marine4a; }
+						 * else if (rot > h / 8 && rot <= (3 * h) / 8) { currentPhase =
+						 * Textures.marine4aright45; } else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8)
+						 * { currentPhase = Textures.marine4aright; } else if (rot > (5 * h) / 8 && rot
+						 * <= (7 * h) / 8) { currentPhase = Textures.marine4aright135; } else if (rot >
+						 * (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase = Textures.marine4aback; }
+						 * else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft135; } else if (rot > (11 * h) / 8 && rot <= (13 * h) /
+						 * 8) { currentPhase = Textures.marine4aleft; } else if (rot > (13 * h) / 8 &&
+						 * rot <= (15 * h) / 8) { currentPhase = Textures.marine4aleft45; }
+						 */
+
+						currentPhase = Textures.deceptor;
+
+						enemyPhase = 0;
+					}
+				}
+			}
+
+			break;
+
+		case 24:
+			// If enemy was recently hurt
+			if (harmed > 0 && !isFiring && !isAttacking) {
+				/*
+				 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+				 * Textures.marine4hurt; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+				 * currentPhase = Textures.marine4hurtright45; } else if (rot > (3 * h) / 8 &&
+				 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4hurtright; } if (rot >
+				 * (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+				 * / 8) { currentPhase = Textures.marine4hurtback; } else if (rot > (9 * h) / 8
+				 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4hurtleft135; } else
+				 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+				 * 8) { currentPhase = Textures.marine4hurtleft45; }
+				 */
+				currentPhase = Textures.heavyZombieHurt;
+
+				enemyPhase = 0;
+			} else {
+				// If enemy is attacking, then show the
+				// phases of that
+				if (isAttacking || isFiring) {
+					/*
+					 * if (tick <= 6 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8)
+					 * { currentPhase = Textures.marine4fire1; } else if (rot > h / 8 && rot <= (3 *
+					 * h) / 8) { currentPhase = Textures.marine4fire1right45; } else if (rot > (3 *
+					 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire1right; }
+					 * else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire1back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire1left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire1left45; } } else if (tick >= 6 *
+					 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+					 * currentPhase = Textures.marine4fire2right45; } else if (rot > (3 * h) / 8 &&
+					 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire2right; } else if
+					 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire2back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire2left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire2left45; } }
+					 */
+
+					currentPhase = Textures.heavyZombieFire;
+
+					enemyPhase = 0;
+				} else {
+					// If entity is currently moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						/*
+						 * if (enemyPhase <= 7 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h)
+						 * / 8) { currentPhase = Textures.marine4a; } else if (rot > h / 8 && rot <= (3
+						 * * h) / 8) { currentPhase = Textures.marine4aright45; } else if (rot > (3 * h)
+						 * / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4aright; } else if
+						 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4aright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4aback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4aleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4aleft45; } } else if (enemyPhase <= 14 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4b; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4bright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4bright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4bright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4bback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4bleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4bleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4bleft45; }
+						 * } else if (enemyPhase <= 21 * Render3D.fpsCheck) { if (rot <= h / 8 || rot >
+						 * (15 * h) / 8) { currentPhase = Textures.marine4c; } else if (rot > h / 8 &&
+						 * rot <= (3 * h) / 8) { currentPhase = Textures.marine4cright45; } else if (rot
+						 * > (3 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4cright;
+						 * } else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4cright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4cback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4cleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4cleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4cleft45; } } else if (enemyPhase <= 28 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4d; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4dright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4dright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4dright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4dback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4dleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4dleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4dleft45; }
+						 * }
+						 * 
+						 * if (enemyPhase >= 28 * Render3D.fpsCheck) { enemyPhase = 0; }
+						 */
+
+						currentPhase = Textures.heavyZombie;
+
+						enemyPhase = 0;
+					} else {
+						// If marine is standing still, just have the default stand
+						// still texture
+						/*
+						 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase = Textures.marine4a; }
+						 * else if (rot > h / 8 && rot <= (3 * h) / 8) { currentPhase =
+						 * Textures.marine4aright45; } else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8)
+						 * { currentPhase = Textures.marine4aright; } else if (rot > (5 * h) / 8 && rot
+						 * <= (7 * h) / 8) { currentPhase = Textures.marine4aright135; } else if (rot >
+						 * (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase = Textures.marine4aback; }
+						 * else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft135; } else if (rot > (11 * h) / 8 && rot <= (13 * h) /
+						 * 8) { currentPhase = Textures.marine4aleft; } else if (rot > (13 * h) / 8 &&
+						 * rot <= (15 * h) / 8) { currentPhase = Textures.marine4aleft45; }
+						 */
+
+						currentPhase = Textures.heavyZombie;
+
+						enemyPhase = 0;
+					}
+				}
+			}
+
+			break;
+
+		case 25:
+			// If enemy was recently hurt
+			if (harmed > 0 && !isFiring && !isAttacking) {
+				/*
+				 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+				 * Textures.marine4hurt; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+				 * currentPhase = Textures.marine4hurtright45; } else if (rot > (3 * h) / 8 &&
+				 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4hurtright; } if (rot >
+				 * (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+				 * / 8) { currentPhase = Textures.marine4hurtback; } else if (rot > (9 * h) / 8
+				 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4hurtleft135; } else
+				 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+				 * 8) { currentPhase = Textures.marine4hurtleft45; }
+				 */
+				currentPhase = Textures.mossSpringerHurt;
+
+				enemyPhase = 0;
+			} else {
+				// If enemy is attacking, then show the
+				// phases of that
+				if (isAttacking || isFiring) {
+					/*
+					 * if (tick <= 6 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8)
+					 * { currentPhase = Textures.marine4fire1; } else if (rot > h / 8 && rot <= (3 *
+					 * h) / 8) { currentPhase = Textures.marine4fire1right45; } else if (rot > (3 *
+					 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire1right; }
+					 * else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire1back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire1left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire1left45; } } else if (tick >= 6 *
+					 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+					 * currentPhase = Textures.marine4fire2right45; } else if (rot > (3 * h) / 8 &&
+					 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire2right; } else if
+					 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire2back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire2left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire2left45; } }
+					 */
+
+					currentPhase = Textures.mossSpringerAttack;
+
+					enemyPhase = 0;
+				} else {
+					// If entity is currently moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						/*
+						 * if (enemyPhase <= 7 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h)
+						 * / 8) { currentPhase = Textures.marine4a; } else if (rot > h / 8 && rot <= (3
+						 * * h) / 8) { currentPhase = Textures.marine4aright45; } else if (rot > (3 * h)
+						 * / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4aright; } else if
+						 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4aright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4aback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4aleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4aleft45; } } else if (enemyPhase <= 14 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4b; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4bright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4bright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4bright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4bback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4bleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4bleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4bleft45; }
+						 * } else if (enemyPhase <= 21 * Render3D.fpsCheck) { if (rot <= h / 8 || rot >
+						 * (15 * h) / 8) { currentPhase = Textures.marine4c; } else if (rot > h / 8 &&
+						 * rot <= (3 * h) / 8) { currentPhase = Textures.marine4cright45; } else if (rot
+						 * > (3 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4cright;
+						 * } else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4cright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4cback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4cleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4cleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4cleft45; } } else if (enemyPhase <= 28 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4d; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4dright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4dright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4dright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4dback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4dleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4dleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4dleft45; }
+						 * }
+						 * 
+						 * if (enemyPhase >= 28 * Render3D.fpsCheck) { enemyPhase = 0; }
+						 */
+
+						currentPhase = Textures.mossSpringer;
+
+						enemyPhase = 0;
+					} else {
+						// If marine is standing still, just have the default stand
+						// still texture
+						/*
+						 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase = Textures.marine4a; }
+						 * else if (rot > h / 8 && rot <= (3 * h) / 8) { currentPhase =
+						 * Textures.marine4aright45; } else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8)
+						 * { currentPhase = Textures.marine4aright; } else if (rot > (5 * h) / 8 && rot
+						 * <= (7 * h) / 8) { currentPhase = Textures.marine4aright135; } else if (rot >
+						 * (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase = Textures.marine4aback; }
+						 * else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft135; } else if (rot > (11 * h) / 8 && rot <= (13 * h) /
+						 * 8) { currentPhase = Textures.marine4aleft; } else if (rot > (13 * h) / 8 &&
+						 * rot <= (15 * h) / 8) { currentPhase = Textures.marine4aleft45; }
+						 */
+
+						currentPhase = Textures.mossSpringer;
+
+						enemyPhase = 0;
+					}
+				}
+			}
+
+			break;
+
+		case 26:
+			// If enemy was recently hurt
+			if (harmed > 0 && !isFiring && !isAttacking) {
+				/*
+				 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+				 * Textures.marine4hurt; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+				 * currentPhase = Textures.marine4hurtright45; } else if (rot > (3 * h) / 8 &&
+				 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4hurtright; } if (rot >
+				 * (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+				 * / 8) { currentPhase = Textures.marine4hurtback; } else if (rot > (9 * h) / 8
+				 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4hurtleft135; } else
+				 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+				 * Textures.marine4hurtleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+				 * 8) { currentPhase = Textures.marine4hurtleft45; }
+				 */
+				currentPhase = Textures.tetraDestructorHurt;
+
+				enemyPhase = 0;
+			} else {
+				// If enemy is attacking, then show the
+				// phases of that
+				if (isAttacking || isFiring) {
+					/*
+					 * if (tick <= 6 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8)
+					 * { currentPhase = Textures.marine4fire1; } else if (rot > h / 8 && rot <= (3 *
+					 * h) / 8) { currentPhase = Textures.marine4fire1right45; } else if (rot > (3 *
+					 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire1right; }
+					 * else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire1back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire1left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire1left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire1left45; } } else if (tick >= 6 *
+					 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+					 * currentPhase = Textures.marine4fire2right45; } else if (rot > (3 * h) / 8 &&
+					 * rot <= (5 * h) / 8) { currentPhase = Textures.marine4fire2right; } else if
+					 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2right135; } else if (rot > (7 * h) / 8 && rot <= (9 * h)
+					 * / 8) { currentPhase = Textures.marine4fire2back; } else if (rot > (9 * h) / 8
+					 * && rot <= (11 * h) / 8) { currentPhase = Textures.marine4fire2left135; } else
+					 * if (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+					 * Textures.marine4fire2left; } else if (rot > (13 * h) / 8 && rot <= (15 * h) /
+					 * 8) { currentPhase = Textures.marine4fire2left45; } }
+					 */
+
+					currentPhase = Textures.tetraDestructorFire;
+
+					enemyPhase = 0;
+				} else {
+					// If entity is currently moving
+					if (moving) {
+						// Runs through movement phases of the
+						// enemies textures.
+						/*
+						 * if (enemyPhase <= 7 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h)
+						 * / 8) { currentPhase = Textures.marine4a; } else if (rot > h / 8 && rot <= (3
+						 * * h) / 8) { currentPhase = Textures.marine4aright45; } else if (rot > (3 * h)
+						 * / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4aright; } else if
+						 * (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4aright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4aback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4aleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4aleft45; } } else if (enemyPhase <= 14 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4b; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4bright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4bright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4bright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4bback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4bleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4bleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4bleft45; }
+						 * } else if (enemyPhase <= 21 * Render3D.fpsCheck) { if (rot <= h / 8 || rot >
+						 * (15 * h) / 8) { currentPhase = Textures.marine4c; } else if (rot > h / 8 &&
+						 * rot <= (3 * h) / 8) { currentPhase = Textures.marine4cright45; } else if (rot
+						 * > (3 * h) / 8 && rot <= (5 * h) / 8) { currentPhase = Textures.marine4cright;
+						 * } else if (rot > (5 * h) / 8 && rot <= (7 * h) / 8) { currentPhase =
+						 * Textures.marine4cright135; } else if (rot > (7 * h) / 8 && rot <= (9 * h) /
+						 * 8) { currentPhase = Textures.marine4cback; } else if (rot > (9 * h) / 8 &&
+						 * rot <= (11 * h) / 8) { currentPhase = Textures.marine4cleft135; } else if
+						 * (rot > (11 * h) / 8 && rot <= (13 * h) / 8) { currentPhase =
+						 * Textures.marine4cleft; } else if (rot > (13 * h) / 8 && rot <= (15 * h) / 8)
+						 * { currentPhase = Textures.marine4cleft45; } } else if (enemyPhase <= 28 *
+						 * Render3D.fpsCheck) { if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase =
+						 * Textures.marine4d; } else if (rot > h / 8 && rot <= (3 * h) / 8) {
+						 * currentPhase = Textures.marine4dright45; } else if (rot > (3 * h) / 8 && rot
+						 * <= (5 * h) / 8) { currentPhase = Textures.marine4dright; } else if (rot > (5
+						 * * h) / 8 && rot <= (7 * h) / 8) { currentPhase = Textures.marine4dright135; }
+						 * else if (rot > (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase =
+						 * Textures.marine4dback; } else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) {
+						 * currentPhase = Textures.marine4dleft135; } else if (rot > (11 * h) / 8 && rot
+						 * <= (13 * h) / 8) { currentPhase = Textures.marine4dleft; } else if (rot > (13
+						 * * h) / 8 && rot <= (15 * h) / 8) { currentPhase = Textures.marine4dleft45; }
+						 * }
+						 * 
+						 * if (enemyPhase >= 28 * Render3D.fpsCheck) { enemyPhase = 0; }
+						 */
+
+						currentPhase = Textures.tetraDestructor;
+
+						enemyPhase = 0;
+					} else {
+						// If marine is standing still, just have the default stand
+						// still texture
+						/*
+						 * if (rot <= h / 8 || rot > (15 * h) / 8) { currentPhase = Textures.marine4a; }
+						 * else if (rot > h / 8 && rot <= (3 * h) / 8) { currentPhase =
+						 * Textures.marine4aright45; } else if (rot > (3 * h) / 8 && rot <= (5 * h) / 8)
+						 * { currentPhase = Textures.marine4aright; } else if (rot > (5 * h) / 8 && rot
+						 * <= (7 * h) / 8) { currentPhase = Textures.marine4aright135; } else if (rot >
+						 * (7 * h) / 8 && rot <= (9 * h) / 8) { currentPhase = Textures.marine4aback; }
+						 * else if (rot > (9 * h) / 8 && rot <= (11 * h) / 8) { currentPhase =
+						 * Textures.marine4aleft135; } else if (rot > (11 * h) / 8 && rot <= (13 * h) /
+						 * 8) { currentPhase = Textures.marine4aleft; } else if (rot > (13 * h) / 8 &&
+						 * rot <= (15 * h) / 8) { currentPhase = Textures.marine4aleft45; }
+						 */
+
+						currentPhase = Textures.tetraDestructor;
+
+						enemyPhase = 0;
+					}
+				}
+			}
+
+			break;
+
+		case 27:
+			currentPhase = Textures.canister;
+
+			enemyPhase = 0;
+
+			break;
+
+		case 28:
+			currentPhase = Textures.trash1;
+
+			enemyPhase = 0;
+
+			break;
+
+		default:
+			currentPhase = Textures.toilet;
 			enemyPhase = 0;
 
 			break;
@@ -2635,7 +4110,6 @@ public abstract class EntityParent implements Comparable {
 					sentryBeepTimer++;
 
 					// When searching, play the searching sentry beep sound
-					// TODO test
 					if (sentryBeepTimer % 79 == 0) {
 						SoundController.sentryBeep.playAudioFile(distanceFromPlayer);
 					}
@@ -2671,11 +4145,13 @@ public abstract class EntityParent implements Comparable {
 			// Current block enemy is on. Re-update from above
 			blockOn = Level.getBlock((int) xPos, (int) zPos);
 
+			moving = true;
+
 			// If enemy can fly
 			if (canFly) {
 				/*
-				 * Used to correct the players y in case the player is crouching and the y goes
-				 * below the maxHeight the player can stand on.
+				 * Used to correct the targets y in case the target is crouching and the y goes
+				 * below the maxHeight the target can stand on.
 				 */
 				double yCorrect = -targetY;
 
@@ -2683,7 +4159,7 @@ public abstract class EntityParent implements Comparable {
 				if (targetEnemy == null) {
 					// if(yCorrect < Player.maxHeight)
 					// {
-					yCorrect = Player.y / 12;
+					yCorrect = Player.y / 11;
 					// }
 				}
 
@@ -2712,8 +4188,8 @@ public abstract class EntityParent implements Comparable {
 					 * If enemy is negligible close to the ground, and is not stuck, then stay
 					 * floating 1/10 units above the ground.
 					 */
-					else if (Math.abs(yPos) < (1 / 100)) {
-						yPos = -(1 / 100);
+					else if (Math.abs(yPos) < 0) {
+						yPos = 0;
 						tracking = true;
 					}
 					/*
@@ -2733,8 +4209,7 @@ public abstract class EntityParent implements Comparable {
 					 * If stuck behind a wall, or below its default height when not in range of
 					 * player, then fly up
 					 */
-					if (-yPos < (startY + 0.025 + (blockOn.height + (blockOn.y * 4) + blockOn.baseCorrect) / 10)
-							|| isStuck) {
+					if (isStuck && !(-yPos + 0.05 >= (blockOn.y * 4))) {
 						yPos -= 0.05;
 						tracking = false;
 					}
@@ -2747,21 +4222,12 @@ public abstract class EntityParent implements Comparable {
 						yPos += 0.05;
 						tracking = false;
 					}
-
-					// If near enough to start Y, then set that to the new
-					// height
-					if (Math.abs(Math.abs(yPos)
-							- Math.abs((startY + (blockOn.height + (blockOn.y * 4) + blockOn.baseCorrect) / 10))) < 0.05
-							&& !isStuck) {
-						yPos = -(startY + (blockOn.height + (blockOn.y * 4) + blockOn.baseCorrect) / 10);
-						tracking = false;
-					}
 				}
 
-				// Set the lowest the enemy can fly as being 1/10 units
+				// Set the lowest the enemy can fly as being 0 units
 				// above the ground
-				if (yPos > -1 / 100) {
-					yPos = -1 / 100;
+				if (yPos > 0) {
+					yPos = 0;
 				}
 
 				// Enemy cannot fly higher than ceiling
@@ -2775,7 +4241,6 @@ public abstract class EntityParent implements Comparable {
 			 * resurrected, and resurrect the corpse if so.
 			 */
 			if (ID == 5) {
-				// TODO here
 				// Check all corpses in the game
 				for (int i = 0; i < Game.corpses.size(); i++) {
 					Corpse corpse = Game.corpses.get(i);
@@ -2882,13 +4347,15 @@ public abstract class EntityParent implements Comparable {
 
 				// If one of the marines, then they are primarily a ranged unit. Stop
 				// moving if the target is in sight and they are a certain distance away.
-				if (ID >= 10 && ID <= 14) {
+				if (!pursuant) {
 					// If distance from target is less than 5 and target is in sight, stop the
 					// movement
-					if (distance <= 5 && inSight && targetEnemy != null) {
-
+					if (distance <= 5 && inSight && targetEnemy != null && !relocating) {
 						// Block enemy is now on
 						Block blockOnNew = Level.getBlock((int) xPos, (int) zPos);
+
+						// Entity is not moving at movment so just stand still
+						moving = false;
 
 						/*
 						 * If the enemy is on a new block, then remove the enemy from the last block it
@@ -2917,6 +4384,12 @@ public abstract class EntityParent implements Comparable {
 
 						return;
 					}
+
+					// Not relocating by default. Only if shots don't hit.
+					relocating = false;
+
+					// Moving by default
+					moving = true;
 				}
 
 				/*
@@ -3394,37 +4867,42 @@ public abstract class EntityParent implements Comparable {
 			// Block enemy is now on
 			Block blockOnNew = Level.getBlock((int) xPos, (int) zPos);
 
-			// Entities can teleport too if on top of a wall with a
-			// teleportation device
-			for (int j = 0; j < blockOnNew.wallEntities.size(); j++) {
-				Item item = blockOnNew.wallEntities.get(j);
+			// Fixes a rare bug that occurs for no reason
+			if (blockOnNew.wallEntities != null) {
+				// Entities can teleport too if on top of a wall with a
+				// teleportation device
+				for (int j = 0; j < blockOnNew.wallEntities.size(); j++) {
+					Item item = blockOnNew.wallEntities.get(j);
 
-				// If a Teleporter enterance
-				if (item.itemID == ItemNames.TELEPORTERENTER.getID()) {
-					// Check all teleporters for a matching exit
-					for (int i = 0; i < Game.teleporters.size(); i++) {
-						// Teleporter Object
-						Item tel = Game.teleporters.get(i);
+					// If a Teleporter enterance
+					if (item.itemID == ItemNames.TELEPORTERENTER.getID()) {
+						// Check all teleporters for a matching exit
+						for (int i = 0; i < Game.teleporters.size(); i++) {
+							// Teleporter Object
+							Item tel = Game.teleporters.get(i);
 
-						// If there is a teleporter exit with the same exact
-						// activation ID, teleport the player to that location
-						if (tel.itemActivationID == item.itemActivationID
-								&& tel.itemID == ItemNames.TELEPORTEREXIT.getID()) {
-							this.xPos = tel.x;
-							this.zPos = tel.z;
+							// If there is a teleporter exit with the same exact
+							// activation ID, teleport the player to that location
+							if (tel.itemActivationID == item.itemActivationID
+									&& tel.itemID == ItemNames.TELEPORTEREXIT.getID()) {
+								this.xPos = tel.x;
+								this.zPos = tel.z;
 
-							// Block teleporter exit is on
-							Block teleporterExit = Level.getBlock((int) tel.x, (int) tel.z);
-							blockOnNew = teleporterExit;
+								// Block teleporter exit is on
+								Block teleporterExit = Level.getBlock((int) tel.x, (int) tel.z);
+								blockOnNew = teleporterExit;
 
-							// Set players y value to that new blocks height
-							this.yPos = teleporterExit.height + teleporterExit.y;
+								// Set players y value to that new blocks height
+								this.yPos = teleporterExit.height + teleporterExit.y;
 
-							// Play teleportation sound
-							SoundController.teleportation.playAudioFile(0);
+								// Play teleportation sound
+								SoundController.teleportation.playAudioFile(0);
+							}
 						}
 					}
 				}
+			} else {
+				blockOnNew.wallEntities = new ArrayList<Item>();
 			}
 
 			/*
@@ -3458,25 +4936,39 @@ public abstract class EntityParent implements Comparable {
 	 * Sets entities new height, and corrects the entities graphics for this new
 	 * height.
 	 */
+	// TODO update possibly
 	public void setHeight() {
 		// Block enemy is now on
 		Block blockOnNew = Level.getBlock((int) xPos, (int) zPos);
 
 		// Calculates the new height the entity will be at when it moves
 		double newHeight = (blockOnNew.height + (blockOnNew.y * 4) + blockOnNew.baseCorrect) / 11;
-
-		// TODO Height stuff
 		// If not flying entity
 		if (!canFly) {
-			if (blockOnNew.y == 0 && -yPos < (blockOnNew.height + blockOnNew.baseCorrect)) {
+
+			if (blockOnNew.y == 0 && -yPos < (blockOnNew.height + blockOnNew.baseCorrect)
+					&& -yPos + 3 > (blockOnNew.height + blockOnNew.baseCorrect)) {
 				maxHeight = -newHeight;
 				yPos = maxHeight;
 			}
 
 			// Set height based on the height of the block the entity is on/in
-			else if (-yPos >= ((blockOnNew.y / 11.0))) {
+			else if (-yPos >= ((blockOnNew.y * 4))) {
 				maxHeight = -newHeight;
 				yPos = maxHeight;
+			}
+
+			// If the entity is supposed to be in the block, keep them under it. Like if
+			// they are
+			// hidden in a box.
+			if (yPos == 0 && newHeight > 0.3) {
+				yPos = 0;
+				maxHeight = 0;
+			}
+		} else {
+			if (-yPos < newHeight) {
+				yPos = -newHeight;
+				maxHeight = -newHeight;
 			}
 		}
 	}

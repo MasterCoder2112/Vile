@@ -4,10 +4,13 @@ import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
@@ -34,7 +37,6 @@ import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JOptionPane;
 import javax.swing.JSlider;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -75,6 +77,158 @@ import com.vile.server.ServerHost;
  *
  */
 public class FPSLauncher extends JFrame {
+
+	// Allows for listening to if a key is pressed, used for the controls menu
+	private class MyDispatcher implements KeyEventDispatcher {
+		@Override
+		public boolean dispatchKeyEvent(KeyEvent e) {
+			if (e.getID() == KeyEvent.KEY_PRESSED) {
+				int keyCode = e.getKeyCode();
+
+				// TODO Keep adding to
+
+				/*
+				 * Depending on the key pressed, say that it is no longer waiting for a key to
+				 * bind, set the new keyCode for the game to listen for, reset the text in the
+				 * controls menu of what that key is binded to now, and reset the buttons
+				 * background to no longer being highlighted
+				 */
+				if (FPSLauncher.forwardWaiting) {
+					FPSLauncher.forwardWaiting = false;
+					Game.fowardKey = keyCode;
+					FPSLauncher.forwardKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.forward.setBackground(Color.BLACK);
+				} else if (backWaiting) {
+					FPSLauncher.backWaiting = false;
+					Game.backKey = keyCode;
+					FPSLauncher.backKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.backButton.setBackground(Color.BLACK);
+				} else if (leftWaiting) {
+					FPSLauncher.leftWaiting = false;
+					Game.leftKey = keyCode;
+					FPSLauncher.leftKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.left.setBackground(Color.BLACK);
+				} else if (rightWaiting) {
+					FPSLauncher.rightWaiting = false;
+					Game.rightKey = keyCode;
+					FPSLauncher.rightKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.right.setBackground(Color.BLACK);
+				} else if (turnLeftWaiting) {
+					FPSLauncher.turnLeftWaiting = false;
+					Game.turnLeftKey = keyCode;
+					FPSLauncher.turnLeftKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.turnLeft.setBackground(Color.BLACK);
+				} else if (turnRightWaiting) {
+					FPSLauncher.turnRightWaiting = false;
+					Game.turnRightKey = keyCode;
+					FPSLauncher.turnRightKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.turnRight.setBackground(Color.BLACK);
+				} else if (turnUpWaiting) {
+					FPSLauncher.turnUpWaiting = false;
+					Game.turnUpKey = keyCode;
+					FPSLauncher.turnUpKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.turnUp.setBackground(Color.BLACK);
+				} else if (turnDownWaiting) {
+					FPSLauncher.turnDownWaiting = false;
+					Game.turnDownKey = keyCode;
+					FPSLauncher.turnDownKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.turnDown.setBackground(Color.BLACK);
+				} else if (shootWaiting) {
+					FPSLauncher.shootWaiting = false;
+					Game.shootKey = keyCode;
+					FPSLauncher.shootKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.shoot.setBackground(Color.BLACK);
+				} else if (pauseWaiting) {
+					FPSLauncher.pauseWaiting = false;
+					Game.pauseKey = keyCode;
+					FPSLauncher.pauseKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.pause.setBackground(Color.BLACK);
+				} else if (runWaiting) {
+					FPSLauncher.runWaiting = false;
+					Game.runKey = keyCode;
+					FPSLauncher.runKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.run.setBackground(Color.BLACK);
+				} else if (crouchWaiting) {
+					FPSLauncher.crouchWaiting = false;
+					Game.crouchKey = keyCode;
+					FPSLauncher.crouchKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.crouch.setBackground(Color.BLACK);
+				} else if (jumpWaiting) {
+					FPSLauncher.jumpWaiting = false;
+					Game.jumpKey = keyCode;
+					FPSLauncher.jumpKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.jump.setBackground(Color.BLACK);
+				} else if (fpsShowWaiting) {
+					FPSLauncher.fpsShowWaiting = false;
+					Game.fpsShowKey = keyCode;
+					FPSLauncher.fpsShowKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.fpsShow.setBackground(Color.BLACK);
+				} else if (reloadingWaiting) {
+					FPSLauncher.reloadingWaiting = false;
+					Game.reloadingKey = keyCode;
+					FPSLauncher.reloadingKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.reloading.setBackground(Color.BLACK);
+				} else if (weapon1Waiting) {
+					FPSLauncher.weapon1Waiting = false;
+					Game.weaponSlot0Key = keyCode;
+					FPSLauncher.weapon1Key.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.weapon1.setBackground(Color.BLACK);
+				} else if (weapon2Waiting) {
+					FPSLauncher.weapon2Waiting = false;
+					Game.weaponSlot1Key = keyCode;
+					FPSLauncher.weapon2Key.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.weapon2.setBackground(Color.BLACK);
+				} else if (weapon3Waiting) {
+					FPSLauncher.weapon3Waiting = false;
+					Game.weaponSlot2Key = keyCode;
+					FPSLauncher.weapon3Key.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.weapon3.setBackground(Color.BLACK);
+				} else if (weapon4Waiting) {
+					FPSLauncher.weapon4Waiting = false;
+					Game.weaponSlot3Key = keyCode;
+					FPSLauncher.weapon4Key.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.weapon4.setBackground(Color.BLACK);
+				} else if (weapon5Waiting) {
+					FPSLauncher.weapon5Waiting = false;
+					Game.weaponSlot4Key = keyCode;
+					FPSLauncher.weapon5Key.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.weapon5.setBackground(Color.BLACK);
+				} else if (weapon6Waiting) {
+					FPSLauncher.weapon6Waiting = false;
+					Game.weaponSlot5Key = keyCode;
+					FPSLauncher.weapon6Key.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.weapon6.setBackground(Color.BLACK);
+				} else if (weapon7Waiting) {
+					FPSLauncher.weapon7Waiting = false;
+					Game.weaponSlot6Key = keyCode;
+					FPSLauncher.weapon7Key.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.weapon7.setBackground(Color.BLACK);
+				} else if (useWaiting) {
+					FPSLauncher.useWaiting = false;
+					Game.useKey = keyCode;
+					FPSLauncher.useKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.use.setBackground(Color.BLACK);
+				} else if (upgradeWeaponWaiting) {
+					FPSLauncher.upgradeWeaponWaiting = false;
+					Game.upgradeWeaponKey = keyCode;
+					FPSLauncher.upgradeWeaponKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.upgradeWeapon.setBackground(Color.BLACK);
+				} else if (recallFriendliesWaiting) {
+					FPSLauncher.recallFriendliesWaiting = false;
+					Game.recallFriendliesKey = keyCode;
+					FPSLauncher.recallFriendliesKey.setText("" + keyCodeToString(keyCode));
+					FPSLauncher.recallFriendlies.setBackground(Color.BLACK);
+				}
+			} else if (e.getID() == KeyEvent.KEY_RELEASED) {
+				// System.out.println("2test2");
+			} else if (e.getID() == KeyEvent.KEY_TYPED) {
+				// System.out.println("3test3");
+			}
+
+			return false;
+		}
+	}
+
 	private static final long serialVersionUID = 1L;
 
 	// Version of the main menu
@@ -95,7 +249,7 @@ public class FPSLauncher extends JFrame {
 	/* Java Swing elements **********************************/
 	private JLayeredPane panel = new JLayeredPane();
 
-	private static JButton play;
+	private static JButton survival;
 	private static JButton playGame;
 	private static JButton saveGame;
 	private static JButton loadGame;
@@ -137,12 +291,92 @@ public class FPSLauncher extends JFrame {
 	private static JLabel portTitle;
 	private static JLabel hostTitle;
 
-	private static JTextArea readMeText;
 	public static JTextField newMapName;
 	private static JTextField newUserName;
 	private static JTextField saveTextfield;
 	private static JTextField ipAddress;
 	private static JTextField port;
+
+	// For all the controls, the buttons and the text describing them
+	public static JLabel forwardKey;
+	public static JLabel backKey;
+	public static JLabel leftKey;
+	public static JLabel rightKey;
+	public static JLabel turnLeftKey;
+	public static JLabel turnRightKey;
+	public static JLabel turnUpKey;
+	public static JLabel turnDownKey;
+	public static JLabel shootKey;
+	public static JLabel pauseKey;
+	public static JLabel runKey;
+	public static JLabel crouchKey;
+	public static JLabel jumpKey;
+	public static JLabel fpsShowKey;
+	public static JLabel reloadingKey;
+	public static JLabel weapon1Key;
+	public static JLabel weapon2Key;
+	public static JLabel weapon3Key;
+	public static JLabel weapon4Key;
+	public static JLabel weapon5Key;
+	public static JLabel useKey;
+	public static JLabel weapon6Key;
+	public static JLabel weapon7Key;
+	public static JLabel upgradeWeaponKey;
+	public static JLabel recallFriendliesKey;
+
+	// Buttons pressed to start the waiting for a new control
+	public static JButton forward;
+	public static JButton backButton;
+	public static JButton left;
+	public static JButton right;
+	public static JButton turnLeft;
+	public static JButton turnRight;
+	public static JButton turnUp;
+	public static JButton turnDown;
+	public static JButton shoot;
+	public static JButton pause;
+	public static JButton run;
+	public static JButton crouch;
+	public static JButton jump;
+	public static JButton fpsShow;
+	public static JButton reloading;
+	public static JButton weapon1;
+	public static JButton weapon2;
+	public static JButton weapon3;
+	public static JButton weapon4;
+	public static JButton weapon5;
+	public static JButton use;
+	public static JButton weapon6;
+	public static JButton weapon7;
+	public static JButton upgradeWeapon;
+	public static JButton recallFriendlies;
+
+	// Waiting on key to be pressed for control
+	public static boolean forwardWaiting;
+	public static boolean backWaiting;
+	public static boolean leftWaiting;
+	public static boolean rightWaiting;
+	public static boolean turnLeftWaiting;
+	public static boolean turnRightWaiting;
+	public static boolean turnUpWaiting;
+	public static boolean turnDownWaiting;
+	public static boolean shootWaiting;
+	public static boolean pauseWaiting;
+	public static boolean runWaiting;
+	public static boolean crouchWaiting;
+	public static boolean jumpWaiting;
+	public static boolean fpsShowWaiting;
+	public static boolean reloadingWaiting;
+	public static boolean weapon1Waiting;
+	public static boolean weapon2Waiting;
+	public static boolean weapon3Waiting;
+	public static boolean weapon4Waiting;
+	public static boolean weapon5Waiting;
+	public static boolean useWaiting;
+	public static boolean weapon6Waiting;
+	public static boolean weapon7Waiting;
+	public static boolean upgradeWeaponWaiting;
+	public static boolean recallFriendliesWaiting;
 
 	private static JTextField hostField;
 
@@ -171,6 +405,10 @@ public class FPSLauncher extends JFrame {
 	// Volume Knobs
 	public static JSlider musicVolume;
 	public static JSlider soundVolume;
+
+	// Default colors of buttons
+	private static Color defaultColor = Color.RED;
+	private static Color mouseColor = Color.GREEN;
 
 	/*
 	 * On a scale from 0 to 100% of the volume, what level is it at right now?
@@ -251,9 +489,94 @@ public class FPSLauncher extends JFrame {
 			// Call the play audio method to play the sound
 			click.playAudioFile(0);
 
+			// Only do this for the controls menu
+			if (idNum == 2) {
+				// If anything is clicked, it is no longer listening for the user
+				// to type in a key to bind. It is canceled effectively. So turn off
+				// the listener boolean and reset the button
+				if (forwardWaiting) {
+					forwardWaiting = false;
+					forward.setBackground(Color.BLACK);
+				} else if (backWaiting) {
+					backWaiting = false;
+					backButton.setBackground(Color.BLACK);
+				} else if (leftWaiting) {
+					leftWaiting = false;
+					left.setBackground(Color.BLACK);
+				} else if (rightWaiting) {
+					rightWaiting = false;
+					right.setBackground(Color.BLACK);
+				} else if (turnLeftWaiting) {
+					turnLeftWaiting = false;
+					turnLeft.setBackground(Color.BLACK);
+				} else if (turnRightWaiting) {
+					turnRightWaiting = false;
+					turnRight.setBackground(Color.BLACK);
+				} else if (turnUpWaiting) {
+					turnUpWaiting = false;
+					turnUp.setBackground(Color.BLACK);
+				} else if (turnDownWaiting) {
+					turnDownWaiting = false;
+					turnDown.setBackground(Color.BLACK);
+				} else if (shootWaiting) {
+					shootWaiting = false;
+					shoot.setBackground(Color.BLACK);
+				} else if (pauseWaiting) {
+					pauseWaiting = false;
+					pause.setBackground(Color.BLACK);
+				} else if (runWaiting) {
+					runWaiting = false;
+					run.setBackground(Color.BLACK);
+				} else if (crouchWaiting) {
+					crouchWaiting = false;
+					crouch.setBackground(Color.BLACK);
+				} else if (jumpWaiting) {
+					jumpWaiting = false;
+					jump.setBackground(Color.BLACK);
+				} else if (fpsShowWaiting) {
+					fpsShowWaiting = false;
+					fpsShow.setBackground(Color.BLACK);
+				} else if (reloadingWaiting) {
+					reloadingWaiting = false;
+					reloading.setBackground(Color.BLACK);
+				} else if (weapon1Waiting) {
+					weapon1Waiting = false;
+					weapon1.setBackground(Color.BLACK);
+				} else if (weapon2Waiting) {
+					weapon2Waiting = false;
+					weapon2.setBackground(Color.BLACK);
+				} else if (weapon3Waiting) {
+					weapon3Waiting = false;
+					weapon3.setBackground(Color.BLACK);
+				} else if (weapon4Waiting) {
+					weapon4Waiting = false;
+					weapon4.setBackground(Color.BLACK);
+				} else if (weapon5Waiting) {
+					weapon5Waiting = false;
+					weapon5.setBackground(Color.BLACK);
+				} else if (useWaiting) {
+					useWaiting = false;
+					use.setBackground(Color.BLACK);
+				} else if (weapon6Waiting) {
+					weapon6Waiting = false;
+					weapon6.setBackground(Color.BLACK);
+				} else if (weapon7Waiting) {
+					weapon7Waiting = false;
+					weapon7.setBackground(Color.BLACK);
+				} else if (upgradeWeaponWaiting) {
+					upgradeWeaponWaiting = false;
+					upgradeWeapon.setBackground(Color.BLACK);
+				} else if (recallFriendliesWaiting) {
+					recallFriendliesWaiting = false;
+					recallFriendlies.setBackground(Color.BLACK);
+				}
+
+				panel.repaint();
+			}
+
 			// If Survival mode is pressed then close the main menu
 			// music, dispose of the menu, and start new game
-			if (e.getSource() == play) {
+			if (e.getSource() == survival) {
 
 				try {
 					Display.music.close();
@@ -352,8 +675,6 @@ public class FPSLauncher extends JFrame {
 				dispose();
 				new Options();
 
-				// TODO change if need be
-
 				/*
 				 * Fixes an old bug where the textfield was unable to gain focus sometimes, and
 				 * therefore a mapname could not be entered if you wanted to do so.
@@ -388,8 +709,6 @@ public class FPSLauncher extends JFrame {
 				dispose();
 				new Host();
 			}
-
-			// TODO Joining server stuff. Make sure set up before submission
 			/*
 			 * Does everything necessary to join a server and start a game
 			 */
@@ -447,8 +766,6 @@ public class FPSLauncher extends JFrame {
 
 				new ServerClient(ipAddress.getText() + ":" + port.getText());
 			}
-
-			// TODO Host server stuff. Make sure set up before submission
 			/*
 			 * Does everything necessary to start a server and start a game
 			 */
@@ -573,6 +890,8 @@ public class FPSLauncher extends JFrame {
 						startMap = "map0";
 					}
 				}
+
+				saveStats();
 
 				dispose();
 				new FPSLauncher(0);
@@ -757,11 +1076,11 @@ public class FPSLauncher extends JFrame {
 							+ Player.hasYellowKey + ":" + Player.upRotate + ":" + Player.extraHeight + ":"
 							+ Player.resurrections + ":" + Player.environProtectionTime + ":" + Player.immortality + ":"
 							+ Player.vision + ":" + Player.invisibility + ":" + Player.weaponEquipped + ":"
-							+ Player.godModeOn + ":" + Player.noClipOn + ":" + Player.flyOn + ":" + Player.superSpeedOn
-							+ ":" + Player.unlimitedAmmoOn + ":" + Player.upgradePoints + ":" + Level.width + ":"
-							+ Level.height + ":" + Game.mapNum + ":" + Game.mapAudio + ":" + Game.mapFloor + ":"
-							+ Game.mapCeiling + ":" + Render3D.ceilingDefaultHeight + ":" + Level.renderDistance + ":"
-							+ Game.mapName + ",");
+							+ Player.godModeOn + ":" + Player.noClipOn + ":" + Player.flyOn + ":"
+							+ Player.speedMultiplier + ":" + Player.unlimitedAmmoOn + ":" + Player.upgradePoints + ":"
+							+ Level.width + ":" + Level.height + ":" + Game.mapNum + ":" + Game.mapAudio + ":"
+							+ Game.mapFloor + ":" + Game.mapCeiling + ":" + Render3D.ceilingDefaultHeight + ":"
+							+ Level.renderDistance + ":" + Game.mapName + ",");
 
 					// Weapons
 					for (int i = 0; i < Player.weapons.length; i++) {
@@ -769,7 +1088,8 @@ public class FPSLauncher extends JFrame {
 						int size = w.cartridges.size();
 
 						rewrite.write(w.weaponID + ":" + w.canBeEquipped + ":" + w.dualWield + ":" + w.ammo + ":"
-								+ w.damage + ":" + w.criticalHitChances + ":" + w.upgradePointsNeeded);
+								+ w.damage + ":" + w.baseDamage + ":" + w.criticalHitChances + ":"
+								+ w.upgradePointsNeeded);
 
 						for (int j = 0; j < size; j++) {
 							int cartSize = w.cartridges.get(j).ammo;
@@ -801,20 +1121,6 @@ public class FPSLauncher extends JFrame {
 								+ en.isAttacking + ":" + en.isFiring + ":" + en.isABoss + ":" + en.xEffects + ":"
 								+ en.yEffects + ":" + en.zEffects + ":" + en.tick + ":" + en.tickRound + ":"
 								+ en.tickAmount + ":" + en.isFriendly + ";");
-					}
-
-					rewrite.newLine();
-					rewrite.write("Bosses:");
-					rewrite.newLine();
-
-					for (int i = 0; i < Game.bosses.size(); i++) {
-						Entity en = Game.bosses.get(i);
-						rewrite.write(en.health + ":" + en.xPos + ":" + en.yPos + ":" + en.zPos + ":" + en.ID + ":"
-								+ en.itemActivationID + ":" + en.maxHeight + ":" + en.newTarget + ":" + en.targetX + ":"
-								+ en.targetY + ":" + en.targetZ + ":" + en.activated + ":" + en.rotation + ":"
-								+ en.isAttacking + ":" + en.isFiring + ":" + en.isABoss + ":" + en.xEffects + ":"
-								+ en.yEffects + ":" + en.zEffects + ":" + en.tick + ":" + en.tickRound + ":"
-								+ en.tickAmount + ";");
 					}
 
 					rewrite.newLine();
@@ -1111,10 +1417,35 @@ public class FPSLauncher extends JFrame {
 							smoothFPS = Boolean.parseBoolean(elements[9]);
 							mouseStatus = Boolean.parseBoolean(elements[10]);
 							nonDefaultMap = Boolean.parseBoolean(elements[11]);
+							Game.fowardKey = Integer.parseInt(elements[12]);
+							Game.backKey = Integer.parseInt(elements[13]);
+							Game.leftKey = Integer.parseInt(elements[14]);
+							Game.rightKey = Integer.parseInt(elements[15]);
+							Game.turnLeftKey = Integer.parseInt(elements[16]);
+							Game.turnRightKey = Integer.parseInt(elements[17]);
+							Game.turnUpKey = Integer.parseInt(elements[18]);
+							Game.turnDownKey = Integer.parseInt(elements[19]);
+							Game.shootKey = Integer.parseInt(elements[20]);
+							Game.pauseKey = Integer.parseInt(elements[21]);
+							Game.runKey = Integer.parseInt(elements[22]);
+							Game.crouchKey = Integer.parseInt(elements[23]);
+							Game.jumpKey = Integer.parseInt(elements[24]);
+							Game.fpsShowKey = Integer.parseInt(elements[25]);
+							Game.reloadingKey = Integer.parseInt(elements[26]);
+							Game.weaponSlot0Key = Integer.parseInt(elements[27]);
+							Game.weaponSlot1Key = Integer.parseInt(elements[28]);
+							Game.weaponSlot2Key = Integer.parseInt(elements[29]);
+							Game.weaponSlot3Key = Integer.parseInt(elements[30]);
+							Game.weaponSlot4Key = Integer.parseInt(elements[31]);
+							Game.useKey = Integer.parseInt(elements[32]);
+							Game.weaponSlot5Key = Integer.parseInt(elements[33]);
+							Game.weaponSlot6Key = Integer.parseInt(elements[34]);
+							Game.upgradeWeaponKey = Integer.parseInt(elements[35]);
+							Game.recallFriendliesKey = Integer.parseInt(elements[36]);
 
 							// Everything else in the file will be the saved game
 							// names this user has
-							for (int i = 12; i < elements.length; i++) {
+							for (int i = 37; i < elements.length; i++) {
 								saves.add(elements[i]);
 							}
 
@@ -1167,6 +1498,33 @@ public class FPSLauncher extends JFrame {
 							currentUserID = users.getItemCount() + 1;
 							currentUserName = n;
 
+							// Reset all the keys so they aren't set to what the last user had
+							Game.fowardKey = KeyEvent.VK_W;
+							Game.backKey = KeyEvent.VK_S;
+							Game.leftKey = KeyEvent.VK_A;
+							Game.rightKey = KeyEvent.VK_D;
+							Game.turnLeftKey = KeyEvent.VK_LEFT;
+							Game.turnRightKey = KeyEvent.VK_RIGHT;
+							Game.turnUpKey = KeyEvent.VK_UP;
+							Game.turnDownKey = KeyEvent.VK_DOWN;
+							Game.shootKey = KeyEvent.VK_V;
+							Game.pauseKey = KeyEvent.VK_ESCAPE;
+							Game.runKey = KeyEvent.VK_SHIFT;
+							Game.crouchKey = KeyEvent.VK_C;
+							Game.jumpKey = KeyEvent.VK_SPACE;
+							Game.fpsShowKey = KeyEvent.VK_F;
+							Game.reloadingKey = KeyEvent.VK_R;
+							Game.weaponSlot0Key = KeyEvent.VK_1;
+							Game.weaponSlot1Key = KeyEvent.VK_2;
+							Game.weaponSlot2Key = KeyEvent.VK_3;
+							Game.weaponSlot3Key = KeyEvent.VK_4;
+							Game.weaponSlot4Key = KeyEvent.VK_5;
+							Game.useKey = KeyEvent.VK_E;
+							Game.weaponSlot5Key = KeyEvent.VK_6;
+							Game.weaponSlot6Key = KeyEvent.VK_7;
+							Game.upgradeWeaponKey = KeyEvent.VK_U;
+							Game.recallFriendliesKey = KeyEvent.VK_Q;
+
 							String temp = currentUserName;
 							/*
 							 * Tries to write the new user to the user file
@@ -1205,6 +1563,158 @@ public class FPSLauncher extends JFrame {
 				} catch (Exception ex) {
 					System.out.println(ex);
 				}
+			}
+
+			// TODO All of the control changing
+
+			// Activates listener for forward key
+			if (e.getSource() == forward) {
+				forwardWaiting = true;
+				forward.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for back key
+			if (e.getSource() == backButton) {
+				backWaiting = true;
+				backButton.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for left key
+			if (e.getSource() == left) {
+				leftWaiting = true;
+				left.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for right key
+			if (e.getSource() == right) {
+				rightWaiting = true;
+				right.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for turnLeft key
+			if (e.getSource() == turnLeft) {
+				turnLeftWaiting = true;
+				turnLeft.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for turnRight key
+			if (e.getSource() == turnRight) {
+				turnRightWaiting = true;
+				turnRight.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for turnUp key
+			if (e.getSource() == turnUp) {
+				turnUpWaiting = true;
+				turnUp.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for turnDown key
+			if (e.getSource() == turnDown) {
+				turnDownWaiting = true;
+				turnDown.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for shoot key
+			if (e.getSource() == shoot) {
+				shootWaiting = true;
+				shoot.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for pause key
+			if (e.getSource() == pause) {
+				pauseWaiting = true;
+				pause.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for run key
+			if (e.getSource() == run) {
+				runWaiting = true;
+				run.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for crouch key
+			if (e.getSource() == crouch) {
+				crouchWaiting = true;
+				crouch.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for jump key
+			if (e.getSource() == jump) {
+				jumpWaiting = true;
+				jump.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for fpsShow key
+			if (e.getSource() == fpsShow) {
+				fpsShowWaiting = true;
+				fpsShow.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for reloading key
+			if (e.getSource() == reloading) {
+				reloadingWaiting = true;
+				reloading.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for weapon 1
+			if (e.getSource() == weapon1) {
+				weapon1Waiting = true;
+				weapon1.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for weapon 2
+			if (e.getSource() == weapon2) {
+				weapon2Waiting = true;
+				weapon2.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for weapon 3
+			if (e.getSource() == weapon3) {
+				weapon3Waiting = true;
+				weapon3.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for weapon 4
+			if (e.getSource() == weapon4) {
+				weapon4Waiting = true;
+				weapon4.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for weapon 5
+			if (e.getSource() == weapon5) {
+				weapon5Waiting = true;
+				weapon5.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for use key
+			if (e.getSource() == use) {
+				useWaiting = true;
+				use.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for weapon 6
+			if (e.getSource() == weapon6) {
+				weapon6Waiting = true;
+				weapon6.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for weapon 7
+			if (e.getSource() == weapon7) {
+				weapon7Waiting = true;
+				weapon7.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for upgradeWeapon key
+			if (e.getSource() == upgradeWeapon) {
+				upgradeWeaponWaiting = true;
+				upgradeWeapon.setBackground(Color.WHITE);
+			}
+
+			// Activates listener for recallFriendlies key
+			if (e.getSource() == recallFriendlies) {
+				recallFriendliesWaiting = true;
+				recallFriendlies.setBackground(Color.WHITE);
 			}
 		}
 	};
@@ -1298,6 +1808,9 @@ public class FPSLauncher extends JFrame {
 			drawBackground();
 		}
 
+		// controlsHandler = new ControlsMenuListener();
+		// panel.addKeyListener(controlsHandler);
+
 		/*
 		 * Try to open up the title theme audio clip and let it loop continuously
 		 */
@@ -1389,6 +1902,9 @@ public class FPSLauncher extends JFrame {
 		ImageIcon titleIcon = new ImageIcon("resources" + themeName + "/textures/hud/titleIcon.png");
 		setIconImage(titleIcon.getImage());
 
+		KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		manager.addKeyEventDispatcher(new MyDispatcher());
+
 		setVisible(true);
 	}
 
@@ -1402,147 +1918,24 @@ public class FPSLauncher extends JFrame {
 	 * to comment all this simple stuff.
 	 */
 	private void drawLauncherButtons() {
-		// Colors of buttons when mouse is not over them or when it is
-		Color defaultColor = Color.RED;
-		Color mouseColor = Color.GREEN;
-
-		play = new JButton("Survival Mode");
-
-		play.setBounds(0, 200, 295, 40);
-
-		// Button blends with background
-		play.setOpaque(false);
-		play.setContentAreaFilled(false);
-		play.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		play.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		play.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		play.setFont(play.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		play.setForeground(defaultColor);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		play.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				play.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				play.setForeground(defaultColor);
-			}
-		});
-
-		play.addActionListener(aL);
-		panel.add(play);
+		survival = new JButton("Survival Mode");
+		survival.setBounds(0, 200, 275, 40);
+		setUpMajorButton(survival, 24);
+		panel.add(survival);
 
 		multiplayer = new JButton("Multiplayer");
-
-		multiplayer.setBounds(0, 250, 265, 40);
-
-		// Button blends with background
-		multiplayer.setOpaque(false);
-		multiplayer.setContentAreaFilled(false);
-		multiplayer.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		multiplayer.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		multiplayer.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		multiplayer.setFont(multiplayer.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		multiplayer.setForeground(defaultColor);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		multiplayer.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				multiplayer.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				multiplayer.setForeground(defaultColor);
-			}
-		});
-
-		multiplayer.addActionListener(aL);
+		multiplayer.setBounds(0, 250, 300, 40);
+		setUpMajorButton(multiplayer, 24);
 		panel.add(multiplayer);
 
 		playGame = new JButton("New Game");
-		playGame.setBounds(0, 100, 270, 40);
-
-		playGame.setOpaque(false);
-		playGame.setContentAreaFilled(false);
-		playGame.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		playGame.setFocusPainted(false);
-
-		playGame.setFont(new Font("Nasalization", Font.BOLD, 24));
-		playGame.setFont(playGame.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		playGame.setForeground(defaultColor);
-
-		playGame.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				playGame.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				playGame.setForeground(defaultColor);
-			}
-		});
-
-		playGame.addActionListener(aL);
+		playGame.setBounds(0, 100, 225, 40);
+		setUpMajorButton(playGame, 24);
 		panel.add(playGame);
 
 		returnToGame = new JButton("Return to game");
 		returnToGame.setBounds(500, 240, 300, 50);
-
-		// Button blends with background
-		returnToGame.setOpaque(false);
-		returnToGame.setContentAreaFilled(false);
-		returnToGame.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		returnToGame.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		returnToGame.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		returnToGame.setForeground(defaultColor);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		returnToGame.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				returnToGame.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				returnToGame.setForeground(defaultColor);
-			}
-		});
-
-		returnToGame.addActionListener(aL);
+		setUpMajorButton(returnToGame, 24);
 
 		// If game is paused, show that you can return to the game
 		if (Display.pauseGame) {
@@ -1550,183 +1943,35 @@ public class FPSLauncher extends JFrame {
 		}
 
 		saveGameMenu = new JButton("Save/Load Game");
-		saveGameMenu.setBounds(30, 150, 270, 40);
-
-		saveGameMenu.setOpaque(false);
-		saveGameMenu.setContentAreaFilled(false);
-		saveGameMenu.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		saveGameMenu.setFocusPainted(false);
-
-		saveGameMenu.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
-
-		saveGameMenu.setForeground(defaultColor);
-
-		saveGameMenu.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				saveGameMenu.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				saveGameMenu.setForeground(defaultColor);
-			}
-		});
-
-		saveGameMenu.addActionListener(aL);
+		saveGameMenu.setBounds(0, 150, 250, 40);
+		setUpMajorButton(saveGameMenu, 24);
 		panel.add(saveGameMenu);
 
 		options = new JButton("Options");
-		options.setBounds(0, 350, 230, 40);
-
-		// Button blends with background
-		options.setOpaque(false);
-		options.setContentAreaFilled(false);
-		options.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		options.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		options.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		options.setFont(options.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		options.setForeground(defaultColor);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		options.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				options.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				options.setForeground(defaultColor);
-			}
-		});
-
-		options.addActionListener(aL);
+		options.setBounds(0, 350, 250, 40);
+		setUpMajorButton(options, 24);
 		panel.add(options);
 
 		controls = new JButton("Controls");
-		controls.setBounds(0, 300, 235, 40);
-
-		// Button blends with background
-		controls.setOpaque(false);
-		controls.setContentAreaFilled(false);
-		controls.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		controls.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		controls.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		controls.setFont(controls.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		controls.setForeground(defaultColor);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		controls.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				controls.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				controls.setForeground(defaultColor);
-			}
-		});
-
-		controls.addActionListener(aL);
+		controls.setBounds(0, 300, 275, 40);
+		setUpMajorButton(controls, 24);
 		panel.add(controls);
 
 		// Button blends with background
 		quit = new JButton("Quit");
-		quit.setBounds(0, 400, 180, 40);
-		quit.setOpaque(false);
-		quit.setContentAreaFilled(false);
-		quit.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		quit.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		quit.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
-
-		quit.setForeground(defaultColor);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		quit.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				quit.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				quit.setForeground(defaultColor);
-			}
-		});
-
-		quit.addActionListener(aL);
+		quit.setBounds(0, 400, 225, 40);
+		setUpMajorButton(quit, 24);
 		panel.add(quit);
 
 		userTitle = new JLabel("Current User: " + currentUserName);
-		userTitle.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		userTitle.setBounds(WIDTH - ((currentUserName.length() * 11) + 300), 25, 200 + (currentUserName.length() * 11),
 				25);
-		userTitle.setForeground(Color.RED);
-		userTitle.setBackground(Color.BLACK);
-		userTitle.setOpaque(true);
+		setUpDecoratedLabel(userTitle, 24);
 		panel.add(userTitle);
 
 		logOut = new JButton("Log Out");
-
 		logOut.setBounds((WIDTH) - 200, 75, 150, 40);
-
-		// Button blends with background
-		logOut.setContentAreaFilled(false);
-		logOut.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		logOut.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		logOut.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		logOut.setForeground(Color.RED);
-		logOut.setBackground(Color.BLACK);
-		logOut.setOpaque(true);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		logOut.addMouseListener(new java.awt.event.MouseAdapter() {
-
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				logOut.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				logOut.setForeground(Color.RED);
-			}
-		});
-
-		logOut.addActionListener(aL);
+		setUpMajorButton(logOut, 24);
 		panel.add(logOut);
 
 		// Refreashes title screen to show all buttons and title perfectly
@@ -1740,39 +1985,7 @@ public class FPSLauncher extends JFrame {
 	public void drawOptionsMenu() {
 		back = new JButton("Back To Main Menu");
 		back.setBounds(0, 325, 300, 40);
-
-		// Button blends with background
-		back.setOpaque(false);
-		back.setContentAreaFilled(false);
-		back.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		back.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		back.setFont(new Font("Nasalization", Font.BOLD, 18));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		back.setFont(back.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		back.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		back.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				back.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				back.setForeground(Color.RED);
-			}
-		});
-
-		back.addActionListener(aL);
+		setUpOptionButton(back, 18);
 		panel.add(back);
 
 		if (smoothFPS) {
@@ -1782,39 +1995,7 @@ public class FPSLauncher extends JFrame {
 		}
 
 		sFPS.setBounds(0, 275, 300, 40);
-
-		// Button blends with background
-		sFPS.setOpaque(false);
-		sFPS.setContentAreaFilled(false);
-		sFPS.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		sFPS.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		sFPS.setFont(new Font("Nasalization", Font.BOLD, 18));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		sFPS.setFont(sFPS.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		sFPS.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		sFPS.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				sFPS.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				sFPS.setForeground(Color.RED);
-			}
-		});
-
-		sFPS.addActionListener(aL);
+		setUpOptionButton(sFPS, 18);
 		panel.add(sFPS);
 
 		if (mouseStatus) {
@@ -1824,39 +2005,7 @@ public class FPSLauncher extends JFrame {
 		}
 
 		mouse.setBounds(300, 275, 250, 40);
-
-		// Button blends with background
-		mouse.setOpaque(false);
-		mouse.setContentAreaFilled(false);
-		mouse.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		mouse.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		mouse.setFont(new Font("Nasalization", Font.BOLD, 18));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		mouse.setFont(mouse.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		mouse.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		mouse.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				mouse.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				mouse.setForeground(Color.RED);
-			}
-		});
-
-		mouse.addActionListener(aL);
+		setUpOptionButton(mouse, 18);
 		panel.add(mouse);
 
 		if (nonDefaultMap) {
@@ -1866,39 +2015,7 @@ public class FPSLauncher extends JFrame {
 		}
 
 		customMap.setBounds(300, 325, 250, 40);
-
-		// Button blends with background
-		customMap.setOpaque(false);
-		customMap.setContentAreaFilled(false);
-		customMap.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		customMap.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		customMap.setFont(new Font("Nasalization", Font.BOLD, 18));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		customMap.setFont(customMap.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		customMap.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		customMap.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				customMap.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				customMap.setForeground(Color.RED);
-			}
-		});
-
-		customMap.addActionListener(aL);
+		setUpOptionButton(customMap, 18);
 		panel.add(customMap);
 
 		resolutionTitle = new JLabel("Resolution:");
@@ -2047,11 +2164,7 @@ public class FPSLauncher extends JFrame {
 	public void drawHostMenu() {
 		hostTitle = new JLabel("Port Number:");
 		hostTitle.setBounds(50, 150, 200, 25);
-		hostTitle.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
-		hostTitle.setForeground(Color.GREEN);
-		hostTitle.setBackground(Color.BLACK);
-		hostTitle.setVisible(true);
-		hostTitle.setOpaque(true);
+		setUpDecoratedLabel(hostTitle, 18);
 		panel.add(hostTitle);
 
 		hostField = new JTextField("");
@@ -2061,77 +2174,12 @@ public class FPSLauncher extends JFrame {
 
 		backMult = new JButton("Back");
 		backMult.setBounds(0, 400, 300, 40);
-
-		// Button blends with background
-		backMult.setOpaque(false);
-		backMult.setContentAreaFilled(false);
-		backMult.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		backMult.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		backMult.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		backMult.setFont(backMult.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		backMult.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		backMult.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				backMult.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				backMult.setForeground(Color.RED);
-			}
-		});
-
-		backMult.addActionListener(aL);
+		setUpOptionButton(backMult, 18);
 		panel.add(backMult);
 
 		hostServer = new JButton("Host Game");
 		hostServer.setBounds(300, 300, 200, 40);
-
-		// Button blends with background
-		hostServer.setOpaque(true);
-		hostServer.setContentAreaFilled(true);
-		hostServer.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		hostServer.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		hostServer.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		hostServer.setFont(hostServer.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		hostServer.setForeground(Color.RED);
-		hostServer.setBackground(Color.BLACK);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		hostServer.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				hostServer.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				hostServer.setForeground(Color.RED);
-			}
-		});
-
-		hostServer.addActionListener(aL);
+		setUpMajorButton(hostServer, 24);
 		panel.add(hostServer);
 
 		panel.repaint();
@@ -2143,11 +2191,7 @@ public class FPSLauncher extends JFrame {
 	public void drawJoinServerMenu() {
 		ipAddressTitle = new JLabel("IP Address:");
 		ipAddressTitle.setBounds(50, 150, 200, 25);
-		ipAddressTitle.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
-		ipAddressTitle.setForeground(Color.GREEN);
-		ipAddressTitle.setBackground(Color.BLACK);
-		ipAddressTitle.setVisible(true);
-		ipAddressTitle.setOpaque(true);
+		setUpDecoratedLabel(ipAddressTitle, 18);
 		panel.add(ipAddressTitle);
 
 		ipAddress = new JTextField("");
@@ -2157,11 +2201,7 @@ public class FPSLauncher extends JFrame {
 
 		portTitle = new JLabel("Server Port:");
 		portTitle.setBounds(500, 150, 200, 25);
-		portTitle.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
-		portTitle.setForeground(Color.GREEN);
-		portTitle.setBackground(Color.BLACK);
-		portTitle.setVisible(true);
-		portTitle.setOpaque(true);
+		setUpDecoratedLabel(portTitle, 18);
 		panel.add(portTitle);
 
 		port = new JTextField("");
@@ -2171,77 +2211,12 @@ public class FPSLauncher extends JFrame {
 
 		backMult = new JButton("Back");
 		backMult.setBounds(0, 400, 300, 40);
-
-		// Button blends with background
-		backMult.setOpaque(false);
-		backMult.setContentAreaFilled(false);
-		backMult.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		backMult.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		backMult.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		backMult.setFont(backMult.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		backMult.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		backMult.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				backMult.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				backMult.setForeground(Color.RED);
-			}
-		});
-
-		backMult.addActionListener(aL);
+		setUpOptionButton(backMult, 18);
 		panel.add(backMult);
 
 		joinServer = new JButton("Join Game");
 		joinServer.setBounds(300, 300, 200, 40);
-
-		// Button blends with background
-		joinServer.setOpaque(true);
-		joinServer.setContentAreaFilled(true);
-		joinServer.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		joinServer.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		joinServer.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		joinServer.setFont(joinServer.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		joinServer.setForeground(Color.RED);
-		joinServer.setBackground(Color.BLACK);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		joinServer.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				joinServer.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				joinServer.setForeground(Color.RED);
-			}
-		});
-
-		joinServer.addActionListener(aL);
+		setUpMajorButton(joinServer, 24);
 		panel.add(joinServer);
 
 		panel.repaint();
@@ -2255,121 +2230,26 @@ public class FPSLauncher extends JFrame {
 
 		host = new JButton("Host");
 		host.setBounds(-85, 100, 300, 40);
-
-		// Button blends with background
-		host.setOpaque(false);
-		host.setContentAreaFilled(false);
-		host.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		host.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		host.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		host.setFont(host.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		host.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		host.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				host.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				host.setForeground(Color.RED);
-			}
-		});
-
-		host.addActionListener(aL);
+		setUpOptionButton(host, 24);
 		panel.add(host);
 
 		join = new JButton("Join Server");
 		join.setBounds(-50, 150, 300, 40);
-
-		// Button blends with background
-		join.setOpaque(false);
-		join.setContentAreaFilled(false);
-		join.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		join.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		join.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		join.setFont(join.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		join.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		join.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				join.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				join.setForeground(Color.RED);
-			}
-		});
-
-		join.addActionListener(aL);
+		setUpOptionButton(join, 24);
 		panel.add(join);
 
 		back = new JButton("Back To Main Menu");
 		back.setBounds(0, 200, 300, 40);
-
-		// Button blends with background
-		back.setOpaque(false);
-		back.setContentAreaFilled(false);
-		back.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		back.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		back.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		back.setFont(back.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		back.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		back.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				back.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				back.setForeground(Color.RED);
-			}
-		});
-
-		back.addActionListener(aL);
+		setUpOptionButton(back, 18);
 		panel.add(back);
 
 		panel.repaint();
 	}
 
 	/**
-	 * Draws the JTextArea that shows all the controls the game has to offer in the
-	 * controls menu.
+	 * Draws up the controls menu. You click on a button which activates a certain
+	 * control field, and an input handler will handle the key pressed in order to
+	 * make that the new control.
 	 */
 	public void drawControlsButtons() {
 		/*
@@ -2377,55 +2257,285 @@ public class FPSLauncher extends JFrame {
 		 * be on multiple lines and also wrap around if there is not enough room on one
 		 * line. That is why I use it to hold all this text here. It just works.
 		 */
-		readMeText = new JTextArea();
-		readMeText.setBounds(0, 0, WIDTH, 300);
-		readMeText.setText("Foward = W, Backwards = S, Strafe Left = A," + " Strafe Right = D, Turn left = Left arrow,"
-				+ " Turn right = Right arrow, Run = Shift, Crouch = C," + "Jump = Space, Show FPS = F,"
-				+ " Look up = Up Arrow, Look down = Down arrow," + " Noclip = N, Super Speed = P,"
-				+ " Reload = R, Fly mode = O, God Mode = G, Shoot = V," + " Pause = ESC, E = Use, Give all weapons = L,"
-				+ " Unlimited Ammo = K. " + " If using the mouse, moving it any direction will"
-				+ " move the camera, and clicking shoots. There will" + " eventually be a way to change"
-				+ " the controls you use in game, but not yet...");
-		readMeText.setEditable(false);
-		readMeText.setLineWrap(true);
-		readMeText.setWrapStyleWord(true);
-		panel.add(readMeText);
+		/*
+		 * readMeText = new JTextArea(); readMeText.setBounds(0, 0, WIDTH, 300);
+		 * readMeText.setText("Foward = W, Backwards = S, Strafe Left = A," +
+		 * " Strafe Right = D, Turn left = Left arrow," +
+		 * " Turn right = Right arrow, Run = Shift, Crouch = C," +
+		 * "Jump = Space, Show FPS = F," +
+		 * " Look up = Up Arrow, Look down = Down arrow," +
+		 * " Noclip = N, Super Speed = P," +
+		 * " Reload = R, Fly mode = O, God Mode = G, Shoot = V," +
+		 * " Pause = ESC, E = Use, Give all weapons = L," + " Unlimited Ammo = K. " +
+		 * " If using the mouse, moving it any direction will" +
+		 * " move the camera, and clicking shoots. There will" +
+		 * " eventually be a way to change" +
+		 * " the controls you use in game, but not yet...");
+		 * readMeText.setEditable(false); readMeText.setLineWrap(true);
+		 * readMeText.setWrapStyleWord(true); panel.add(readMeText);
+		 */
+
+		// TODO keep working on
+
+		// Buttons to be pressed on to wait for key press
+		forward = new JButton("Move Forward");
+		forward.setBounds(25, 25, 200, 30);
+		setUpMajorButton(forward, 18);
+		panel.add(forward);
+
+		backButton = new JButton("Move Backward");
+		backButton.setBounds(25, 65, 200, 30);
+		setUpMajorButton(backButton, 18);
+		panel.add(backButton);
+
+		left = new JButton("Strafe Left");
+		left.setBounds(25, 105, 200, 30);
+		setUpMajorButton(left, 18);
+		panel.add(left);
+
+		right = new JButton("Strafe Right");
+		right.setBounds(25, 145, 200, 30);
+		setUpMajorButton(right, 18);
+		panel.add(right);
+
+		turnLeft = new JButton("Turn Left");
+		turnLeft.setBounds(25, 185, 200, 30);
+		setUpMajorButton(turnLeft, 18);
+		panel.add(turnLeft);
+
+		turnRight = new JButton("Turn Right");
+		turnRight.setBounds(25, 225, 200, 30);
+		setUpMajorButton(turnRight, 18);
+		panel.add(turnRight);
+
+		turnUp = new JButton("Look up");
+		turnUp.setBounds(25, 265, 200, 30);
+		setUpMajorButton(turnUp, 18);
+		panel.add(turnUp);
+
+		turnDown = new JButton("Look Down");
+		turnDown.setBounds(25, 305, 200, 30);
+		setUpMajorButton(turnDown, 18);
+		panel.add(turnDown);
+
+		shoot = new JButton("Fire Weapon");
+		shoot.setBounds(25, 345, 200, 30);
+		setUpMajorButton(shoot, 18);
+		panel.add(shoot);
+
+		pause = new JButton("Pause Game");
+		pause.setBounds(25, 385, 200, 30);
+		setUpMajorButton(pause, 18);
+		panel.add(pause);
+
+		run = new JButton("Sprint");
+		run.setBounds(25, 425, 200, 30);
+		setUpMajorButton(run, 18);
+		panel.add(run);
+
+		crouch = new JButton("Crouch");
+		crouch.setBounds(25, 465, 200, 30);
+		setUpMajorButton(crouch, 18);
+		panel.add(crouch);
+
+		jump = new JButton("Jump");
+		jump.setBounds(400, 25, 200, 30);
+		setUpMajorButton(jump, 18);
+		panel.add(jump);
+
+		fpsShow = new JButton("Show FPS");
+		fpsShow.setBounds(400, 65, 200, 30);
+		setUpMajorButton(fpsShow, 18);
+		panel.add(fpsShow);
+
+		reloading = new JButton("Reload");
+		reloading.setBounds(400, 105, 200, 30);
+		setUpMajorButton(reloading, 18);
+		panel.add(reloading);
+
+		upgradeWeapon = new JButton("Upgrade Weapon");
+		upgradeWeapon.setBounds(400, 145, 200, 30);
+		setUpMajorButton(upgradeWeapon, 18);
+		panel.add(upgradeWeapon);
+
+		use = new JButton("Use/Activate");
+		use.setBounds(400, 185, 200, 30);
+		setUpMajorButton(use, 18);
+		panel.add(use);
+
+		recallFriendlies = new JButton("Recall Friendlies");
+		recallFriendlies.setBounds(400, 225, 200, 30);
+		setUpMajorButton(recallFriendlies, 18);
+		panel.add(recallFriendlies);
+
+		weapon1 = new JButton("Weapon 1");
+		weapon1.setBounds(400, 265, 200, 30);
+		setUpMajorButton(weapon1, 18);
+		panel.add(weapon1);
+
+		weapon2 = new JButton("Weapon 2");
+		weapon2.setBounds(400, 305, 200, 30);
+		setUpMajorButton(weapon2, 18);
+		panel.add(weapon2);
+
+		weapon3 = new JButton("Weapon 3");
+		weapon3.setBounds(400, 345, 200, 30);
+		setUpMajorButton(weapon3, 18);
+		panel.add(weapon3);
+
+		weapon4 = new JButton("Weapon 4");
+		weapon4.setBounds(400, 385, 200, 30);
+		setUpMajorButton(weapon4, 18);
+		panel.add(weapon4);
+
+		weapon5 = new JButton("Weapon 5");
+		weapon5.setBounds(400, 425, 200, 30);
+		setUpMajorButton(weapon5, 18);
+		panel.add(weapon5);
+
+		weapon6 = new JButton("Weapon 6");
+		weapon6.setBounds(400, 465, 200, 30);
+		setUpMajorButton(weapon6, 18);
+		panel.add(weapon6);
+
+		weapon7 = new JButton("Weapon 7");
+		weapon7.setBounds(400, 505, 200, 30);
+		setUpMajorButton(weapon7, 18);
+		panel.add(weapon7);
+
+		/*
+		 * public static JButton godMode; public static JButton restock; public static
+		 * JButton unlimAmmo;
+		 */
+
+		forwardKey = new JLabel("" + keyCodeToString(Game.fowardKey));
+		forwardKey.setBounds(250, 25, 100, 30);
+		setUpDecoratedLabel(forwardKey, 24);
+		panel.add(forwardKey);
+
+		backKey = new JLabel("" + keyCodeToString(Game.backKey));
+		backKey.setBounds(250, 65, 100, 30);
+		setUpDecoratedLabel(backKey, 24);
+		panel.add(backKey);
+
+		leftKey = new JLabel("" + keyCodeToString(Game.leftKey));
+		leftKey.setBounds(250, 105, 100, 30);
+		setUpDecoratedLabel(leftKey, 24);
+		panel.add(leftKey);
+
+		rightKey = new JLabel("" + keyCodeToString(Game.rightKey));
+		rightKey.setBounds(250, 145, 100, 30);
+		setUpDecoratedLabel(rightKey, 24);
+		panel.add(rightKey);
+
+		turnLeftKey = new JLabel("" + keyCodeToString(Game.turnLeftKey));
+		turnLeftKey.setBounds(250, 185, 100, 30);
+		setUpDecoratedLabel(turnLeftKey, 24);
+		panel.add(turnLeftKey);
+
+		turnRightKey = new JLabel("" + keyCodeToString(Game.turnRightKey));
+		turnRightKey.setBounds(250, 225, 100, 30);
+		setUpDecoratedLabel(turnRightKey, 24);
+		panel.add(turnRightKey);
+
+		turnUpKey = new JLabel("" + keyCodeToString(Game.turnUpKey));
+		turnUpKey.setBounds(250, 265, 100, 30);
+		setUpDecoratedLabel(turnUpKey, 24);
+		panel.add(turnUpKey);
+
+		turnDownKey = new JLabel("" + keyCodeToString(Game.turnDownKey));
+		turnDownKey.setBounds(250, 305, 100, 30);
+		setUpDecoratedLabel(turnDownKey, 24);
+		panel.add(turnDownKey);
+
+		shootKey = new JLabel("" + keyCodeToString(Game.shootKey));
+		shootKey.setBounds(250, 345, 100, 30);
+		setUpDecoratedLabel(shootKey, 24);
+		panel.add(shootKey);
+
+		pauseKey = new JLabel("" + keyCodeToString(Game.pauseKey));
+		pauseKey.setBounds(250, 385, 100, 30);
+		setUpDecoratedLabel(pauseKey, 24);
+		panel.add(pauseKey);
+
+		runKey = new JLabel("" + keyCodeToString(Game.runKey));
+		runKey.setBounds(250, 425, 100, 30);
+		setUpDecoratedLabel(runKey, 24);
+		panel.add(runKey);
+
+		crouchKey = new JLabel("" + keyCodeToString(Game.crouchKey));
+		crouchKey.setBounds(250, 465, 100, 30);
+		setUpDecoratedLabel(crouchKey, 24);
+		panel.add(crouchKey);
+
+		jumpKey = new JLabel("" + keyCodeToString(Game.jumpKey));
+		jumpKey.setBounds(625, 25, 100, 30);
+		setUpDecoratedLabel(jumpKey, 24);
+		panel.add(jumpKey);
+
+		fpsShowKey = new JLabel("" + keyCodeToString(Game.fpsShowKey));
+		fpsShowKey.setBounds(625, 65, 100, 30);
+		setUpDecoratedLabel(fpsShowKey, 24);
+		panel.add(fpsShowKey);
+
+		reloadingKey = new JLabel("" + keyCodeToString(Game.reloadingKey));
+		reloadingKey.setBounds(625, 105, 100, 30);
+		setUpDecoratedLabel(reloadingKey, 24);
+		panel.add(reloadingKey);
+
+		upgradeWeaponKey = new JLabel("" + keyCodeToString(Game.upgradeWeaponKey));
+		upgradeWeaponKey.setBounds(625, 145, 100, 30);
+		setUpDecoratedLabel(upgradeWeaponKey, 24);
+		panel.add(upgradeWeaponKey);
+
+		useKey = new JLabel("" + keyCodeToString(Game.useKey));
+		useKey.setBounds(625, 185, 100, 30);
+		setUpDecoratedLabel(useKey, 24);
+		panel.add(useKey);
+
+		recallFriendliesKey = new JLabel("" + keyCodeToString(Game.recallFriendliesKey));
+		recallFriendliesKey.setBounds(625, 225, 100, 30);
+		setUpDecoratedLabel(recallFriendliesKey, 24);
+		panel.add(recallFriendliesKey);
+
+		weapon1Key = new JLabel("" + keyCodeToString(Game.weaponSlot0Key));
+		weapon1Key.setBounds(625, 265, 100, 30);
+		setUpDecoratedLabel(weapon1Key, 24);
+		panel.add(weapon1Key);
+
+		weapon2Key = new JLabel("" + keyCodeToString(Game.weaponSlot1Key));
+		weapon2Key.setBounds(625, 305, 100, 30);
+		setUpDecoratedLabel(weapon2Key, 24);
+		panel.add(weapon2Key);
+
+		weapon3Key = new JLabel("" + keyCodeToString(Game.weaponSlot2Key));
+		weapon3Key.setBounds(625, 345, 100, 30);
+		setUpDecoratedLabel(weapon3Key, 24);
+		panel.add(weapon3Key);
+
+		weapon4Key = new JLabel("" + keyCodeToString(Game.weaponSlot3Key));
+		weapon4Key.setBounds(625, 385, 100, 30);
+		setUpDecoratedLabel(weapon4Key, 24);
+		panel.add(weapon4Key);
+
+		weapon5Key = new JLabel("" + keyCodeToString(Game.weaponSlot4Key));
+		weapon5Key.setBounds(625, 425, 100, 30);
+		setUpDecoratedLabel(weapon5Key, 24);
+		panel.add(weapon5Key);
+
+		weapon6Key = new JLabel("" + keyCodeToString(Game.weaponSlot5Key));
+		weapon6Key.setBounds(625, 465, 100, 30);
+		setUpDecoratedLabel(weapon6Key, 24);
+		panel.add(weapon6Key);
+
+		weapon7Key = new JLabel("" + keyCodeToString(Game.weaponSlot6Key));
+		weapon7Key.setBounds(625, 505, 100, 30);
+		setUpDecoratedLabel(weapon7Key, 24);
+		panel.add(weapon7Key);
 
 		back = new JButton("Back To Main Menu");
-		back.setBounds(0, 325, 300, 40);
-
-		// Button blends with background
-		back.setOpaque(false);
-		back.setContentAreaFilled(false);
-		back.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		back.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		back.setFont(new Font("Nasalization", Font.BOLD, 18));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		back.setFont(back.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		back.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		back.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				back.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				back.setForeground(Color.RED);
-			}
-		});
-
-		back.addActionListener(aL);
+		back.setBounds(25, 525, 225, 40);
+		setUpMajorButton(back, 20);
 		panel.add(back);
 
 		panel.repaint();
@@ -2471,27 +2581,18 @@ public class FPSLauncher extends JFrame {
 	 */
 	public void logInScreen() {
 		userTitle = new JLabel("Users:");
-		userTitle.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		userTitle.setBounds(WIDTH / 6, HEIGHT / 3, 200, 25);
-		userTitle.setForeground(Color.RED);
-		userTitle.setBackground(Color.BLACK);
-		userTitle.setOpaque(true);
+		setUpDecoratedLabel(userTitle, 24);
 		panel.add(userTitle);
 
 		newUserTitle = new JLabel("New User:");
-		newUserTitle.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		newUserTitle.setBounds((int) (WIDTH / 1.6), HEIGHT / 3, 200, 25);
-		newUserTitle.setForeground(Color.RED);
-		newUserTitle.setBackground(Color.BLACK);
-		newUserTitle.setOpaque(true);
+		setUpDecoratedLabel(newUserTitle, 24);
 		panel.add(newUserTitle);
 
 		error = new JLabel("THAT USER ALREADY EXISTS! TRY ANOTHER!");
-		error.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		error.setBounds(WIDTH / 2 - 260, HEIGHT - 250, 550, 25);
-		error.setForeground(Color.GREEN);
-		error.setBackground(Color.BLACK);
-		error.setOpaque(true);
+		setUpDecoratedLabel(error, 24);
 		error.setVisible(false);
 		panel.add(error);
 
@@ -2557,73 +2658,13 @@ public class FPSLauncher extends JFrame {
 		panel.add(newUserName);
 
 		logIn = new JButton("Log In");
-
 		logIn.setBounds((WIDTH / 2) - 62, HEIGHT - 200, 150, 40);
-
-		// Button blends with background
-		logIn.setContentAreaFilled(false);
-		logIn.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		logIn.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		logIn.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		logIn.setForeground(Color.RED);
-		logIn.setBackground(Color.BLACK);
-		logIn.setOpaque(true);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		logIn.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				logIn.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				logIn.setForeground(Color.RED);
-			}
-		});
-
-		logIn.addActionListener(aL);
+		setUpMajorButton(logIn, 24);
 		panel.add(logIn);
 
 		removeUser = new JButton("Remove User");
-
 		removeUser.setBounds((WIDTH / 2) - 85, HEIGHT - 500, 200, 40);
-
-		// Button blends with background
-		removeUser.setContentAreaFilled(false);
-		removeUser.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		removeUser.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		removeUser.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		removeUser.setForeground(Color.RED);
-		removeUser.setBackground(new Color(0, 0, 0));
-		removeUser.setOpaque(true);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		removeUser.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				removeUser.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				removeUser.setForeground(Color.RED);
-			}
-		});
-
-		removeUser.addActionListener(aL);
+		setUpMajorButton(removeUser, 24);
 		panel.add(removeUser);
 
 		panel.repaint();
@@ -2659,95 +2700,20 @@ public class FPSLauncher extends JFrame {
 	 * it easy to access these functions.
 	 */
 	public void saveLoadMenuSetup() {
-		// Colors of buttons when mouse is not over them or when it is
-		Color defaultColor = Color.RED;
-		Color mouseColor = Color.GREEN;
 
 		saveGame = new JButton("Save Game");
 		saveGame.setBounds(0, 150, 270, 40);
-
-		saveGame.setOpaque(false);
-		saveGame.setContentAreaFilled(false);
-		saveGame.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		saveGame.setFocusPainted(false);
-
-		saveGame.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		saveGame.setForeground(defaultColor);
-
-		saveGame.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				saveGame.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				saveGame.setForeground(defaultColor);
-			}
-		});
-
-		saveGame.addActionListener(aL);
+		setUpOptionButton(saveGame, 24);
 		panel.add(saveGame);
 
 		loadGame = new JButton("Load Game");
 		loadGame.setBounds(0, 200, 270, 40);
-
-		loadGame.setOpaque(false);
-		loadGame.setContentAreaFilled(false);
-		loadGame.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		loadGame.setFocusPainted(false);
-
-		loadGame.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		loadGame.setForeground(defaultColor);
-
-		loadGame.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				loadGame.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				loadGame.setForeground(defaultColor);
-			}
-		});
-
-		loadGame.addActionListener(aL);
+		setUpOptionButton(loadGame, 24);
 		panel.add(loadGame);
 
 		removeSave = new JButton("Remove a Save");
 		removeSave.setBounds(0, 250, 315, 40);
-
-		removeSave.setOpaque(false);
-		removeSave.setContentAreaFilled(false);
-		removeSave.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		removeSave.setFocusPainted(false);
-
-		removeSave.setFont(new Font("Nasalization", Font.BOLD, 24));
-
-		removeSave.setForeground(defaultColor);
-
-		removeSave.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				removeSave.setForeground(mouseColor);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				removeSave.setForeground(defaultColor);
-			}
-		});
-
-		removeSave.addActionListener(aL);
+		setUpOptionButton(removeSave, 24);
 		panel.add(removeSave);
 
 		// Saved Games choice list bounds
@@ -2782,58 +2748,19 @@ public class FPSLauncher extends JFrame {
 		panel.add(saveTextfield);
 
 		availableGames = new JLabel("Saved Games");
-		availableGames.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		availableGames.setBounds(WIDTH / 2 - 100, (HEIGHT / 2) - 150, 200, 25);
-		availableGames.setForeground(Color.GREEN);
-		availableGames.setBackground(Color.BLACK);
-		availableGames.setOpaque(true);
-		availableGames.setVisible(true);
+		setUpDecoratedLabel(availableGames, 24);
 		panel.add(availableGames);
 
 		saveName = new JLabel("File Name: (Can add new name)");
+		setUpDecoratedLabel(saveName, 13);
 		saveName.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 13));
 		saveName.setBounds(WIDTH / 2 + 150, (HEIGHT / 2) - 150, 200, 25);
-		saveName.setForeground(Color.GREEN);
-		saveName.setBackground(Color.BLACK);
-		saveName.setOpaque(true);
-		saveName.setVisible(true);
 		panel.add(saveName);
 
 		back = new JButton("Back To Main Menu");
 		back.setBounds(0, 325, 300, 40);
-
-		// Button blends with background
-		back.setOpaque(false);
-		back.setContentAreaFilled(false);
-		back.setBorderPainted(false);
-
-		// Removes textbox focus so the textbox border is removed
-		back.setFocusPainted(false);
-
-		// Sets font type, mode, and size
-		back.setFont(new Font("Nasalization", Font.BOLD, 18));
-
-		// Uses a bitwise operator to merge the fonts of bold and italic
-		// for the text
-		back.setFont(back.getFont().deriveFont(Font.BOLD | Font.ITALIC));
-
-		back.setForeground(Color.RED);
-
-		// Listens for whether the mouse has entered or exited the button
-		// area and if it has or has not, change color accordingly
-		back.addMouseListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseEntered(java.awt.event.MouseEvent evt) {
-				back.setForeground(Color.GREEN);
-			}
-
-			@Override
-			public void mouseExited(java.awt.event.MouseEvent evt) {
-				back.setForeground(Color.RED);
-			}
-		});
-
-		back.addActionListener(aL);
+		setUpOptionButton(back, 18);
 		panel.add(back);
 
 		panel.repaint();
@@ -2919,6 +2846,16 @@ public class FPSLauncher extends JFrame {
 					+ themeName + ":" + modeChoice + ":" + musicChoice + ":" + soundVolumeLevel + ":" + musicVolumeLevel
 					+ ":" + smoothFPS + ":" + mouseStatus + ":" + nonDefaultMap);
 
+			// Now for all the key bindings... Oh boy
+			// TODO This exact thing
+			writeSettings.write(":" + Game.fowardKey + ":" + Game.backKey + ":" + Game.leftKey + ":" + Game.rightKey
+					+ ":" + Game.turnLeftKey + ":" + Game.turnRightKey + ":" + Game.turnUpKey + ":" + Game.turnDownKey
+					+ ":" + Game.shootKey + ":" + Game.pauseKey + ":" + Game.runKey + ":" + Game.crouchKey + ":"
+					+ Game.jumpKey + ":" + Game.fpsShowKey + ":" + Game.reloadingKey + ":" + Game.weaponSlot0Key + ":"
+					+ Game.weaponSlot1Key + ":" + Game.weaponSlot2Key + ":" + Game.weaponSlot3Key + ":"
+					+ Game.weaponSlot4Key + ":" + Game.useKey + ":" + Game.weaponSlot5Key + ":" + Game.weaponSlot6Key
+					+ ":" + Game.upgradeWeaponKey + ":" + Game.recallFriendliesKey);
+
 			// For all the save names. Write them into the file
 			for (String s : saves) {
 				writeSettings.write(":" + s);
@@ -2939,12 +2876,8 @@ public class FPSLauncher extends JFrame {
 	public void displayError(String errorMessage) {
 		// Initialize error
 		error = new JLabel(errorMessage);
-		error.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, 24));
 		error.setBounds(WIDTH / 2 - 260, HEIGHT - 100, 550, 25);
-		error.setForeground(Color.GREEN);
-		error.setBackground(Color.BLACK);
-		error.setOpaque(true);
-		error.setVisible(true);
+		setUpDecoratedLabel(error, 24);
 		panel.add(error);
 
 		// Start new thread to have flashing text
@@ -2977,5 +2910,557 @@ public class FPSLauncher extends JFrame {
 
 		t.start();
 		return;
+	}
+
+	/**
+	 * Each menu button is set up practically the same. Though there is some
+	 * variance, this method will set up the basic qualities of the button for you.
+	 * 
+	 * @param button
+	 */
+	public void setUpOptionButton(JButton button, int fontSize) {
+		// Button blends with background
+		button.setOpaque(false);
+		button.setContentAreaFilled(false);
+		button.setBorderPainted(false);
+
+		// Removes textbox focus so the textbox border is removed
+		button.setFocusPainted(false);
+
+		// Sets font type, mode, and size
+		button.setFont(new Font("Nasalization", Font.BOLD, fontSize));
+
+		// Uses a bitwise operator to merge the fonts of bold and italic
+		// for the text
+		button.setFont(button.getFont().deriveFont(Font.BOLD | Font.ITALIC));
+
+		button.setForeground(defaultColor);
+
+		// Listens for whether the mouse has entered or exited the button
+		// area and if it has or has not, change color accordingly
+		button.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				button.setForeground(mouseColor);
+			}
+
+			@Override
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				button.setForeground(defaultColor);
+			}
+		});
+
+		button.addActionListener(aL);
+	}
+
+	/**
+	 * This button type has the black opaque background
+	 * 
+	 * @param button
+	 */
+	public void setUpMajorButton(JButton button, int fontSize) {
+		// Button blends with background
+		button.setOpaque(true);
+		button.setContentAreaFilled(true);
+		button.setBorderPainted(false);
+
+		// Removes textbox focus so the textbox border is removed
+		button.setFocusPainted(false);
+
+		// Sets font type, mode, and size
+		button.setFont(new Font("Nasalization", Font.BOLD, fontSize));
+
+		// Uses a bitwise operator to merge the fonts of bold and italic
+		// for the text
+		button.setFont(button.getFont().deriveFont(Font.BOLD | Font.ITALIC));
+
+		button.setForeground(defaultColor);
+		button.setBackground(Color.BLACK);
+
+		// Listens for whether the mouse has entered or exited the button
+		// area and if it has or has not, change color accordingly
+		button.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				button.setForeground(mouseColor);
+				button.setBounds(button.getX(), button.getY(), button.getWidth() + 10, button.getHeight());
+			}
+
+			@Override
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				button.setForeground(defaultColor);
+				button.setBounds(button.getX(), button.getY(), button.getWidth() - 10, button.getHeight());
+			}
+		});
+
+		button.addActionListener(aL);
+	}
+
+	/**
+	 * Sets up a decorated label. Several of these are used, so this makes it
+	 * easier.
+	 * 
+	 * @param label
+	 */
+	public void setUpDecoratedLabel(JLabel label, int fontSize) {
+		label.setFont(new Font("Nasalization", Font.BOLD | Font.ITALIC, fontSize));
+		label.setForeground(Color.GREEN);
+		label.setBackground(Color.BLACK);
+		label.setVisible(true);
+		label.setOpaque(true);
+	}
+
+	/**
+	 * Converts KeyCode integer to a string for the controls menu
+	 * 
+	 * @param keyCode
+	 * @return
+	 */
+	public static String keyCodeToString(int keyCode) {
+		String keyString = "";
+
+		switch (keyCode) {
+		case KeyEvent.VK_0:
+			keyString = "0";
+			break;
+
+		case KeyEvent.VK_1:
+			keyString = "1";
+			break;
+
+		case KeyEvent.VK_2:
+			keyString = "2";
+			break;
+
+		case KeyEvent.VK_3:
+			keyString = "3";
+			break;
+
+		case KeyEvent.VK_4:
+			keyString = "4";
+			break;
+
+		case KeyEvent.VK_5:
+			keyString = "5";
+			break;
+
+		case KeyEvent.VK_6:
+			keyString = "6";
+			break;
+
+		case KeyEvent.VK_7:
+			keyString = "7";
+			break;
+
+		case KeyEvent.VK_8:
+			keyString = "8";
+			break;
+
+		case KeyEvent.VK_9:
+			keyString = "9";
+			break;
+
+		case KeyEvent.VK_A:
+			keyString = "A";
+			break;
+
+		case KeyEvent.VK_ALT:
+			keyString = "ALT";
+			break;
+
+		case KeyEvent.VK_ASTERISK:
+			keyString = "8";
+			break;
+
+		case KeyEvent.VK_AMPERSAND:
+			keyString = "7";
+			break;
+
+		case KeyEvent.VK_AT:
+			keyString = "2";
+			break;
+
+		case KeyEvent.VK_B:
+			keyString = "B";
+			break;
+
+		case KeyEvent.VK_BACK_SLASH:
+			keyString = "\\";
+			break;
+
+		case KeyEvent.VK_BACK_SPACE:
+			keyString = "BackSp";
+			break;
+
+		case KeyEvent.VK_BRACELEFT:
+			keyString = "{";
+			break;
+
+		case KeyEvent.VK_BRACERIGHT:
+			keyString = "}";
+			break;
+
+		case KeyEvent.VK_C:
+			keyString = "C";
+			break;
+
+		case KeyEvent.VK_CAPS_LOCK:
+			keyString = "Caps";
+			break;
+
+		case KeyEvent.VK_CLOSE_BRACKET:
+			keyString = "]";
+			break;
+
+		case KeyEvent.VK_COLON:
+			keyString = ":";
+			break;
+
+		case KeyEvent.VK_COMMA:
+			keyString = ",";
+			break;
+
+		case KeyEvent.VK_CONTROL:
+			keyString = "ctrl";
+			break;
+
+		case KeyEvent.VK_D:
+			keyString = "D";
+			break;
+
+		case KeyEvent.VK_DELETE:
+			keyString = "Del";
+			break;
+
+		case KeyEvent.VK_DOWN:
+			keyString = "DOWN";
+			break;
+
+		case KeyEvent.VK_E:
+			keyString = "E";
+			break;
+
+		case KeyEvent.VK_ENTER:
+			keyString = "Enter";
+			break;
+
+		case KeyEvent.VK_EQUALS:
+			keyString = "=";
+			break;
+
+		case KeyEvent.VK_ESCAPE:
+			keyString = "ESC";
+			break;
+
+		case KeyEvent.VK_EXCLAMATION_MARK:
+			keyString = "1";
+			break;
+
+		case KeyEvent.VK_F:
+			keyString = "F";
+			break;
+
+		case KeyEvent.VK_F1:
+			keyString = "F1";
+			break;
+
+		case KeyEvent.VK_F2:
+			keyString = "F2";
+			break;
+
+		case KeyEvent.VK_F3:
+			keyString = "F3";
+			break;
+
+		case KeyEvent.VK_F4:
+			keyString = "F4";
+			break;
+
+		case KeyEvent.VK_F5:
+			keyString = "F5";
+			break;
+
+		case KeyEvent.VK_F6:
+			keyString = "F6";
+			break;
+
+		case KeyEvent.VK_F7:
+			keyString = "F7";
+			break;
+
+		case KeyEvent.VK_F8:
+			keyString = "F8";
+			break;
+
+		case KeyEvent.VK_F9:
+			keyString = "F9";
+			break;
+
+		case KeyEvent.VK_F10:
+			keyString = "F10";
+			break;
+
+		case KeyEvent.VK_F11:
+			keyString = "F11";
+			break;
+
+		case KeyEvent.VK_F12:
+			keyString = "F12";
+			break;
+
+		case KeyEvent.VK_G:
+			keyString = "G";
+			break;
+
+		case KeyEvent.VK_GREATER:
+			keyString = ".";
+			break;
+
+		case KeyEvent.VK_H:
+			keyString = "H";
+			break;
+
+		case KeyEvent.VK_I:
+			keyString = "I";
+			break;
+
+		case KeyEvent.VK_INSERT:
+			keyString = "Ins";
+			break;
+
+		case KeyEvent.VK_J:
+			keyString = "J";
+			break;
+
+		case KeyEvent.VK_K:
+			keyString = "K";
+			break;
+
+		case KeyEvent.VK_KP_DOWN:
+			keyString = "DOWN";
+			break;
+
+		case KeyEvent.VK_KP_LEFT:
+			keyString = "LEFT";
+			break;
+
+		case KeyEvent.VK_KP_RIGHT:
+			keyString = "RIGHT";
+			break;
+
+		case KeyEvent.VK_KP_UP:
+			keyString = "UP";
+			break;
+
+		case KeyEvent.VK_L:
+			keyString = "L";
+			break;
+
+		case KeyEvent.VK_LEFT:
+			keyString = "LEFT";
+			break;
+
+		case KeyEvent.VK_LEFT_PARENTHESIS:
+			keyString = "(";
+			break;
+
+		case KeyEvent.VK_M:
+			keyString = "M";
+			break;
+
+		case KeyEvent.VK_MINUS:
+			keyString = "-";
+			break;
+
+		case KeyEvent.VK_MULTIPLY:
+			keyString = "*";
+			break;
+
+		case KeyEvent.VK_N:
+			keyString = "N";
+			break;
+
+		case KeyEvent.VK_NUM_LOCK:
+			keyString = "Num";
+			break;
+
+		case KeyEvent.VK_NUMBER_SIGN:
+			keyString = "3";
+			break;
+
+		case KeyEvent.VK_NUMPAD0:
+			keyString = "Num 0";
+			break;
+
+		case KeyEvent.VK_NUMPAD1:
+			keyString = "Num 1";
+			break;
+
+		case KeyEvent.VK_NUMPAD2:
+			keyString = "Num 2";
+			break;
+
+		case KeyEvent.VK_NUMPAD3:
+			keyString = "Num 3";
+			break;
+
+		case KeyEvent.VK_NUMPAD4:
+			keyString = "Num 4";
+			break;
+
+		case KeyEvent.VK_NUMPAD5:
+			keyString = "Num 5";
+			break;
+
+		case KeyEvent.VK_NUMPAD6:
+			keyString = "Num 6";
+			break;
+
+		case KeyEvent.VK_NUMPAD7:
+			keyString = "Num 7";
+			break;
+
+		case KeyEvent.VK_NUMPAD8:
+			keyString = "Num 8";
+			break;
+
+		case KeyEvent.VK_NUMPAD9:
+			keyString = "Num 9";
+			break;
+
+		case KeyEvent.VK_O:
+			keyString = "O";
+			break;
+
+		case KeyEvent.VK_OPEN_BRACKET:
+			keyString = "[";
+			break;
+
+		case KeyEvent.VK_P:
+			keyString = "P";
+			break;
+
+		case KeyEvent.VK_PAGE_DOWN:
+			keyString = "Pg dn";
+			break;
+
+		case KeyEvent.VK_PAGE_UP:
+			keyString = "Pg up";
+			break;
+
+		case KeyEvent.VK_PERIOD:
+			keyString = ".";
+			break;
+
+		case KeyEvent.VK_PLUS:
+			keyString = "+";
+			break;
+
+		case KeyEvent.VK_PRINTSCREEN:
+			keyString = "Prt sc";
+			break;
+
+		case KeyEvent.VK_Q:
+			keyString = "Q";
+			break;
+
+		case KeyEvent.VK_QUOTE:
+			keyString = "'";
+			break;
+
+		case KeyEvent.VK_R:
+			keyString = "R";
+			break;
+
+		case KeyEvent.VK_RIGHT:
+			keyString = "RIGHT";
+			break;
+
+		case KeyEvent.VK_RIGHT_PARENTHESIS:
+			keyString = ")";
+			break;
+
+		case KeyEvent.VK_S:
+			keyString = "S";
+			break;
+
+		case KeyEvent.VK_SCROLL_LOCK:
+			keyString = "ScrLck";
+			break;
+
+		case KeyEvent.VK_SEMICOLON:
+			keyString = ";";
+			break;
+
+		case KeyEvent.VK_SHIFT:
+			keyString = "Shift";
+			break;
+
+		case KeyEvent.VK_SLASH:
+			keyString = "/";
+			break;
+
+		case KeyEvent.VK_SPACE:
+			keyString = "Space";
+			break;
+
+		case KeyEvent.VK_SUBTRACT:
+			keyString = "-";
+			break;
+
+		case KeyEvent.VK_T:
+			keyString = "T";
+			break;
+
+		case KeyEvent.VK_TAB:
+			keyString = "Tab";
+			break;
+
+		case KeyEvent.VK_U:
+			keyString = "U";
+			break;
+
+		case KeyEvent.VK_UP:
+			keyString = "UP";
+			break;
+
+		case KeyEvent.VK_V:
+			keyString = "V";
+			break;
+
+		case KeyEvent.VK_W:
+			keyString = "W";
+			break;
+
+		case KeyEvent.VK_WINDOWS:
+			keyString = "WinKey";
+			break;
+
+		case KeyEvent.VK_X:
+			keyString = "X";
+			break;
+
+		case KeyEvent.VK_Y:
+			keyString = "Y";
+			break;
+
+		case KeyEvent.VK_Z:
+			keyString = "Z";
+			break;
+
+		case KeyEvent.VK_ADD:
+			keyString = "+";
+			break;
+
+		case KeyEvent.VK_DIVIDE:
+			keyString = "/";
+			break;
+
+		default:
+			keyString = "NaN";
+			break;
+		}
+
+		return keyString;
 	}
 }

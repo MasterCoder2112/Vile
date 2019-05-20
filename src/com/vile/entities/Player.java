@@ -77,6 +77,7 @@ public class Player {
 	public static double jumpHeight = 8;
 
 	// How high in the air player can jump no matter where he/she is
+	// Can be changed by the resource pack or command
 	public static double totalJump = 8;
 
 	// Used for rendering
@@ -84,6 +85,9 @@ public class Player {
 
 	// If a solid item or enemy adds extra height to a player
 	public static double extraHeight = 0;
+
+	// Melee damage the player deals to the enemy
+	public static double meleeMultiplier = 1;
 
 	// Whether the player has the keys or not
 	public static boolean hasRedKey = false;
@@ -94,7 +98,6 @@ public class Player {
 	// Player cheats
 	public static boolean noClipOn;
 	public static boolean flyOn;
-	public static boolean superSpeedOn;
 	public static boolean godModeOn;
 	public static boolean unlimitedAmmoOn;
 
@@ -117,7 +120,7 @@ public class Player {
 	public static double drunkLevels = 0;
 
 	// Array of weapons player has
-	public static Weapon[] weapons = new Weapon[5];
+	public static Weapon[] weapons = new Weapon[6];
 
 	// ID of the player in case he/she is on a server
 	public static int ID = 0;
@@ -125,6 +128,11 @@ public class Player {
 	// For multi player
 	public static int kills = 0;
 	public static int deaths = 0;
+
+	public static int movementTick = 0;
+	public static int moveDirect = 1;
+
+	public static int speedMultiplier = 1;
 
 	/**
 	 * Reset all of a Players variables and make a new Player
@@ -155,17 +163,20 @@ public class Player {
 		drunkLevels = 0;
 		frozen = 0;
 		upgradePoints = 0;
+		meleeMultiplier = 1;
 
 		forceCrouch = false;
 
-		weapons[0] = new Pistol();
-		weapons[1] = new Shotgun();
-		weapons[2] = new PhaseCannon();
-		weapons[3] = new RocketLauncher();
-		weapons[4] = new Scepter();
+		weapons[0] = new Sword();
+		weapons[1] = new Pistol();
+		weapons[2] = new Shotgun();
+		weapons[3] = new PhaseCannon();
+		weapons[4] = new RocketLauncher();
+		weapons[5] = new Scepter();
 		weaponEquipped = 0;
 
-		// TODO for now, always make pistols equippable.
+		// TODO for now, always make swords equippable by default. It's your first
+		// weapon
 		weapons[0].canBeEquipped = true;
 
 		// These do not get reset in multiplayer.

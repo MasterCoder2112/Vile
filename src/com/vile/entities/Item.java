@@ -56,6 +56,7 @@ public class Item {
 	public boolean activated = false;
 	public boolean isSolid = false;
 	public boolean aboveBlock = true;
+	public boolean hanging = false;
 
 	/*
 	 * The Audio clip after activating this object will be this. Notice this is
@@ -282,8 +283,10 @@ public class Item {
 				|| ID == ItemNames.STALAG1.getID() || ID == ItemNames.STALAG2.getID()
 				|| ID == ItemNames.TECHPILLAR1.getID() || ID == ItemNames.TECHPILLAR2.getID()
 				|| ID == ItemNames.TECHPILLAR3.getID()) {
-			size = 2048;
+			size = 1800;
 		}
+
+		// size = 0;
 
 		/*
 		 * Figures out if item should float or not
@@ -297,6 +300,13 @@ public class Item {
 				|| ID == ItemNames.INVISEMERALD.getID() || ID == ItemNames.DECIETSCEPTER.getID())) {
 			floatHeight = 0.2;
 			floatAmount = 0.01;
+		}
+
+		// If it is a item that is supposed to "hang" off a block or ceiling, give the
+		// item
+		// that attribute
+		if (ID == ItemNames.HANGMAN.getID() || ID == ItemNames.CEILINGLAMP.getID()) {
+			hanging = true;
 		}
 	}
 
@@ -381,21 +391,21 @@ public class Item {
 		else if (hasAmmo) {
 			if (itemID == ItemNames.PISTOL.getID() || itemID == ItemNames.BULLETS.getID()
 					|| itemID == ItemNames.BOXOFBULLETS.getID()) {
-				itemUsed = Player.weapons[0].addAmmo(itemValue);
+				itemUsed = Player.weapons[1].addAmmo(itemValue);
 			} else if (itemID == ItemNames.SHELLS.getID() || itemID == ItemNames.SHOTGUN.getID()
 					|| itemID == ItemNames.SHELLBOX.getID()) {
-				itemUsed = Player.weapons[1].addAmmo(itemValue);
+				itemUsed = Player.weapons[2].addAmmo(itemValue);
 			} else if (itemID == ItemNames.PHASECANNON.getID() || itemID == ItemNames.SMALLCHARGE.getID()
 					|| itemID == ItemNames.LARGECHARGE.getID()) {
-				itemUsed = Player.weapons[2].addAmmo(itemValue);
+				itemUsed = Player.weapons[3].addAmmo(itemValue);
 			}
 			// Rocket Launcher stuff
 			else if (itemID == ItemNames.ROCKETLAUNCHER.getID() || itemID == ItemNames.ROCKETS.getID()
 					|| itemID == ItemNames.ROCKETCRATE.getID()) {
-				itemUsed = Player.weapons[3].addAmmo(itemValue);
+				itemUsed = Player.weapons[4].addAmmo(itemValue);
 			} // Scepter of Deciet stuff
 			else if (itemID == ItemNames.DECIETSCEPTER.getID() || itemID == ItemNames.DECIETORB.getID()) {
-				itemUsed = Player.weapons[4].addAmmo(itemValue);
+				itemUsed = Player.weapons[5].addAmmo(itemValue);
 			}
 
 			/*
@@ -404,11 +414,11 @@ public class Item {
 			 * but ammo won't be added.
 			 */
 			if (!itemUsed) {
-				if (itemID == ItemNames.PHASECANNON.getID() && !Player.weapons[2].canBeEquipped
-						|| itemID == ItemNames.SHOTGUN.getID() && !Player.weapons[1].canBeEquipped
-						|| itemID == ItemNames.PISTOL.getID() && !Player.weapons[0].dualWield
-						|| itemID == ItemNames.ROCKETLAUNCHER.getID() && !Player.weapons[3].canBeEquipped
-						|| itemID == ItemNames.DECIETSCEPTER.getID() && !Player.weapons[4].canBeEquipped) {
+				if (itemID == ItemNames.PHASECANNON.getID() && !Player.weapons[3].canBeEquipped
+						|| itemID == ItemNames.SHOTGUN.getID() && !Player.weapons[2].canBeEquipped
+						|| itemID == ItemNames.PISTOL.getID() && !Player.weapons[1].dualWield
+						|| itemID == ItemNames.ROCKETLAUNCHER.getID() && !Player.weapons[4].canBeEquipped
+						|| itemID == ItemNames.DECIETSCEPTER.getID() && !Player.weapons[5].canBeEquipped) {
 
 				} else {
 					return false;
@@ -443,9 +453,9 @@ public class Item {
 
 				// If weapon can't already be equipped, make it so that
 				// it can be, and equip it
-				if (!Player.weapons[1].canBeEquipped) {
-					Player.weapons[1].canBeEquipped = true;
-					Player.weaponEquipped = 1;
+				if (!Player.weapons[2].canBeEquipped) {
+					Player.weapons[2].canBeEquipped = true;
+					Player.weaponEquipped = 2;
 				}
 			}
 
@@ -472,9 +482,9 @@ public class Item {
 
 				// If weapon can't already be equipped, make it so that
 				// it can be, and equip it
-				if (!Player.weapons[2].canBeEquipped) {
-					Player.weapons[2].canBeEquipped = true;
-					Player.weaponEquipped = 2;
+				if (!Player.weapons[3].canBeEquipped) {
+					Player.weapons[3].canBeEquipped = true;
+					Player.weaponEquipped = 3;
 				}
 			} else if (itemID == ItemNames.SMALLCHARGE.getID()) {
 				if (Display.smileMode) {
@@ -502,9 +512,9 @@ public class Item {
 
 				// If weapon cant be dual wielded yet, make it so that it
 				// is
-				if (!Player.weapons[0].dualWield) {
-					Player.weapons[0].dualWield = true;
-					Player.weaponEquipped = 0;
+				if (!Player.weapons[1].dualWield && Player.weapons[1].canBeEquipped) {
+					Player.weapons[1].dualWield = true;
+					Player.weaponEquipped = 1;
 					Display.messages.add(new PopUp("Hell yeah! Dual wielding!"));
 
 					if (Display.smileMode) {
@@ -515,6 +525,8 @@ public class Item {
 						Display.messages.add(new PopUp("Hell yeah! Dual wielding!"));
 					}
 				} else {
+					Player.weapons[1].canBeEquipped = true;
+					Player.weaponEquipped = 1;
 					if (Display.smileMode) {
 						Display.messages.add(new PopUp("All the more to love you my dear"));
 						Display.messages.add(new PopUp("You pick up a cupids bow!"));
@@ -557,9 +569,9 @@ public class Item {
 
 				// If weapon can't already be equipped, make it so that
 				// it can be, and equip it
-				if (!Player.weapons[3].canBeEquipped) {
-					Player.weapons[3].canBeEquipped = true;
-					Player.weaponEquipped = 3;
+				if (!Player.weapons[4].canBeEquipped) {
+					Player.weapons[4].canBeEquipped = true;
+					Player.weaponEquipped = 4;
 				}
 			} else if (itemID == ItemNames.ROCKETS.getID()) {
 				if (Display.smileMode) {
@@ -597,9 +609,9 @@ public class Item {
 
 				// If weapon can't already be equipped, make it so that
 				// it can be, and equip it
-				if (!Player.weapons[4].canBeEquipped) {
-					Player.weapons[4].canBeEquipped = true;
-					Player.weaponEquipped = 4;
+				if (!Player.weapons[5].canBeEquipped) {
+					Player.weapons[5].canBeEquipped = true;
+					Player.weaponEquipped = 5;
 				}
 			} else if (itemID == ItemNames.DECIETORB.getID()) {
 				if (Display.smileMode) {
@@ -856,7 +868,7 @@ public class Item {
 				Display.messages.add(new PopUp("Just taste that carbonation!"));
 				Display.messages.add(new PopUp("You consume the Soda!"));
 			} else {
-				Display.messages.add(new PopUp("You consume the Beer!"));
+				Display.messages.add(new PopUp("Drinking your problems away!"));
 			}
 
 			// Play correlating sound effect
@@ -880,7 +892,6 @@ public class Item {
 		// Upgrade point
 		else if (itemID == ItemNames.UPGRADE.getID()) {
 			itemUsed = true;
-			Display.messages.add(new PopUp("No use yet though..."));
 			Display.messages.add(new PopUp("You collect an upgrade point!"));
 
 			// Add to upgradePoints player has
@@ -896,11 +907,18 @@ public class Item {
 				Display.messages.add(new PopUp("You're already happy, no need to be saved..."));
 				return false;
 			} else {
-				Display.messages.add(new PopUp("You collect the holy water!"));
+				Display.messages.add(new PopUp("The spirit of the lord gives you strength!"));
+			}
+
+			Player.meleeMultiplier = 4;
+
+			// Replenishes health
+			if (Player.health < 100) {
+				Player.health = 100;
 			}
 
 			// Play correlating sound effect
-			SoundController.health.playAudioFile(distanceFromPlayer);
+			SoundController.megaPickUp.playAudioFile(distanceFromPlayer);
 
 			// Becomes just a normal table
 			itemID = 42;
@@ -1563,15 +1581,6 @@ public class Item {
 		}
 
 		return itemUsed;
-	}
-
-	/**
-	 * If item can be moved and has a force on it, then move that object until it is
-	 * stopped. Speed will decrease by half until it reaches a negligible distance
-	 * from 0. This will be the first test of simple game physics.
-	 */
-	public void moveItem() {
-		// TODO implement me next update
 	}
 
 	/**

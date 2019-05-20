@@ -10,7 +10,6 @@ import com.vile.entities.Door;
 import com.vile.entities.Elevator;
 import com.vile.entities.Entity;
 import com.vile.entities.Explosion;
-import com.vile.entities.ExplosiveCanister;
 import com.vile.entities.HurtingBlock;
 import com.vile.entities.Item;
 import com.vile.entities.ItemNames;
@@ -149,11 +148,12 @@ public class Level {
 					// All Items that are not entities
 					if (itemID > ItemNames.AIR.getID() && itemID <= ItemNames.YELLOWKEY.getID()
 							|| itemID == ItemNames.SHOTGUN.getID() || itemID == ItemNames.BREAKABLEWALL.getID()
-							|| itemID == ItemNames.SECRET.getID() || itemID > 23 && itemID < 44
+							|| itemID == ItemNames.SECRET.getID()
+							|| itemID > 23 && itemID < 44 && itemID != ItemNames.CANISTER.getID()
 							|| itemID >= 47 && itemID != ItemNames.BUTTON.getID() && itemID != 58 && itemID != 59
-									&& itemID != ItemNames.TURRET.getID() && itemID != ItemNames.EXPLOSION.getID()
-									&& itemID != ItemNames.TOILET.getID() && itemID != 110 && itemID != 111
-									&& itemID != 124) {
+									&& itemID != ItemNames.TURRET.getID() && itemID != ItemNames.TOILET.getID()
+									&& itemID != 110 && itemID != 111 && itemID != ItemNames.EXPLOSION.getID()
+									&& itemID != ItemNames.TRASH1.getID() && itemID < 124) {
 						// Item to be added to the map and block
 						Item temp = null;
 
@@ -171,13 +171,7 @@ public class Level {
 						 * If its not an explosive canister, add it as a normal item. Otherwise add it
 						 * as an explosive canister
 						 */
-						if (itemID != ItemNames.CANISTER.getID()) {
-							temp = new Item(10, i + 0.5, yValue, j + 0.5, itemID, (int) rotation, itemActID,
-									audioQueue);
-						} else {
-							temp = new ExplosiveCanister(10, i + 0.5, yValue, j + 0.5, itemID, (int) rotation,
-									itemActID);
-						}
+						temp = new Item(10, i + 0.5, yValue, j + 0.5, itemID, (int) rotation, itemActID, audioQueue);
 
 						// If the item is solid or another interactable block
 						if (temp.isSolid || itemID == ItemNames.BREAKABLEWALL.getID()
@@ -185,7 +179,6 @@ public class Level {
 							// Set item to being the item that is within this
 							// block only if it is solid
 							block.wallItems.add(temp);
-							;
 						}
 
 						// If satellite dish, add to activatable list as well
@@ -411,7 +404,7 @@ public class Level {
 						}
 
 						Random random = new Random();
-						int marineType = random.nextInt(5) + 10;
+						int marineType = random.nextInt(6) + 10;
 
 						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, marineType, rotation, itemActID);
 
@@ -427,7 +420,7 @@ public class Level {
 							yValue = 0;
 						}
 
-						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 15, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 16, rotation, itemActID);
 
 						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
@@ -441,7 +434,7 @@ public class Level {
 							yValue = 0;
 						}
 
-						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 16, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 17, rotation, itemActID);
 
 						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);
@@ -455,7 +448,147 @@ public class Level {
 							yValue = 0;
 						}
 
-						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 17, rotation, itemActID);
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 18, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Armored Menace entity
+					else if (itemID == 125) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 19, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Blind Charger entity
+					else if (itemID == 126) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 20, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Damned Soul entity
+					else if (itemID == 127) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 21, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Dark Strider entity
+					else if (itemID == 128) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 22, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Deceptor entity
+					else if (itemID == 129) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 23, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Heavy Zombie entity
+					else if (itemID == 130) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 24, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Moss Springer entity
+					else if (itemID == 131) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 25, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Tetra Destructor entity
+					else if (itemID == 132) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 26, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds Explosive Canister entity
+					else if (itemID == ItemNames.CANISTER.getID()) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 27, rotation, itemActID);
+
+						Game.entities.add(temp);
+						block.entitiesOnBlock.add(temp);
+					}
+					// Adds trash can entity
+					else if (itemID == ItemNames.TRASH1.getID()) {
+						// Sets the y value based on the aboveBlock boolean
+						double yValue = -((block.y * 4) + (block.height / 12));
+
+						if (!aboveBlock) {
+							yValue = 0;
+						}
+
+						Entity temp = new Entity(i + 0.5, yValue, j + 0.5, 28, rotation, itemActID);
 
 						Game.entities.add(temp);
 						block.entitiesOnBlock.add(temp);

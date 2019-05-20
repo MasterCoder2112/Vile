@@ -19,7 +19,7 @@ public class Scepter extends Weapon implements WeaponInterface {
 	 * Creates a new Weapon of ID 0
 	 */
 	public Scepter() {
-		super(4);
+		super(5);
 	}
 
 	/**

@@ -19,7 +19,7 @@ public class RocketLauncher extends Weapon implements WeaponInterface {
 	 * Creates new RocketLauncher with ID 3
 	 */
 	public RocketLauncher() {
-		super(3);
+		super(4);
 	}
 
 	/**
@@ -58,7 +58,7 @@ public class RocketLauncher extends Weapon implements WeaponInterface {
 				weaponPhase = 1;
 
 				// Adds rocket to map
-				Game.addBullet(damage, weaponID, 0.2, Player.rotation, criticalHit);
+				Game.addBullet(damage, weaponID - 1, 0.2, Player.rotation, criticalHit);
 
 				try {
 					// Begin rocket sound effect, and play firing sound effect

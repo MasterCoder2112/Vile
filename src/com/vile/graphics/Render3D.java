@@ -220,19 +220,8 @@ public class Render3D extends Render {
 		for (int i = 0; i < Game.entities.size(); ++i) {
 			Entity enemy = Game.entities.get(i);
 
-			// Correct the enemies y so it appears correct graphically
-			double yCorrect = enemy.getY();
-
-			/*
-			 * Because the boss is so gosh darn big, correct his graphical height of the
-			 * ground so it looks like he is touching the ground.
-			 */
-			if (enemy.isABoss) {
-				yCorrect -= 4;
-			}
-
 			// Call method to render Enemy
-			renderEnemy(enemy.getX(), yCorrect, enemy.getZ(), 0.2, enemy.ID, enemy);
+			renderEnemy(enemy.getX(), enemy.getY(), enemy.getZ(), 0.2, enemy.ID, enemy);
 		}
 
 		/*
@@ -245,9 +234,6 @@ public class Render3D extends Render {
 
 			// Block item is over or on
 			Block temp = Level.getBlock((int) item.x, (int) item.z);
-
-			// Difference between the item and the top of the block
-			double difference = item.y - (temp.height + (temp.y * 4) + temp.baseCorrect);
 
 			/*
 			 * To correct corpse heights because again, graphics in this game make no gosh
@@ -277,12 +263,8 @@ public class Render3D extends Render {
 			 * The bigger the sprite needs to be for the item being displayed, then lift it
 			 * higher off the ground so that it does not seem to clip through the ground.
 			 */
-			if (item.size < 240) {
-				extra -= 0.3;
-			}
-
 			// Smaller sprites
-			else if (item.size >= 240 && item.size < 420) {
+			if (item.size >= 240 && item.size < 420) {
 				extra -= 0.5;
 			}
 			// Larger sprites
@@ -305,20 +287,19 @@ public class Render3D extends Render {
 			}
 
 			// If Large objects
-			else if (item.size == 2048) {
-				extra -= 3.2;
+			else if (item.size == 1800) {
+				extra -= 2.6;
 			} else {
 				extra -= 0.3;
 			}
+			// TODO debug
 
 			// Fix depending on resolution
-			if (FPSLauncher.resolutionChoice > 3) {
-				extra = extra * (5.0 / 6);
-			} else if (FPSLauncher.resolutionChoice > 1) {
-				extra = extra * (11.0 / 12);
-			} else {
-				extra = extra * (12.0 / 11);
-			}
+			/*
+			 * if (FPSLauncher.resolutionChoice > 3) { extra = extra * (5.0 / 6); } else if
+			 * (FPSLauncher.resolutionChoice > 1) { extra = extra * (11.0 / 12); } else {
+			 * extra = extra * (12.0 / 11); }
+			 */
 
 			yCorrect += extra;
 
@@ -415,7 +396,6 @@ public class Render3D extends Render {
 		/*
 		 * Renders all other player sprites in the game
 		 */
-		// TODO This is not finished, only for testing the texture currently
 		for (int i = 0; i < Game.otherPlayers.size(); i++) {
 			ServerPlayer sP = Game.otherPlayers.get(i);
 			// render sprite
@@ -594,7 +574,6 @@ public class Render3D extends Render {
 	/*
 	 * Renders other players on the server given their player ID and positions
 	 */
-	// TODO Not finished yet, fix this up
 	public void renderPlayers(double x, double y, double z, double hOffSet, int ID) {
 		/*
 		 * The change in x, y, and z coordinates in correlation to the player to correct
@@ -605,8 +584,6 @@ public class Render3D extends Render {
 		double xC = (x - Player.x) * 1.9;
 		double yC = (Player.yCorrect / 11) - (y / 11);
 		double zC = (z - Player.z) * 1.9;
-
-		// TODO FIX JUMPING AND CROUCHING
 
 		// Size of sprite in terms of pixels. 512 x 512 is typical
 		int spriteSize = 512;
@@ -946,15 +923,40 @@ public class Render3D extends Render {
 		// Size of sprite in terms of pixels. 512 x 512 is typical
 		int spriteSize = 512;
 
+		yC += 0.1;
+
 		// Marines are adjusted to be the size of the player about.
-		if (enemy.ID >= 10 && enemy.ID <= 15) {
+		if (enemy.ID >= 10 && enemy.ID <= 16 || enemy.ID == 20 || enemy.ID == 25) {
 			spriteSize = 460;
-			yC += 0.3;
+
+			if (enemy.ID != 25) {
+				yC += 0.1;
+			}
+		}
+
+		if (enemy.ID == 19 || enemy.ID == 22) {
+			spriteSize = 720;
+			yC -= 0.4;
+		}
+
+		if (enemy.ID == 21) {
+			spriteSize = 320;
 		}
 
 		// If a boss, have a bigger sprite size
 		if (enemy.isABoss) {
-			spriteSize = 4096;
+			spriteSize = 3072;
+			yC -= 3.5;
+		}
+		// TODO for entities
+
+		// Adjust sprite size based on screen size
+		if (FPSLauncher.resolutionChoice > 3) {
+			spriteSize = (int) (spriteSize * (11.0 / 12));
+		} else if (FPSLauncher.resolutionChoice > 1) {
+			spriteSize = (int) (spriteSize * (9.5 / 12));
+		} else {
+			spriteSize = (int) (spriteSize * (10.0 / 12));
 		}
 
 		/*
@@ -1052,6 +1054,7 @@ public class Render3D extends Render {
 		// enemy.pixelsOnScreen = new ArrayList<Boolean>(Display.HEIGHT *
 		// Display.WIDTH);
 		enemy.canBeSeen = false;
+		int pixelsSeen = 0;
 
 		try {
 			/*
@@ -1131,8 +1134,6 @@ public class Render3D extends Render {
 							 */
 							if (color != 0xffffffff) {
 								try {
-									// TODO if entity is friendly, change color to distinguish it unless its a
-									// marine
 									if (enemy.isFriendly && (enemy.ID < 10 || enemy.ID > 17)) {
 										color = changeColor(255, 255, 255, color, 8, 0, 16);
 									}
@@ -1163,7 +1164,11 @@ public class Render3D extends Render {
 									PIXELS[(xx) + (yy + 1) * WIDTH] = color;
 									zBuffer[(xx) + (yy + 1) * WIDTH] = rotZ;
 
-									enemy.canBeSeen = true;
+									pixelsSeen++;
+
+									if (pixelsSeen >= 257) {
+										enemy.canBeSeen = true;
+									}
 								} catch (Exception e) {
 
 								}
@@ -1247,7 +1252,6 @@ public class Render3D extends Render {
 							 */
 							if (color != 0xffffffff) {
 								try {
-									// TODO if enemy is friendly, change color to distinguish it unless its a marine
 									if (enemy.isFriendly && (enemy.ID < 10 || enemy.ID > 17)) {
 										color = changeColor(255, 255, 255, color, 8, 0, 16);
 									}
@@ -1267,7 +1271,11 @@ public class Render3D extends Render {
 
 									// Adds to the pixels on screen this takes up
 									// enemy.pixelsOnScreen.set(xx + yy * WIDTH, true);
-									enemy.canBeSeen = true;
+									pixelsSeen++;
+
+									if (pixelsSeen >= 257) {
+										enemy.canBeSeen = true;
+									}
 								} catch (Exception e) {
 
 								}
@@ -1293,15 +1301,12 @@ public class Render3D extends Render {
 		if (enemy.canBeSeen && enemy.ID == 9) {
 			enemy.playerStareTime++;
 
-			// TODO maybe change time later
 			if (enemy.playerStareTime > 200) {
 				enemy.playerStareTime = 0;
 			}
 		} else {
 			enemy.playerStareTime = 0;
 		}
-
-		// TODO maybe re-add in future
 		/*
 		 * If off screen, still save the pixels of the enemy in a crude way so that
 		 * projectiles can still hit the enemies if you look away from them. Of course
@@ -1353,16 +1358,30 @@ public class Render3D extends Render {
 			return;
 		}
 
+		int size = item.size;
+
+		// Corrects item size depending on the resolution choice so it is not overally
+		// big or small depending on the screen size.
+		if (FPSLauncher.resolutionChoice > 3) {
+			size = (int) (size * (23.0 / 24));
+		} else if (FPSLauncher.resolutionChoice > 1) {
+			size = (int) (size * (9.5 / 12));
+		} else {
+			size = (int) (size * (10.0 / 12));
+		}
+
+		// TODO mess with height stuff
+
 		double xCenter = WIDTH / 2;
 
 		double xPixel = ((rotX / rotZ) * HEIGHT) + xCenter;
 		double yPixel = ((rotY / rotZ) * HEIGHT) + (HEIGHT / Math.sin(Player.upRotate) * Math.cos(Player.upRotate));
 
-		double xPixelL = xPixel - (item.size / rotZ);
-		double xPixelR = xPixel + (item.size / rotZ);
+		double xPixelL = xPixel - (size / rotZ);
+		double xPixelR = xPixel + (size / rotZ);
 
-		double yPixelL = yPixel - (item.size / rotZ);
-		double yPixelR = yPixel + (item.size / rotZ);
+		double yPixelL = yPixel - (size / rotZ);
+		double yPixelR = yPixel + (size / rotZ);
 
 		int xPixL = (int) (xPixelL);
 		int xPixR = (int) (xPixelR);
@@ -1922,13 +1941,13 @@ public class Render3D extends Render {
 		// Trash can 1
 		case 83:
 			item.phaseTime = 0;
-			item.itemImage = Textures.trash3;
+			item.itemImage = Textures.trash1;
 			break;
 
 		// Trash can 2
 		case 84:
 			item.phaseTime = 0;
-			item.itemImage = Textures.trash1;
+			item.itemImage = Textures.trash3;
 			break;
 
 		// Trash can 3
@@ -2343,8 +2362,6 @@ public class Render3D extends Render {
 				}
 			}
 		}
-
-		// TODO FIX THIS
 		/*
 		 * If off screen, still save the pixels of the enemy in a crude way so that
 		 * projectiles can still hit the enemies if you look away from them. Of course
@@ -2634,89 +2651,30 @@ public class Render3D extends Render {
 
 		int spriteSize = 150;
 
-		// If phase cannon bolt
-		if (hitSprite.ID == 2) {
-			spriteSize = 600;
-		}
-		// If fireball or critical hit
-		else if (hitSprite.ID == 4 || hitSprite.ID == 6) {
-			spriteSize = 300;
-		}
-
-		double rotX = xC * cosine - zC * sine;
-		double rotY = yC;
-		double rotZ = zC * cosine + xC * sine;
-
-		// If the sprite is behind the player, don't even try to render it.
-		if (rotZ <= 0) {
-			return;
-		}
-
-		double xCenter = WIDTH / 2;
-
-		double xPixel = ((rotX / rotZ) * HEIGHT) + xCenter;
-		double yPixel = ((rotY / rotZ) * HEIGHT) + (HEIGHT / Math.sin(Player.upRotate) * Math.cos(Player.upRotate));
-
-		double xPixelL = xPixel - (spriteSize / rotZ);
-		double xPixelR = xPixel + (spriteSize / rotZ);
-
-		double yPixelL = yPixel - (spriteSize / rotZ);
-		double yPixelR = yPixel + (spriteSize / rotZ);
-
-		int xPixL = (int) (xPixelL);
-		int xPixR = (int) (xPixelR);
-		int yPixL = (int) (yPixelL);
-		int yPixR = (int) (yPixelR);
-
-		if (xPixL < 0) {
-			xPixL = 0;
-		}
-
-		if (xPixR > WIDTH) {
-			xPixR = WIDTH;
-		}
-
-		if (yPixL < 0) {
-			yPixL = 0;
-		}
-
-		if (yPixR > HEIGHT) {
-			yPixR = HEIGHT;
-		}
-
-		// If the image is not on the screen. Return and do not render.
-		if (Math.abs(xPixL - xPixR) == 0) {
-			return;
-		}
-
-		rotZ *= 8;
-
-		int imageDimensions = 256;
-
-		int correction = 1;
-
-		if (lowRes) {
-			correction = 2;
-		}
-
 		switch (hitSprite.ID) {
 		// Pistol and shotgun bullets
 		case 0:
 		case 1:
+			spriteSize = 75;
+
 			if (hitSprite.phaseTime <= 6) {
 				hitSprite.spriteImage = Textures.bulletHit1;
-			} else if (hitSprite.phaseTime <= 13) {
+			} else if (hitSprite.phaseTime <= 11) {
 				hitSprite.spriteImage = Textures.bulletHit2;
-			} else if (hitSprite.phaseTime <= 20) {
+			} else if (hitSprite.phaseTime <= 16) {
 				hitSprite.spriteImage = Textures.bulletHit3;
-			} else {
+			} else if (hitSprite.phaseTime <= 20) {
 				hitSprite.spriteImage = Textures.bulletHit4;
+			} else {
+				hitSprite.spriteImage = Textures.bulletHit5;
 				return; // TODO take return out when fixed
 			}
 
 			break;
 		// If the Phase Cannon hits something.
 		case 2:
+			spriteSize = 600;
+
 			if (hitSprite.phaseTime <= 4) {
 				hitSprite.spriteImage = Textures.phaseHit1;
 			} else if (hitSprite.phaseTime <= 8) {
@@ -2751,6 +2709,8 @@ public class Render3D extends Render {
 
 		// If an enemy fireball hits something
 		case 4:
+			spriteSize = 300;
+
 			if (hitSprite.phaseTime <= 5) {
 				hitSprite.spriteImage = Textures.fireHit1;
 			} else if (hitSprite.phaseTime <= 10) {
@@ -2767,6 +2727,8 @@ public class Render3D extends Render {
 
 		// Critical hit
 		case 6:
+			spriteSize = 300;
+
 			if (hitSprite.phaseTime <= 4) {
 				hitSprite.spriteImage = Textures.criticalHit1;
 			} else if (hitSprite.phaseTime <= 8) {
@@ -2827,18 +2789,78 @@ public class Render3D extends Render {
 
 		// Default bullet disappears
 		default:
-			if (hitSprite.phaseTime <= 4) {
+			spriteSize = 75;
+
+			if (hitSprite.phaseTime <= 6) {
 				hitSprite.spriteImage = Textures.bulletHit1;
-			} else if (hitSprite.phaseTime <= 8) {
+			} else if (hitSprite.phaseTime <= 11) {
 				hitSprite.spriteImage = Textures.bulletHit2;
-			} else if (hitSprite.phaseTime <= 10) {
+			} else if (hitSprite.phaseTime <= 16) {
 				hitSprite.spriteImage = Textures.bulletHit3;
-			} else {
+			} else if (hitSprite.phaseTime <= 20) {
 				hitSprite.spriteImage = Textures.bulletHit4;
-				return;
+			} else {
+				hitSprite.spriteImage = Textures.bulletHit5;
+				return; // TODO take return out when fixed
 			}
 
 			break;
+		}
+
+		double rotX = xC * cosine - zC * sine;
+		double rotY = yC;
+		double rotZ = zC * cosine + xC * sine;
+
+		// If the sprite is behind the player, don't even try to render it.
+		if (rotZ <= 0) {
+			return;
+		}
+
+		double xCenter = WIDTH / 2;
+
+		double xPixel = ((rotX / rotZ) * HEIGHT) + xCenter;
+		double yPixel = ((rotY / rotZ) * HEIGHT) + (HEIGHT / Math.sin(Player.upRotate) * Math.cos(Player.upRotate));
+
+		double xPixelL = xPixel - (spriteSize / rotZ);
+		double xPixelR = xPixel + (spriteSize / rotZ);
+
+		double yPixelL = yPixel - (spriteSize / rotZ);
+		double yPixelR = yPixel + (spriteSize / rotZ);
+
+		int xPixL = (int) (xPixelL);
+		int xPixR = (int) (xPixelR);
+		int yPixL = (int) (yPixelL);
+		int yPixR = (int) (yPixelR);
+
+		if (xPixL < 0) {
+			xPixL = 0;
+		}
+
+		if (xPixR > WIDTH) {
+			xPixR = WIDTH;
+		}
+
+		if (yPixL < 0) {
+			yPixL = 0;
+		}
+
+		if (yPixR > HEIGHT) {
+			yPixR = HEIGHT;
+		}
+
+		// If the image is not on the screen. Return and do not render.
+		if (Math.abs(xPixL - xPixR) == 0) {
+			return;
+		}
+
+		rotZ *= 8;
+
+		int imageDimensions = 256;
+
+		int correction = 1;
+
+		if (lowRes) {
+			correction = 2;
 		}
 
 		// boolean xRender = false;
@@ -2995,10 +3017,21 @@ public class Render3D extends Render {
 			spriteSize = 512;
 		}
 
+		y += 0.1;
+
 		// If it is the corpse of a boss
 		if (corpse.enemyID == 6 || corpse.enemyID == 8) {
-			spriteSize = 4096;
-			y -= 3;
+			spriteSize = 3072;
+			y -= 3.3;
+		}
+
+		// Adjust sprite size based on screen size
+		if (FPSLauncher.resolutionChoice > 3) {
+			spriteSize = (int) (spriteSize * (11.0 / 12));
+		} else if (FPSLauncher.resolutionChoice > 1) {
+			spriteSize = (int) (spriteSize * (9.5 / 12));
+		} else {
+			spriteSize = (int) (spriteSize * (10.0 / 12));
 		}
 
 		double xC = ((x) - Player.x) * 1.9;
@@ -3071,7 +3104,7 @@ public class Render3D extends Render {
 
 		// Depending on corpse, have a different sprite
 		// depending on the enemy killed.
-		if (corpse.phaseTime == 0) {
+		if (corpse.phaseTime <= 0) {
 			if (corpse.enemyID == 7) {
 				corpseGraphics = Textures.corpseType2;
 			} else if (corpse.enemyID == 1) {
@@ -3095,15 +3128,41 @@ public class Render3D extends Render {
 			} else if (corpse.enemyID == 12) {
 				corpseGraphics = Textures.defaultCorpse3;
 			} else if (corpse.enemyID == 13) {
-				corpseGraphics = Textures.defaultCorpse5;
+				if (corpse.corpseType == 0) {
+					corpseGraphics = Textures.marine4corpse1;
+				} else {
+					corpseGraphics = Textures.marine4corpse2;
+				}
 			} else if (corpse.enemyID == 14) {
 				corpseGraphics = Textures.defaultCorpse6;
 			} else if (corpse.enemyID == 15) {
-				corpseGraphics = Textures.chairBroken;
+				corpseGraphics = Textures.marine6corpse;
 			} else if (corpse.enemyID == 16) {
-				corpseGraphics = Textures.toiletBroken1;
+				corpseGraphics = Textures.chairBroken;
 			} else if (corpse.enemyID == 17) {
+				corpseGraphics = Textures.toiletBroken1;
+			} else if (corpse.enemyID == 18) {
 				corpseGraphics = Textures.turretDown;
+			} else if (corpse.enemyID == 19) {
+				corpseGraphics = Textures.armoredMenaceCorpse;
+			} else if (corpse.enemyID == 20) {
+				corpseGraphics = Textures.blindChargerCorpse;
+			} else if (corpse.enemyID == 21) {
+				return;
+			} else if (corpse.enemyID == 22) {
+				corpseGraphics = Textures.darkStriderCorpse;
+			} else if (corpse.enemyID == 23) {
+				corpseGraphics = Textures.deceptorCorpse;
+			} else if (corpse.enemyID == 24) {
+				corpseGraphics = Textures.heavyZombieCorpse;
+			} else if (corpse.enemyID == 25) {
+				corpseGraphics = Textures.mossSpringerCorpse;
+			} else if (corpse.enemyID == 26) {
+				corpseGraphics = Textures.tetraDestructorCorpse;
+			} else if (corpse.enemyID == 27) {
+				corpseGraphics = Textures.canExploded;
+			} else if (corpse.enemyID == 28) {
+				corpseGraphics = Textures.trashBroken;
 			} else {
 				corpseGraphics = corpse.corpseImage;
 			}
@@ -3255,12 +3314,34 @@ public class Render3D extends Render {
 			} else if (corpse.enemyID == 12) {
 				corpseGraphics = Textures.defaultCorpse3;
 			} else if (corpse.enemyID == 13) {
-				corpseGraphics = Textures.defaultCorpse5;
+				if (corpse.corpseType == 0) {
+					if (corpse.phaseTime >= 18) {
+						corpseGraphics = Textures.marine4corpse1a;
+					} else if (corpse.phaseTime >= 12) {
+						corpseGraphics = Textures.marine4corpse1b;
+					} else if (corpse.phaseTime >= 6) {
+						corpseGraphics = Textures.marine4corpse1c;
+					} else {
+						corpseGraphics = Textures.marine4corpse1d;
+					}
+				} else {
+					if (corpse.phaseTime >= 18) {
+						corpseGraphics = Textures.marine4corpse2a;
+					} else if (corpse.phaseTime >= 12) {
+						corpseGraphics = Textures.marine4corpse2b;
+					} else if (corpse.phaseTime >= 6) {
+						corpseGraphics = Textures.marine4corpse2c;
+					} else {
+						corpseGraphics = Textures.marine4corpse2d;
+					}
+				}
 			} else if (corpse.enemyID == 14) {
 				corpseGraphics = Textures.defaultCorpse6;
 			} else if (corpse.enemyID == 15) {
-				corpseGraphics = Textures.chairBroken;
+				corpseGraphics = Textures.marine6corpse;
 			} else if (corpse.enemyID == 16) {
+				corpseGraphics = Textures.chairBroken;
+			} else if (corpse.enemyID == 17) {
 				if (corpse.phaseTime >= 18) {
 					corpseGraphics = Textures.toiletBroken1;
 				} else if (corpse.phaseTime >= 12) {
@@ -3270,8 +3351,35 @@ public class Render3D extends Render {
 				} else if (corpse.phaseTime >= 0) {
 					corpseGraphics = Textures.toiletBroken4;
 				}
-			} else if (corpse.enemyID == 17) {
+			} else if (corpse.enemyID == 18) {
 				corpseGraphics = Textures.turretDown;
+			} else if (corpse.enemyID == 19) {
+				corpseGraphics = Textures.armoredMenaceCorpse;
+			} else if (corpse.enemyID == 20) {
+				corpseGraphics = Textures.blindChargerCorpse;
+			} else if (corpse.enemyID == 21) {
+				return;
+			} else if (corpse.enemyID == 22) {
+				corpseGraphics = Textures.darkStriderCorpse;
+			} else if (corpse.enemyID == 23) {
+				corpseGraphics = Textures.deceptorCorpse;
+			} else if (corpse.enemyID == 24) {
+				corpseGraphics = Textures.heavyZombieCorpse;
+			} else if (corpse.enemyID == 25) {
+				corpseGraphics = Textures.mossSpringerCorpse;
+			} else if (corpse.enemyID == 26) {
+				corpseGraphics = Textures.tetraDestructorCorpse;
+			} else if (corpse.enemyID == 27) {
+				corpseGraphics = Textures.canExploded;
+			} else if (corpse.enemyID == 28) {
+				if (corpse.phaseTime >= 12) {
+					corpseGraphics = Textures.trashBreak;
+				} else {
+					corpseGraphics = Textures.trashBroken;
+				}
+
+				// Goes down twice as fast
+				corpse.phaseTime--;
 			} else {
 				if (corpse.phaseTime >= 21) {
 					corpseGraphics = Textures.corpse1;
@@ -3421,7 +3529,7 @@ public class Render3D extends Render {
 		}
 
 		double xC = (x - Player.x) * 1.9;
-		double yC = newy + (Player.yCorrect / 11);
+		double yC = (newy) + ((Player.yCorrect) / 16);
 		double zC = (z - Player.z) * 1.9;
 
 		double rotX = xC * cosine - zC * sine;
@@ -4339,7 +4447,143 @@ public class Render3D extends Render {
 
 			// Wall 43
 			case 43:
-				block.wallImage = Textures.normButtonOn;
+				block.wallImage = Textures.wall43;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 44
+			case 44:
+				block.wallImage = Textures.wall44;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 45
+			case 45:
+				block.wallImage = Textures.wall45;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 46
+			case 46:
+				block.wallImage = Textures.wall46;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 47
+			case 47:
+				block.wallImage = Textures.wall47;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 48
+			case 48:
+				block.wallImage = Textures.wall48;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 49
+			case 49:
+				block.wallImage = Textures.wall49;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 50
+			case 50:
+				block.wallImage = Textures.wall50;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 51
+			case 51:
+				block.wallImage = Textures.wall51;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 52
+			case 52:
+				block.wallImage = Textures.wall52;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 53
+			case 53:
+				block.wallImage = Textures.wall53;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 54
+			case 54:
+				block.wallImage = Textures.wall54;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 55
+			case 55:
+				block.wallImage = Textures.wall55;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 56
+			case 56:
+				block.wallImage = Textures.wall56;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 57
+			case 57:
+				block.wallImage = Textures.wall57;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 58
+			case 58:
+				block.wallImage = Textures.wall58;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 59
+			case 59:
+				block.wallImage = Textures.wall59;
+
+				block.wallPhase = 0;
+
+				break;
+
+			// Wall 60
+			case 60:
+				block.wallImage = Textures.wall60;
 
 				block.wallPhase = 0;
 
@@ -4347,7 +4591,7 @@ public class Render3D extends Render {
 
 			// Default texture
 			default:
-				block.wallImage = Textures.coolWall;
+				block.wallImage = Textures.normButtonOn;
 
 				block.wallPhase = 0;
 
@@ -4994,83 +5238,107 @@ public class Render3D extends Render {
 	 * the map.
 	 */
 	public void renderDistanceLimiter() {
-		int skip = 6;
+		int redLess = 0;
+		int greenLess = 0;
+		int blueLess = 0;
+
+		/*
+		 * Divides that value by 255, then multiplies it by the brightness level of the
+		 * pixel to determine how bright the reds, greens, and blues in each pixel will
+		 * get. Getting drunk causes the players vision to get darker and a little bit
+		 * distorted.
+		 */
+		if (Player.drunkLevels > 500) {
+			if (Player.drunkLevels > 4000) {
+				redLess = 255;
+				greenLess = 255;
+				blueLess = 255;
+			} else if (Player.drunkLevels > 3500) {
+				redLess = 235;
+				greenLess = 220;
+				blueLess = 255;
+			} else if (Player.drunkLevels > 3000) {
+				redLess = 180;
+				greenLess = 200;
+				blueLess = 145;
+			} else if (Player.drunkLevels > 2500) {
+				redLess = 145;
+				greenLess = 90;
+				blueLess = 115;
+			} else if (Player.drunkLevels > 2000) {
+				redLess = 90;
+				greenLess = 60;
+				blueLess = 45;
+			} else if (Player.drunkLevels > 1500) {
+				redLess = 15;
+				greenLess = 45;
+				blueLess = 30;
+			} else if (Player.drunkLevels > 1000) {
+				redLess = 10;
+				greenLess = 30;
+				blueLess = 5;
+			} else {
+				redLess = 7;
+				greenLess = 3;
+				blueLess = 8;
+			}
+		}
+
+		int rShift = 16;
+		int gShift = 8;
+		int bShift = 0;
+
+		// Determines beforehand what color the pixels should be shifted to
+		if (Player.alive && Player.playerHurt == 0) {
+			int ePT = Player.environProtectionTime;
+
+			if (ePT > 0) {
+				if (ePT <= 100 * fpsCheck && ePT % 5 == 0) {
+					// Do nothing
+				} else {
+					rShift = 8;
+					bShift = 8;
+				}
+			}
+		} else {
+			if (Display.smileMode) {
+				rShift = 0;
+				gShift = 0;
+			} else {
+				gShift = 16;
+				bShift = 16;
+			}
+		}
+
+		boolean hasVision = true;
+
+		if (Player.vision < 100 * fpsCheck && Player.vision % 5 == 0) {
+			hasVision = false;
+		}
 
 		// Go through all the pixels on the screen in series of 6
-		for (int i = 0; i < (WIDTH * HEIGHT); i += skip) {
+		for (int i = 0; i < (WIDTH * HEIGHT); i++) {
 			// Color value of this pixel in integer form
 			int color = PIXELS[i];
-			int color1 = 0;
-			int color2 = 0;
-			int color3 = 0;
-			int color4 = 0;
-			int color5 = 0;
 
 			// Brightness of color. 255 is Full brightness
 			int brightness = 255;
-			int brightness1 = 255;
-			int brightness2 = 255;
-			int brightness3 = 255;
-			int brightness4 = 255;
-			int brightness5 = 255;
-
-			int j = Player.vision;
 
 			/*
-			 * If player is nearing the end of immortality, or is not immortal.
+			 * If player has vision, brightness is 255. Otherwise it changes depending on z
+			 * distance away
 			 */
-			if (j < 100 * fpsCheck && j % 5 == 0) {
+			if (!hasVision) {
 				/*
 				 * The brightness of each pixel depending on its distance from the player, and
 				 * the render Distance
 				 */
 				brightness = (int) (renderDistance / (zBuffer[i]));
-				brightness1 = (int) (renderDistance / (zBuffer[i + 1]));
-				brightness2 = (int) (renderDistance / (zBuffer[i + 2]));
-				brightness3 = (int) (renderDistance / (zBuffer[i + 3]));
-				brightness4 = (int) (renderDistance / (zBuffer[i + 4]));
-				brightness5 = (int) (renderDistance / (zBuffer[i + 5]));
-			}
-			// If the player has full vision
-			else {
-				brightness = 255;
-				brightness1 = 255;
-				brightness2 = 255;
-				brightness3 = 255;
-				brightness4 = 255;
-				brightness5 = 255;
 			}
 
 			// Never can be less than 0 brightness
 			if (brightness < 0) {
 				brightness = 0;
-			}
-
-			color1 = PIXELS[i + 1];
-			color2 = PIXELS[i + 2];
-			color3 = PIXELS[i + 3];
-			color4 = PIXELS[i + 4];
-			color5 = PIXELS[i + 5];
-
-			// Can never be brighter than 255
-			if (brightness1 > 255) {
-				brightness1 = 255;
-			}
-			// Can never be brighter than 255
-			if (brightness2 > 255) {
-				brightness2 = 255;
-			}
-			// Can never be brighter than 255
-			if (brightness3 > 255) {
-				brightness3 = 255;
-			}
-			// Can never be brighter than 255
-			if (brightness4 > 255) {
-				brightness4 = 255;
-			}
-			// Can never be brighter than 255
-			if (brightness5 > 255) {
-				brightness5 = 255;
 			}
 
 			// Can never be brighter than 255
@@ -5091,189 +5359,28 @@ public class Render3D extends Render {
 			int r = (color >> 16) & 255;
 			int g = (color >> 8) & 255;
 			int b = color & 255;
-			int r1 = 0;
-			int g1 = 0;
-			int b1 = 0;
-			int r2 = 0;
-			int g2 = 0;
-			int b2 = 0;
-			int r3 = 0;
-			int g3 = 0;
-			int b3 = 0;
-			int r4 = 0;
-			int g4 = 0;
-			int b4 = 0;
-			int r5 = 0;
-			int g5 = 0;
-			int b5 = 0;
 
-			/*
-			 * Divides that value by 255, then multiplies it by the brightness level of the
-			 * pixel to determine how bright the reds, greens, and blues in each pixel will
-			 * get. Getting drunk causes the players vision to get darker and a little bit
-			 * distorted.
-			 */
-			if (Player.drunkLevels > 500) {
-				int redLess = brightness;
-				int greenLess = brightness;
-				int blueLess = brightness;
-
-				if (Player.drunkLevels > 4000) {
-					redLess -= 255;
-					greenLess -= 255;
-					blueLess -= 255;
-				} else if (Player.drunkLevels > 3500) {
-					redLess -= 235;
-					greenLess -= 220;
-					blueLess -= 255;
-				} else if (Player.drunkLevels > 3000) {
-					redLess -= 180;
-					greenLess -= 200;
-					blueLess -= 145;
-				} else if (Player.drunkLevels > 2500) {
-					redLess -= 145;
-					greenLess -= 90;
-					blueLess -= 115;
-				} else if (Player.drunkLevels > 2000) {
-					redLess -= 90;
-					greenLess -= 60;
-					blueLess -= 45;
-				} else if (Player.drunkLevels > 1500) {
-					redLess -= 15;
-					greenLess -= 45;
-					blueLess -= 30;
-				} else if (Player.drunkLevels > 1000) {
-					redLess -= 10;
-					greenLess -= 30;
-					blueLess -= 5;
-				} else {
-					redLess -= 7;
-					greenLess -= 3;
-					blueLess -= 8;
-				}
-
-				if (redLess < 0) {
-					redLess = 0;
-				}
-
-				if (greenLess < 0) {
-					greenLess = 0;
-				}
-
-				if (blueLess < 0) {
-					blueLess = 0;
-				}
-
-				r = (r * redLess) / 255;
-				g = (g * greenLess) / 255;
-				b = (b * blueLess) / 255;
-				r1 = (color1 >> 16) & 255;
-				g1 = (color1 >> 8) & 255;
-				b1 = color1 & 255;
-				r2 = (color2 >> 16) & 255;
-				g2 = (color2 >> 8) & 255;
-				b2 = color2 & 255;
-				r3 = (color3 >> 16) & 255;
-				g3 = (color3 >> 8) & 255;
-				b3 = color3 & 255;
-				r4 = (color4 >> 16) & 255;
-				g4 = (color4 >> 8) & 255;
-				b4 = color4 & 255;
-				r5 = (color5 >> 16) & 255;
-				g5 = (color5 >> 8) & 255;
-				b5 = color5 & 255;
-				r1 = (r1 * redLess) / 255;
-				g1 = (g1 * greenLess) / 255;
-				b1 = (b1 * blueLess) / 255;
-				r2 = (r2 * redLess) / 255;
-				g2 = (g2 * greenLess) / 255;
-				b2 = (b2 * blueLess) / 255;
-				r3 = (r3 * redLess) / 255;
-				g3 = (g3 * greenLess) / 255;
-				b3 = (b3 * blueLess) / 255;
-				r4 = (r4 * redLess) / 255;
-				g4 = (g4 * greenLess) / 255;
-				b4 = (b4 * blueLess) / 255;
-				r5 = (r5 * redLess) / 255;
-				g5 = (g5 * greenLess) / 255;
-				b5 = (b5 * blueLess) / 255;
+			if (brightness - redLess < 0) {
+				r = 0;
 			} else {
-				r = (r * brightness) / 255;
-				g = (g * brightness) / 255;
-				b = (b * brightness) / 255;
-				r1 = (color1 >> 16) & 255;
-				g1 = (color1 >> 8) & 255;
-				b1 = color1 & 255;
-				r2 = (color2 >> 16) & 255;
-				g2 = (color2 >> 8) & 255;
-				b2 = color2 & 255;
-				r3 = (color3 >> 16) & 255;
-				g3 = (color3 >> 8) & 255;
-				b3 = color3 & 255;
-				r4 = (color4 >> 16) & 255;
-				g4 = (color4 >> 8) & 255;
-				b4 = color4 & 255;
-				r5 = (color5 >> 16) & 255;
-				g5 = (color5 >> 8) & 255;
-				b5 = color5 & 255;
-				r1 = (r1 * brightness1) / 255;
-				g1 = (g1 * brightness1) / 255;
-				b1 = (b1 * brightness1) / 255;
-				r2 = (r2 * brightness2) / 255;
-				g2 = (g2 * brightness2) / 255;
-				b2 = (b2 * brightness2) / 255;
-				r3 = (r3 * brightness3) / 255;
-				g3 = (g3 * brightness3) / 255;
-				b3 = (b3 * brightness3) / 255;
-				r4 = (r4 * brightness4) / 255;
-				g4 = (g4 * brightness4) / 255;
-				b4 = (b4 * brightness4) / 255;
-				r5 = (r5 * brightness5) / 255;
-				g5 = (g5 * brightness5) / 255;
-				b5 = (b5 * brightness5) / 255;
+				r = (r * (brightness - redLess)) / 255;
 			}
 
-			// Reset the bits of that particular pixel
-			if (Player.alive && Player.playerHurt == 0) {
-				int ePT = Player.environProtectionTime;
-
-				if ((ePT < 100 * fpsCheck && ePT % 5 == 0)) {
-					PIXELS[i] = r << 16 | g << 8 | b;
-					PIXELS[i + 1] = r1 << 16 | g1 << 8 | b1;
-					PIXELS[i + 2] = r2 << 16 | g2 << 8 | b2;
-					PIXELS[i + 3] = r3 << 16 | g3 << 8 | b3;
-					PIXELS[i + 4] = r4 << 16 | g4 << 8 | b4;
-					PIXELS[i + 5] = r5 << 16 | g5 << 8 | b5;
-				} else {
-					PIXELS[i] = r << 8 | g << 8 | b << 8;
-					PIXELS[i + 1] = r1 << 8 | g1 << 8 | b1 << 8;
-					PIXELS[i + 2] = r2 << 8 | g2 << 8 | b2 << 8;
-					PIXELS[i + 3] = r3 << 8 | g3 << 8 | b3 << 8;
-					PIXELS[i + 4] = r4 << 8 | g4 << 8 | b4 << 8;
-					PIXELS[i + 5] = r5 << 8 | g5 << 8 | b5 << 8;
-				}
+			if (brightness - greenLess < 0) {
+				g = 0;
 			} else {
-				if (Display.smileMode) {
-					PIXELS[i] = r | g | b;
-					PIXELS[i + 1] = r1 | g1 | b1;
-					PIXELS[i + 2] = r2 | g2 | b2;
-					PIXELS[i + 3] = r3 | g3 | b3;
-					PIXELS[i + 4] = r4 | g4 | b4;
-					PIXELS[i + 5] = r5 | g5 | b5;
-				} else {
-					PIXELS[i] = r << 16 | g << 16 | b << 16;
-					PIXELS[i + 1] = r1 << 16 | g1 << 16 | b1 << 16;
-					PIXELS[i + 2] = r2 << 16 | g2 << 16 | b2 << 16;
-					PIXELS[i + 3] = r3 << 16 | g3 << 16 | b3 << 16;
-					PIXELS[i + 4] = r4 << 16 | g4 << 16 | b4 << 16;
-					PIXELS[i + 5] = r5 << 16 | g5 << 16 | b5 << 16;
-				}
+				g = (g * (brightness - greenLess)) / 255;
 			}
 
-			if (i + 6 > WIDTH * HEIGHT) {
-				skip = 1;
+			if (brightness - blueLess < 0) {
+				b = 0;
+			} else {
+				b = (b * (brightness - blueLess)) / 255;
 			}
+
+			PIXELS[i] = r << rShift | g << gShift | b << bShift;
 		}
+
 	}
 
 	/**

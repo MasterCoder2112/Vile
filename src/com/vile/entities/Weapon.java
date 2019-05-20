@@ -20,6 +20,7 @@ public abstract class Weapon {
 
 	// Damage and ammo it holds
 	public int damage = 20;
+	public int baseDamage = 20;
 	public int ammo = 40;
 	public int upgradePointsNeeded = 4;
 
@@ -46,8 +47,12 @@ public abstract class Weapon {
 	// FLAGS
 	// Can the weapon be Equipped
 	public boolean canBeEquipped = false;
+
 	// Weapon can be dualWielded
 	public boolean dualWield = false;
+
+	// Does weapon shoot or melee
+	public boolean melee = false;
 
 	// Is the weapon reloading? If so it cannot shoot, and the graphics will change.
 	public int reloading = 0;
@@ -61,46 +66,61 @@ public abstract class Weapon {
 		this.weaponID = weaponID;
 
 		if (weaponID == 0) {
+			name = "Sword";
+			baseDamage = 15;
+			damage = 20;
+			ammo = 0;
+			cartridges = new ArrayList<Cartridge>();
+			cooldownTime = 40;
+			ammoLimit = 0;
+			upgradePointsNeeded = 4;
+			melee = true;
+		} else if (weaponID == 1) {
 			name = "Pistol";
-			damage = 10;
+			baseDamage = 15;
+			damage = 15;
 			ammo = 28;
 			cartridges = new ArrayList<Cartridge>();
 			cooldownTime = 25;
 			ammoLimit = 28;
 			upgradePointsNeeded = 4;
-		} else if (weaponID == 1) {
+		} else if (weaponID == 2) {
 			name = "Shotgun";
+			baseDamage = 6;
 			damage = 6;
 			ammo = 8;
 			cartridges = new ArrayList<Cartridge>();
 			cooldownTime = 43;
-			ammoLimit = 16;
+			ammoLimit = 8;
 			canBeEquipped = false;
 			upgradePointsNeeded = 6;
-		} else if (weaponID == 2) {
+		} else if (weaponID == 3) {
 			name = "Phase Cannon";
+			baseDamage = 120;
 			damage = 120;
 			ammo = 5;
 			cartridges = new ArrayList<Cartridge>();
 			cooldownTime = 60;
-			ammoLimit = 20;
+			ammoLimit = 10;
 			upgradePointsNeeded = 10;
-		} else if (weaponID == 3) {
+		} else if (weaponID == 4) {
 			name = "Rocket Launcher";
+			baseDamage = 50;
 			damage = 50;
 			ammo = 5;
 			cartridges = new ArrayList<Cartridge>();
 			cooldownTime = 40;
 			ammoLimit = 5;
 			upgradePointsNeeded = 12;
-		} else if (weaponID == 4) {
+		} else if (weaponID == 5) {
 			name = "Scepter of Deciet";
+			baseDamage = 0;
 			damage = 0;
 			ammo = 1;
 			cartridges = new ArrayList<Cartridge>();
 			cooldownTime = 25;
 			ammoLimit = 3;
-			upgradePointsNeeded = 15;
+			upgradePointsNeeded = -1;
 		}
 	}
 
@@ -116,36 +136,50 @@ public abstract class Weapon {
 		this.dualWield = dualWield;
 
 		if (weaponID == 0) {
+			name = "Sword";
+			baseDamage = 15;
+			damage = 20;
+			this.ammo = 0;
+			cartridges = new ArrayList<Cartridge>();
+			cooldownTime = 40;
+			ammoLimit = 0;
+			melee = true;
+		} else if (weaponID == 1) {
 			name = "Pistol";
-			damage = 10;
+			baseDamage = 15;
+			damage = 15;
 			this.ammo = ammo;
 			cartridges = temp;
 			cooldownTime = 25;
 			ammoLimit = 25;
-		} else if (weaponID == 1) {
+		} else if (weaponID == 2) {
 			name = "Shotgun";
+			baseDamage = 6;
 			damage = 6;
 			this.ammo = ammo;
 			cartridges = temp;
 			cooldownTime = 43;
 			ammoLimit = 16;
 			canBeEquipped = false;
-		} else if (weaponID == 2) {
+		} else if (weaponID == 3) {
 			name = "Phase Cannon";
+			baseDamage = 120;
 			damage = 120;
 			this.ammo = ammo;
 			cartridges = temp;
 			cooldownTime = 60;
 			ammoLimit = 20;
-		} else if (weaponID == 3) {
+		} else if (weaponID == 4) {
 			name = "Rocket Launcher";
+			baseDamage = 50;
 			damage = 50;
 			this.ammo = ammo;
 			cartridges = temp;
 			cooldownTime = 40;
 			ammoLimit = 5;
-		} else if (weaponID == 4) {
+		} else if (weaponID == 5) {
 			name = "Scepter of Deciet";
+			baseDamage = 0;
 			damage = 0;
 			this.ammo = ammo;
 			cartridges = temp;
@@ -169,7 +203,7 @@ public abstract class Weapon {
 			// Can weapon be dual wielded? If not do this
 			if (!dualWield) {
 				// Only begin the next shot if previous one is done
-				if (weaponShootTime == 0 && ammo > 0) {
+				if (weaponShootTime == 0 && (ammo > 0 || melee)) {
 					weaponShootTime++;
 
 					couldBeShot = true;
@@ -224,14 +258,15 @@ public abstract class Weapon {
 		// Default amount of ammo you get
 		int amount = value;
 
-		// The amount you extra you get after your imediate ammo is filled
+		// The amount you extra you get after your immediate ammo is filled
 		int extra = 0;
 
 		// If everything is completely full, return false
-		if (cartridges.size() == 12 && ammo == ammoLimit) {
+		if (cartridges.size() == 12 && ammo >= ammoLimit) {
 			Cartridge temp = cartridges.get(0);
 
-			if (temp.ammo == ammoLimit) {
+			if (temp.ammo >= ammoLimit) {
+				temp.ammo = ammoLimit;
 				return false;
 			}
 		}
@@ -270,7 +305,7 @@ public abstract class Weapon {
 				if (last.ammo + extra < ammoLimit + extra) {
 					last.ammo += extra;
 
-					if (last.ammo > ammoLimit) {
+					if (last.ammo >= ammoLimit) {
 						last.ammo = ammoLimit;
 					}
 				}

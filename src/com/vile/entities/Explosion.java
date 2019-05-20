@@ -116,12 +116,18 @@ public class Explosion {
 		 * its full potential till 13 ticks into it.
 		 */
 		if (phaseTime == 1 && ID == 0 || phaseTime >= 13 * Render3D.fpsCheck && ID == 1 && !exploded) {
+			SoundController.explosion.playAudioFile(distanceFromPlayer);
 			exploded = true;
 			explosionHarm();
 		}
 
 		// If at end of explosion delete explosion object
 		if (phaseTime >= 16 * Render3D.fpsCheck) {
+			if (ID == 1) {
+				// Add the "corpse" of the canister to the map
+				Game.corpses.add(new Corpse(x, z, -y * 10, 27, 0, 0, 0, false));
+			}
+
 			removeObject();
 		}
 	}
@@ -337,8 +343,15 @@ public class Explosion {
 				distance = Math.sqrt(((Math.abs(this.x - enemy.xPos)) * (Math.abs(this.x - enemy.xPos)))
 						+ ((Math.abs(this.z - enemy.zPos)) * (Math.abs(this.z - enemy.zPos))));
 
+				// Entity hitBox, changes if they are a boss though.
+				double hitBox = 3;
+
+				if (enemy.isABoss) {
+					hitBox = 6;
+				}
+
 				// If within range of normal enemy
-				if (distance <= 3 && Math.abs(this.y - (enemy.yPos)) <= 2 && !enemy.isABoss) {
+				if (distance <= hitBox && (Math.abs(this.y - (enemy.yPos)) <= 2 || enemy.isABoss)) {
 					// Realistic damage
 					double damage = 80;
 
@@ -527,112 +540,6 @@ public class Explosion {
 				}
 			} catch (Exception e) {
 
-			}
-
-			try {
-				/*
-				 * If the block surrounding it has an explosive canister on it
-				 */
-				for (int j = 0; j < block.wallItems.size(); j++) {
-					Item item = block.wallItems.get(j);
-
-					if (item.itemID == 32) {
-						ExplosiveCanister temp = (ExplosiveCanister) item;
-
-						// Distance between explosion and canister
-						distance = Math.sqrt(((Math.abs(this.x - temp.x)) * (Math.abs(this.x - temp.x)))
-								+ ((Math.abs(this.z - temp.z)) * (Math.abs(this.z - temp.z))));
-
-						double yCorrect = this.y * 4;
-
-						// Corrects it because when the explosion hits below
-						// eye level it is technically positive, and when
-						// multiplied by thirteen it causes the statement
-						// below this one turn out to be false.
-						if (this.y > 0) {
-							yCorrect = 0;
-						}
-
-						// If within range, start a new explosion and remove the canister
-						if (Math.abs((temp.y) + (yCorrect)) <= 8) {
-							Game.explosions.add(new Explosion(temp.x, -temp.y / 10, temp.z, 1, 0));
-							block.wallItems.remove(item);
-							temp.removeCanister();
-						}
-					}
-				}
-			} catch (Exception e) {
-
-			}
-		}
-
-		// Bosses have a larger hit range so they have to be checked
-		// separate.
-		for (int i = 0; i < Game.bosses.size(); i++) {
-			Entity boss = Game.bosses.get(i);
-
-			// Self explainatory by now I hope
-			distance = Math.sqrt(((Math.abs(this.x - boss.xPos)) * (Math.abs(this.x - boss.xPos)))
-					+ ((Math.abs(this.z - boss.zPos)) * (Math.abs(this.z - boss.zPos))));
-
-			// Boss has larger range to hit
-			if (distance <= 6) {
-				// Not meant to be funny, this just is the most realistic
-				// it seems after testing. NO LAUGHING
-				double damage = 69;
-
-				// Every 0.1 distance units, subtract 2 from the damage
-				// the explosion will cause. But only if the explosion is
-				// outside of the bosses body range of 3
-				if (distance > 3) {
-					distance -= 3;
-					damage -= 2 * (distance / 0.1);
-				}
-
-				// Hurt the enemy, and activate the enemy
-				boss.hurt((int) damage, false);
-				boss.activated = true;
-				boss.searchMode = false;
-
-				// If enemy losses all of its sadness, commence
-				// happiness proceedures.
-				if (boss.health <= 0) {
-					Block block = Level.getBlock((int) boss.xPos, (int) boss.zPos);
-					boss.enemyDeath();
-					block.entitiesOnBlock.remove(boss);
-				}
-			}
-		}
-
-		// Play explosion sound based on explosion type
-		if (ID == 1) {
-			SoundController.explosion.playAudioFile(distanceFromPlayer);
-
-			// If the host, play sounds for all clients that are connected.
-			if (Display.gameType == 0) {
-				for (int i = 0; i < Game.otherPlayers.size(); i++) {
-					ServerPlayer sP = Game.otherPlayers.get(i);
-					double distanceFromClient = Math.sqrt(((Math.abs(x - sP.x)) * (Math.abs(x - sP.x)))
-							+ ((Math.abs(z - sP.z)) * (Math.abs(z - sP.z))));
-
-					sP.audioToPlay.add("explosion");
-					sP.audioDistances.add(new Integer((int) distanceFromClient));
-				}
-			}
-		} else {
-			SoundController.rocketFly.stopClip();
-			SoundController.explosion.playAudioFile(distanceFromPlayer);
-
-			// If the host, play sounds for all clients that are connected.
-			if (Display.gameType == 0) {
-				for (int i = 0; i < Game.otherPlayers.size(); i++) {
-					ServerPlayer sP = Game.otherPlayers.get(i);
-					double distanceFromClient = Math.sqrt(((Math.abs(x - sP.x)) * (Math.abs(x - sP.x)))
-							+ ((Math.abs(z - sP.z)) * (Math.abs(z - sP.z))));
-
-					sP.audioToPlay.add("explosion");
-					sP.audioDistances.add(new Integer((int) distanceFromClient));
-				}
 			}
 		}
 	}
